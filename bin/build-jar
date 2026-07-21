@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ZIL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cd "$ZIL_ROOT"
+exec clojure -Sdeps '{:mvn/local-repo ".m2/repository"}' -T:build uber

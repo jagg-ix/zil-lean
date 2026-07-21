@@ -1,0 +1,48 @@
+MODULE everparse.interop.demo.
+
+// Demo of EverParse/3d interop modeling in ZIL.
+// Run with:
+//   ./bin/zil preprocess examples/everparse-interop-demo.zc /tmp/everparse_interop.pre.zc libsets/everparse-interop
+//   ./bin/zil /tmp/everparse_interop.pre.zc
+
+USE EP_SPEC(tls_record, EverTLS_Record, parse_record, specs_tls_record_3d).
+USE EP_PROFILE(c_verified, c, everest_toolchain, no_ub).
+USE EP_RUN(run_tls_record_ci_001, tls_record, c_verified, succeeded).
+
+USE EP_ARTIFACT(run_tls_record_ci_001, fst, fstar_module, generated_tls_record_fst).
+USE EP_ARTIFACT(run_tls_record_ci_001, fsti, fstar_interface, generated_tls_record_fsti).
+USE EP_ARTIFACT(run_tls_record_ci_001, c_header, c_header, generated_tls_record_h).
+USE EP_ARTIFACT(run_tls_record_ci_001, c_impl, c_source, generated_tls_record_c).
+USE EP_ARTIFACT(run_tls_record_ci_001, wrapper, c_wrapper, generated_tls_record_wrapper_c).
+
+// EverParse style deterministic positive/negative testing profile.
+USE EP_TEST_SUITE(run_tls_record_ci_001, batch, true, true, true, n_2).
+
+USE EP_GUARANTEE(run_tls_record_ci_001, g_mem, memory_safety, proved).
+USE EP_GUARANTEE(run_tls_record_ci_001, g_arith, arithmetic_safety, proved).
+USE EP_GUARANTEE(run_tls_record_ci_001, g_df, double_fetch_freedom, proved).
+
+USE EP_EVIDENCE(run_tls_record_ci_001, e1, tls_record_validator_contract, everparse, ci_run_001).
+
+// One intentionally incomplete run to show gap query behavior.
+USE EP_SPEC(quic_packet, EverQUIC_Packet, parse_packet, specs_quic_packet_3d).
+USE EP_PROFILE(c_verified_quic, c, everest_toolchain, no_ub).
+USE EP_RUN(run_quic_ci_002, quic_packet, c_verified_quic, succeeded).
+USE EP_ARTIFACT(run_quic_ci_002, c_impl, c_source, generated_quic_packet_c).
+USE EP_TEST_SUITE(run_quic_ci_002, batch, true, true, false, n_1).
+USE EP_GUARANTEE(run_quic_ci_002, g_mem, memory_safety, proved).
+
+QUERY ep_specs:
+FIND ?spec ?module ?entry WHERE ?spec#kind@entity:everparse_spec AND ?spec#module@?module AND ?spec#entrypoint@?entry.
+
+QUERY ep_runs:
+FIND ?run ?status WHERE ?run#kind@entity:everparse_run AND ?run#status@?status.
+
+QUERY ep_contract_verified_runs:
+FIND ?run WHERE ?run#contract_verified@value:true.
+
+QUERY ep_contract_gaps:
+FIND ?run ?gap WHERE ?run#contract_gap@?gap.
+
+QUERY ep_guarantees:
+FIND ?g ?name ?v WHERE ?g#kind@entity:everparse_guarantee AND ?g#name@?name AND ?g#verdict@?v.

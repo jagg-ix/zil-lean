@@ -1,0 +1,39 @@
+MODULE kubernetes.compat.demo.
+
+// Kubernetes-focused equivalent to examples/k8s-helm-compat.zc.
+// Run with:
+//   ./bin/zil preprocess examples/kubernetes-compat.zc /tmp/kubernetes_compat.pre.zc libsets/k8s-helm-compat
+//   ./bin/zil /tmp/kubernetes_compat.pre.zc
+
+USE KHC_DOC(kubernetes_compat_demo, kubernetes, prod).
+USE KHC_COMPAT_PROFILE(profile_k8s_prod, true, 600).
+
+// Helm release metadata retained as deployment envelope, while the modeled
+// compatibility target is Kubernetes CRD/resource alignment.
+USE KHC_CHART(chart_platform_runtime, platform_runtime, n_1_0_0, n_1_0_0).
+USE KHC_CHART_VALUE(chart_platform_runtime, image_repository, string, corp_platform_runtime, true).
+USE KHC_CHART_VALUE(chart_platform_runtime, image_tag, string, stable, true).
+USE KHC_CHART_VALUE(chart_platform_runtime, reconcile_interval_seconds, number, n_30, false).
+
+USE KHC_CRD(clusterpolicy_ops_example_io_v1, ops_example_io, v1, clusterpolicy, clusterpolicies, cluster).
+USE KHC_CRD(synccontract_sync_example_io_v1, sync_example_io, v1, synccontract, synccontracts, namespaced).
+
+USE KHC_TEMPLATE_RESOURCE(clusterpolicy_guardrail_core, chart_platform_runtime, ops_example_io_v1, clusterpolicy, guardrail_core).
+USE KHC_TEMPLATE_RESOURCE(synccontract_payments_pipeline, chart_platform_runtime, sync_example_io_v1, synccontract, payments_pipeline).
+
+USE KHC_RELEASE(prod_platform, chart_platform_runtime, platform, profile_k8s_prod).
+USE KHC_RELEASE_VALUE(prod_platform, image_repository, corp_platform_runtime).
+USE KHC_RELEASE_VALUE(prod_platform, image_tag, stable).
+USE KHC_RELEASE_VALUE(prod_platform, reconcile_interval_seconds, n_30).
+
+QUERY khc_releases:
+FIND ?release ?namespace WHERE ?release#kind@entity:k8s_release AND ?release#namespace@?namespace.
+
+QUERY khc_missing_required_values:
+FIND ?release ?path WHERE ?release#missing_required_value@?path.
+
+QUERY khc_drift_candidates:
+FIND ?release ?res WHERE ?release#drift_candidate@?res.
+
+QUERY khc_release_requirements:
+FIND ?release ?crd WHERE ?release#requires_crd@?crd.

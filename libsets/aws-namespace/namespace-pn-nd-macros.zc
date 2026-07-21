@@ -1,0 +1,166 @@
+MODULE namespace.pn.nd.lib.
+
+// Namespace extension layer: hierarchy + n-dimensional context products +
+// category-style morphism reachability + Petri-net style resolution flow.
+//
+// Inspired by namespace hierarchy as stratified/product spaces and by
+// dynamic resolution modeled as token flow over transitions.
+
+MACRO NS_DIMENSION(dim, rank):
+EMIT ns:dim:{{dim}}#kind@entity:ns_dimension.
+EMIT ns:dim:{{dim}}#rank@value:{{rank}}.
+ENDMACRO.
+
+MACRO NS_DIM_SUCCESSOR(lower_dim, upper_dim):
+EMIT ns:dim:{{lower_dim}}#direct_next@ns:dim:{{upper_dim}}.
+EMIT ns:dim:{{lower_dim}}#next@ns:dim:{{upper_dim}}.
+ENDMACRO.
+
+MACRO NS_CONTEXT(ctx, dim, scope_kind):
+EMIT ns:ctx:{{ctx}}#kind@entity:ns_context.
+EMIT ns:ctx:{{ctx}}#dimension@ns:dim:{{dim}}.
+EMIT ns:ctx:{{ctx}}#scope_kind@value:{{scope_kind}}.
+ENDMACRO.
+
+MACRO NS_CHILD(parent_ctx, child_ctx):
+EMIT ns:ctx:{{parent_ctx}}#child@ns:ctx:{{child_ctx}}.
+EMIT ns:ctx:{{child_ctx}}#parent@ns:ctx:{{parent_ctx}}.
+EMIT ns:ctx:{{parent_ctx}}#delegates_to@ns:ctx:{{child_ctx}}.
+ENDMACRO.
+
+MACRO NS_PRODUCT_CONTEXT(product_ctx, dim, left_ctx, right_ctx):
+EMIT ns:ctx:{{product_ctx}}#kind@entity:ns_context.
+EMIT ns:ctx:{{product_ctx}}#dimension@ns:dim:{{dim}}.
+EMIT ns:ctx:{{product_ctx}}#scope_kind@value:product.
+EMIT ns:ctx:{{product_ctx}}#product@value:true.
+EMIT ns:ctx:{{product_ctx}}#proj_left@ns:ctx:{{left_ctx}}.
+EMIT ns:ctx:{{product_ctx}}#proj_right@ns:ctx:{{right_ctx}}.
+ENDMACRO.
+
+MACRO NS_BIND(ctx, local_name, target):
+EMIT ns:binding:{{ctx}}_{{local_name}}_{{target}}#kind@entity:ns_binding.
+EMIT ns:binding:{{ctx}}_{{local_name}}_{{target}}#context@ns:ctx:{{ctx}}.
+EMIT ns:binding:{{ctx}}_{{local_name}}_{{target}}#local_name@value:{{local_name}}.
+EMIT ns:binding:{{ctx}}_{{local_name}}_{{target}}#target@value:{{target}}.
+ENDMACRO.
+
+MACRO NS_ALIAS(src_ctx, src_name, dst_ctx, dst_name):
+EMIT ns:alias:{{src_ctx}}_{{src_name}}_to_{{dst_ctx}}_{{dst_name}}#kind@entity:ns_alias.
+EMIT ns:alias:{{src_ctx}}_{{src_name}}_to_{{dst_ctx}}_{{dst_name}}#src_ctx@ns:ctx:{{src_ctx}}.
+EMIT ns:alias:{{src_ctx}}_{{src_name}}_to_{{dst_ctx}}_{{dst_name}}#src_name@value:{{src_name}}.
+EMIT ns:alias:{{src_ctx}}_{{src_name}}_to_{{dst_ctx}}_{{dst_name}}#dst_ctx@ns:ctx:{{dst_ctx}}.
+EMIT ns:alias:{{src_ctx}}_{{src_name}}_to_{{dst_ctx}}_{{dst_name}}#dst_name@value:{{dst_name}}.
+ENDMACRO.
+
+MACRO NS_MORPHISM(morphism, src_ctx, dst_ctx, morphism_kind):
+EMIT ns:morphism:{{morphism}}#kind@entity:ns_morphism.
+EMIT ns:morphism:{{morphism}}#src@ns:ctx:{{src_ctx}}.
+EMIT ns:morphism:{{morphism}}#dst@ns:ctx:{{dst_ctx}}.
+EMIT ns:morphism:{{morphism}}#morphism_kind@value:{{morphism_kind}}.
+ENDMACRO.
+
+MACRO NS_PN_NET(net):
+EMIT nspn:net:{{net}}#kind@entity:ns_pn_net.
+ENDMACRO.
+
+MACRO NS_RESOLVE_TRANSITION(net, transition, from_ctx, to_ctx, action):
+EMIT nspn:transition:{{transition}}#kind@entity:ns_pn_transition.
+EMIT nspn:transition:{{transition}}#net@nspn:net:{{net}}.
+EMIT nspn:transition:{{transition}}#from@ns:ctx:{{from_ctx}}.
+EMIT nspn:transition:{{transition}}#to@ns:ctx:{{to_ctx}}.
+EMIT nspn:transition:{{transition}}#action@value:{{action}}.
+ENDMACRO.
+
+MACRO NS_TOKEN(token, ctx, name):
+EMIT nspn:token:{{token}}#kind@entity:ns_name_token.
+EMIT nspn:token:{{token}}#context@ns:ctx:{{ctx}}.
+EMIT nspn:token:{{token}}#name@value:{{name}}.
+ENDMACRO.
+
+RULE ns_dim_next_transitive:
+IF ?d1#next@?d2 AND ?d2#next@?d3
+THEN ?d1#next@?d3.
+
+RULE ns_descendant_direct:
+IF ?p#child@?c
+THEN ?p#descendant@?c.
+
+RULE ns_descendant_transitive:
+IF ?p#descendant@?m AND ?m#child@?c
+THEN ?p#descendant@?c.
+
+RULE ns_context_has_local_name:
+IF ?b#kind@entity:ns_binding AND ?b#context@?ctx AND ?b#local_name@?name
+THEN ?ctx#has_local_name@?name.
+
+RULE ns_visible_name_local:
+IF ?ctx#has_local_name@?name
+THEN ?ctx#visible_name@?name.
+
+RULE ns_visible_name_from_ancestor:
+IF ?ancestor#descendant@?ctx AND ?ancestor#has_local_name@?name
+THEN ?ctx#visible_name@?name.
+
+RULE ns_visible_name_alias:
+IF ?a#kind@entity:ns_alias AND ?a#src_ctx@?src AND ?a#src_name@?src_name AND ?a#dst_ctx@?dst AND ?a#dst_name@?dst_name AND ?dst#visible_name@?dst_name
+THEN ?src#visible_name@?src_name.
+
+RULE ns_morphism_reach_direct:
+IF ?m#kind@entity:ns_morphism AND ?m#src@?src AND ?m#dst@?dst
+THEN ?src#morphism_reaches@?dst.
+
+RULE ns_morphism_reach_from_child:
+IF ?src#child@?dst
+THEN ?src#morphism_reaches@?dst.
+
+RULE ns_morphism_reach_transitive:
+IF ?a#morphism_reaches@?b AND ?b#morphism_reaches@?c
+THEN ?a#morphism_reaches@?c.
+
+RULE ns_product_projection_left_visible:
+IF ?pc#product@value:true AND ?pc#proj_left@?l AND ?l#visible_name@?name
+THEN ?pc#visible_name@?name.
+
+RULE ns_product_projection_right_visible:
+IF ?pc#product@value:true AND ?pc#proj_right@?r AND ?r#visible_name@?name
+THEN ?pc#visible_name@?name.
+
+RULE ns_product_dimension_valid:
+IF ?pc#product@value:true AND ?pc#dimension@?dp AND ?pc#proj_left@?l AND ?pc#proj_right@?r AND ?l#dimension@?dl AND ?r#dimension@?dr AND ?dl#next@?dp AND ?dr#next@?dp
+THEN ?pc#product_dimension_valid@value:true.
+
+RULE ns_transition_enabled:
+IF ?tr#kind@entity:ns_pn_transition AND ?tr#from@?ctx AND ?tok#kind@entity:ns_name_token AND ?tok#context@?ctx
+THEN ?tr#enabled_by@?tok.
+
+RULE ns_token_can_move_to_transition_target:
+IF ?tr#enabled_by@?tok AND ?tr#to@?dst
+THEN ?tok#can_move_to@?dst.
+
+RULE ns_token_resolution_witness:
+IF ?tr#enabled_by@?tok AND ?tok#name@?name AND ?tr#to@?dst AND ?dst#visible_name@?name
+THEN ?tok#resolution_witness@?dst.
+
+QUERY namespace_hierarchy_edges:
+FIND ?parent ?child WHERE ?parent#child@?child.
+
+QUERY namespace_descendants:
+FIND ?ancestor ?desc WHERE ?ancestor#descendant@?desc.
+
+QUERY namespace_visible_names:
+FIND ?ctx ?name WHERE ?ctx#visible_name@?name.
+
+QUERY namespace_product_contexts:
+FIND ?ctx ?ok WHERE ?ctx#product@value:true AND ?ctx#product_dimension_valid@?ok.
+
+QUERY namespace_morphism_reachability:
+FIND ?src ?dst WHERE ?src#morphism_reaches@?dst.
+
+QUERY namespace_transition_enabling:
+FIND ?tr ?tok WHERE ?tr#enabled_by@?tok.
+
+QUERY namespace_resolution_witnesses:
+FIND ?tok ?dst WHERE ?tok#resolution_witness@?dst.
+
+QUERY namespace_binding_conflict_pairs:
+FIND ?ctx ?name ?b1 ?b2 WHERE ?b1#kind@entity:ns_binding AND ?b2#kind@entity:ns_binding AND ?b1#context@?ctx AND ?b2#context@?ctx AND ?b1#local_name@?name AND ?b2#local_name@?name.

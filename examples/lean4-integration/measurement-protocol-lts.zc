@@ -1,0 +1,17 @@
+MODULE lean4.integration.measurement.protocol.
+
+// Level 1 (simple): LTS_ATOM state machine + POLICY, no macro library.
+// Lean4 path: standalone state-machine module (no imports needed).
+//
+//   ./bin/zil export-lean examples/lean4-integration/measurement-protocol-lts.zc \
+//     /tmp/MeasurementProtocol.lean Zil.Generated.MeasurementProtocol
+//   lean /tmp/MeasurementProtocol.lean          # or: cd ../zil-lean && lake env lean ...
+//
+// export-tla emits the matching TLA+ module from the same source.
+
+LTS_ATOM measurement_run [states=#{idle calibrating acquiring analyzing archived aborted}, initial=idle, transitions={[idle begin_calibration] [calibrating], [calibrating calibration_ok] [acquiring], [calibrating calibration_fail] [aborted], [acquiring acquisition_done] [analyzing], [acquiring detector_fault] [aborted], [analyzing results_archived] [archived]}].
+
+POLICY no_acquisition_without_calibration [condition="NOT (acquiring AND NOT calibration_ok)", criticality=high].
+
+QUERY run_edges:
+FIND ?e WHERE lts_atom:measurement_run#edge@?e.

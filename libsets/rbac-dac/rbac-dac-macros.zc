@@ -1,0 +1,185 @@
+MODULE rbac.dac.lib.
+
+// RBAC + DAC macro layer for ZIL.
+// Goal:
+// - model discretionary controls (owner grants) and role controls together
+// - keep semantics in canonical tuples/rules
+// - include accountability/object-reuse checks aligned with Orange Book C2 intent
+
+MACRO RBD_SUBJECT(id):
+EMIT subject:{{id}}#kind@entity:subject.
+ENDMACRO.
+
+MACRO RBD_GROUP(id):
+EMIT group:{{id}}#kind@entity:group.
+ENDMACRO.
+
+MACRO RBD_GROUP_MEMBER(group, subject):
+EMIT group:{{group}}#member@subject:{{subject}}.
+EMIT subject:{{subject}}#member_of@group:{{group}}.
+ENDMACRO.
+
+MACRO RBD_ROLE(id):
+EMIT role:{{id}}#kind@entity:role.
+ENDMACRO.
+
+MACRO RBD_OBJECT(id, owner):
+EMIT object:{{id}}#kind@entity:protected_object.
+EMIT object:{{id}}#owner@subject:{{owner}}.
+ENDMACRO.
+
+MACRO RBD_DAC_GRANT_SUBJECT(grant_id, object, action, subject, grantor):
+EMIT dac_grant:{{grant_id}}#kind@entity:dac_grant_subject.
+EMIT dac_grant:{{grant_id}}#object@object:{{object}}.
+EMIT dac_grant:{{grant_id}}#action@value:{{action}}.
+EMIT dac_grant:{{grant_id}}#subject@subject:{{subject}}.
+EMIT dac_grant:{{grant_id}}#grantor@subject:{{grantor}}.
+ENDMACRO.
+
+MACRO RBD_DAC_GRANT_GROUP(grant_id, object, action, group, grantor):
+EMIT dac_grant:{{grant_id}}#kind@entity:dac_grant_group.
+EMIT dac_grant:{{grant_id}}#object@object:{{object}}.
+EMIT dac_grant:{{grant_id}}#action@value:{{action}}.
+EMIT dac_grant:{{grant_id}}#group@group:{{group}}.
+EMIT dac_grant:{{grant_id}}#grantor@subject:{{grantor}}.
+ENDMACRO.
+
+MACRO RBD_ROLE_ASSIGN(binding_id, subject, role):
+EMIT role_binding:{{binding_id}}#kind@entity:role_binding.
+EMIT role_binding:{{binding_id}}#subject@subject:{{subject}}.
+EMIT role_binding:{{binding_id}}#role@role:{{role}}.
+ENDMACRO.
+
+MACRO RBD_ROLE_PERMIT(perm_id, role, object, action):
+EMIT role_perm:{{perm_id}}#kind@entity:role_permission.
+EMIT role_perm:{{perm_id}}#role@role:{{role}}.
+EMIT role_perm:{{perm_id}}#object@object:{{object}}.
+EMIT role_perm:{{perm_id}}#action@value:{{action}}.
+ENDMACRO.
+
+MACRO RBD_SESSION(session_id, subject):
+EMIT session:{{session_id}}#kind@entity:session.
+EMIT session:{{session_id}}#subject@subject:{{subject}}.
+ENDMACRO.
+
+MACRO RBD_SESSION_ACTIVATE(session_id, role):
+EMIT session:{{session_id}}#active_role@role:{{role}}.
+ENDMACRO.
+
+MACRO RBD_REQUEST(request_id, subject, object, action):
+EMIT request:{{request_id}}#kind@entity:access_request.
+EMIT request:{{request_id}}#subject@subject:{{subject}}.
+EMIT request:{{request_id}}#object@object:{{object}}.
+EMIT request:{{request_id}}#action@value:{{action}}.
+ENDMACRO.
+
+MACRO RBD_REQUEST_SESSION(request_id, session_id):
+EMIT request:{{request_id}}#session@session:{{session_id}}.
+ENDMACRO.
+
+MACRO RBD_AUDIT(record_id, request_id, channel):
+EMIT audit:{{record_id}}#kind@entity:audit_record.
+EMIT audit:{{record_id}}#request@request:{{request_id}}.
+EMIT audit:{{record_id}}#channel@value:{{channel}}.
+EMIT request:{{request_id}}#audit_logged@value:true.
+ENDMACRO.
+
+MACRO RBD_OBJECT_REUSE_CLEARED(object):
+EMIT object:{{object}}#reuse_cleared@value:true.
+ENDMACRO.
+
+MACRO RBD_REUSE_ALLOC(alloc_id, object, subject):
+EMIT reuse_alloc:{{alloc_id}}#kind@entity:reuse_allocation.
+EMIT reuse_alloc:{{alloc_id}}#object@object:{{object}}.
+EMIT reuse_alloc:{{alloc_id}}#subject@subject:{{subject}}.
+ENDMACRO.
+
+RULE rbd_dac_subject_grant_valid:
+IF ?g#kind@entity:dac_grant_subject AND ?g#object@?obj AND ?g#grantor@?grantor AND ?obj#owner@?grantor
+THEN ?g#valid@value:true.
+
+RULE rbd_dac_group_grant_valid:
+IF ?g#kind@entity:dac_grant_group AND ?g#object@?obj AND ?g#grantor@?grantor AND ?obj#owner@?grantor
+THEN ?g#valid@value:true.
+
+RULE rbd_dac_subject_grantor_not_owner:
+IF ?g#kind@entity:dac_grant_subject AND ?g#object@?obj AND ?g#grantor@?grantor AND NOT ?obj#owner@?grantor
+THEN ?g#policy_violation@value:grantor_not_owner.
+
+RULE rbd_dac_group_grantor_not_owner:
+IF ?g#kind@entity:dac_grant_group AND ?g#object@?obj AND ?g#grantor@?grantor AND NOT ?obj#owner@?grantor
+THEN ?g#policy_violation@value:grantor_not_owner.
+
+RULE rbd_allow_via_dac_subject:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?g#kind@entity:dac_grant_subject AND ?g#valid@value:true AND ?g#subject@?subject AND ?g#object@?obj AND ?g#action@?action
+THEN ?req#allowed_by@mechanism:dac_subject.
+
+RULE rbd_allow_via_dac_group:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?g#kind@entity:dac_grant_group AND ?g#valid@value:true AND ?g#group@?group AND ?group#member@?subject AND ?g#object@?obj AND ?g#action@?action
+THEN ?req#allowed_by@mechanism:dac_group.
+
+RULE rbd_allow_via_rbac_assignment:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?rb#kind@entity:role_binding AND ?rb#subject@?subject AND ?rb#role@?role AND ?rp#kind@entity:role_permission AND ?rp#role@?role AND ?rp#object@?obj AND ?rp#action@?action
+THEN ?req#allowed_by@mechanism:rbac_assignment.
+
+RULE rbd_allow_via_rbac_session:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?req#session@?session AND ?session#subject@?subject AND ?session#active_role@?role AND ?rp#kind@entity:role_permission AND ?rp#role@?role AND ?rp#object@?obj AND ?rp#action@?action
+THEN ?req#allowed_by@mechanism:rbac_session.
+
+RULE rbd_request_allow_witness:
+IF ?req#allowed_by@?mechanism
+THEN ?req#allow_witness@value:true.
+
+RULE rbd_request_allow_decision:
+IF ?req#allow_witness@value:true
+THEN ?req#decision@value:allow.
+
+RULE rbd_request_default_deny:
+IF ?req#kind@entity:access_request AND NOT ?req#allow_witness@value:true
+THEN ?req#decision@value:deny.
+
+RULE rbd_missing_audit_record:
+IF ?req#decision@?decision AND NOT ?req#audit_logged@value:true
+THEN ?req#policy_violation@value:missing_audit_record.
+
+RULE rbd_reuse_without_clear_violation:
+IF ?alloc#kind@entity:reuse_allocation AND ?alloc#object@?obj AND NOT ?obj#reuse_cleared@value:true
+THEN ?alloc#policy_violation@value:reuse_without_clear.
+
+RULE rbd_reuse_with_clear_ok:
+IF ?alloc#kind@entity:reuse_allocation AND ?alloc#object@?obj AND ?obj#reuse_cleared@value:true
+THEN ?alloc#policy_ok@value:reuse_cleared_before_allocation.
+
+RULE rbd_policy_target_dac_grant_subject:
+IF ?x#kind@entity:dac_grant_subject
+THEN ?x#policy_target@value:dac_grant.
+
+RULE rbd_policy_target_dac_grant_group:
+IF ?x#kind@entity:dac_grant_group
+THEN ?x#policy_target@value:dac_grant.
+
+RULE rbd_policy_target_access_request:
+IF ?x#kind@entity:access_request
+THEN ?x#policy_target@value:access_request.
+
+RULE rbd_policy_target_reuse_allocation:
+IF ?x#kind@entity:reuse_allocation
+THEN ?x#policy_target@value:reuse_allocation.
+
+QUERY rbd_decisions:
+FIND ?req ?decision WHERE ?req#decision@?decision.
+
+QUERY rbd_allowed_paths:
+FIND ?req ?mechanism WHERE ?req#allowed_by@?mechanism.
+
+QUERY rbd_denied_requests:
+FIND ?req WHERE ?req#decision@value:deny.
+
+QUERY rbd_grant_violations:
+FIND ?grant ?v WHERE ?grant#policy_target@value:dac_grant AND ?grant#policy_violation@?v.
+
+QUERY rbd_request_policy_violations:
+FIND ?req ?v WHERE ?req#policy_target@value:access_request AND ?req#policy_violation@?v.
+
+QUERY rbd_reuse_policy_violations:
+FIND ?alloc ?v WHERE ?alloc#policy_target@value:reuse_allocation AND ?alloc#policy_violation@?v.

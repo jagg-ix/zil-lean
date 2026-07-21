@@ -1,0 +1,253 @@
+MODULE pi.vc.macro.layer.demo.
+
+// Pi-calculus + vector-clock macro layer for ZIL.
+// Reference: https://en.wikipedia.org/wiki/%CE%A0-calculus
+
+// -----------------------
+// Pi-calculus constructors
+// -----------------------
+
+MACRO PI_CHANNEL(name):
+EMIT pi:name:{{name}}#kind@entity:pi_channel.
+ENDMACRO.
+
+MACRO PI_VALUE(name):
+EMIT pi:name:{{name}}#kind@entity:pi_value.
+ENDMACRO.
+
+MACRO PI_NIL(proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:nil.
+ENDMACRO.
+
+MACRO PI_SEND(proc, channel, payload, next_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:send.
+EMIT pi:proc:{{proc}}#channel@pi:name:{{channel}}.
+EMIT pi:proc:{{proc}}#payload@pi:name:{{payload}}.
+EMIT pi:proc:{{proc}}#next@pi:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO PI_RECV(proc, channel, bind_name, next_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:recv.
+EMIT pi:proc:{{proc}}#channel@pi:name:{{channel}}.
+EMIT pi:proc:{{proc}}#bind@pi:name:{{bind_name}}.
+EMIT pi:proc:{{proc}}#next@pi:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO PI_PAR(proc, left_proc, right_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:par.
+EMIT pi:proc:{{proc}}#left@pi:proc:{{left_proc}}.
+EMIT pi:proc:{{proc}}#right@pi:proc:{{right_proc}}.
+ENDMACRO.
+
+MACRO PI_CHOICE(proc, left_proc, right_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:choice.
+EMIT pi:proc:{{proc}}#left@pi:proc:{{left_proc}}.
+EMIT pi:proc:{{proc}}#right@pi:proc:{{right_proc}}.
+ENDMACRO.
+
+MACRO PI_RESTRICT(proc, restricted_name, inner_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:restrict.
+EMIT pi:proc:{{proc}}#restricted_name@pi:name:{{restricted_name}}.
+EMIT pi:proc:{{proc}}#inner@pi:proc:{{inner_proc}}.
+ENDMACRO.
+
+MACRO PI_REPLICATE(proc, body_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:replicate.
+EMIT pi:proc:{{proc}}#body@pi:proc:{{body_proc}}.
+ENDMACRO.
+
+MACRO PI_REC(proc, label, body_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:rec.
+EMIT pi:proc:{{proc}}#label@value:{{label}}.
+EMIT pi:proc:{{proc}}#body@pi:proc:{{body_proc}}.
+ENDMACRO.
+
+MACRO PI_VAR(proc, label):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:var.
+EMIT pi:proc:{{proc}}#var_label@value:{{label}}.
+ENDMACRO.
+
+MACRO PI_EVENT_LINK(event, proc):
+EMIT vc:event:{{event}}#pi_transition@pi:proc:{{proc}}.
+ENDMACRO.
+
+// ------------------------------------
+// Vector-clock DSL layer (inside ZIL)
+// ------------------------------------
+
+MACRO VC_ACTOR(actor):
+EMIT vc:actor:{{actor}}#kind@entity:vc_actor.
+ENDMACRO.
+
+MACRO VC_COUNTER(counter):
+EMIT vc:ctr:{{counter}}#kind@entity:vc_counter.
+ENDMACRO.
+
+MACRO VC_LT(low, high):
+EMIT vc:ctr:{{low}}#lt@vc:ctr:{{high}}.
+ENDMACRO.
+
+MACRO VC_EVENT(event):
+EMIT vc:event:{{event}}#kind@entity:vc_event.
+ENDMACRO.
+
+MACRO VC_COMPONENT(event, actor, counter):
+EMIT vc:event:{{event}}#vc_counter@vc:actor:{{actor}} [counter=vc:ctr:{{counter}}].
+ENDMACRO.
+
+MACRO VC_DISTINCT(e1, e2):
+EMIT vc:event:{{e1}}#distinct_from@vc:event:{{e2}}.
+EMIT vc:event:{{e2}}#distinct_from@vc:event:{{e1}}.
+ENDMACRO.
+
+// -----------------
+// Pi derived rules
+// -----------------
+
+RULE pi_parallel_sync:
+IF ?p#operator@value:par AND ?p#left@?s AND ?p#right@?r AND ?s#operator@value:send AND ?r#operator@value:recv AND ?s#channel@?c AND ?r#channel@?c AND ?s#payload@?v AND ?s#next@?sn AND ?r#next@?rn
+THEN ?p#can_tau@value:true AND ?p#sync_channel@?c AND ?p#sync_payload@?v AND ?p#left_cont@?sn AND ?p#right_cont@?rn.
+
+RULE pi_choice_tau_left:
+IF ?p#operator@value:choice AND ?p#left@?l AND ?l#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE pi_choice_tau_right:
+IF ?p#operator@value:choice AND ?p#right@?r AND ?r#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE pi_restrict_inherit_tau:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE pi_replicate_unfold:
+IF ?p#operator@value:replicate AND ?p#body@?b
+THEN ?p#can_spawn@value:true AND ?p#spawn_body@?b.
+
+RULE pi_rec_inherit_tau:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE pi_var_resolve_tau:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#can_tau@value:true
+THEN ?v#can_tau@value:true.
+
+// ---------------------------
+// VC partial-ordering rules
+// ---------------------------
+
+RULE vc_lt_transitive:
+IF ?a#lt@?b AND ?b#lt@?c
+THEN ?a#lt@?c.
+
+RULE vc_strict_witness:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c1#lt@?c2
+THEN ?e1#vc_strict_witness@?e2.
+
+RULE vc_violation_over:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c2#lt@?c1
+THEN ?e1#vc_violation_over@?e2.
+
+RULE vc_before:
+IF ?e1#kind@entity:vc_event AND ?e2#kind@entity:vc_event AND ?e1#distinct_from@?e2 AND ?e1#vc_strict_witness@?e2 AND NOT ?e1#vc_violation_over@?e2
+THEN ?e1#before@?e2.
+
+RULE vc_concurrent:
+IF ?e1#kind@entity:vc_event AND ?e2#kind@entity:vc_event AND ?e1#distinct_from@?e2 AND NOT ?e1#before@?e2 AND NOT ?e2#before@?e1
+THEN ?e1#concurrent_with@?e2.
+
+// -------------------------------------
+// Example: two-step pi communication
+// -------------------------------------
+
+USE PI_CHANNEL(x).
+USE PI_CHANNEL(z).
+USE PI_VALUE(v1).
+USE PI_VALUE(v2).
+USE PI_VALUE(y).
+USE PI_VALUE(w).
+
+USE PI_NIL(p0).
+USE PI_NIL(p1).
+
+USE PI_SEND(s_x, x, v1, p0).
+USE PI_RECV(r_x, x, y, r_z_send).
+USE PI_SEND(r_z_send, z, v2, p1).
+USE PI_RECV(r_z, z, w, p0).
+
+USE PI_PAR(par_x, s_x, r_x).
+USE PI_PAR(par_z, r_z_send, r_z).
+
+USE PI_CHOICE(choice_any, par_x, p0).
+USE PI_REPLICATE(rep_service, r_x).
+USE PI_RESTRICT(scope_x, x, par_x).
+USE PI_REC(loop_proc, loop_label, par_x).
+USE PI_VAR(loop_ref, loop_label).
+
+// VC actors/counters/events
+USE VC_ACTOR(sender).
+USE VC_ACTOR(middle).
+USE VC_ACTOR(receiver).
+
+USE VC_COUNTER(c0).
+USE VC_COUNTER(c1).
+USE VC_COUNTER(c2).
+USE VC_COUNTER(c3).
+
+USE VC_LT(c0, c1).
+USE VC_LT(c1, c2).
+USE VC_LT(c2, c3).
+
+USE VC_EVENT(e_sync_x).
+USE VC_EVENT(e_sync_z).
+USE VC_EVENT(e_independent).
+
+USE VC_DISTINCT(e_sync_x, e_sync_z).
+USE VC_DISTINCT(e_sync_x, e_independent).
+USE VC_DISTINCT(e_sync_z, e_independent).
+
+USE VC_COMPONENT(e_sync_x, sender, c1).
+USE VC_COMPONENT(e_sync_x, middle, c1).
+USE VC_COMPONENT(e_sync_x, receiver, c0).
+
+USE VC_COMPONENT(e_sync_z, sender, c1).
+USE VC_COMPONENT(e_sync_z, middle, c2).
+USE VC_COMPONENT(e_sync_z, receiver, c1).
+
+USE VC_COMPONENT(e_independent, sender, c2).
+USE VC_COMPONENT(e_independent, middle, c0).
+USE VC_COMPONENT(e_independent, receiver, c0).
+
+USE PI_EVENT_LINK(e_sync_x, par_x).
+USE PI_EVENT_LINK(e_sync_z, par_z).
+
+// -------
+// Queries
+// -------
+
+QUERY pi_tau_enabled:
+FIND ?p WHERE ?p#can_tau@value:true.
+
+QUERY pi_sync_payloads:
+FIND ?v WHERE ?p#sync_payload@?v.
+
+QUERY pi_spawnable:
+FIND ?p WHERE ?p#can_spawn@value:true.
+
+QUERY vc_before_edges:
+FIND ?t WHERE vc:event:e_sync_x#before@?t.
+
+QUERY vc_concurrency_from_sync_x:
+FIND ?e WHERE vc:event:e_sync_x#concurrent_with@?e.
+
+QUERY vc_event_pi_links:
+FIND ?p WHERE ?e#pi_transition@?p.

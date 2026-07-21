@@ -1,0 +1,12 @@
+MODULE provider.external.minimal.
+
+PROVIDER aws [source="hashicorp/aws", version="~> 5.0", language=hcl, engine=opentofu].
+
+SERVICE control_plane [env=prod, provider=aws].
+DATASOURCE cloud_events [type=rest, format=json, provider=aws, url="https://example.invalid/events"].
+
+QUERY provider_entities:
+FIND ?e WHERE ?e#provider@provider:aws.
+
+QUERY inverse_provider_edges:
+FIND ?e WHERE provider:aws#provides_for@?e.

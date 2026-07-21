@@ -1,0 +1,135 @@
+MODULE org.pn.nd.embedding.lib.
+
+// Organization + Petri Net + N-dimensional embedding macro layer.
+//
+// This layer captures:
+// - which organizations use Petri nets,
+// - how N-dimensional spaces are modeled and embedded,
+// - how software layers embed N-1 spaces into N spaces and connect,
+// - a lightweight LPPN-style hybrid marker (reactive + declarative rules).
+
+MACRO ORG(id, org_type):
+EMIT org:{{id}}#kind@entity:organization.
+EMIT org:{{id}}#org_type@value:{{org_type}}.
+ENDMACRO.
+
+MACRO PN_NET(net, profile):
+EMIT pn:net:{{net}}#kind@entity:pn_net.
+EMIT pn:net:{{net}}#profile@value:{{profile}}.
+ENDMACRO.
+
+MACRO ORG_USES_PETRINET(org, net):
+EMIT org:{{org}}#uses_net@pn:net:{{net}}.
+ENDMACRO.
+
+MACRO ND_DIMENSION(dim, rank):
+EMIT nd:dim:{{dim}}#kind@entity:nd_dimension.
+EMIT nd:dim:{{dim}}#rank@value:{{rank}}.
+ENDMACRO.
+
+MACRO ND_DIM_SUCCESSOR(lower_dim, upper_dim):
+EMIT nd:dim:{{lower_dim}}#direct_next@nd:dim:{{upper_dim}}.
+EMIT nd:dim:{{lower_dim}}#next@nd:dim:{{upper_dim}}.
+ENDMACRO.
+
+MACRO ND_SPACE(space, dim):
+EMIT nd:space:{{space}}#kind@entity:nd_space.
+EMIT nd:space:{{space}}#dimension@nd:dim:{{dim}}.
+ENDMACRO.
+
+MACRO PN_MODELS_SPACE(net, space):
+EMIT pn:net:{{net}}#models_space@nd:space:{{space}}.
+ENDMACRO.
+
+MACRO ND_EMBED_SPACE(lower_space, upper_space):
+EMIT nd:space:{{lower_space}}#space_embeds_into@nd:space:{{upper_space}}.
+ENDMACRO.
+
+MACRO ND_SPACE_LINK(link, from_space, to_space, link_kind):
+EMIT nd:link:{{link}}#kind@entity:nd_space_link.
+EMIT nd:link:{{link}}#from@nd:space:{{from_space}}.
+EMIT nd:link:{{link}}#to@nd:space:{{to_space}}.
+EMIT nd:link:{{link}}#link_kind@value:{{link_kind}}.
+ENDMACRO.
+
+MACRO SW_LAYER(layer, space, layer_role):
+EMIT sw:layer:{{layer}}#kind@entity:sw_layer.
+EMIT sw:layer:{{layer}}#space@nd:space:{{space}}.
+EMIT sw:layer:{{layer}}#layer_role@value:{{layer_role}}.
+ENDMACRO.
+
+MACRO SW_EMBED_LAYER(lower_layer, upper_layer):
+EMIT sw:layer:{{lower_layer}}#layer_embeds_into@sw:layer:{{upper_layer}}.
+ENDMACRO.
+
+MACRO SW_LAYER_LINK(link, from_layer, to_layer, protocol):
+EMIT sw:link:{{link}}#kind@entity:sw_layer_link.
+EMIT sw:link:{{link}}#from@sw:layer:{{from_layer}}.
+EMIT sw:link:{{link}}#to@sw:layer:{{to_layer}}.
+EMIT sw:link:{{link}}#protocol@value:{{protocol}}.
+ENDMACRO.
+
+MACRO LPPN_RULE(net, rule_id, rule_kind):
+EMIT lppn:rule:{{rule_id}}#kind@entity:lppn_rule.
+EMIT lppn:rule:{{rule_id}}#rule_kind@value:{{rule_kind}}.
+EMIT lppn:rule:{{rule_id}}#net@pn:net:{{net}}.
+EMIT pn:net:{{net}}#has_lppn_rule@lppn:rule:{{rule_id}}.
+ENDMACRO.
+
+RULE nd_dim_next_transitive:
+IF ?d1#next@?d2 AND ?d2#next@?d3
+THEN ?d1#next@?d3.
+
+RULE nd_space_embedding_transitive:
+IF ?s1#kind@entity:nd_space AND ?s1#space_embeds_into@?s2 AND ?s2#kind@entity:nd_space AND ?s2#space_embeds_into@?s3 AND ?s3#kind@entity:nd_space
+THEN ?s1#space_embeds_into@?s3.
+
+RULE nd_space_embedding_step_valid:
+IF ?s1#kind@entity:nd_space AND ?s1#space_embeds_into@?s2 AND ?s2#kind@entity:nd_space AND ?s1#dimension@?d1 AND ?s2#dimension@?d2 AND ?d1#direct_next@?d2
+THEN ?s1#embedding_step_valid@?s2.
+
+RULE sw_layer_embedding_valid:
+IF ?l1#kind@entity:sw_layer AND ?l1#layer_embeds_into@?l2 AND ?l2#kind@entity:sw_layer AND ?l1#space@?s1 AND ?l2#space@?s2 AND ?s1#space_embeds_into@?s2
+THEN ?l1#embedding_valid@?l2.
+
+RULE org_uses_nd_space_through_net:
+IF ?org#kind@entity:organization AND ?org#uses_net@?net AND ?net#models_space@?space
+THEN ?org#uses_nd_space@?space.
+
+RULE sw_link_space_alignment:
+IF ?link#kind@entity:sw_layer_link AND ?link#from@?from AND ?link#to@?to AND ?from#space@?s1 AND ?to#space@?s2 AND ?s1#space_embeds_into@?s2
+THEN ?link#space_alignment@value:upward_embed.
+
+RULE sw_link_embedding_alignment:
+IF ?link#kind@entity:sw_layer_link AND ?link#from@?from AND ?link#to@?to AND ?from#embedding_valid@?to
+THEN ?link#embedding_alignment@value:valid.
+
+RULE pn_has_reactive_rule:
+IF ?net#has_lppn_rule@?r AND ?r#rule_kind@value:reactive
+THEN ?net#has_reactive_rule@value:true.
+
+RULE pn_has_declarative_rule:
+IF ?net#has_lppn_rule@?r AND ?r#rule_kind@value:declarative
+THEN ?net#has_declarative_rule@value:true.
+
+RULE pn_lppn_hybrid:
+IF ?net#has_reactive_rule@value:true AND ?net#has_declarative_rule@value:true
+THEN ?net#lppn_hybrid@value:true.
+
+QUERY orgs_using_petrinet_nd_spaces:
+FIND ?org ?net ?space WHERE ?org#uses_net@?net AND ?net#models_space@?space.
+
+QUERY nd_space_embeddings:
+FIND ?lower ?upper WHERE ?lower#kind@entity:nd_space AND ?lower#space_embeds_into@?upper AND ?upper#kind@entity:nd_space.
+
+QUERY nd_embedding_steps_valid:
+FIND ?lower ?upper WHERE ?lower#embedding_step_valid@?upper.
+
+QUERY sw_embedding_valid_pairs:
+FIND ?lower ?upper WHERE ?lower#embedding_valid@?upper.
+
+QUERY sw_links_alignment:
+FIND ?link ?alignment WHERE ?link#kind@entity:sw_layer_link AND ?link#embedding_alignment@?alignment.
+
+QUERY lppn_hybrid_nets:
+FIND ?net WHERE ?net#lppn_hybrid@value:true.

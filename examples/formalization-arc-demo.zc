@@ -1,0 +1,50 @@
+MODULE formalization.arc.demo.
+
+// Minimal theorem-dependency model for a mathematics/physics formalization arc.
+// Statuses are computed from dependencies and proof evidence:
+//   PROVED      broken nothing, proof witness present
+//   CONDITIONAL proof witness present, but depends on an unverified assumption
+//   WEAK        no proof witness yet
+//   BROKEN      a required assumption/lemma is broken
+// Proof status here is bookkeeping only — the proof assistant (Lean, ACL2, ...)
+// remains the sole proof authority; `proof:...` tokens name kernel-checked
+// declarations, they do not assert them.
+//
+// Run with:
+//   ./bin/zil theorem-dsl-ci examples/formalization-arc-demo.zc /tmp
+
+// Toolchain/context components the arc depends on.
+USE THM_COMPONENT(lean4_mathlib, tier0).
+USE THM_COMPONENT_HEALTHY(lean4_mathlib, toolchain_check).
+
+// Hypotheses of the arc.
+USE ASSUMPTION(a_potential_confining, hypothesis).
+USE ASSUME_HOLDS(a_potential_confining, review).
+
+USE ASSUMPTION(a_energy_finite, hypothesis).
+USE ASSUME_HOLDS(a_energy_finite, review).
+
+// Lemma layer, with Lean4 proof witnesses (declaration names in the Lean repo).
+USE LEMMA(l_energy_conserved, high).
+USE LEMMA_REQUIRES_ASSUMPTION(l_energy_conserved, a_energy_finite).
+USE EVIDENCE_FOR_LEMMA(l_energy_conserved, lean4, proof:Oscillator.energy_conserved).
+
+USE LEMMA(l_sublevel_compact, high).
+USE LEMMA_REQUIRES_ASSUMPTION(l_sublevel_compact, a_potential_confining).
+USE LEMMA_REQUIRES_LEMMA(l_sublevel_compact, l_energy_conserved).
+USE EVIDENCE_FOR_LEMMA(l_sublevel_compact, lean4, proof:Oscillator.sublevel_compact).
+
+// Main theorem: proved (witness + all dependencies satisfied).
+USE THEOREM(t_orbits_bounded, high).
+USE THEOREM_REQUIRES_ASSUMPTION(t_orbits_bounded, a_potential_confining).
+USE THEOREM_REQUIRES_LEMMA(t_orbits_bounded, l_sublevel_compact).
+USE THEOREM_ENSURES(t_orbits_bounded, bounded_orbits).
+USE EVIDENCE_FOR_THEOREM(t_orbits_bounded, lean4, proof:Oscillator.orbits_bounded).
+
+// Open target: no proof witness yet, so it reports WEAK.
+USE THEOREM(t_period_monotone, medium).
+USE THEOREM_REQUIRES_LEMMA(t_period_monotone, l_energy_conserved).
+USE THEOREM_ENSURES(t_period_monotone, period_monotone_in_energy).
+
+// Standard operator summary queries (statuses, break roots, impact set, DAG).
+USE DSL_SUMMARY_QUERIES().

@@ -1,0 +1,77 @@
+MODULE rbac.dac.demo.
+
+// Demo: RBAC + DAC with C2-style accountability/object-reuse checks.
+// This file uses macros from `lib/rbac-dac-macros.zc`.
+//
+// Run:
+//   ./bin/zil preprocess examples/rbac-dac-orange-book.zc /tmp/rbd.pre.zc
+//   ./bin/zil /tmp/rbd.pre.zc
+
+// Subjects
+USE RBD_SUBJECT(alice).
+USE RBD_SUBJECT(bob).
+USE RBD_SUBJECT(carol).
+USE RBD_SUBJECT(dave).
+USE RBD_SUBJECT(erin).
+USE RBD_SUBJECT(mallory).
+
+// Groups
+USE RBD_GROUP(ops_team).
+USE RBD_GROUP_MEMBER(ops_team, carol).
+
+// Objects
+USE RBD_OBJECT(payroll_file, alice).
+USE RBD_OBJECT(shared_runbook, alice).
+USE RBD_OBJECT(system_config, alice).
+USE RBD_OBJECT(ops_console, alice).
+USE RBD_OBJECT(temp_buffer, alice).
+USE RBD_OBJECT(report_cache, alice).
+
+// DAC grants (one invalid to show policy violation)
+USE RBD_DAC_GRANT_SUBJECT(g_payroll_read_bob, payroll_file, read, bob, alice).
+USE RBD_DAC_GRANT_GROUP(g_runbook_read_ops, shared_runbook, read, ops_team, alice).
+USE RBD_DAC_GRANT_SUBJECT(g_bad_payroll_write, payroll_file, write, mallory, mallory).
+
+// RBAC roles and permissions
+USE RBD_ROLE(admin_role).
+USE RBD_ROLE(ops_role).
+USE RBD_ROLE_PERMIT(rp_admin_write_syscfg, admin_role, system_config, write).
+USE RBD_ROLE_PERMIT(rp_ops_restart_console, ops_role, ops_console, restart).
+USE RBD_ROLE_ASSIGN(rb_dave_admin, dave, admin_role).
+
+// Session-based role activation
+USE RBD_SESSION(sess_erin_ops, erin).
+USE RBD_SESSION_ACTIVATE(sess_erin_ops, ops_role).
+
+// Access requests
+USE RBD_REQUEST(req_bob_read_payroll, bob, payroll_file, read).
+USE RBD_REQUEST(req_mallory_write_payroll, mallory, payroll_file, write).
+USE RBD_REQUEST(req_carol_read_runbook, carol, shared_runbook, read).
+USE RBD_REQUEST(req_dave_write_syscfg, dave, system_config, write).
+USE RBD_REQUEST(req_erin_restart_console, erin, ops_console, restart).
+USE RBD_REQUEST_SESSION(req_erin_restart_console, sess_erin_ops).
+
+// Audit records (leave two requests without audit to demonstrate accountability checks)
+USE RBD_AUDIT(a_bob_read_payroll, req_bob_read_payroll, append_only_log).
+USE RBD_AUDIT(a_carol_read_runbook, req_carol_read_runbook, append_only_log).
+USE RBD_AUDIT(a_dave_write_syscfg, req_dave_write_syscfg, append_only_log).
+
+// Object reuse checks
+USE RBD_REUSE_ALLOC(alloc_temp_1, temp_buffer, bob).
+USE RBD_OBJECT_REUSE_CLEARED(report_cache).
+USE RBD_REUSE_ALLOC(alloc_cache_1, report_cache, carol).
+
+QUERY demo_decisions:
+FIND ?req ?decision WHERE ?req#decision@?decision.
+
+QUERY demo_denied:
+FIND ?req WHERE ?req#decision@value:deny.
+
+QUERY demo_request_policy_violations:
+FIND ?req ?v WHERE ?req#policy_target@value:access_request AND ?req#policy_violation@?v.
+
+QUERY demo_grant_policy_violations:
+FIND ?grant ?v WHERE ?grant#policy_target@value:dac_grant AND ?grant#policy_violation@?v.
+
+QUERY demo_reuse_violations:
+FIND ?alloc ?v WHERE ?alloc#policy_target@value:reuse_allocation AND ?alloc#policy_violation@?v.

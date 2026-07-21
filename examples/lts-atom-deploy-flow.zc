@@ -1,0 +1,6 @@
+MODULE lts.deploy.
+
+LTS_ATOM deploy_flow [states=#{draft reviewing approved rejected}, initial=draft, transitions={[draft submit] [reviewing], [reviewing approve] [approved], [reviewing reject] [rejected notify_author]}].
+
+QUERY edges:
+FIND ?e WHERE lts_atom:deploy_flow#edge@?e.

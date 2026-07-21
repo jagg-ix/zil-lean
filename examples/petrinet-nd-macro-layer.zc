@@ -1,0 +1,297 @@
+MODULE petrinet.nd.macro.layer.demo.
+
+// Petri-net macro layer for ZIL with:
+// 1) PNML-aligned structure (pages, references, flattening hints),
+// 2) n-dimensional abstraction layers for places,
+// 3) bridge checks to TM / pi-calculus / lambda-style rewrites.
+
+// -----------------------
+// Core Petri declarations
+// -----------------------
+
+MACRO PN_NET(net, pntd):
+EMIT pn:net:{{net}}#kind@entity:pn_net.
+EMIT pn:net:{{net}}#pntd@value:{{pntd}}.
+ENDMACRO.
+
+MACRO PN_PAGE(page):
+EMIT pn:page:{{page}}#kind@entity:pn_page.
+ENDMACRO.
+
+MACRO PN_DIMENSION(dim):
+EMIT pn:dim:{{dim}}#kind@entity:pn_dimension.
+ENDMACRO.
+
+MACRO PN_LAYER_ROOT(layer):
+EMIT pn:layer:{{layer}}#kind@entity:pn_layer.
+EMIT pn:layer:{{layer}}#layer_role@value:root.
+ENDMACRO.
+
+MACRO PN_LAYER_CHILD(layer, parent):
+EMIT pn:layer:{{layer}}#kind@entity:pn_layer.
+EMIT pn:layer:{{layer}}#parent@pn:layer:{{parent}}.
+ENDMACRO.
+
+MACRO PN_PLACE(place, layer, page):
+EMIT pn:place:{{place}}#kind@entity:pn_place.
+EMIT pn:place:{{place}}#layer@pn:layer:{{layer}}.
+EMIT pn:place:{{place}}#page@pn:page:{{page}}.
+ENDMACRO.
+
+MACRO PN_COORD(place, dim, coord):
+EMIT pn:place:{{place}}#coord@pn:dim:{{dim}} [value=value:{{coord}}].
+ENDMACRO.
+
+MACRO PN_TOKEN(place, token):
+EMIT pn:place:{{place}}#has_token@pn:token:{{token}}.
+ENDMACRO.
+
+MACRO PN_TRANSITION(transition, layer, page):
+EMIT pn:transition:{{transition}}#kind@entity:pn_transition.
+EMIT pn:transition:{{transition}}#layer@pn:layer:{{layer}}.
+EMIT pn:transition:{{transition}}#page@pn:page:{{page}}.
+ENDMACRO.
+
+MACRO PN_ARC_PT(arc, source_place, target_transition, weight):
+EMIT pn:arc:{{arc}}#kind@entity:pn_arc.
+EMIT pn:arc:{{arc}}#arc_type@value:pt.
+EMIT pn:arc:{{arc}}#source_place@pn:place:{{source_place}}.
+EMIT pn:arc:{{arc}}#target_transition@pn:transition:{{target_transition}}.
+EMIT pn:arc:{{arc}}#weight@value:{{weight}}.
+ENDMACRO.
+
+MACRO PN_ARC_PT_REF(arc, source_ref_place, target_transition, weight):
+EMIT pn:arc:{{arc}}#kind@entity:pn_arc.
+EMIT pn:arc:{{arc}}#arc_type@value:pt.
+EMIT pn:arc:{{arc}}#source_ref_place@pn:ref_place:{{source_ref_place}}.
+EMIT pn:arc:{{arc}}#target_transition@pn:transition:{{target_transition}}.
+EMIT pn:arc:{{arc}}#weight@value:{{weight}}.
+ENDMACRO.
+
+MACRO PN_ARC_TP(arc, source_transition, target_place, weight):
+EMIT pn:arc:{{arc}}#kind@entity:pn_arc.
+EMIT pn:arc:{{arc}}#arc_type@value:tp.
+EMIT pn:arc:{{arc}}#source_transition@pn:transition:{{source_transition}}.
+EMIT pn:arc:{{arc}}#target_place@pn:place:{{target_place}}.
+EMIT pn:arc:{{arc}}#weight@value:{{weight}}.
+ENDMACRO.
+
+MACRO PN_REF_PLACE(ref_place, page, target_place):
+EMIT pn:ref_place:{{ref_place}}#kind@entity:pn_ref_place.
+EMIT pn:ref_place:{{ref_place}}#page@pn:page:{{page}}.
+EMIT pn:ref_place:{{ref_place}}#refers_to@pn:place:{{target_place}}.
+ENDMACRO.
+
+MACRO PN_ABSTRACTS(concrete_place, abstract_place):
+EMIT pn:place:{{concrete_place}}#abstracts_to@pn:place:{{abstract_place}}.
+ENDMACRO.
+
+// --------------------
+// Formal bridge macros
+// --------------------
+
+MACRO PN_TM_MAP(transition, machine, from_state, read_symbol, to_state, write_symbol, move):
+EMIT pn:transition:{{transition}}#tm_machine@tm_atom:{{machine}}.
+EMIT pn:transition:{{transition}}#tm_map@tm_atom:{{machine}} [from_state={{from_state}}, read_symbol={{read_symbol}}, to_state={{to_state}}, write_symbol={{write_symbol}}, move={{move}}].
+ENDMACRO.
+
+MACRO PI_CHANNEL(name):
+EMIT pi:name:{{name}}#kind@entity:pi_channel.
+ENDMACRO.
+
+MACRO PI_VALUE(name):
+EMIT pi:name:{{name}}#kind@entity:pi_value.
+ENDMACRO.
+
+MACRO PI_NIL(proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:nil.
+ENDMACRO.
+
+MACRO PI_SEND(proc, channel, payload, next_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:send.
+EMIT pi:proc:{{proc}}#channel@pi:name:{{channel}}.
+EMIT pi:proc:{{proc}}#payload@pi:name:{{payload}}.
+EMIT pi:proc:{{proc}}#next@pi:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO PI_RECV(proc, channel, bind_name, next_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:recv.
+EMIT pi:proc:{{proc}}#channel@pi:name:{{channel}}.
+EMIT pi:proc:{{proc}}#bind@pi:name:{{bind_name}}.
+EMIT pi:proc:{{proc}}#next@pi:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO PI_PAR(proc, left_proc, right_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:par.
+EMIT pi:proc:{{proc}}#left@pi:proc:{{left_proc}}.
+EMIT pi:proc:{{proc}}#right@pi:proc:{{right_proc}}.
+ENDMACRO.
+
+MACRO PN_PI_MAP(transition, proc):
+EMIT pn:transition:{{transition}}#pi_process@pi:proc:{{proc}}.
+ENDMACRO.
+
+MACRO LAM_TERM(name, form):
+EMIT lam:term:{{name}}#kind@entity:lambda_term.
+EMIT lam:term:{{name}}#form@value:{{form}}.
+ENDMACRO.
+
+MACRO LAM_REDUCES(from_term, to_term):
+EMIT lam:term:{{from_term}}#reduces_to@lam:term:{{to_term}}.
+ENDMACRO.
+
+MACRO PN_LAMBDA_MAP(transition, from_term, to_term):
+EMIT pn:transition:{{transition}}#lambda_from@lam:term:{{from_term}}.
+EMIT pn:transition:{{transition}}#lambda_to@lam:term:{{to_term}}.
+ENDMACRO.
+
+// --------------------
+// Derived semantics
+// --------------------
+
+// Flattening support: resolve refs to canonical places (PNML-style references).
+RULE pn_arc_source_canonical_place_direct:
+IF ?arc#arc_type@value:pt AND ?arc#source_place@?p
+THEN ?arc#source_canonical_place@?p.
+
+RULE pn_arc_source_canonical_place_ref:
+IF ?arc#arc_type@value:pt AND ?arc#source_ref_place@?rp AND ?rp#refers_to@?p
+THEN ?arc#source_canonical_place@?p.
+
+RULE pn_ref_place_flat_target:
+IF ?rp#kind@entity:pn_ref_place AND ?rp#refers_to@?p
+THEN ?rp#flat_target@?p.
+
+// Layer ancestry (n-dimensional abstraction support).
+RULE pn_layer_parent_transitive:
+IF ?l1#parent@?l2 AND ?l2#parent@?l3
+THEN ?l1#parent@?l3.
+
+RULE pn_abstraction_layer_consistent:
+IF ?p#abstracts_to@?q AND ?p#layer@?lp AND ?q#layer@?lq AND ?lp#parent@?lq
+THEN ?p#abstraction_consistent@value:true.
+
+RULE pn_lift_token_to_abstraction:
+IF ?p#has_token@?tok AND ?p#abstracts_to@?q
+THEN ?q#abstract_token@?tok.
+
+// Enabling witness (not full firing semantics): token-bearing preset places.
+RULE pn_transition_enabling_witness:
+IF ?arc#arc_type@value:pt AND ?arc#source_canonical_place@?p AND ?arc#target_transition@?t AND ?p#has_token@?tok
+THEN ?t#enabling_witness_from@?p.
+
+// TM bridge validity against TM_ATOM lowered transition facts.
+RULE pn_tm_map_valid:
+IF ?t#tm_map@?m [from_state=?from, read_symbol=?read, to_state=?to, write_symbol=?write, move=?mv] AND ?m#transition@?tr [from_state=?from, read_symbol=?read, to_state=?to, write_symbol=?write, move=?mv]
+THEN ?t#tm_map_valid@value:true.
+
+// Pi bridge validity from synchronization evidence.
+RULE pi_parallel_sync:
+IF ?p#operator@value:par AND ?p#left@?s AND ?p#right@?r AND ?s#operator@value:send AND ?r#operator@value:recv AND ?s#channel@?c AND ?r#channel@?c
+THEN ?p#can_tau@value:true.
+
+RULE pn_pi_map_valid:
+IF ?t#pi_process@?p AND ?p#can_tau@value:true
+THEN ?t#pi_map_valid@value:true.
+
+// Lambda bridge validity from rewrite witness facts.
+RULE pn_lambda_map_valid:
+IF ?t#lambda_from@?lf AND ?t#lambda_to@?lt AND ?lf#reduces_to@?lt
+THEN ?t#lambda_map_valid@value:true.
+
+// -----------------
+// Example instance
+// -----------------
+
+USE PN_NET(auth_pipeline_net, ptNet).
+
+USE PN_PAGE(main_page).
+USE PN_PAGE(diag_page).
+
+USE PN_DIMENSION(stack).
+USE PN_DIMENSION(domain).
+USE PN_DIMENSION(trust).
+
+USE PN_LAYER_ROOT(l2_business).
+USE PN_LAYER_CHILD(l1_protocol, l2_business).
+USE PN_LAYER_CHILD(l0_transport, l1_protocol).
+
+USE PN_PLACE(conn_socket_ready, l0_transport, main_page).
+USE PN_COORD(conn_socket_ready, stack, transport).
+USE PN_COORD(conn_socket_ready, domain, ssh).
+USE PN_COORD(conn_socket_ready, trust, medium).
+
+USE PN_PLACE(channel_ready, l1_protocol, main_page).
+USE PN_COORD(channel_ready, stack, protocol).
+USE PN_COORD(channel_ready, domain, overlay).
+USE PN_COORD(channel_ready, trust, high).
+
+USE PN_PLACE(session_authenticated, l2_business, main_page).
+USE PN_COORD(session_authenticated, stack, workflow).
+USE PN_COORD(session_authenticated, domain, operator).
+USE PN_COORD(session_authenticated, trust, high).
+
+USE PN_ABSTRACTS(conn_socket_ready, channel_ready).
+USE PN_ABSTRACTS(channel_ready, session_authenticated).
+
+USE PN_REF_PLACE(conn_socket_ready_ref, diag_page, conn_socket_ready).
+
+USE PN_TRANSITION(t_upgrade_channel, l1_protocol, main_page).
+USE PN_TRANSITION(t_authenticate, l2_business, main_page).
+
+USE PN_ARC_PT_REF(a_in_upgrade, conn_socket_ready_ref, t_upgrade_channel, 1).
+USE PN_ARC_TP(a_out_upgrade, t_upgrade_channel, channel_ready, 1).
+USE PN_ARC_PT(a_in_auth, channel_ready, t_authenticate, 1).
+USE PN_ARC_TP(a_out_auth, t_authenticate, session_authenticated, 1).
+
+USE PN_TOKEN(conn_socket_ready, tok_conn_1).
+USE PN_TOKEN(channel_ready, tok_chan_1).
+
+// TM bridge unit + mapping
+TM_ATOM handshake_unit [states=#{idle done reject}, alphabet=#{conn _}, blank=_, initial=idle, accept=#{done}, reject=#{reject}, transitions={[idle conn] [done conn :N], [idle _] [reject _ :N]}].
+USE PN_TM_MAP(t_upgrade_channel, handshake_unit, idle, conn, done, conn, :N).
+
+// Pi bridge unit + mapping
+USE PI_CHANNEL(ch_conn).
+USE PI_VALUE(v_conn).
+USE PI_VALUE(v_bound).
+USE PI_NIL(p0).
+USE PI_SEND(p_send, ch_conn, v_conn, p0).
+USE PI_RECV(p_recv, ch_conn, v_bound, p0).
+USE PI_PAR(p_sync, p_send, p_recv).
+USE PN_PI_MAP(t_upgrade_channel, p_sync).
+
+// Lambda bridge unit + mapping
+USE LAM_TERM(beta_redex, application).
+USE LAM_TERM(beta_result, variable).
+USE LAM_REDUCES(beta_redex, beta_result).
+USE PN_LAMBDA_MAP(t_authenticate, beta_redex, beta_result).
+
+// -------
+// Queries
+// -------
+
+QUERY flatten_ref_targets:
+FIND ?p WHERE pn:ref_place:conn_socket_ready_ref#flat_target@?p.
+
+QUERY transition_enabling_witnesses:
+FIND ?p WHERE pn:transition:t_upgrade_channel#enabling_witness_from@?p.
+
+QUERY abstraction_consistency:
+FIND ?p WHERE ?p#abstraction_consistent@value:true.
+
+QUERY lifted_tokens_on_abstract_places:
+FIND ?tok WHERE pn:place:channel_ready#abstract_token@?tok.
+
+QUERY tm_bridge_valid:
+FIND ?t WHERE ?t#tm_map_valid@value:true.
+
+QUERY pi_bridge_valid:
+FIND ?t WHERE ?t#pi_map_valid@value:true.
+
+QUERY lambda_bridge_valid:
+FIND ?t WHERE ?t#lambda_map_valid@value:true.

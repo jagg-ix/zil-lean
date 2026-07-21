@@ -1,0 +1,78 @@
+MODULE namespace.pn.nd.extension.demo.
+
+// Namespace hierarchy + N-dimensional products + Petri resolution flow.
+//
+// Run:
+//   ./bin/zil preprocess examples/namespace-pn-nd-extension.zc /tmp/namespace_pn_nd.pre.zc libsets/namespace-pn-nd
+//   ./bin/zil /tmp/namespace_pn_nd.pre.zc
+
+// Dimensions (local -> scoped -> composite).
+USE NS_DIMENSION(d1_local, 1).
+USE NS_DIMENSION(d2_scope, 2).
+USE NS_DIMENSION(d3_composite, 3).
+USE NS_DIM_SUCCESSOR(d1_local, d2_scope).
+USE NS_DIM_SUCCESSOR(d2_scope, d3_composite).
+
+// Context hierarchy.
+USE NS_CONTEXT(root_org, d2_scope, global).
+USE NS_CONTEXT(finance_team, d2_scope, team).
+USE NS_CONTEXT(ml_team, d2_scope, team).
+USE NS_CHILD(root_org, finance_team).
+USE NS_CHILD(root_org, ml_team).
+
+// Another axis of context.
+USE NS_CONTEXT(api_service, d1_local, service).
+USE NS_CONTEXT(inference_service, d1_local, service).
+
+// Product context combines hierarchy + service axis.
+USE NS_PRODUCT_CONTEXT(finance_api_ctx, d3_composite, finance_team, api_service).
+
+// Namespace bindings.
+USE NS_BIND(root_org, table, root_table).
+USE NS_BIND(finance_team, table, finance_table).
+USE NS_BIND(ml_team, table, ml_table).
+USE NS_BIND(api_service, endpoint, endpoint_v1).
+
+// Intentional same-context duplicate name to surface conflict-pair query.
+USE NS_BIND(finance_team, policy, policy_v1).
+USE NS_BIND(finance_team, policy, policy_v2).
+
+// Alias (example of explicit contextual remap).
+USE NS_ALIAS(finance_api_ctx, tab, finance_team, table).
+
+// Category-style morphisms.
+USE NS_MORPHISM(m_root_finance, root_org, finance_team, delegation).
+USE NS_MORPHISM(m_finance_product, finance_team, finance_api_ctx, projection).
+USE NS_MORPHISM(m_service_product, api_service, finance_api_ctx, projection).
+
+// Petri-style resolution flow.
+USE NS_PN_NET(ns_resolution_flow).
+USE NS_RESOLVE_TRANSITION(ns_resolution_flow, t_root_to_finance, root_org, finance_team, descend).
+USE NS_RESOLVE_TRANSITION(ns_resolution_flow, t_finance_to_product, finance_team, finance_api_ctx, compose).
+
+USE NS_TOKEN(tok_table_lookup, root_org, table).
+USE NS_TOKEN(tok_policy_lookup, finance_team, policy).
+
+QUERY namespace_hierarchy_edges:
+FIND ?parent ?child WHERE ?parent#child@?child.
+
+QUERY namespace_descendants:
+FIND ?ancestor ?desc WHERE ?ancestor#descendant@?desc.
+
+QUERY namespace_visible_names:
+FIND ?ctx ?name WHERE ?ctx#visible_name@?name.
+
+QUERY namespace_product_contexts:
+FIND ?ctx ?ok WHERE ?ctx#product@value:true AND ?ctx#product_dimension_valid@?ok.
+
+QUERY namespace_morphism_reachability:
+FIND ?src ?dst WHERE ?src#morphism_reaches@?dst.
+
+QUERY namespace_transition_enabling:
+FIND ?tr ?tok WHERE ?tr#enabled_by@?tok.
+
+QUERY namespace_resolution_witnesses:
+FIND ?tok ?dst WHERE ?tok#resolution_witness@?dst.
+
+QUERY namespace_binding_conflict_pairs:
+FIND ?ctx ?name ?b1 ?b2 WHERE ?b1#kind@entity:ns_binding AND ?b2#kind@entity:ns_binding AND ?b1#context@?ctx AND ?b2#context@?ctx AND ?b1#local_name@?name AND ?b2#local_name@?name.

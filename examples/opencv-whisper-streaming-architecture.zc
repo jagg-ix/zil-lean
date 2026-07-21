@@ -1,0 +1,101 @@
+MODULE opencv.whisper.streaming.architecture.
+
+// System architecture for the local bridge:
+// tools/verification/opencv_whisper_bridge.py
+// tools/verification/start_flameshot_opencv_whisper_mcp.sh
+//
+// Scope:
+// - Multi-backend video ingest (OpenCV camera/file, Flameshot, GStreamer)
+// - Whisper transcript ingestion (dry-run or whisper.cpp)
+// - MCP control/data plane
+// - Optional WebRTC adapter (video track + data channel)
+// - Optional desktop action execution via PyAutoGUI
+
+HOST local_workstation [environment=prod, type=physical, os_family="macos_linux_windows"].
+HOST bridge_process [environment=prod, type=process].
+HOST mcp_client [environment=prod, type=process].
+HOST webrtc_peer [environment=prod, type=process].
+
+SERVICE bridge_core [env=prod, criticality=high, uses=[vision_loop, whisper_loop, event_writer, shared_state, snapshot_controller, mcp_server_adapter, webrtc_adapter]].
+SERVICE vision_loop [env=prod, criticality=high, uses=[capture_input_router, frame_hub, metrics_extract, overlay_renderer, gstreamer_out_adapter, window_track_controller]].
+SERVICE whisper_loop [env=prod, criticality=high, uses=[transcript_ingest, snapshot_controller, desktop_action_router]].
+SERVICE event_writer [env=prod, criticality=high, uses=[jsonl_audit_log, event_fanout]].
+SERVICE jsonl_audit_log [env=prod, criticality=high].
+SERVICE event_fanout [env=prod, criticality=high].
+SERVICE shared_state [env=prod, criticality=high].
+SERVICE frame_hub [env=prod, criticality=high].
+SERVICE snapshot_controller [env=prod, criticality=high].
+
+SERVICE capture_input_router [env=prod, criticality=high, uses=[opencv_input_adapter, flameshot_input_adapter, gstreamer_in_adapter]].
+SERVICE opencv_input_adapter [env=prod, criticality=medium].
+SERVICE flameshot_input_adapter [env=prod, criticality=high].
+SERVICE gstreamer_in_adapter [env=prod, criticality=high].
+SERVICE gstreamer_out_adapter [env=prod, criticality=high].
+SERVICE window_track_controller [env=prod, criticality=high, uses=[macos_quartz_window_probe]].
+SERVICE macos_quartz_window_probe [env=prod, criticality=medium].
+SERVICE metrics_extract [env=prod, criticality=high].
+SERVICE overlay_renderer [env=prod, criticality=low].
+
+SERVICE whisper_cpp_adapter [env=prod, criticality=medium].
+SERVICE dry_run_transcript_generator [env=prod, criticality=low].
+SERVICE transcript_ingest [env=prod, criticality=high, uses=[whisper_cpp_adapter, dry_run_transcript_generator]].
+SERVICE desktop_action_router [env=prod, criticality=high, uses=[desktop_action_queue, pyautogui_executor]].
+SERVICE desktop_action_queue [env=prod, criticality=high].
+SERVICE pyautogui_executor [env=prod, criticality=high].
+
+SERVICE mcp_server_adapter [env=prod, criticality=high, uses=[mcp_tool_status, mcp_tool_latest_vision, mcp_tool_latest_transcript, mcp_tool_tail_events, mcp_tool_request_snapshot, mcp_tool_stop, mcp_tool_desktop_action]].
+SERVICE mcp_tool_status [env=prod, criticality=high].
+SERVICE mcp_tool_latest_vision [env=prod, criticality=high].
+SERVICE mcp_tool_latest_transcript [env=prod, criticality=high].
+SERVICE mcp_tool_tail_events [env=prod, criticality=high].
+SERVICE mcp_tool_request_snapshot [env=prod, criticality=high].
+SERVICE mcp_tool_stop [env=prod, criticality=high].
+SERVICE mcp_tool_desktop_action [env=prod, criticality=high].
+
+SERVICE webrtc_adapter [env=prod, criticality=high, uses=[webrtc_video_track, webrtc_data_channel, webrtc_signaling_tcp, webrtc_control_ingest, webrtc_event_mirror]].
+SERVICE webrtc_video_track [env=prod, criticality=high, uses=[frame_hub]].
+SERVICE webrtc_data_channel [env=prod, criticality=high].
+SERVICE webrtc_signaling_tcp [env=prod, criticality=high].
+SERVICE webrtc_control_ingest [env=prod, criticality=high, uses=[snapshot_controller, desktop_action_router]].
+SERVICE webrtc_event_mirror [env=prod, criticality=high, uses=[event_writer]].
+
+DATASOURCE bridge_events [type=file, format=json, mode=lines, path="/tmp/opencv-whisper-bridge/events.jsonl"].
+DATASOURCE bridge_snapshots [type=file, format=text, path="/tmp/opencv-whisper-bridge/snapshots"].
+DATASOURCE flameshot_screen_pixels [type=command, format=text, command="flameshot screen/full -r"].
+DATASOURCE gstreamer_in_pipeline [type=socket, format=text, protocol=gstreamer].
+DATASOURCE gstreamer_out_pipeline [type=socket, format=text, protocol=gstreamer].
+DATASOURCE mcp_endpoint [type=rest, format=json, url="http://127.0.0.1:8788/mcp"].
+DATASOURCE webrtc_signaling_endpoint [type=socket, format=text, address="127.0.0.1:8766"].
+
+METRIC brightness_mean [source=datasource:bridge_events, unit=float].
+METRIC motion_mean [source=datasource:bridge_events, unit=float].
+METRIC capture_reliability [source=datasource:bridge_events, unit=enum].
+METRIC transcript_events_per_min [source=datasource:bridge_events, unit=events_per_min].
+METRIC desktop_actions_per_min [source=datasource:bridge_events, unit=events_per_min].
+
+EVENT window_track_state_tracking [criticality=high, labels=["tracking","high_reliability"]].
+EVENT window_track_state_exists_not_onscreen [criticality=high, labels=["exists_not_onscreen","low_reliability"]].
+EVENT window_track_state_not_found [criticality=medium, labels=["not_found","low_reliability"]].
+EVENT window_track_state_unsupported [criticality=medium, labels=["unsupported","low_reliability"]].
+EVENT window_track_state_error [criticality=high, labels=["error","low_reliability"]].
+
+LTS_ATOM bridge_runtime [states=#{boot config_loaded input_ready running webrtc_waiting webrtc_connected degraded stopping stopped}, initial=boot, transitions={[boot load_config] [config_loaded], [config_loaded init_input] [input_ready], [input_ready start_loops] [running], [running webrtc_enabled] [webrtc_waiting], [webrtc_waiting signaling_ready] [webrtc_connected], [webrtc_connected peer_disconnect] [running], [running capture_failure] [degraded], [degraded recover_capture] [running], [running stop_request] [stopping], [webrtc_waiting stop_request] [stopping], [webrtc_connected stop_request] [stopping], [stopping finalize] [stopped]}].
+
+POLICY final_pixel_capture_visibility_limit [condition="window_track_state = exists_not_onscreen -> capture_reliability = low", criticality=high].
+POLICY window_missing_policy_contract [condition="window_stick_missing_policy IN {hold-last-region,pause-capture,capture-without-region}", criticality=high].
+POLICY mcp_tools_contract_complete [condition="mcp_tool_status AND mcp_tool_latest_vision AND mcp_tool_latest_transcript AND mcp_tool_tail_events AND mcp_tool_request_snapshot AND mcp_tool_stop AND mcp_tool_desktop_action", criticality=high].
+POLICY webrtc_optional_dependency_contract [condition="NOT webrtc_enable OR aiortc_dependency_available", criticality=high].
+POLICY pyautogui_safety_contract [condition="pyautogui_enable -> (failsafe_enabled AND dry_run_default_true)", criticality=high].
+POLICY gstreamer_region_mode_contract [condition="watch_region_set -> flameshot_capture_mode_screen", criticality=medium].
+
+QUERY critical_services:
+FIND ?s WHERE ?s#kind@entity:service AND ?s#criticality@value:high.
+
+QUERY webrtc_surface:
+FIND ?s WHERE ?s#kind@entity:service AND ?s#uses@service:webrtc_adapter.
+
+QUERY stream_inputs:
+FIND ?d WHERE ?d#kind@entity:datasource AND ?d#protocol@value:gstreamer.
+
+QUERY reliability_events:
+FIND ?e WHERE ?e#kind@entity:event AND ?e#labels@value:low_reliability.

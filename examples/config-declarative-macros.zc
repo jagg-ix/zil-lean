@@ -1,0 +1,41 @@
+MODULE config.declarative.demo.
+
+// Declarative config demo.
+//
+// Run with preprocess using the focused libset:
+//   ./bin/zil preprocess examples/config-declarative-macros.zc /tmp/config.pre.zc libsets/config-declarative
+//   ./bin/zil /tmp/config.pre.zc
+
+USE CFG_DOC(base_defaults, yaml, "configs/base-defaults.yaml").
+USE CFG_PROFILE(base_defaults, shared).
+USE CFG_BLOCK(base_defaults, web, service).
+USE CFG_KV(base_defaults, web, host, "0.0.0.0").
+USE CFG_KV(base_defaults, web, bind_port, 8096).
+USE CFG_TIMEOUT_MS(base_defaults, web, 5000).
+USE CFG_RETRY(base_defaults, web, 4, 200).
+USE CFG_FEATURE(base_defaults, web, image_ingest, true).
+USE CFG_CRON(base_defaults, web, "*/5 * * * *", "UTC").
+USE CFG_LIST_ITEM(base_defaults, web, allowed_origins, 0, "http://127.0.0.1:8096").
+USE CFG_LIST_ITEM(base_defaults, web, allowed_origins, 1, "http://127.0.0.1:8091").
+
+USE CFG_DOC(runtime_prod, yaml, "configs/runtime-prod.yaml").
+USE CFG_PROFILE(runtime_prod, prod).
+USE CFG_INCLUDE(runtime_prod, base_defaults).
+USE CFG_BLOCK(runtime_prod, web, service).
+USE CFG_SERVICE(runtime_prod, web, opencv_whisper_bridge, prod, high).
+USE CFG_ENDPOINT(runtime_prod, web, mcp_api, http, "127.0.0.1", 8788, "/mcp").
+USE CFG_ENV_BIND(runtime_prod, web, log_level, APP_LOG_LEVEL, info).
+USE CFG_ENV_BIND(runtime_prod, web, model_path, WHISPER_MODEL_PATH, "/models/ggml-base.bin").
+USE CFG_SECRET_REF(runtime_prod, web, openai_api_key, local_keychain, "secret/openai/api_key").
+USE CFG_KV(runtime_prod, web, webrtc_enable, true).
+USE CFG_KV(runtime_prod, web, webrtc_signaling_host, "127.0.0.1").
+USE CFG_KV(runtime_prod, web, webrtc_signaling_port, 8766).
+USE CFG_REF(runtime_prod, web, metrics_source, datasource:bridge_events).
+USE CFG_OVERRIDE(runtime_prod, prod, web, timeout_ms, 2000).
+USE CFG_OVERRIDE(runtime_prod, prod, web, bind_port, 8097).
+
+QUERY demo_effective_timeout_override:
+FIND ?entry ?override ?v WHERE ?entry#key@value:timeout_ms AND ?entry#overridden_by@?override AND ?override#value@?v.
+
+QUERY demo_service_endpoint:
+FIND ?ep ?host ?port ?path WHERE ?ep#kind@entity:config_endpoint AND ?ep#host@?host AND ?ep#port@?port AND ?ep#path@?path.

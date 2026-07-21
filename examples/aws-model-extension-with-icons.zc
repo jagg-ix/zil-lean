@@ -1,0 +1,39 @@
+MODULE aws.model.extension.icons.demo.
+
+// Use with preprocess against libsets/aws-model, then concatenate generated inputs:
+//   cat examples/generated/aws-overview-model-inputs.zc \
+//       examples/generated/aws-icon-catalog.zc \
+//       examples/generated/aws-service-icon-links.zc \
+//       examples/aws-model-extension-with-icons.zc > /tmp/aws_extension_icons_combined.zc
+//   ./bin/zil preprocess /tmp/aws_extension_icons_combined.zc /tmp/aws_extension_icons_combined.pre.zc libsets/aws-model
+//   ./bin/zil /tmp/aws_extension_icons_combined.pre.zc
+
+USE AWS_PROVIDER(aws, amazon_web_services).
+USE AWS_TARGET(prod_extension, strict).
+USE AWS_TARGET_REQ_SERVICE(prod_extension, amazon_ec2).
+USE AWS_TARGET_REQ_SERVICE(prod_extension, aws_cloudtrail).
+USE AWS_TARGET_REQ_SERVICE(prod_extension, aws_identity_and_access_management).
+USE AWS_TARGET_REQ_REGION(prod_extension, us_east_northern_virginia).
+USE AWS_TARGET_REQ_CONTROL_CATEGORY(prod_extension, logging).
+USE AWS_TARGET_REQ_CONTROL_CATEGORY(prod_extension, governance).
+
+USE AWS_RUNTIME_CONFIG(prod_cfg).
+USE AWS_TARGET_USES_CONFIG(prod_extension, prod_cfg).
+USE AWS_TARGET_REQ_CONFIG_KEY(prod_extension, account_id).
+USE AWS_TARGET_REQ_CONFIG_KEY(prod_extension, region).
+USE AWS_TARGET_REQ_CONFIG_KEY(prod_extension, cloudtrail_enabled).
+USE AWS_CONFIG_KEY_PRESENT(prod_cfg, account_id).
+USE AWS_CONFIG_KEY_PRESENT(prod_cfg, region).
+USE AWS_CONFIG_KEY_PRESENT(prod_cfg, cloudtrail_enabled).
+
+QUERY aws_compat_ready_models:
+FIND ?m WHERE ?m#compat_ready@value:true.
+
+QUERY aws_compat_missing_services:
+FIND ?m ?svc WHERE ?m#missing_required_service@?svc.
+
+QUERY aws_service_icon_links:
+FIND ?svc ?icon WHERE ?svc#icon_concept@?icon.
+
+QUERY aws_services_missing_icons:
+FIND ?svc WHERE ?svc#icon_missing@value:true.

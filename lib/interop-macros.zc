@@ -1,0 +1,32 @@
+MODULE interop.lib.
+
+// Interop macro layer for external exchange formats.
+//
+// Consume side:
+// - macro sugar over DATASOURCE declarations for json/yaml/csv payloads.
+//
+// Produce side:
+// - optional export intent facts to document desired outputs.
+//   (tooling can read these intents, or users can call export-data directly.)
+
+MACRO IO_FILE_SOURCE(name, format, path):
+EMIT DATASOURCE {{name}} [type=file, format={{format}}, path={{path}}].
+ENDMACRO.
+
+MACRO IO_REST_SOURCE(name, format, url, method):
+EMIT DATASOURCE {{name}} [type=rest, format={{format}}, url={{url}}, method={{method}}].
+ENDMACRO.
+
+MACRO IO_COMMAND_SOURCE(name, format, command):
+EMIT DATASOURCE {{name}} [type=command, format={{format}}, command={{command}}].
+ENDMACRO.
+
+MACRO IO_EXPORT(name, source, format, path):
+EMIT interop:export:{{name}}#kind@entity:interop_export.
+EMIT interop:export:{{name}}#source@value:{{source}}.
+EMIT interop:export:{{name}}#format@value:{{format}}.
+EMIT interop:export:{{name}}#path@{{path}}.
+ENDMACRO.
+
+QUERY io_export_specs:
+FIND ?spec ?source ?format ?path WHERE ?spec#kind@entity:interop_export AND ?spec#source@?source AND ?spec#format@?format AND ?spec#path@?path.

@@ -1,0 +1,1737 @@
+{
+  "source_pdf": "aws-overview.pdf",
+  "stats": {
+    "chars": 355450,
+    "lines": 5076,
+    "services_found": 268,
+    "regions_found": 22,
+    "controls_found": 120
+  },
+  "regions": [
+    "Canada (Central)",
+    "Cape Town",
+    "Europe (Frankfurt)",
+    "Europe (Ireland)",
+    "Europe (London)",
+    "Europe (Milan)",
+    "Europe (Paris)",
+    "Europe (Stockholm)",
+    "GovCloud (US West)",
+    "GovCloud (US)",
+    "Montreal",
+    "Mumbai",
+    "Seoul",
+    "Singapore",
+    "South America (Sao Paulo)",
+    "Sydney",
+    "S\u00e3o Paulo",
+    "Tokyo",
+    "US East (Northern Virginia)",
+    "US East (Ohio)",
+    "US West (Northern California)",
+    "US West (Oregon)"
+  ],
+  "services": [
+    {
+      "id": "amazon_athena",
+      "name": "Amazon Athena"
+    },
+    {
+      "id": "amazon_cloudsearch",
+      "name": "Amazon CloudSearch"
+    },
+    {
+      "id": "amazon_datazone",
+      "name": "Amazon DataZone"
+    },
+    {
+      "id": "amazon_emr",
+      "name": "Amazon EMR"
+    },
+    {
+      "id": "amazon_finspace",
+      "name": "Amazon FinSpace"
+    },
+    {
+      "id": "amazon_kinesis",
+      "name": "Amazon Kinesis"
+    },
+    {
+      "id": "amazon_data_firehose",
+      "name": "Amazon Data Firehose"
+    },
+    {
+      "id": "amazon_managed_service_for_apache_flink",
+      "name": "Amazon Managed Service for Apache Flink"
+    },
+    {
+      "id": "amazon_kinesis_data_streams",
+      "name": "Amazon Kinesis Data Streams"
+    },
+    {
+      "id": "amazon_kinesis_video_streams",
+      "name": "Amazon Kinesis Video Streams"
+    },
+    {
+      "id": "amazon_opensearch_service",
+      "name": "Amazon OpenSearch Service"
+    },
+    {
+      "id": "amazon_opensearch_serverless",
+      "name": "Amazon OpenSearch Serverless"
+    },
+    {
+      "id": "amazon_redshift",
+      "name": "Amazon Redshift"
+    },
+    {
+      "id": "amazon_redshift_serverless",
+      "name": "Amazon Redshift Serverless"
+    },
+    {
+      "id": "aws_clean_rooms",
+      "name": "AWS Clean Rooms"
+    },
+    {
+      "id": "aws_data_exchange",
+      "name": "AWS Data Exchange"
+    },
+    {
+      "id": "aws_data_pipeline",
+      "name": "AWS Data Pipeline"
+    },
+    {
+      "id": "aws_entity_resolution",
+      "name": "AWS Entity Resolution"
+    },
+    {
+      "id": "aws_glue",
+      "name": "AWS Glue"
+    },
+    {
+      "id": "aws_lake_formation",
+      "name": "AWS Lake Formation"
+    },
+    {
+      "id": "amazon_managed_streaming_for_apache_kafka_amazon_msk",
+      "name": "Amazon Managed Streaming for Apache Kafka (Amazon MSK)"
+    },
+    {
+      "id": "aws_step_functions",
+      "name": "AWS Step Functions"
+    },
+    {
+      "id": "amazon_appflow",
+      "name": "Amazon AppFlow"
+    },
+    {
+      "id": "aws_b2b_data_interchange",
+      "name": "AWS B2B Data Interchange"
+    },
+    {
+      "id": "amazon_eventbridge",
+      "name": "Amazon EventBridge"
+    },
+    {
+      "id": "amazon_mq",
+      "name": "Amazon MQ"
+    },
+    {
+      "id": "amazon_simple_queue_service",
+      "name": "Amazon Simple Queue Service"
+    },
+    {
+      "id": "aws_appfabric",
+      "name": "AWS AppFabric"
+    },
+    {
+      "id": "amazon_chime",
+      "name": "Amazon Chime"
+    },
+    {
+      "id": "amazon_chime_sdk",
+      "name": "Amazon Chime SDK"
+    },
+    {
+      "id": "amazon_connect",
+      "name": "Amazon Connect"
+    },
+    {
+      "id": "amazon_pinpoint",
+      "name": "Amazon Pinpoint"
+    },
+    {
+      "id": "amazon_ses",
+      "name": "Amazon SES"
+    },
+    {
+      "id": "amazon_workdocs",
+      "name": "Amazon WorkDocs"
+    },
+    {
+      "id": "amazon_workmail",
+      "name": "Amazon WorkMail"
+    },
+    {
+      "id": "aws_billing_conductor",
+      "name": "AWS Billing Conductor"
+    },
+    {
+      "id": "aws_cost_explorer",
+      "name": "AWS Cost Explorer"
+    },
+    {
+      "id": "aws_budgets",
+      "name": "AWS Budgets"
+    },
+    {
+      "id": "aws_cost_and_usage_report",
+      "name": "AWS Cost and Usage Report"
+    },
+    {
+      "id": "amazon_ec2",
+      "name": "Amazon EC2"
+    },
+    {
+      "id": "amazon_ec2_auto_scaling",
+      "name": "Amazon EC2 Auto Scaling"
+    },
+    {
+      "id": "amazon_ec2_image_builder",
+      "name": "Amazon EC2 Image Builder"
+    },
+    {
+      "id": "amazon_lightsail",
+      "name": "Amazon Lightsail"
+    },
+    {
+      "id": "amazon_linux",
+      "name": "Amazon Linux"
+    },
+    {
+      "id": "aws_app_runner",
+      "name": "AWS App Runner"
+    },
+    {
+      "id": "aws_batch",
+      "name": "AWS Batch"
+    },
+    {
+      "id": "aws_elastic_beanstalk",
+      "name": "AWS Elastic Beanstalk"
+    },
+    {
+      "id": "aws_fargate",
+      "name": "AWS Fargate"
+    },
+    {
+      "id": "aws_lambda",
+      "name": "AWS Lambda"
+    },
+    {
+      "id": "aws_serverless_application_repository",
+      "name": "AWS Serverless Application Repository"
+    },
+    {
+      "id": "aws_outposts",
+      "name": "AWS Outposts"
+    },
+    {
+      "id": "aws_wavelength",
+      "name": "AWS Wavelength"
+    },
+    {
+      "id": "amazon_elastic_container_registry",
+      "name": "Amazon Elastic Container Registry"
+    },
+    {
+      "id": "amazon_elastic_container_service",
+      "name": "Amazon Elastic Container Service"
+    },
+    {
+      "id": "amazon_elastic_kubernetes_service",
+      "name": "Amazon Elastic Kubernetes Service"
+    },
+    {
+      "id": "aws_app2container",
+      "name": "AWS App2Container"
+    },
+    {
+      "id": "amazon_aurora",
+      "name": "Amazon Aurora"
+    },
+    {
+      "id": "amazon_dynamodb",
+      "name": "Amazon DynamoDB"
+    },
+    {
+      "id": "amazon_elasticache",
+      "name": "Amazon ElastiCache"
+    },
+    {
+      "id": "amazon_keyspaces_for_apache_cassandra",
+      "name": "Amazon Keyspaces (for Apache Cassandra)"
+    },
+    {
+      "id": "amazon_memorydb",
+      "name": "Amazon MemoryDB"
+    },
+    {
+      "id": "amazon_neptune",
+      "name": "Amazon Neptune"
+    },
+    {
+      "id": "amazon_relational_database_service",
+      "name": "Amazon Relational Database Service"
+    },
+    {
+      "id": "amazon_rds_for_db2",
+      "name": "Amazon RDS for Db2"
+    },
+    {
+      "id": "amazon_rds_on_vmware",
+      "name": "Amazon RDS on VMware"
+    },
+    {
+      "id": "amazon_timestream",
+      "name": "Amazon Timestream"
+    },
+    {
+      "id": "amazon_documentdb_with_mongodb_compatibility",
+      "name": "Amazon DocumentDB (with MongoDB compatibility)"
+    },
+    {
+      "id": "amazon_lightsail_managed_databases",
+      "name": "Amazon Lightsail managed databases"
+    },
+    {
+      "id": "aws_infrastructure_composer",
+      "name": "AWS Infrastructure Composer"
+    },
+    {
+      "id": "aws_cloud9",
+      "name": "AWS Cloud9"
+    },
+    {
+      "id": "aws_cloudshell",
+      "name": "AWS CloudShell"
+    },
+    {
+      "id": "aws_codeartifact",
+      "name": "AWS CodeArtifact"
+    },
+    {
+      "id": "aws_codebuild",
+      "name": "AWS CodeBuild"
+    },
+    {
+      "id": "amazon_codecatalyst",
+      "name": "Amazon CodeCatalyst"
+    },
+    {
+      "id": "aws_codecommit",
+      "name": "AWS CodeCommit"
+    },
+    {
+      "id": "aws_codedeploy",
+      "name": "AWS CodeDeploy"
+    },
+    {
+      "id": "aws_codepipeline",
+      "name": "AWS CodePipeline"
+    },
+    {
+      "id": "amazon_corretto",
+      "name": "Amazon Corretto"
+    },
+    {
+      "id": "aws_fault_injection_service",
+      "name": "AWS Fault Injection Service"
+    },
+    {
+      "id": "amazon_q_developer",
+      "name": "Amazon Q Developer"
+    },
+    {
+      "id": "aws_x_ray",
+      "name": "AWS X-Ray"
+    },
+    {
+      "id": "aws_amplify",
+      "name": "AWS Amplify"
+    },
+    {
+      "id": "aws_appsync",
+      "name": "AWS AppSync"
+    },
+    {
+      "id": "aws_device_farm",
+      "name": "AWS Device Farm"
+    },
+    {
+      "id": "amazon_location_service",
+      "name": "Amazon Location Service"
+    },
+    {
+      "id": "aws_iot_analytics",
+      "name": "AWS IoT Analytics"
+    },
+    {
+      "id": "aws_iot_button",
+      "name": "AWS IoT Button"
+    },
+    {
+      "id": "aws_iot_core",
+      "name": "AWS IoT Core"
+    },
+    {
+      "id": "aws_iot_device_defender",
+      "name": "AWS IoT Device Defender"
+    },
+    {
+      "id": "aws_iot_device_management",
+      "name": "AWS IoT Device Management"
+    },
+    {
+      "id": "aws_iot_events",
+      "name": "AWS IoT Events"
+    },
+    {
+      "id": "aws_iot_expresslink",
+      "name": "AWS IoT ExpressLink"
+    },
+    {
+      "id": "aws_iot_fleetwise",
+      "name": "AWS IoT FleetWise"
+    },
+    {
+      "id": "aws_iot_greengrass",
+      "name": "AWS IoT Greengrass"
+    },
+    {
+      "id": "aws_iot_sitewise",
+      "name": "AWS IoT SiteWise"
+    },
+    {
+      "id": "aws_iot_twinmaker",
+      "name": "AWS IoT TwinMaker"
+    },
+    {
+      "id": "aws_partner_device_catalog",
+      "name": "AWS Partner Device Catalog"
+    },
+    {
+      "id": "amazon_augmented_ai",
+      "name": "Amazon Augmented AI"
+    },
+    {
+      "id": "amazon_bedrock",
+      "name": "Amazon Bedrock"
+    },
+    {
+      "id": "amazon_codeguru",
+      "name": "Amazon CodeGuru"
+    },
+    {
+      "id": "amazon_comprehend",
+      "name": "Amazon Comprehend"
+    },
+    {
+      "id": "amazon_devops_guru",
+      "name": "Amazon DevOps Guru"
+    },
+    {
+      "id": "amazon_forecast",
+      "name": "Amazon Forecast"
+    },
+    {
+      "id": "amazon_fraud_detector",
+      "name": "Amazon Fraud Detector"
+    },
+    {
+      "id": "amazon_comprehend_medical",
+      "name": "Amazon Comprehend Medical"
+    },
+    {
+      "id": "amazon_kendra",
+      "name": "Amazon Kendra"
+    },
+    {
+      "id": "amazon_lex",
+      "name": "Amazon Lex"
+    },
+    {
+      "id": "amazon_lookout_for_equipment",
+      "name": "Amazon Lookout for Equipment"
+    },
+    {
+      "id": "amazon_lookout_for_metrics",
+      "name": "Amazon Lookout for Metrics"
+    },
+    {
+      "id": "amazon_lookout_for_vision",
+      "name": "Amazon Lookout for Vision"
+    },
+    {
+      "id": "amazon_monitron",
+      "name": "Amazon Monitron"
+    },
+    {
+      "id": "amazon_partyrock",
+      "name": "Amazon PartyRock"
+    },
+    {
+      "id": "amazon_personalize",
+      "name": "Amazon Personalize"
+    },
+    {
+      "id": "amazon_polly",
+      "name": "Amazon Polly"
+    },
+    {
+      "id": "amazon_rekognition",
+      "name": "Amazon Rekognition"
+    },
+    {
+      "id": "amazon_sagemaker_ai",
+      "name": "Amazon SageMaker AI"
+    },
+    {
+      "id": "amazon_textract",
+      "name": "Amazon Textract"
+    },
+    {
+      "id": "amazon_transcribe",
+      "name": "Amazon Transcribe"
+    },
+    {
+      "id": "amazon_translate",
+      "name": "Amazon Translate"
+    },
+    {
+      "id": "aws_deepcomposer",
+      "name": "AWS DeepComposer"
+    },
+    {
+      "id": "aws_deepracer",
+      "name": "AWS DeepRacer"
+    },
+    {
+      "id": "aws_healthlake",
+      "name": "AWS HealthLake"
+    },
+    {
+      "id": "aws_healthscribe",
+      "name": "AWS HealthScribe"
+    },
+    {
+      "id": "aws_panorama",
+      "name": "AWS Panorama"
+    },
+    {
+      "id": "aws_auto_scaling",
+      "name": "AWS Auto Scaling"
+    },
+    {
+      "id": "aws_cloudformation",
+      "name": "AWS CloudFormation"
+    },
+    {
+      "id": "aws_cloudtrail",
+      "name": "AWS CloudTrail"
+    },
+    {
+      "id": "amazon_cloudwatch",
+      "name": "Amazon CloudWatch"
+    },
+    {
+      "id": "aws_compute_optimizer",
+      "name": "AWS Compute Optimizer"
+    },
+    {
+      "id": "aws_console_mobile_application",
+      "name": "AWS Console Mobile Application"
+    },
+    {
+      "id": "aws_control_tower",
+      "name": "AWS Control Tower"
+    },
+    {
+      "id": "aws_health",
+      "name": "AWS Health"
+    },
+    {
+      "id": "aws_launch_wizard",
+      "name": "AWS Launch Wizard"
+    },
+    {
+      "id": "aws_license_manager",
+      "name": "AWS License Manager"
+    },
+    {
+      "id": "amazon_managed_grafana",
+      "name": "Amazon Managed Grafana"
+    },
+    {
+      "id": "amazon_managed_service_for_prometheus",
+      "name": "Amazon Managed Service for Prometheus"
+    },
+    {
+      "id": "aws_organizations",
+      "name": "AWS Organizations"
+    },
+    {
+      "id": "aws_proton",
+      "name": "AWS Proton"
+    },
+    {
+      "id": "amazon_q_developer_in_chat_applications_formerly_aws_chatbot",
+      "name": "Amazon Q Developer in chat applications (formerly AWS Chatbot)"
+    },
+    {
+      "id": "aws_service_catalog",
+      "name": "AWS Service Catalog"
+    },
+    {
+      "id": "aws_systems_manager",
+      "name": "AWS Systems Manager"
+    },
+    {
+      "id": "aws_trusted_advisor",
+      "name": "AWS Trusted Advisor"
+    },
+    {
+      "id": "aws_well_architected_tool",
+      "name": "AWS Well-Architected Tool"
+    },
+    {
+      "id": "amazon_elastic_transcoder",
+      "name": "Amazon Elastic Transcoder"
+    },
+    {
+      "id": "amazon_interactive_video_service",
+      "name": "Amazon Interactive Video Service"
+    },
+    {
+      "id": "amazon_nimble_studio",
+      "name": "Amazon Nimble Studio"
+    },
+    {
+      "id": "aws_elemental_appliances_and_software",
+      "name": "AWS Elemental Appliances and Software"
+    },
+    {
+      "id": "aws_elemental_mediaconnect",
+      "name": "AWS Elemental MediaConnect"
+    },
+    {
+      "id": "aws_elemental_mediaconvert",
+      "name": "AWS Elemental MediaConvert"
+    },
+    {
+      "id": "aws_elemental_medialive",
+      "name": "AWS Elemental MediaLive"
+    },
+    {
+      "id": "aws_elemental_mediapackage",
+      "name": "AWS Elemental MediaPackage"
+    },
+    {
+      "id": "aws_elemental_mediastore",
+      "name": "AWS Elemental MediaStore"
+    },
+    {
+      "id": "aws_elemental_mediatailor",
+      "name": "AWS Elemental MediaTailor"
+    },
+    {
+      "id": "aws_application_discovery_service",
+      "name": "AWS Application Discovery Service"
+    },
+    {
+      "id": "aws_application_migration_service",
+      "name": "AWS Application Migration Service"
+    },
+    {
+      "id": "aws_database_migration_service",
+      "name": "AWS Database Migration Service"
+    },
+    {
+      "id": "aws_mainframe_modernization_service",
+      "name": "AWS Mainframe Modernization Service"
+    },
+    {
+      "id": "aws_migration_hub",
+      "name": "AWS Migration Hub"
+    },
+    {
+      "id": "aws_snow_family",
+      "name": "AWS Snow Family"
+    },
+    {
+      "id": "aws_datasync",
+      "name": "AWS DataSync"
+    },
+    {
+      "id": "aws_transfer_family",
+      "name": "AWS Transfer Family"
+    },
+    {
+      "id": "amazon_api_gateway",
+      "name": "Amazon API Gateway"
+    },
+    {
+      "id": "aws_app_mesh",
+      "name": "AWS App Mesh"
+    },
+    {
+      "id": "amazon_cloudfront",
+      "name": "Amazon CloudFront"
+    },
+    {
+      "id": "aws_cloud_map",
+      "name": "AWS Cloud Map"
+    },
+    {
+      "id": "aws_global_accelerator",
+      "name": "AWS Global Accelerator"
+    },
+    {
+      "id": "aws_privatelink",
+      "name": "AWS PrivateLink"
+    },
+    {
+      "id": "aws_private_5g",
+      "name": "AWS Private 5G"
+    },
+    {
+      "id": "amazon_route",
+      "name": "Amazon Route"
+    },
+    {
+      "id": "aws_transit_gateway",
+      "name": "AWS Transit Gateway"
+    },
+    {
+      "id": "amazon_vpc",
+      "name": "Amazon VPC"
+    },
+    {
+      "id": "amazon_vpc_lattice",
+      "name": "Amazon VPC Lattice"
+    },
+    {
+      "id": "amazon_cognito",
+      "name": "Amazon Cognito"
+    },
+    {
+      "id": "amazon_detective",
+      "name": "Amazon Detective"
+    },
+    {
+      "id": "amazon_guardduty",
+      "name": "Amazon GuardDuty"
+    },
+    {
+      "id": "amazon_inspector",
+      "name": "Amazon Inspector"
+    },
+    {
+      "id": "amazon_macie",
+      "name": "Amazon Macie"
+    },
+    {
+      "id": "amazon_security_lake",
+      "name": "Amazon Security Lake"
+    },
+    {
+      "id": "aws_artifact",
+      "name": "AWS Artifact"
+    },
+    {
+      "id": "aws_audit_manager",
+      "name": "AWS Audit Manager"
+    },
+    {
+      "id": "aws_cloudhsm",
+      "name": "AWS CloudHSM"
+    },
+    {
+      "id": "aws_directory_service",
+      "name": "AWS Directory Service"
+    },
+    {
+      "id": "aws_firewall_manager",
+      "name": "AWS Firewall Manager"
+    },
+    {
+      "id": "aws_identity_and_access_management",
+      "name": "AWS Identity and Access Management"
+    },
+    {
+      "id": "aws_key_management_service",
+      "name": "AWS Key Management Service"
+    },
+    {
+      "id": "aws_network_firewall",
+      "name": "AWS Network Firewall"
+    },
+    {
+      "id": "aws_resource_access_manager",
+      "name": "AWS Resource Access Manager"
+    },
+    {
+      "id": "aws_secrets_manager",
+      "name": "AWS Secrets Manager"
+    },
+    {
+      "id": "aws_security_hub_cspm",
+      "name": "AWS Security Hub CSPM"
+    },
+    {
+      "id": "aws_shield",
+      "name": "AWS Shield"
+    },
+    {
+      "id": "aws_iam_identity_center",
+      "name": "AWS IAM Identity Center"
+    },
+    {
+      "id": "aws_waf",
+      "name": "AWS WAF"
+    },
+    {
+      "id": "aws_waf_captcha",
+      "name": "AWS WAF Captcha"
+    },
+    {
+      "id": "aws_backup",
+      "name": "AWS Backup"
+    },
+    {
+      "id": "amazon_elastic_block_store",
+      "name": "Amazon Elastic Block Store"
+    },
+    {
+      "id": "aws_elastic_disaster_recovery",
+      "name": "AWS Elastic Disaster Recovery"
+    },
+    {
+      "id": "amazon_elastic_file_system",
+      "name": "Amazon Elastic File System"
+    },
+    {
+      "id": "amazon_file_cache",
+      "name": "Amazon File Cache"
+    },
+    {
+      "id": "amazon_fsx_for_lustre",
+      "name": "Amazon FSx for Lustre"
+    },
+    {
+      "id": "amazon_fsx_for_netapp_ontap",
+      "name": "Amazon FSx for NetApp ONTAP"
+    },
+    {
+      "id": "amazon_fsx_for_openzfs",
+      "name": "Amazon FSx for OpenZFS"
+    },
+    {
+      "id": "amazon_fsx_for_windows_file_server",
+      "name": "Amazon FSx for Windows File Server"
+    },
+    {
+      "id": "amazon_simple_storage_service",
+      "name": "Amazon Simple Storage Service"
+    },
+    {
+      "id": "aws_storage_gateway",
+      "name": "AWS Storage Gateway"
+    },
+    {
+      "id": "aws_glossary",
+      "name": "AWS Glossary"
+    },
+    {
+      "id": "aws_when_you_encounter_security_issues",
+      "name": "AWS when you encounter security issues"
+    },
+    {
+      "id": "aws_management_console",
+      "name": "AWS Management Console"
+    },
+    {
+      "id": "aws_command_line_interface_aws_cli",
+      "name": "AWS Command Line Interface (AWS CLI)"
+    },
+    {
+      "id": "amazon_rds_amazon_dynamodb_and_amazon_emr",
+      "name": "Amazon RDS, Amazon DynamoDB, and Amazon EMR"
+    },
+    {
+      "id": "amazon_managed_blockchain",
+      "name": "Amazon Managed Blockchain"
+    },
+    {
+      "id": "aws_has_a_set_of_solutions_to_help_you_manage_and_optimize_your_spend",
+      "name": "AWS has a set of solutions to help you manage and optimize your spend"
+    },
+    {
+      "id": "aws_service",
+      "name": "AWS service"
+    },
+    {
+      "id": "amazon_elastic_compute_cloud_amazon",
+      "name": "Amazon Elastic Compute Cloud (Amazon"
+    },
+    {
+      "id": "amazon_elastic_container_service_amazon",
+      "name": "Amazon Elastic Container Service (Amazon"
+    },
+    {
+      "id": "amazon_elastic_container_registry_amazon",
+      "name": "Amazon Elastic Container Registry (Amazon"
+    },
+    {
+      "id": "amazon_elastic_kubernetes_service_amazon",
+      "name": "Amazon Elastic Kubernetes Service (Amazon"
+    },
+    {
+      "id": "aws_outposts_come_in_two_variants",
+      "name": "AWS Outposts come in two variants"
+    },
+    {
+      "id": "aws_managed_services",
+      "name": "AWS Managed Services"
+    },
+    {
+      "id": "aws_re_post_private",
+      "name": "AWS re:Post Private"
+    },
+    {
+      "id": "amazon_documentdb",
+      "name": "Amazon DocumentDB"
+    },
+    {
+      "id": "amazon_workspaces_applications",
+      "name": "Amazon WorkSpaces Applications"
+    },
+    {
+      "id": "amazon_workspaces",
+      "name": "Amazon WorkSpaces"
+    },
+    {
+      "id": "amazon_workspaces_core",
+      "name": "Amazon WorkSpaces Core"
+    },
+    {
+      "id": "amazon_workspaces_thin_client",
+      "name": "Amazon WorkSpaces Thin Client"
+    },
+    {
+      "id": "amazon_workspaces_web",
+      "name": "Amazon Workspaces Web"
+    },
+    {
+      "id": "amazon_gamelift_servers",
+      "name": "Amazon GameLift Servers"
+    },
+    {
+      "id": "amazon_q_business",
+      "name": "Amazon Q Business"
+    },
+    {
+      "id": "amazon_sagemaker_ai_autopilot",
+      "name": "Amazon SageMaker AI Autopilot"
+    },
+    {
+      "id": "amazon_sagemaker_ai_canvas",
+      "name": "Amazon SageMaker AI Canvas"
+    },
+    {
+      "id": "amazon_sagemaker_ai_clarify",
+      "name": "Amazon SageMaker AI Clarify"
+    },
+    {
+      "id": "amazon_sagemaker_ai_data_labeling",
+      "name": "Amazon SageMaker AI Data Labeling"
+    },
+    {
+      "id": "amazon_sagemaker_ai_data_wrangler",
+      "name": "Amazon SageMaker AI Data Wrangler"
+    },
+    {
+      "id": "amazon_sagemaker_ai_edge",
+      "name": "Amazon SageMaker AI Edge"
+    },
+    {
+      "id": "amazon_sagemaker_ai_feature_store",
+      "name": "Amazon SageMaker AI Feature Store"
+    },
+    {
+      "id": "amazon_sagemaker_ai_geospatial_capabilities",
+      "name": "Amazon SageMaker AI geospatial capabilities"
+    },
+    {
+      "id": "amazon_sagemaker_ai_hyperpod",
+      "name": "Amazon SageMaker AI HyperPod"
+    },
+    {
+      "id": "amazon_sagemaker_ai_jumpstart",
+      "name": "Amazon SageMaker AI JumpStart"
+    },
+    {
+      "id": "amazon_sagemaker_ai_model_building",
+      "name": "Amazon SageMaker AI Model Building"
+    },
+    {
+      "id": "amazon_sagemaker_ai_model_training",
+      "name": "Amazon SageMaker AI Model Training"
+    },
+    {
+      "id": "amazon_sagemaker_ai_model_deployment",
+      "name": "Amazon SageMaker AI Model Deployment"
+    },
+    {
+      "id": "amazon_sagemaker_ai_pipelines",
+      "name": "Amazon SageMaker AI Pipelines"
+    },
+    {
+      "id": "amazon_sagemaker_ai_studio_lab",
+      "name": "Amazon SageMaker AI Studio Lab"
+    },
+    {
+      "id": "aws_deep_learning_amis",
+      "name": "AWS Deep Learning AMIs"
+    },
+    {
+      "id": "aws_deep_learning_containers",
+      "name": "AWS Deep Learning Containers"
+    },
+    {
+      "id": "aws_lambda_functions_based_on_your_utilization_data",
+      "name": "AWS Lambda functions, based on your utilization data"
+    },
+    {
+      "id": "aws_systems_manager_contains_the_following_tools",
+      "name": "AWS Systems Manager contains the following tools"
+    },
+    {
+      "id": "amazon_s3_or_amazon_cloudwatch_logs_using_aws_cloudtrail",
+      "name": "Amazon S3 or Amazon CloudWatch Logs using AWS CloudTrail"
+    },
+    {
+      "id": "aws_snowball",
+      "name": "AWS Snowball"
+    },
+    {
+      "id": "aws_snowball_edge",
+      "name": "AWS Snowball Edge"
+    },
+    {
+      "id": "aws_networking_and_content_delivery",
+      "name": "AWS Networking and Content Delivery"
+    },
+    {
+      "id": "amazon_braket",
+      "name": "Amazon Braket"
+    },
+    {
+      "id": "aws_ground_station",
+      "name": "AWS Ground Station"
+    },
+    {
+      "id": "amazon_efs_archive_for_your_colder_data",
+      "name": "Amazon EFS Archive for your colder data"
+    },
+    {
+      "id": "aws_decision_guides",
+      "name": "AWS Decision Guides"
+    },
+    {
+      "id": "aws_architecture_center",
+      "name": "AWS Architecture Center"
+    },
+    {
+      "id": "aws_documentation",
+      "name": "AWS Documentation"
+    },
+    {
+      "id": "aws_blog",
+      "name": "AWS Blog"
+    },
+    {
+      "id": "aws_well_architected_framework",
+      "name": "AWS Well-Architected Framework"
+    },
+    {
+      "id": "amazon_q_added_amazon",
+      "name": "Amazon Q added. Amazon"
+    },
+    {
+      "id": "amazon_workdocs_notice",
+      "name": "Amazon WorkDocs notice"
+    },
+    {
+      "id": "aws_b2b_data_interchan",
+      "name": "AWS B2B Data Interchan"
+    },
+    {
+      "id": "amazon_elasticache_serverles",
+      "name": "Amazon ElastiCache Serverles"
+    },
+    {
+      "id": "amazon_partyrock_amazon",
+      "name": "Amazon PartyRock, Amazon"
+    },
+    {
+      "id": "amazon_workspaces_thin",
+      "name": "Amazon WorkSpaces Thin"
+    },
+    {
+      "id": "aws_snowball_edge_informati",
+      "name": "AWS Snowball Edge informati"
+    },
+    {
+      "id": "aws_glue_for_ray_aws_glue",
+      "name": "AWS Glue for Ray, AWS Glue"
+    },
+    {
+      "id": "amazon_file_cache_aws_iot",
+      "name": "Amazon File Cache, AWS IoT"
+    },
+    {
+      "id": "amazon_elasticsearch_service",
+      "name": "Amazon Elasticsearch Service"
+    }
+  ],
+  "controls": [
+    {
+      "id": "ctrl_a_cloud_services_platform_such_as_amazon",
+      "category": "general",
+      "excerpt": "A cloud services platform such as Amazon Web Services owns and maintains the network-connected hardware required for these application services, while you provision and use what you need via a web application."
+    },
+    {
+      "id": "ctrl_you_can_access_as_much_or_as_little_capa",
+      "category": "general",
+      "excerpt": "You can access as much or as little capacity as you need, and scale up and down as required with only a few minutes\u2019 notice."
+    },
+    {
+      "id": "ctrl_an_aws_region_is_a_physical_location_in_",
+      "category": "resilience",
+      "excerpt": "An AWS Region is a physical location in the world where we have multiple Availability Zones."
+    },
+    {
+      "id": "ctrl_availability_zones_consist_of_one_or_mor",
+      "category": "resilience",
+      "excerpt": "Availability Zones consist of one or more discrete data centers, each with redundant power, networking, and connectivity, housed in separate facilities."
+    },
+    {
+      "id": "ctrl_these_availability_zones_o_er_you_the_ab",
+      "category": "resilience",
+      "excerpt": "These Availability Zones o\ufb00er you the ability to operate production applications and databases that are more highly available, fault tolerant, and scalable than would be possible from a single data center."
+    },
+    {
+      "id": "ctrl_for_the_latest_information_on_the_aws_cl",
+      "category": "resilience",
+      "excerpt": "For the latest information on the AWS Cloud Availability Zones and AWS Regions, refer to AWS Global Infrastructure."
+    },
+    {
+      "id": "ctrl_as_organizations_embrace_the_scalability",
+      "category": "governance",
+      "excerpt": "As organizations embrace the scalability and \ufb02exibility of the cloud, AWS is helping them evolve security, identity, and compliance into key business enablers."
+    },
+    {
+      "id": "ctrl_aws_builds_security_into_the_core_of_our",
+      "category": "general",
+      "excerpt": "AWS builds security into the core of our cloud infrastructure, and o\ufb00ers foundational services to help organizations meet their unique security requirements in the cloud."
+    },
+    {
+      "id": "ctrl_as_an_aws_customer_you_will_bene_t_from_",
+      "category": "general",
+      "excerpt": "As an AWS customer, you will bene\ufb01t from a data center and network architecture built to meet the requirements of the most security-sensitive organizations."
+    },
+    {
+      "id": "ctrl_security_in_the_cloud_is_much_like_secur",
+      "category": "cost",
+      "excerpt": "Security in the cloud is much like security in your on-premises data centers\u2014only without the costs of maintaining facilities and hardware."
+    },
+    {
+      "id": "ctrl_instead_you_use_software_based_security_",
+      "category": "logging",
+      "excerpt": "Instead, you use software-based security tools to monitor and protect the \ufb02ow of information into and out of your cloud resources."
+    },
+    {
+      "id": "ctrl_this_means_that_you_can_have_the_securit",
+      "category": "cost",
+      "excerpt": "This means that you can have the security you need at a lower cost than in an on-premises environment."
+    },
+    {
+      "id": "ctrl_as_an_aws_customer_you_inherit_all_the_b",
+      "category": "general",
+      "excerpt": "As an AWS customer you inherit all the best practices of AWS policies, architecture, and operational processes built to satisfy the requirements of our most security-sensitive customers."
+    },
+    {
+      "id": "ctrl_get_the_exibility_and_agility_you_need_i",
+      "category": "general",
+      "excerpt": "Get the \ufb02exibility and agility you need in security controls."
+    },
+    {
+      "id": "ctrl_while_aws_manages_security_of_the_cloud_",
+      "category": "general",
+      "excerpt": "While AWS manages security of the cloud, you are responsible for security in the cloud."
+    },
+    {
+      "id": "ctrl_this_means_that_you_retain_control_of_th",
+      "category": "general",
+      "excerpt": "This means that you retain control of the security you choose to implement to protect your own content, platform, applications, systems, and networks no di\ufb00erently than you would in an on-site data center."
+    },
+    {
+      "id": "ctrl_aws_provides_you_with_advisories_for_cur",
+      "category": "general",
+      "excerpt": "AWS provides you with advisories for current issues, plus you have the opportunity to work with AWS when you encounter security issues."
+    },
+    {
+      "id": "ctrl_you_get_access_to_hundreds_of_tools_and_",
+      "category": "general",
+      "excerpt": "You get access to hundreds of tools and features to help you to meet your security objectives."
+    },
+    {
+      "id": "ctrl_aws_provides_security_speci_c_tools_and_",
+      "category": "encryption",
+      "excerpt": "AWS provides security-speci\ufb01c tools and features across network security, con\ufb01guration management, access control, and data encryption."
+    },
+    {
+      "id": "ctrl_bene_ts_of_aws_security_keep_your_data_s",
+      "category": "general",
+      "excerpt": "Bene\ufb01ts of AWS security \u2022 Keep Your data safe \u2014 The AWS infrastructure puts strong safeguards in place to help protect your privacy."
+    },
+    {
+      "id": "ctrl_meet_compliance_requirements_aws_manages",
+      "category": "governance",
+      "excerpt": "\u2022 Meet compliance requirements \u2014 AWS manages dozens of compliance programs in its infrastructure."
+    },
+    {
+      "id": "ctrl_this_means_that_segments_of_your_complia",
+      "category": "governance",
+      "excerpt": "This means that segments of your compliance have already been completed."
+    },
+    {
+      "id": "ctrl_maintain_the_highest_standard_of_securit",
+      "category": "general",
+      "excerpt": "Maintain the highest standard of security without having to manage your own facility \u2022 Scale quickly \u2014 Security scales with your AWS Cloud usage."
+    },
+    {
+      "id": "ctrl_compliance_aws_cloud_compliance_helps_yo",
+      "category": "governance",
+      "excerpt": "Compliance AWS Cloud Compliance helps you understand the robust controls in place at AWS for security and data protection in the cloud."
+    },
+    {
+      "id": "ctrl_compliance_is_a_shared_responsibility_be",
+      "category": "governance",
+      "excerpt": "Compliance is a shared responsibility between AWS and the customer, and you can visit the Shared Responsibility Model to learn more."
+    },
+    {
+      "id": "ctrl_customers_can_feel_con_dent_in_operating",
+      "category": "general",
+      "excerpt": "Customers can feel con\ufb01dent in operating and building on top of the security controls AWS uses on its infrastructure."
+    },
+    {
+      "id": "ctrl_the_it_infrastructure_that_aws_provides_",
+      "category": "general",
+      "excerpt": "The IT infrastructure that AWS provides to its customers is designed and managed in alignment with best security practices and a variety of IT security standards."
+    },
+    {
+      "id": "ctrl_more_information_is_available_in_the_ris",
+      "category": "governance",
+      "excerpt": "More information is available in the Risk and Compliance whitepaper and the AWS Security Center."
+    },
+    {
+      "id": "ctrl_finspace_makes_it_easy_to_discover_and_s",
+      "category": "governance",
+      "excerpt": "FinSpace makes it easy to discover and share data across your organization in accordance with your compliance requirements."
+    },
+    {
+      "id": "ctrl_you_de_ne_your_data_access_policies_in_o",
+      "category": "logging",
+      "excerpt": "You de\ufb01ne your data access policies in one place and FinSpace enforces them while keeping audit logs to allow for compliance and activity reporting."
+    },
+    {
+      "id": "ctrl_it_can_also_batch_compress_transform_and",
+      "category": "encryption",
+      "excerpt": "It can also batch, compress, transform, and encrypt the data before loading it, minimizing the amount of storage used at the destination and increasing security."
+    },
+    {
+      "id": "ctrl_amazon_managed_service_for_apache_flink_",
+      "category": "general",
+      "excerpt": "Amazon Managed Service for Apache Flink takes care of everything required to run your queries continuously and scales automatically to match the volume and throughput rate of your incoming data."
+    },
+    {
+      "id": "ctrl_with_amazon_opensearch_service_you_get_e",
+      "category": "logging",
+      "excerpt": "With Amazon OpenSearch Service, you get easy-to-use APIs and real-time analytics capabilities to power use-cases such as log analytics, full-text search, application monitoring, and clickstream analytics, with enterprisegrade availability, scalability, and security."
+    },
+    {
+      "id": "ctrl_use_cases_for_vector_search_collections_",
+      "category": "general",
+      "excerpt": "Use cases for vector search collections include image search, document search, music retrieval, product recommendation, video search, location-based search, fraud detection, and anomaly detection."
+    },
+    {
+      "id": "ctrl_you_don_t_have_to_worry_about_ensuring_r",
+      "category": "resilience",
+      "excerpt": "You don\u2019t have to worry about ensuring resource availability, managing inter-task dependencies, retrying transient failures or timeouts in individual tasks, or creating a failure noti\ufb01cation system."
+    },
+    {
+      "id": "ctrl_aws_glue_data_quality_can_measure_and_mo",
+      "category": "logging",
+      "excerpt": "AWS Glue Data Quality can measure and monitor the data quality of Amazon S3 based data lakes, data warehouses, and other data repositories."
+    },
+    {
+      "id": "ctrl_it_automatically_computes_statistics_rec",
+      "category": "logging",
+      "excerpt": "It automatically computes statistics, recommends quality rules, and can monitor and alert you when it detects missing, stale, or bad data."
+    },
+    {
+      "id": "ctrl_creating_a_data_lake_with_lake_formation",
+      "category": "general",
+      "excerpt": "Creating a data lake with Lake Formation is as simple as de\ufb01ning where your data resides and what data access and security policies you want to apply."
+    },
+    {
+      "id": "ctrl_amazon_msk_continuously_monitors_cluster",
+      "category": "logging",
+      "excerpt": "Amazon MSK continuously monitors cluster health and automatically replaces unhealthy nodes with no downtime to your application."
+    },
+    {
+      "id": "ctrl_amazon_appflow_automatically_encrypts_da",
+      "category": "encryption",
+      "excerpt": "Amazon AppFlow; automatically encrypts data in motion, and allows users to restrict data from \ufb02owing over the public internet for SaaS applications that are integrated with AWS PrivateLink, reducing exposure to security threats."
+    },
+    {
+      "id": "ctrl_managed_work_ows_automatically_scales_it",
+      "category": "general",
+      "excerpt": "Managed Work\ufb02ows automatically scales its work\ufb02ow capacity to meet your needs, and is integrated with AWS security services to help provide you with fast and secure access to data."
+    },
+    {
+      "id": "ctrl_today_building_a_scalable_blockchain_net",
+      "category": "logging",
+      "excerpt": "Today, building a scalable blockchain network with existing technologies is complex to set up and hard to manage."
+    },
+    {
+      "id": "ctrl_to_create_a_blockchain_network_each_netw",
+      "category": "general",
+      "excerpt": "To create a blockchain network, each network member needs to manually provision hardware, install software, create and manage certi\ufb01cates for access control, and con\ufb01gure networking components."
+    },
+    {
+      "id": "ctrl_once_the_blockchain_network_is_running_y",
+      "category": "logging",
+      "excerpt": "Once the blockchain network is running, you need to continuously monitor the infrastructure and adapt to changes, such as an increase in transaction requests, or new members joining or leaving the network."
+    },
+    {
+      "id": "ctrl_amazon_managed_blockchain_is_a_fully_man",
+      "category": "general",
+      "excerpt": "Amazon Managed Blockchain is a fully managed service that allows you to set up and manage a scalable blockchain network with just a few clicks."
+    },
+    {
+      "id": "ctrl_amazon_managed_blockchain_eliminates_the",
+      "category": "general",
+      "excerpt": "Amazon Managed Blockchain eliminates the overhead required to create the network, and automatically scales to meet the demands of thousands of applications running millions of transactions."
+    },
+    {
+      "id": "ctrl_once_your_network_is_up_and_running_mana",
+      "category": "general",
+      "excerpt": "Once your network is up and running, Managed Blockchain makes it easy to manage and maintain your blockchain network."
+    },
+    {
+      "id": "ctrl_it_manages_your_certi_cates_lets_you_eas",
+      "category": "general",
+      "excerpt": "It manages your certi\ufb01cates, lets you easily invite new members to join the network, and tracks operational metrics such as usage of compute, memory, and storage resources."
+    },
+    {
+      "id": "ctrl_previously_integrating_saas_applications",
+      "category": "logging",
+      "excerpt": "Previously, integrating SaaS applications with existing security tools required teams to build, manage, and maintain their own point-to-point (P2P) integrations so that security teams could monitor event logs and understand activity from each application."
+    },
+    {
+      "id": "ctrl_with_appfabric_you_can_quickly_connect_m",
+      "category": "general",
+      "excerpt": "With AppFabric, you can quickly connect multiple SaaS applications to increase observability, productivity, and security\u2014with no coding required."
+    },
+    {
+      "id": "ctrl_after_the_saas_applications_are_authoriz",
+      "category": "general",
+      "excerpt": "After the SaaS applications are authorized and connected, AppFabric ingests the data and normalizes it using the Open Cybersecurity Schema Framework (OCSF)."
+    },
+    {
+      "id": "ctrl_ocsf_allows_you_to_set_common_policies_s",
+      "category": "general",
+      "excerpt": "OCSF allows you to set common policies, standardize security alerts, and quickly manage user access across multiple applications."
+    },
+    {
+      "id": "ctrl_the_self_service_graphical_interface_in_",
+      "category": "general",
+      "excerpt": "The self-service graphical interface in Amazon Connect makes it easy for non-technical users to design contact \ufb02ows, manage agents, and track performance metrics \u2013 no specialized skills required."
+    },
+    {
+      "id": "ctrl_you_can_integrate_amazon_workmail_with_y",
+      "category": "encryption",
+      "excerpt": "You can integrate Amazon WorkMail with your existing corporate directory, use email journaling to meet compliance requirements, and control both the keys that encrypt your data and the location in which your data is stored."
+    },
+    {
+      "id": "ctrl_you_can_easily_sign_up_a_one_or_three_ye",
+      "category": "cost",
+      "excerpt": "You can easily sign up a one- or three-year term Savings Plans in AWS Cost Explorer and manage your plans by taking advantage of recommendations, performance reporting, and budget alerts."
+    },
+    {
+      "id": "ctrl_amazon_ec2_reduces_the_time_required_to_",
+      "category": "general",
+      "excerpt": "Amazon EC2 reduces the time required to obtain and boot new server instances (called Amazon EC2 instances) to minutes, allowing you to quickly scale capacity, both up and down, as your computing requirements change."
+    },
+    {
+      "id": "ctrl_amazon_ec2_provides_developers_and_syste",
+      "category": "general",
+      "excerpt": "Amazon EC2 provides developers and system administrators the tools to build failure resilient applications and isolate themselves from common failure scenarios."
+    },
+    {
+      "id": "ctrl_dedicated_hosts_can_help_you_reduce_cost",
+      "category": "governance",
+      "excerpt": "Dedicated Hosts can help you reduce costs by allowing you to use your existing server-bound software licenses, including Windows Server, Microsoft SQL Server, and SUSE Linux Enterprise Server (subject to your license terms), and can also help you meet compliance requirements."
+    },
+    {
+      "id": "ctrl_amazon_ec2_auto_scaling_amazon_ec2_auto_",
+      "category": "resilience",
+      "excerpt": "Amazon EC2 Auto Scaling Amazon EC2 Auto Scaling helps you maintain application availability and allows you to automatically add or remove EC2 instances according to conditions you de\ufb01ne."
+    },
+    {
+      "id": "ctrl_you_can_use_the_eet_management_features_",
+      "category": "resilience",
+      "excerpt": "You can use the \ufb02eet management features of Amazon EC2 Auto Scaling to maintain the health and availability of your \ufb02eet."
+    },
+    {
+      "id": "ctrl_ec2_image_builder_signi_cantly_reduces_t",
+      "category": "general",
+      "excerpt": "EC2 Image Builder signi\ufb01cantly reduces the e\ufb00ort of keeping images up-to-date and secure by providing a simple graphical interface, built-in automation, and AWS-provided security settings."
+    },
+    {
+      "id": "ctrl_for_example_al2023_takes_a_security_by_d",
+      "category": "resilience",
+      "excerpt": "For example, AL2023 takes a security-by-default approach to help improve your security posture with precon\ufb01gured security policies, SELinux in permissive mode and IMDSv2 enabled by default, and the availability of kernel live patching."
+    },
+    {
+      "id": "ctrl_with_this_capability_you_can_adhere_to_o",
+      "category": "general",
+      "excerpt": "With this capability, you can adhere to operational best practices more e\ufb03ciently by ensuring consistency between package versions and updates across your environment."
+    },
+    {
+      "id": "ctrl_aws_app_runner_aws_app_runner_is_a_fully",
+      "category": "general",
+      "excerpt": "AWS App Runner AWS App Runner is a fully managed service that makes it easy for developers to quickly deploy containerized web applications and APIs, at scale and with no prior infrastructure experience required."
+    },
+    {
+      "id": "ctrl_aws_app_runner_automatically_builds_and_",
+      "category": "encryption",
+      "excerpt": "AWS App Runner automatically builds and deploys the web application and load balances tra\ufb03c with encryption."
+    },
+    {
+      "id": "ctrl_you_can_simply_upload_your_code_and_aws_",
+      "category": "logging",
+      "excerpt": "You can simply upload your code, and AWS Elastic Beanstalk automatically handles the deployment, from capacity provisioning, load balancing, and auto scaling to application health monitoring."
+    },
+    {
+      "id": "ctrl_with_fargate_launch_type_all_you_have_to",
+      "category": "identity",
+      "excerpt": "With Fargate launch type, all you have to do is package your application in containers, specify the CPU and memory requirements, de\ufb01ne networking and IAM policies, and launch the application."
+    },
+    {
+      "id": "ctrl_you_can_decide_which_type_of_server_to_u",
+      "category": "general",
+      "excerpt": "You can decide which type of server to use, which applications and how many containers to run in a cluster to optimize utilization, and when you should add or remove servers from a cluster."
+    },
+    {
+      "id": "ctrl_ec2_launch_type_gives_you_more_control_o",
+      "category": "governance",
+      "excerpt": "EC2 launch type gives you more control of your server clusters and provides a broader range of customization options, which might be required to support some speci\ufb01c applications or possible compliance and government requirements."
+    },
+    {
+      "id": "ctrl_just_upload_your_code_and_lambda_takes_c",
+      "category": "resilience",
+      "excerpt": "Just upload your code, and Lambda takes care of everything required to run and scale your code with high availability."
+    },
+    {
+      "id": "ctrl_with_each_release_vmware_cloud_on_aws_av",
+      "category": "resilience",
+      "excerpt": "With each release, VMware Cloud on AWS availability will expand into additional global regions."
+    },
+    {
+      "id": "ctrl_vmware_cloud_on_aws_brings_the_broad_div",
+      "category": "general",
+      "excerpt": "VMware Cloud on AWS brings the broad, diverse and rich innovations of AWS services natively to the enterprise applications running on VMware's compute, storage and network virtualization platforms."
+    },
+    {
+      "id": "ctrl_with_vmware_cloud_on_aws_you_can_use_a_b",
+      "category": "general",
+      "excerpt": "With VMware Cloud on AWS, you can use a broad range of AWS services, including compute, databases, analytics, IoT, security, mobile, deployment, application services, and more."
+    },
+    {
+      "id": "ctrl_by_implementing_best_practices_to_mainta",
+      "category": "general",
+      "excerpt": "By implementing best practices to maintain your infrastructure, AWS Managed Services helps to reduce your operational overhead and risk."
+    },
+    {
+      "id": "ctrl_aws_managed_services_automates_common_ac",
+      "category": "logging",
+      "excerpt": "AWS Managed Services automates common activities such as change requests, monitoring, patch management, security, and backup services, and provides full lifecycle services to provision, run, and support your infrastructure."
+    },
+    {
+      "id": "ctrl_our_rigor_and_controls_help_to_enforce_y",
+      "category": "general",
+      "excerpt": "Our rigor and controls help to enforce your corporate and security infrastructure policies, and enables you to develop solutions and applications using your preferred development approach."
+    },
+    {
+      "id": "ctrl_with_simple_api_calls_you_can_launch_and",
+      "category": "logging",
+      "excerpt": "With simple API calls, you can launch and stop Docker-enabled applications, query the complete state of your application, and access many familiar features such as IAM roles, security groups, load balancers, Amazon CloudWatch Events, CloudFormation templates, and AWS CloudTrail logs."
+    },
+    {
+      "id": "ctrl_amazon_eks_runs_the_kubernetes_managemen",
+      "category": "resilience",
+      "excerpt": "Amazon EKS runs the Kubernetes management infrastructure for you across multiple AWS Availability Zones to eliminate a single point of failure."
+    },
+    {
+      "id": "ctrl_you_simply_select_the_application_you_wa",
+      "category": "general",
+      "excerpt": "You simply select the application you want to containerize, and A2C packages the application artifact and identi\ufb01ed dependencies into container images, con\ufb01gures the network ports, and generates the ECS task and Kubernetes pod de\ufb01nitions."
+    },
+    {
+      "id": "ctrl_with_rosa_you_can_use_the_wide_range_of_",
+      "category": "general",
+      "excerpt": "With ROSA, you can use the wide range of AWS compute, database, analytics, machine learning (ML), networking, mobile, and other services to build secure and scalable applications faster."
+    },
+    {
+      "id": "ctrl_it_provides_the_security_availability_an",
+      "category": "resilience",
+      "excerpt": "It provides the security, availability, and reliability of th commercial databases at 1/10 the cost."
+    },
+    {
+      "id": "ctrl_amazon_aurora_is_fully_managed_by_amazon",
+      "category": "resilience",
+      "excerpt": "Amazon Aurora is fully managed by Amazon Relational Database Service (Amazon RDS), which automates time-consuming administration tasks such as hardware provisioning, database setup, patching, and backups."
+    },
+    {
+      "id": "ctrl_it_s_a_fully_managed_multi_region_databa",
+      "category": "resilience",
+      "excerpt": "It's a fully managed, multi-Region database with built-in security, backup and restore, and in-memory caching for internet-scale applications."
+    },
+    {
+      "id": "ctrl_amazon_elasticache_redis_oss_is_a_redis_",
+      "category": "resilience",
+      "excerpt": "Amazon ElastiCache (Redis OSS) is a Redis-compatible in-memory service that delivers the ease-of-use and power of Redis along with the availability, reliability, and performance suitable for the most demanding applications."
+    },
+    {
+      "id": "ctrl_elasticache_serverless_automatically_sto",
+      "category": "resilience",
+      "excerpt": "ElastiCache Serverless automatically stores data redundantly across multiple Availability Zones (AZs) and provides a 99.99% availability Service Level Agreement (SLA)."
+    },
+    {
+      "id": "ctrl_memorydb_also_stores_data_durably_across",
+      "category": "logging",
+      "excerpt": "MemoryDB also stores data durably across multiple Availability Zones using a distributed transactional log to allow fast failover, database recovery, and node restarts."
+    },
+    {
+      "id": "ctrl_neptune_powers_graph_use_cases_such_as_r",
+      "category": "general",
+      "excerpt": "Neptune powers graph use cases such as recommendation engines, fraud detection, knowledge graphs, drug discovery, and network security."
+    },
+    {
+      "id": "ctrl_amazon_neptune_is_highly_available_with_",
+      "category": "resilience",
+      "excerpt": "Amazon Neptune is highly available, with read replicas, point-in-time recovery, continuous backup to Amazon S3, and replication across Availability Zones."
+    },
+    {
+      "id": "ctrl_neptune_is_secure_with_support_for_encry",
+      "category": "encryption",
+      "excerpt": "Neptune is secure with support for encryption at rest."
+    },
+    {
+      "id": "ctrl_neptune_is_fully_managed_so_you_no_longe",
+      "category": "resilience",
+      "excerpt": "Neptune is fully managed, so you no longer need to worry about database management tasks such as hardware provisioning, software patching, setup, con\ufb01guration, or backups."
+    },
+    {
+      "id": "ctrl_it_provides_cost_e_cient_and_resizable_c",
+      "category": "resilience",
+      "excerpt": "It provides cost-e\ufb03cient and resizable capacity while automating time-consuming administration tasks such as hardware provisioning, database setup, patching and backups."
+    },
+    {
+      "id": "ctrl_it_frees_you_to_focus_on_your_applicatio",
+      "category": "resilience",
+      "excerpt": "It frees you to focus on your applications so you can give them the fast performance, high availability, security and compatibility they need."
+    },
+    {
+      "id": "ctrl_amazon_rds_automates_time_consuming_data",
+      "category": "logging",
+      "excerpt": "Amazon RDS automates time-consuming database administration tasks, such as provisioning, backups, software patching, monitoring, and more, to free up time to innovate and drive business value."
+    },
+    {
+      "id": "ctrl_it_also_o_ers_high_availability_with_mul",
+      "category": "resilience",
+      "excerpt": "It also o\ufb00ers high availability with Multi-AZ deployment, disaster recovery solutions with cross-Region backups, and security features to support your business-critical workloads."
+    },
+    {
+      "id": "ctrl_amazon_rds_provides_cost_e_cient_and_res",
+      "category": "resilience",
+      "excerpt": "Amazon RDS provides cost-e\ufb03cient and resizable capacity while automating time-consuming administration tasks including hardware provisioning, database setup, patching, and backups, freeing you to focus on your applications."
+    },
+    {
+      "id": "ctrl_you_can_easily_replicate_amazon_rds_on_v",
+      "category": "resilience",
+      "excerpt": "You can easily replicate Amazon RDS on VMware databases to Amazon RDS instances in AWS, enabling low-cost hybrid deployments for disaster recovery, read replica bursting, and optional long-term backup retention in Amazon Simple Storage Service (Amazon S3)."
+    },
+    {
+      "id": "ctrl_amazon_documentdb_is_designed_from_the_g",
+      "category": "resilience",
+      "excerpt": "Amazon DocumentDB is designed from the ground-up to give you the performance, scalability, and availability you need when operating mission-critical MongoDB workloads at scale."
+    },
+    {
+      "id": "ctrl_lightsail_supports_mysql_and_postgresql_",
+      "category": "resilience",
+      "excerpt": "Lightsail supports MySQL and PostgreSQL databases , and you can con\ufb01gure them for standard availability for regular workloads or high availability for critical workloads."
+    },
+    {
+      "id": "ctrl_common_development_and_operations_tools_",
+      "category": "general",
+      "excerpt": "Common development and operations tools are pre-installed, so no local installation or con\ufb01guration is required."
+    },
+    {
+      "id": "ctrl_corretto_comes_with_long_term_support_th",
+      "category": "general",
+      "excerpt": "Corretto comes with long-term support that will include performance enhancements and security \ufb01xes."
+    },
+    {
+      "id": "ctrl_aws_fault_injection_service_aws_fault_in",
+      "category": "resilience",
+      "excerpt": "AWS Fault Injection Service AWS Fault Injection Service is a fully managed service for running fault injection experiments on AWS that makes it easier to improve an application\u2019s performance, observability, and resiliency."
+    },
+    {
+      "id": "ctrl_fault_injection_experiment_helps_teams_c",
+      "category": "logging",
+      "excerpt": "Fault injection experiment helps teams create the real-world conditions needed to uncover the hidden bugs, monitoring blind spots, and performance bottlenecks that are di\ufb03cult to \ufb01nd in distributed systems."
+    },
+    {
+      "id": "ctrl_amazon_q_developer_amazon_q_developer_fo",
+      "category": "general",
+      "excerpt": "Amazon Q Developer Amazon Q Developer (formerly Amazon CodeWhisperer) assists developers and IT professionals with their tasks\u2014from coding, testing, and upgrading applications, to diagnosing errors, performing security scanning and \ufb01xes, and optimizing AWS resources."
+    },
+    {
+      "id": "ctrl_workspaces_applications_is_built_on_aws_",
+      "category": "general",
+      "excerpt": "WorkSpaces Applications is built on AWS, so you bene\ufb01t from a data center and network architecture designed for the most security-sensitive organizations."
+    },
+    {
+      "id": "ctrl_each_user_has_a_uid_and_responsive_exper",
+      "category": "general",
+      "excerpt": "Each user has a \ufb02uid and responsive experience with your applications, including GPU-intensive 3D design and engineering ones, because your applications run on virtual machines (VMs) optimized for speci\ufb01c use cases and each streaming session automatically adjusts to network conditions."
+    },
+    {
+      "id": "ctrl_simplify_vdi_migration_and_combine_your_",
+      "category": "general",
+      "excerpt": "\u2022 Simplify VDI migration and combine your current VDI software with the security and reliability of AWS."
+    },
+    {
+      "id": "ctrl_workspaces_thin_client_is_a_compact_devi",
+      "category": "logging",
+      "excerpt": "WorkSpaces Thin Client is a compact device designed to connect two monitors and multiple USB devices such as a keyboard, mouse, headset, and webcam."
+    },
+    {
+      "id": "ctrl_to_maximize_endpoint_security_workspaces",
+      "category": "general",
+      "excerpt": "To maximize endpoint security, WorkSpaces Thin Client devices do not allow local data storage or installation of unapproved applications."
+    },
+    {
+      "id": "ctrl_amazon_location_service_amazon_location_",
+      "category": "general",
+      "excerpt": "Amazon Location Service Amazon Location Service makes it easy for developers to add location functionality to applications without compromising data security and user privacy."
+    },
+    {
+      "id": "ctrl_this_includes_cost_privacy_and_security_",
+      "category": "cost",
+      "excerpt": "This includes cost, privacy and security compromises, and tedious and slow integration work."
+    },
+    {
+      "id": "ctrl_the_data_from_these_devices_can_frequent",
+      "category": "general",
+      "excerpt": "The data from these devices can frequently have signi\ufb01cant gaps, corrupted messages, and false readings that must be cleaned up before analysis can occur."
+    },
+    {
+      "id": "ctrl_aws_iot_analytics_automates_each_of_the_",
+      "category": "general",
+      "excerpt": "AWS IoT Analytics automates each of the di\ufb03cult steps that are required to analyze data from IoT devices."
+    },
+    {
+      "id": "ctrl_aws_iot_device_defender_continuously_aud",
+      "category": "logging",
+      "excerpt": "AWS IoT Device Defender continuously audits your IoT con\ufb01gurations to make sure that they aren\u2019t deviating from security best practices."
+    },
+    {
+      "id": "ctrl_aws_iot_device_defender_continuously_aud",
+      "category": "logging",
+      "excerpt": "AWS IoT Device Defender continuously audits the IoT con\ufb01gurations on your devices against a set of prede\ufb01ned security best practices."
+    },
+    {
+      "id": "ctrl_aws_iot_device_defender_sends_an_alert_i",
+      "category": "general",
+      "excerpt": "AWS IoT Device Defender sends an alert if there are any gaps in your IoT con\ufb01guration that might create a security risk, such as identity certi\ufb01cates being shared across multiple devices or a device with a revoked identity certi\ufb01cate trying to connect to AWS IoT Core."
+    },
+    {
+      "id": "ctrl_aws_iot_device_defender_also_lets_you_co",
+      "category": "logging",
+      "excerpt": "AWS IoT Device Defender also lets you continuously monitor security metrics from devices and AWS IoT Core for deviations from what you have de\ufb01ned as appropriate behavior for each device."
+    },
+    {
+      "id": "ctrl_aws_iot_greengrass_and_freertos_automati",
+      "category": "general",
+      "excerpt": "AWS IoT Greengrass and FreeRTOS automatically integrate with AWS IoT Device Defender to provide security metrics from the devices for evaluation."
+    },
+    {
+      "id": "ctrl_if_you_determine_that_you_need_to_take_a",
+      "category": "general",
+      "excerpt": "If you determine that you need to take an action based on an alert, you can use AWS IoT Device Management to take mitigating actions such as pushing security \ufb01xes."
+    },
+    {
+      "id": "ctrl_aws_iot_device_management_as_many_iot_de",
+      "category": "logging",
+      "excerpt": "AWS IoT Device Management As many IoT deployments consist of hundreds of thousands to millions of devices, it is essential to track, monitor, and manage connected device \ufb02eets."
+    },
+    {
+      "id": "ctrl_you_need_to_ensure_your_iot_devices_work",
+      "category": "general",
+      "excerpt": "You need to ensure your IoT devices work properly and securely after they have been deployed."
+    }
+  ],
+  "keyword_counts": {
+    "identity": 33,
+    "encryption": 66,
+    "logging": 220,
+    "network": 43,
+    "resilience": 121,
+    "governance": 77,
+    "cost": 210
+  },
+  "next_modeling_hints": {
+    "provider": "aws",
+    "required_config_paths": [
+      "account_id",
+      "region",
+      "vpc_id",
+      "subnet_ids",
+      "kms_key_id",
+      "cloudtrail_enabled",
+      "logging_sink"
+    ],
+    "drift_signals": [
+      "missing_required_config",
+      "region_mismatch",
+      "unencrypted_storage",
+      "audit_logging_disabled"
+    ]
+  }
+}

@@ -1,0 +1,113 @@
+MODULE k8s.helm.compat.lib.
+
+// Macro layer for Kubernetes CRD + Helm compatibility modeling.
+
+MACRO KHC_DOC(doc, source, environment):
+EMIT khc:doc:{{doc}}#kind@entity:k8s_helm_doc.
+EMIT khc:doc:{{doc}}#source@value:{{source}}.
+EMIT khc:doc:{{doc}}#environment@value:{{environment}}.
+ENDMACRO.
+
+MACRO KHC_COMPAT_PROFILE(id, strict_mode, drift_window_s):
+EMIT khc:profile:{{id}}#kind@entity:k8s_helm_profile.
+EMIT khc:profile:{{id}}#strict_mode@value:{{strict_mode}}.
+EMIT khc:profile:{{id}}#drift_window_s@value:{{drift_window_s}}.
+ENDMACRO.
+
+MACRO KHC_CHART(id, name, version, app_version):
+EMIT khc:chart:{{id}}#kind@entity:helm_chart.
+EMIT khc:chart:{{id}}#chart_name@value:{{name}}.
+EMIT khc:chart:{{id}}#chart_version@value:{{version}}.
+EMIT khc:chart:{{id}}#app_version@value:{{app_version}}.
+ENDMACRO.
+
+MACRO KHC_CHART_VALUE(chart, path, value_type, default_value, required):
+EMIT khc:chart_value:{{chart}}_{{path}}#kind@entity:helm_chart_value.
+EMIT khc:chart_value:{{chart}}_{{path}}#chart@khc:chart:{{chart}}.
+EMIT khc:chart_value:{{chart}}_{{path}}#path@value:{{path}}.
+EMIT khc:chart_value:{{chart}}_{{path}}#value_type@value:{{value_type}}.
+EMIT khc:chart_value:{{chart}}_{{path}}#default@value:{{default_value}}.
+EMIT khc:chart_value:{{chart}}_{{path}}#required@value:{{required}}.
+ENDMACRO.
+
+MACRO KHC_CRD(id, group, version, kind_name, plural, scope):
+EMIT khc:crd:{{id}}#kind@entity:k8s_crd.
+EMIT khc:crd:{{id}}#group@value:{{group}}.
+EMIT khc:crd:{{id}}#version@value:{{version}}.
+EMIT khc:crd:{{id}}#kind_name@value:{{kind_name}}.
+EMIT khc:crd:{{id}}#plural@value:{{plural}}.
+EMIT khc:crd:{{id}}#scope@value:{{scope}}.
+ENDMACRO.
+
+MACRO KHC_TEMPLATE_RESOURCE(id, chart, api_version, kind_name, resource_name):
+EMIT khc:resource:{{id}}#kind@entity:k8s_template_resource.
+EMIT khc:resource:{{id}}#chart@khc:chart:{{chart}}.
+EMIT khc:resource:{{id}}#api_version@value:{{api_version}}.
+EMIT khc:resource:{{id}}#kind_name@value:{{kind_name}}.
+EMIT khc:resource:{{id}}#resource_name@value:{{resource_name}}.
+ENDMACRO.
+
+MACRO KHC_RELEASE(id, chart, namespace, profile):
+EMIT khc:release:{{id}}#kind@entity:k8s_release.
+EMIT khc:release:{{id}}#chart@khc:chart:{{chart}}.
+EMIT khc:release:{{id}}#namespace@value:{{namespace}}.
+EMIT khc:release:{{id}}#profile@khc:profile:{{profile}}.
+ENDMACRO.
+
+MACRO KHC_RELEASE_VALUE(release, path, value):
+EMIT khc:release_value:{{release}}_{{path}}#kind@entity:helm_release_value.
+EMIT khc:release_value:{{release}}_{{path}}#release@khc:release:{{release}}.
+EMIT khc:release_value:{{release}}_{{path}}#path@value:{{path}}.
+EMIT khc:release_value:{{release}}_{{path}}#value@value:{{value}}.
+EMIT khc:release:{{release}}#has_value_path@value:{{path}}.
+ENDMACRO.
+
+RULE khc_resource_matches_crd_kind:
+IF ?res#kind@entity:k8s_template_resource AND ?crd#kind@entity:k8s_crd AND ?res#kind_name@?kind AND ?crd#kind_name@?kind
+THEN ?res#compatible_crd@?crd.
+
+RULE khc_resource_has_compatible_crd:
+IF ?res#compatible_crd@?crd
+THEN ?res#has_compatible_crd@value:true.
+
+RULE khc_release_manages_resource:
+IF ?release#kind@entity:k8s_release AND ?res#kind@entity:k8s_template_resource AND ?release#chart@?chart AND ?res#chart@?chart
+THEN ?release#manages_resource@?res.
+
+RULE khc_release_requires_crd:
+IF ?release#kind@entity:k8s_release AND ?release#manages_resource@?res AND ?res#compatible_crd@?crd
+THEN ?release#requires_crd@?crd.
+
+RULE khc_release_missing_required_value:
+IF ?release#kind@entity:k8s_release AND ?release#chart@?chart AND ?cv#kind@entity:helm_chart_value AND ?cv#chart@?chart AND ?cv#required@value:true AND ?cv#path@?path AND NOT ?release#has_value_path@?path
+THEN ?release#missing_required_value@?path.
+
+RULE khc_release_has_missing_required:
+IF ?release#missing_required_value@?path
+THEN ?release#has_missing_required@value:true.
+
+RULE khc_release_config_ready:
+IF ?release#kind@entity:k8s_release AND NOT ?release#has_missing_required@value:true
+THEN ?release#config_ready@value:true.
+
+RULE khc_release_drift_candidate:
+IF ?release#kind@entity:k8s_release AND ?release#manages_resource@?res AND NOT ?res#has_compatible_crd@value:true
+THEN ?release#drift_candidate@?res.
+
+QUERY khc_releases:
+FIND ?release ?namespace WHERE ?release#kind@entity:k8s_release AND ?release#namespace@?namespace.
+
+QUERY khc_resources:
+FIND ?res ?kind WHERE ?res#kind@entity:k8s_template_resource AND ?res#kind_name@?kind.
+
+QUERY khc_crds:
+FIND ?crd ?kind WHERE ?crd#kind@entity:k8s_crd AND ?crd#kind_name@?kind.
+
+QUERY khc_missing_required_values:
+FIND ?release ?path WHERE ?release#missing_required_value@?path.
+
+QUERY khc_drift_candidates:
+FIND ?release ?res WHERE ?release#drift_candidate@?res.
+
+QUERY khc_release_requirements:
+FIND ?release ?crd WHERE ?release#requires_crd@?crd.

@@ -1,0 +1,81 @@
+MODULE aws.namespace.bridge.lib.
+
+// Bridge layer that composes:
+// - aws-model macros/rules
+// - namespace-pn-nd macros/rules
+//
+// Goal: let AWS compatibility targets be validated against names visible inside
+// namespace contexts (not only global catalog existence).
+
+MACRO AWS_NS_SCOPE_TARGET(target, ctx):
+EMIT aws:model:{{target}}#scope_ctx@ns:ctx:{{ctx}}.
+ENDMACRO.
+
+MACRO AWS_NS_BIND_SERVICE(ctx, local_name, service_id):
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_service_{{service_id}}#kind@entity:ns_binding.
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_service_{{service_id}}#context@ns:ctx:{{ctx}}.
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_service_{{service_id}}#local_name@value:{{local_name}}.
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_service_{{service_id}}#target@value:aws_service_{{service_id}}.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_svc_{{service_id}}#kind@entity:aws_namespace_service_ref.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_svc_{{service_id}}#context@ns:ctx:{{ctx}}.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_svc_{{service_id}}#local_name@value:{{local_name}}.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_svc_{{service_id}}#service@aws:service:{{service_id}}.
+ENDMACRO.
+
+MACRO AWS_NS_BIND_REGION(ctx, local_name, region_id):
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_region_{{region_id}}#kind@entity:ns_binding.
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_region_{{region_id}}#context@ns:ctx:{{ctx}}.
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_region_{{region_id}}#local_name@value:{{local_name}}.
+EMIT ns:binding:{{ctx}}_{{local_name}}_aws_region_{{region_id}}#target@value:aws_region_{{region_id}}.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_region_{{region_id}}#kind@entity:aws_namespace_region_ref.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_region_{{region_id}}#context@ns:ctx:{{ctx}}.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_region_{{region_id}}#local_name@value:{{local_name}}.
+EMIT aws:ns_ref:{{ctx}}_{{local_name}}_region_{{region_id}}#region@aws:region:{{region_id}}.
+ENDMACRO.
+
+RULE aws_ns_visible_service:
+IF ?ctx#visible_name@?name AND ?ref#kind@entity:aws_namespace_service_ref AND ?ref#context@?ctx AND ?ref#local_name@?name AND ?ref#service@?svc
+THEN ?ctx#visible_service@?svc.
+
+RULE aws_ns_visible_region:
+IF ?ctx#visible_name@?name AND ?ref#kind@entity:aws_namespace_region_ref AND ?ref#context@?ctx AND ?ref#local_name@?name AND ?ref#region@?region
+THEN ?ctx#visible_region@?region.
+
+RULE aws_ns_scoped_has_required_service:
+IF ?m#kind@entity:aws_compat_target AND ?m#scope_ctx@?ctx AND ?m#requires_service@?svc AND ?ctx#visible_service@?svc
+THEN ?m#scoped_has_required_service@?svc.
+
+RULE aws_ns_scoped_missing_required_service:
+IF ?m#kind@entity:aws_compat_target AND ?m#scope_ctx@?ctx AND ?m#requires_service@?svc AND NOT ?m#scoped_has_required_service@?svc
+THEN ?m#scoped_missing_required_service@?svc.
+
+RULE aws_ns_scoped_has_required_region:
+IF ?m#kind@entity:aws_compat_target AND ?m#scope_ctx@?ctx AND ?m#requires_region@?region AND ?ctx#visible_region@?region
+THEN ?m#scoped_has_required_region@?region.
+
+RULE aws_ns_scoped_missing_required_region:
+IF ?m#kind@entity:aws_compat_target AND ?m#scope_ctx@?ctx AND ?m#requires_region@?region AND NOT ?m#scoped_has_required_region@?region
+THEN ?m#scoped_missing_required_region@?region.
+
+RULE aws_ns_scoped_missing_marks_target_from_service:
+IF ?m#scoped_missing_required_service@?svc
+THEN ?m#has_missing_any@value:true.
+
+RULE aws_ns_scoped_missing_marks_target_from_region:
+IF ?m#scoped_missing_required_region@?region
+THEN ?m#has_missing_any@value:true.
+
+QUERY aws_ns_target_scopes:
+FIND ?m ?ctx WHERE ?m#scope_ctx@?ctx.
+
+QUERY aws_ns_visible_services:
+FIND ?ctx ?svc WHERE ?ctx#visible_service@?svc.
+
+QUERY aws_ns_visible_regions:
+FIND ?ctx ?region WHERE ?ctx#visible_region@?region.
+
+QUERY aws_ns_scoped_missing_services:
+FIND ?m ?svc WHERE ?m#scoped_missing_required_service@?svc.
+
+QUERY aws_ns_scoped_missing_regions:
+FIND ?m ?region WHERE ?m#scoped_missing_required_region@?region.

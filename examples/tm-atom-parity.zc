@@ -1,0 +1,6 @@
+MODULE tm.parity.
+
+TM_ATOM parity [states=#{q0 qa qr}, alphabet=#{0 _}, blank=_, initial=q0, accept=#{qa}, reject=#{qr}, transitions={[q0 0] [q0 0 :R], [q0 _] [qa _ :N]}].
+
+QUERY transitions:
+FIND ?t WHERE tm_atom:parity#transition@?t.

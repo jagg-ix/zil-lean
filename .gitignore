@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Build/cache
+*.log
+*.tmp
+.tmp/
+out/
+.cpcache/
+.m2/
+target/
+dist/
+.clj-kondo/
+.lsp/
+__pycache__/

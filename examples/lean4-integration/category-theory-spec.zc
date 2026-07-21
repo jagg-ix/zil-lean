@@ -1,0 +1,49 @@
+MODULE lean4.integration.category.theory.spec.
+
+// Level 3 (most complex): category-theory layer, which recursively lowers into
+// the theorem-impact layer — every CT construct emits proof obligations.
+// Content: the free/forgetful adjunction between Set and Grp, with Lean4
+// witnesses naming standard Mathlib declarations.
+//
+// Lean4 path: theorem bridge (the theorem layer contains multi-head status
+// rules, which the v0.2 snapshot exporter does not lower yet — the bridge
+// pipeline is the supported route).
+//
+//   ./bin/zil theorem-dsl-ci examples/lean4-integration/category-theory-spec.zc /tmp/ct_out
+//   cd ../zil-lean && lake env lean /tmp/ct_out/category-theory-spec.dsl.bridge.lean
+//
+// Expected operator summary: left triangle PROVED (full witness chain),
+// right triangle WEAK (deliberately left as the open formalization target).
+
+USE CT_CATEGORY(set_cat, u1).
+USE CT_CATEGORY(grp_cat, u1).
+
+// The category-axiom assumptions generated above hang off signals named
+// ct_cat_<name>; tie those signals to the Mathlib component and mark them
+// verified (Set and Grp are Mathlib category instances).
+USE THM_COMPONENT(lean4_mathlib, tier0).
+USE THM_COMPONENT_HEALTHY(lean4_mathlib, toolchain_check).
+USE THM_SIGNAL(ct_cat_set_cat, lean4_mathlib).
+USE THM_SIGNAL(ct_cat_grp_cat, lean4_mathlib).
+USE THM_SIGNAL_HEALTHY(ct_cat_set_cat, mathlib_instance).
+USE THM_SIGNAL_HEALTHY(ct_cat_grp_cat, mathlib_instance).
+
+USE CT_FUNCTOR(free_group_functor, set_cat, grp_cat).
+USE CT_FUNCTOR(forgetful_functor, grp_cat, set_cat).
+
+// F ⊣ U : generates unit/counit naturality lemmas + both triangle-identity
+// theorems as obligations.
+USE CT_ADJUNCTION(free_forgetful, free_group_functor, forgetful_functor).
+
+// Lean4 witnesses (bookkeeping tokens naming Mathlib declarations; the Lean
+// kernel remains the proof authority).
+USE CT_LEAN4_LEMMA(ct_fun_free_group_functor_preserves_comp, Mathlib.CategoryTheory.Functor.Basic, CategoryTheory.Functor.map_comp).
+USE CT_LEAN4_LEMMA(ct_fun_forgetful_functor_preserves_comp, Mathlib.CategoryTheory.Functor.Basic, CategoryTheory.Functor.map_comp).
+USE CT_LEAN4_LEMMA(ct_adj_free_forgetful_unit_nat_trans, Mathlib.Algebra.Category.Grp.Adjunctions, CategoryTheory.Adjunction.unit).
+USE CT_LEAN4_LEMMA(ct_adj_free_forgetful_counit_nat_trans, Mathlib.Algebra.Category.Grp.Adjunctions, CategoryTheory.Adjunction.counit).
+USE CT_LEAN4_THEOREM(ct_adj_free_forgetful_left_triangle, Mathlib.CategoryTheory.Adjunction.Basic, CategoryTheory.Adjunction.left_triangle_components).
+// ct_adj_free_forgetful_right_triangle: no witness yet — reported WEAK.
+
+// Audit queries: unproved obligations + operator summary.
+USE CT_QUERY_MISSING().
+USE DSL_SUMMARY_QUERIES().

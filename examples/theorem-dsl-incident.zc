@@ -1,0 +1,44 @@
+MODULE theorem.dsl.incident.demo.
+
+// Demonstrates optional high-level theorem DSL macros layered over canonical core.
+// Run with:
+//   ./bin/zil theorem-dsl-ci examples/theorem-dsl-incident.zc /tmp
+
+// Baseline components/signals.
+USE THM_COMPONENT(control_plane, tier0).
+USE THM_COMPONENT(etcd_cluster, tier0).
+USE THM_COMPONENT_HEALTHY(etcd_cluster, probe).
+USE THM_COMPONENT_BROKEN(control_plane, probe, lease_staleness).
+
+USE THM_SIGNAL(grant_mutex, control_plane).
+USE THM_SIGNAL(etcd_quorum, etcd_cluster).
+USE THM_SIGNAL_HEALTHY(etcd_quorum, quorum_probe).
+
+// High-level DSL declarations.
+USE ASSUMPTION(a_grant_mutex, safety).
+USE ASSUMPTION_FROM_SIGNAL(a_grant_mutex, grant_mutex).
+
+USE ASSUMPTION(a_etcd_quorum, safety).
+USE ASSUMPTION_FROM_SIGNAL(a_etcd_quorum, etcd_quorum).
+
+USE LEMMA(l_etcd_election_safety, high).
+USE LEMMA_REQUIRES_ASSUMPTION(l_etcd_election_safety, a_etcd_quorum).
+USE EVIDENCE_FOR_LEMMA(l_etcd_election_safety, lean4, proof:etcd_election_001).
+
+USE THEOREM(t_single_controller_safety, high).
+USE THEOREM_REQUIRES_ASSUMPTION(t_single_controller_safety, a_grant_mutex).
+USE THEOREM_REQUIRES_LEMMA(t_single_controller_safety, l_etcd_election_safety).
+USE THEOREM_ENSURES(t_single_controller_safety, at_most_one_controller).
+USE EVIDENCE_FOR_THEOREM(t_single_controller_safety, lean4, proof:single_controller_001).
+
+USE THEOREM(t_remote_exec_integrity, medium).
+USE THEOREM_REQUIRES_ASSUMPTION(t_remote_exec_integrity, a_etcd_quorum).
+USE THEOREM_REQUIRES_LEMMA(t_remote_exec_integrity, l_etcd_election_safety).
+USE THEOREM_ENSURES(t_remote_exec_integrity, remote_exec_integrity).
+// no theorem proof witness => WEAK (if not broken)
+
+USE INCIDENT(inc_001, high).
+USE INCIDENT_BREAK_COMPONENT(inc_001, control_plane, probe, lease_staleness).
+USE INCIDENT_LINK_THEOREM(inc_001, t_single_controller_safety).
+
+USE DSL_SUMMARY_QUERIES().

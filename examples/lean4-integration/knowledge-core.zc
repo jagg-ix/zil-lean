@@ -1,0 +1,33 @@
+MODULE lean4.integration.knowledge.core.
+
+// Level 1 (simple): core facts + one rule, no macro library.
+// Lean4 path: native zil-lean snapshot module.
+//
+//   ./bin/zil export-snapshot examples/lean4-integration/knowledge-core.zc \
+//     /tmp/KnowledgeCore.snapshot.json /tmp/KnowledgeCore.lean Zil.Generated.KnowledgeCore
+//   cd ../zil-lean && lake env lean /tmp/KnowledgeCore.lean
+//
+// The generated module elaborates the facts and the rule inside Lean's kernel
+// (zil_fact / zil_rule syntax from the zil-lean package).
+
+quantity:temperature#measured_by@instrument:thermocouple.
+quantity:pressure#measured_by@instrument:manometer.
+quantity:entropy#derived_from@quantity:temperature.
+quantity:entropy#derived_from@quantity:pressure.
+
+instrument:thermocouple#calibrated@value:true [method = "fixed_point", year = 2026].
+instrument:manometer#calibrated@value:true [method = "deadweight", year = 2025].
+
+RULE trusted_when_calibrated:
+IF ?q#measured_by@?inst AND ?inst#calibrated@value:true
+THEN ?q#trusted@value:true.
+
+RULE derived_trusted:
+IF ?q#derived_from@?base AND ?base#trusted@value:true
+THEN ?q#input_trusted@?base.
+
+QUERY trusted_quantities:
+FIND ?q WHERE ?q#trusted@value:true.
+
+QUERY entropy_inputs:
+FIND ?base WHERE quantity:entropy#input_trusted@?base.

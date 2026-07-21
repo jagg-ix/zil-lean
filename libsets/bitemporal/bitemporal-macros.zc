@@ -1,0 +1,169 @@
+MODULE bitemporal.dsl.lib.
+
+// Bitemporal DSL macro layer.
+//
+// Goals:
+// - represent valid-time and transaction-time explicitly
+// - encode replayable evidence links
+// - encode corrections as append-only supersession chains
+//
+// Note:
+// This layer is intentionally monotonic. It models supersession and snapshots
+// explicitly instead of deleting/retracting previous versions.
+
+MACRO BT_TIMEPOINT(id, axis, instant):
+EMIT bt:tp:{{id}}#kind@entity:bt_timepoint.
+EMIT bt:tp:{{id}}#axis@value:{{axis}}.
+EMIT bt:tp:{{id}}#instant@value:{{instant}}.
+ENDMACRO.
+
+MACRO BT_TIME_BEFORE(left, right):
+EMIT bt:tp:{{left}}#before@bt:tp:{{right}}.
+ENDMACRO.
+
+MACRO BT_ASSERTION(id, subject, relation):
+EMIT bt:assertion:{{id}}#kind@entity:bt_assertion.
+EMIT bt:assertion:{{id}}#subject@{{subject}}.
+EMIT bt:assertion:{{id}}#relation@value:{{relation}}.
+ENDMACRO.
+
+MACRO BT_VERSION(id, assertion, object, valid_from, tx_from):
+EMIT bt:version:{{id}}#kind@entity:bt_version.
+EMIT bt:version:{{id}}#assertion@bt:assertion:{{assertion}}.
+EMIT bt:version:{{id}}#object@{{object}}.
+EMIT bt:version:{{id}}#valid_from@bt:tp:{{valid_from}}.
+EMIT bt:version:{{id}}#tx_from@bt:tp:{{tx_from}}.
+ENDMACRO.
+
+MACRO BT_VALID_TO(version, valid_to):
+EMIT bt:version:{{version}}#valid_to@bt:tp:{{valid_to}}.
+ENDMACRO.
+
+MACRO BT_TX_TO(version, tx_to):
+EMIT bt:version:{{version}}#tx_to@bt:tp:{{tx_to}}.
+ENDMACRO.
+
+MACRO BT_EVIDENCE(id, source, digest):
+EMIT bt:evidence:{{id}}#kind@entity:bt_evidence.
+EMIT bt:evidence:{{id}}#source@source:{{source}}.
+EMIT bt:evidence:{{id}}#digest@value:{{digest}}.
+ENDMACRO.
+
+MACRO BT_EVIDENCE_CAPTURED_AT(evidence, tx_timepoint):
+EMIT bt:evidence:{{evidence}}#captured_at_tx@bt:tp:{{tx_timepoint}}.
+ENDMACRO.
+
+MACRO BT_VERSION_EVIDENCE(version, evidence):
+EMIT bt:version:{{version}}#evidence@bt:evidence:{{evidence}}.
+ENDMACRO.
+
+MACRO BT_CORRECTION(id, assertion, replaces_version, corrected_version, reason):
+EMIT bt:correction:{{id}}#kind@entity:bt_correction.
+EMIT bt:correction:{{id}}#assertion@bt:assertion:{{assertion}}.
+EMIT bt:correction:{{id}}#replaces@bt:version:{{replaces_version}}.
+EMIT bt:correction:{{id}}#corrected_by@bt:version:{{corrected_version}}.
+EMIT bt:correction:{{id}}#reason@value:{{reason}}.
+ENDMACRO.
+
+MACRO BT_CORRECTION_AT(id, tx_timepoint):
+EMIT bt:correction:{{id}}#tx_at@bt:tp:{{tx_timepoint}}.
+ENDMACRO.
+
+MACRO BT_CORRECTION_EVIDENCE(correction, evidence):
+EMIT bt:correction:{{correction}}#evidence@bt:evidence:{{evidence}}.
+ENDMACRO.
+
+MACRO BT_REPLAY_RUN(id, assertion, valid_asof, tx_asof):
+EMIT bt:replay:{{id}}#kind@entity:bt_replay_run.
+EMIT bt:replay:{{id}}#assertion@bt:assertion:{{assertion}}.
+EMIT bt:replay:{{id}}#valid_asof@bt:tp:{{valid_asof}}.
+EMIT bt:replay:{{id}}#tx_asof@bt:tp:{{tx_asof}}.
+ENDMACRO.
+
+MACRO BT_ASOF_SNAPSHOT(id, assertion, version, valid_asof, tx_asof):
+EMIT bt:snapshot:{{id}}#kind@entity:bt_asof_snapshot.
+EMIT bt:snapshot:{{id}}#assertion@bt:assertion:{{assertion}}.
+EMIT bt:snapshot:{{id}}#version@bt:version:{{version}}.
+EMIT bt:snapshot:{{id}}#valid_asof@bt:tp:{{valid_asof}}.
+EMIT bt:snapshot:{{id}}#tx_asof@bt:tp:{{tx_asof}}.
+ENDMACRO.
+
+RULE bt_time_before_transitive:
+IF ?a#before@?b AND ?b#before@?c
+THEN ?a#before@?c.
+
+RULE bt_assertion_has_history_version:
+IF ?v#kind@entity:bt_version AND ?v#assertion@?a
+THEN ?a#history_version@?v.
+
+RULE bt_assertion_has_history_correction:
+IF ?c#kind@entity:bt_correction AND ?c#assertion@?a
+THEN ?a#history_correction@?c.
+
+RULE bt_version_superseded_by_correction:
+IF ?c#kind@entity:bt_correction AND ?c#replaces@?old AND ?old#kind@entity:bt_version AND ?c#corrected_by@?new AND ?new#kind@entity:bt_version
+THEN ?old#superseded_by@?new.
+
+RULE bt_version_superseded_transitive:
+IF ?a#kind@entity:bt_version AND ?a#superseded_by@?b AND ?b#kind@entity:bt_version AND ?b#superseded_by@?c AND ?c#kind@entity:bt_version
+THEN ?a#superseded_by@?c.
+
+RULE bt_version_replay_next:
+IF ?v#kind@entity:bt_version AND ?v#superseded_by@?next AND ?next#kind@entity:bt_version
+THEN ?v#replay_next@?next.
+
+RULE bt_version_replayable_from_evidence:
+IF ?v#kind@entity:bt_version AND ?v#evidence@?e
+THEN ?v#replayable@value:true.
+
+RULE bt_correction_replayable_from_evidence:
+IF ?c#kind@entity:bt_correction AND ?c#evidence@?e
+THEN ?c#replayable@value:true.
+
+RULE bt_version_evidence_tx:
+IF ?v#kind@entity:bt_version AND ?v#evidence@?e AND ?e#captured_at_tx@?tx
+THEN ?v#evidence_tx@?tx.
+
+RULE bt_correction_evidence_tx:
+IF ?c#kind@entity:bt_correction AND ?c#evidence@?e AND ?e#captured_at_tx@?tx
+THEN ?c#evidence_tx@?tx.
+
+RULE bt_replay_run_includes_history:
+IF ?run#kind@entity:bt_replay_run AND ?run#assertion@?a AND ?v#kind@entity:bt_version AND ?v#assertion@?a
+THEN ?run#version@?v.
+
+RULE bt_replay_run_edge:
+IF ?run#kind@entity:bt_replay_run AND ?run#version@?from AND ?from#kind@entity:bt_version AND ?from#replay_next@?to AND ?to#kind@entity:bt_version
+THEN ?run#replay_edge@?to.
+
+RULE bt_snapshot_object:
+IF ?snap#kind@entity:bt_asof_snapshot AND ?snap#version@?v AND ?v#kind@entity:bt_version AND ?v#object@?o
+THEN ?snap#object@?o.
+
+RULE bt_snapshot_replayable:
+IF ?snap#kind@entity:bt_asof_snapshot AND ?snap#version@?v AND ?v#replayable@value:true
+THEN ?snap#replayable@value:true.
+
+QUERY bt_assertion_history_versions:
+FIND ?assertion ?version WHERE ?assertion#kind@entity:bt_assertion AND ?assertion#history_version@?version AND ?version#kind@entity:bt_version.
+
+QUERY bt_assertion_history_corrections:
+FIND ?assertion ?correction WHERE ?assertion#kind@entity:bt_assertion AND ?assertion#history_correction@?correction AND ?correction#kind@entity:bt_correction.
+
+QUERY bt_correction_chain:
+FIND ?old ?new WHERE ?old#kind@entity:bt_version AND ?old#replay_next@?new AND ?new#kind@entity:bt_version.
+
+QUERY bt_replayable_versions:
+FIND ?version WHERE ?version#kind@entity:bt_version AND ?version#replayable@value:true.
+
+QUERY bt_replayable_corrections:
+FIND ?correction WHERE ?correction#kind@entity:bt_correction AND ?correction#replayable@value:true.
+
+QUERY bt_replay_runs:
+FIND ?run ?version WHERE ?run#kind@entity:bt_replay_run AND ?run#version@?version AND ?version#kind@entity:bt_version.
+
+QUERY bt_replay_edges:
+FIND ?run ?to WHERE ?run#kind@entity:bt_replay_run AND ?run#replay_edge@?to AND ?to#kind@entity:bt_version.
+
+QUERY bt_asof_snapshots:
+FIND ?snapshot ?assertion ?version ?object WHERE ?snapshot#kind@entity:bt_asof_snapshot AND ?snapshot#assertion@?assertion AND ?assertion#kind@entity:bt_assertion AND ?snapshot#version@?version AND ?version#kind@entity:bt_version AND ?snapshot#object@?object.

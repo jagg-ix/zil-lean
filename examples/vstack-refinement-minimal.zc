@@ -1,0 +1,13 @@
+MODULE vstack.refinement.minimal.
+
+// Optional theorem contract in the same model.
+theorem:t_controller_singleton#kind@entity:theorem.
+theorem:t_controller_singleton#criticality@value:high.
+theorem:t_controller_singleton#requires_assumption@assumption:a_election_safety.
+theorem:t_controller_singleton#ensures@guarantee:at_most_one_controller.
+
+// Refinement relation layer.
+REFINES core_to_logic [spec=tla:DistributedControl, impl=lean4:Step, mapping=map:core_to_logic, layer_from=spec, layer_to=logic].
+CORRESPONDS logic_to_runtime [left=lean4:Step, right=acl2:ExecStep, domain=controller_state, refines=core_to_logic].
+PROOF_OBLIGATION po_refines_sound [relation=core_to_logic, statement="x > 0 IMPLIES y > 0", tool=z3, logic=QF_LRA, expectation=sat, criticality=high].
+PROOF_OBLIGATION po_correspondence_sound [relation=corresponds:logic_to_runtime, statement="Lean and ACL2 steps agree", tool=acl2, artifact_in="data/acl2-correspondence-ok.log", criticality=high].

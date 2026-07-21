@@ -1,0 +1,95 @@
+MODULE theorem.impact.devops.sre.demo.
+
+// DevOps/SRE theorem-status and backward breakage demo.
+// This example uses macros from `lib/theorem-impact-macros.zc`.
+//
+// Run:
+//   ./bin/zil preprocess examples/theorem-impact-devops-sre.zc /tmp/theorem_impact.pre.zc
+//   ./bin/zil /tmp/theorem_impact.pre.zc
+
+// Components and live health context.
+USE THM_COMPONENT(etcd_cluster, tier0).
+USE THM_COMPONENT(control_plane, tier0).
+USE THM_COMPONENT(audit_pipeline, tier1).
+
+USE THM_COMPONENT_HEALTHY(etcd_cluster, probe).
+USE THM_COMPONENT_BROKEN(control_plane, probe, lease_staleness).
+USE THM_COMPONENT_HEALTHY(audit_pipeline, probe).
+
+// Signals.
+USE THM_SIGNAL(etcd_quorum, etcd_cluster).
+USE THM_SIGNAL_HEALTHY(etcd_quorum, quorum_probe).
+
+USE THM_SIGNAL(control_presence_fresh, control_plane).
+USE THM_SIGNAL(grant_mutex, control_plane).
+
+USE THM_SIGNAL(audit_append_only, audit_pipeline).
+USE THM_SIGNAL_HEALTHY(audit_append_only, log_probe).
+
+// Assumptions.
+USE THM_ASSUMPTION(a_etcd_quorum, safety).
+USE THM_ASSUMPTION_FROM_SIGNAL(a_etcd_quorum, etcd_quorum).
+
+USE THM_ASSUMPTION(a_presence_fresh, liveness).
+USE THM_ASSUMPTION_FROM_SIGNAL(a_presence_fresh, control_presence_fresh).
+
+USE THM_ASSUMPTION(a_grant_mutex, safety).
+USE THM_ASSUMPTION_FROM_SIGNAL(a_grant_mutex, grant_mutex).
+
+USE THM_ASSUMPTION(a_audit_pipeline_append_only, safety).
+USE THM_ASSUMPTION_FROM_SIGNAL(a_audit_pipeline_append_only, audit_append_only).
+
+// Intentionally left without holds/broken witness:
+// this drives CONDITIONAL theorem classification.
+USE THM_ASSUMPTION(a_manual_audit_review_done, process).
+
+// Lemmas.
+USE THM_LEMMA(l_etcd_election_safety, high).
+USE THM_LEMMA_REQUIRES_ASSUMPTION(l_etcd_election_safety, a_etcd_quorum).
+USE THM_LEMMA_PROOF(l_etcd_election_safety, lean4, proof:etcd_election_001).
+
+USE THM_LEMMA(l_presence_snapshot_sound, high).
+USE THM_LEMMA_REQUIRES_ASSUMPTION(l_presence_snapshot_sound, a_presence_fresh).
+USE THM_LEMMA_PROOF(l_presence_snapshot_sound, lean4, proof:presence_snapshot_001).
+
+USE THM_LEMMA(l_audit_chain_integrity, high).
+USE THM_LEMMA_REQUIRES_ASSUMPTION(l_audit_chain_integrity, a_audit_pipeline_append_only).
+USE THM_LEMMA_PROOF(l_audit_chain_integrity, lean4, proof:audit_chain_001).
+
+// Theorems.
+USE THM_THEOREM(t_storage_consistency, high).
+USE THM_THEOREM_REQUIRES_ASSUMPTION(t_storage_consistency, a_etcd_quorum).
+USE THM_THEOREM_REQUIRES_LEMMA(t_storage_consistency, l_etcd_election_safety).
+USE THM_THEOREM_ENSURES(t_storage_consistency, storage_consistency).
+USE THM_THEOREM_PROOF(t_storage_consistency, lean4, proof:storage_consistency_001).
+
+USE THM_THEOREM(t_single_controller_safety, high).
+USE THM_THEOREM_REQUIRES_ASSUMPTION(t_single_controller_safety, a_grant_mutex).
+USE THM_THEOREM_REQUIRES_LEMMA(t_single_controller_safety, l_presence_snapshot_sound).
+USE THM_THEOREM_REQUIRES_LEMMA(t_single_controller_safety, l_etcd_election_safety).
+USE THM_THEOREM_ENSURES(t_single_controller_safety, at_most_one_controller).
+USE THM_THEOREM_PROOF(t_single_controller_safety, lean4, proof:single_controller_001).
+
+USE THM_THEOREM(t_playbook_conformance, medium).
+USE THM_THEOREM_REQUIRES_ASSUMPTION(t_playbook_conformance, a_manual_audit_review_done).
+USE THM_THEOREM_REQUIRES_LEMMA(t_playbook_conformance, l_audit_chain_integrity).
+USE THM_THEOREM_ENSURES(t_playbook_conformance, runbook_conformance).
+USE THM_THEOREM_PROOF(t_playbook_conformance, lean4, proof:playbook_conformance_001).
+
+USE THM_THEOREM(t_remote_exec_integrity, medium).
+USE THM_THEOREM_REQUIRES_ASSUMPTION(t_remote_exec_integrity, a_etcd_quorum).
+USE THM_THEOREM_REQUIRES_LEMMA(t_remote_exec_integrity, l_audit_chain_integrity).
+USE THM_THEOREM_ENSURES(t_remote_exec_integrity, remote_exec_integrity).
+// No proof witness -> WEAK (if no broken deps).
+
+QUERY demo_theorem_statuses:
+FIND ?theorem ?status WHERE ?theorem#kind@entity:theorem AND ?theorem#status@?status.
+
+QUERY demo_conditional_on:
+FIND ?theorem ?dep WHERE ?theorem#conditional_on@?dep.
+
+QUERY demo_break_roots:
+FIND ?node WHERE ?node#is_break_root@value:true.
+
+QUERY demo_impacted_theorems:
+FIND ?theorem ?root WHERE ?theorem#kind@entity:theorem AND ?theorem#impacted_by_root@?root.

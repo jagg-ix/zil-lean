@@ -1,0 +1,17 @@
+MODULE query.ci.adaptive.demo.
+
+// Run:
+//   ./bin/zil query-ci examples/query-ci-adaptive.zc
+//   ./bin/zil query-ci examples/query-ci-adaptive.zc - - ops_profile
+
+QUERY_PACK ops_pack [queries=[q_service_present q_missing_guard], must_return=[q_service_present]].
+DSL_PROFILE ops_profile [query_pack=ops_pack, planner_hint=high_selectivity_first, verification_chain=[query_ci constraint]].
+
+service:api#kind@entity:service.
+service:api#status@value:healthy.
+
+QUERY q_service_present:
+FIND ?svc WHERE ?svc#kind@entity:service.
+
+QUERY q_missing_guard:
+FIND ?svc WHERE ?svc#status@value:degraded.

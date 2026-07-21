@@ -1,0 +1,11 @@
+MODULE cucumber.causal.datasource.
+
+// Minimal declaration for runtime ingest from a Cucumber JSON report.
+// The ingest runtime (not plain compile/execute) materializes:
+// - step records
+// - vector-clock components (:vc_component)
+// - before edges (:zil/event-left -> :zil/event-right)
+DATASOURCE cucumber_run [type=cucumber, path="artifacts/cucumber-report.json", poll_mode=event].
+
+METRIC cucumber_step_duration [source=datasource:cucumber_run, unit=ns].
+POLICY cucumber_run_nonempty [condition="step_count >= 1", criticality=high].

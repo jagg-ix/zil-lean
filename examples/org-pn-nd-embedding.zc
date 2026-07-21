@@ -1,0 +1,50 @@
+MODULE org.pn.nd.embedding.demo.
+
+// Organization + Petri-net + N-dimensional embedding demo.
+//
+// Run:
+//   ./bin/zil preprocess examples/org-pn-nd-embedding.zc /tmp/org_pn_nd.pre.zc libsets/org-pn-nd
+//   ./bin/zil /tmp/org_pn_nd.pre.zc
+
+// Organization and Petri-net profile.
+USE ORG(acme_ops, enterprise).
+USE PN_NET(acme_flow, lppn).
+USE ORG_USES_PETRINET(acme_ops, acme_flow).
+
+// N-dimensional spaces (1D -> 2D -> 3D).
+USE ND_DIMENSION(d1, 1).
+USE ND_DIMENSION(d2, 2).
+USE ND_DIMENSION(d3, 3).
+USE ND_DIM_SUCCESSOR(d1, d2).
+USE ND_DIM_SUCCESSOR(d2, d3).
+
+USE ND_SPACE(transport_space, d1).
+USE ND_SPACE(protocol_space, d2).
+USE ND_SPACE(operations_space, d3).
+
+USE ND_EMBED_SPACE(transport_space, protocol_space).
+USE ND_EMBED_SPACE(protocol_space, operations_space).
+
+USE ND_SPACE_LINK(link_s_tp, transport_space, protocol_space, upgrade).
+USE ND_SPACE_LINK(link_s_po, protocol_space, operations_space, elevate).
+
+// Net models these spaces.
+USE PN_MODELS_SPACE(acme_flow, transport_space).
+USE PN_MODELS_SPACE(acme_flow, protocol_space).
+USE PN_MODELS_SPACE(acme_flow, operations_space).
+
+// Software layers embedding N-1 into N.
+USE SW_LAYER(l_transport, transport_space, transport).
+USE SW_LAYER(l_protocol, protocol_space, protocol).
+USE SW_LAYER(l_ops, operations_space, operations).
+
+USE SW_EMBED_LAYER(l_transport, l_protocol).
+USE SW_EMBED_LAYER(l_protocol, l_ops).
+
+// Connected layers.
+USE SW_LAYER_LINK(link_l_tp, l_transport, l_protocol, overlay).
+USE SW_LAYER_LINK(link_l_po, l_protocol, l_ops, mcp).
+
+// LPPN-style hybrid marking: reactive + declarative rules on same net.
+USE LPPN_RULE(acme_flow, r_flow_progress, reactive).
+USE LPPN_RULE(acme_flow, r_model_consistency, declarative).

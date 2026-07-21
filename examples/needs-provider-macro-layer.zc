@@ -1,0 +1,175 @@
+MODULE needs.provider.demo.
+
+// Runnable demo of the NEED/provider macro concepts.
+// Until cross-file imports are added to ZIL core, this file vendors a compact
+// subset of the macros from `lib/needs-provider-macros.zc`.
+
+MACRO NP_NEED(id, target):
+EMIT need:{{id}}#kind@entity:need.
+EMIT need:{{id}}#target@{{target}}.
+ENDMACRO.
+
+MACRO NP_NEED_ACCEPTS(id, criterion):
+EMIT need:{{id}}#accepts@crit:{{criterion}}.
+ENDMACRO.
+
+MACRO NP_NEED_REJECTS(id, criterion):
+EMIT need:{{id}}#rejects@crit:{{criterion}}.
+ENDMACRO.
+
+MACRO NP_NEED_POLICY(id, policy):
+EMIT need:{{id}}#policy@value:{{policy}}.
+ENDMACRO.
+
+MACRO NP_CRITERION(id, kind):
+EMIT crit:{{id}}#kind@entity:criterion.
+EMIT crit:{{id}}#criterion_kind@value:{{kind}}.
+ENDMACRO.
+
+MACRO NP_CRITERION_CTX_EQ(id, var, value):
+EMIT crit:{{id}}#kind@entity:criterion_context_equals.
+EMIT crit:{{id}}#expects_ctx@ctx:{{var}}={{value}}.
+ENDMACRO.
+
+MACRO NP_CRITERION_VERSION(id, op, version):
+EMIT crit:{{id}}#kind@entity:criterion_version.
+EMIT crit:{{id}}#op@value:{{op}}.
+EMIT crit:{{id}}#version@ver:{{version}}.
+ENDMACRO.
+
+MACRO NP_CONTEXT(var, value):
+EMIT context:solver#has@ctx:{{var}}={{value}}.
+ENDMACRO.
+
+MACRO NP_PROVIDER(id, target, version):
+EMIT provider:{{id}}#kind@entity:provider.
+EMIT provider:{{id}}#target@{{target}}.
+EMIT provider:{{id}}#version@ver:{{version}}.
+ENDMACRO.
+
+MACRO NP_PROVIDER_MEETS_IF_CONTEXT(id, criterion):
+EMIT provider:{{id}}#meets_if@crit:{{criterion}}.
+ENDMACRO.
+
+MACRO NP_MEETS_WITH_PROOF(id, criterion, engine, evidence):
+EMIT provider:{{id}}#meets@crit:{{criterion}}.
+EMIT proof:{{id}}:{{criterion}}#kind@entity:evaluation_proof.
+EMIT proof:{{id}}:{{criterion}}#provider@provider:{{id}}.
+EMIT proof:{{id}}:{{criterion}}#criterion@crit:{{criterion}}.
+EMIT proof:{{id}}:{{criterion}}#engine@engine:{{engine}}.
+EMIT proof:{{id}}:{{criterion}}#evidence@{{evidence}}.
+EMIT provider:{{id}}#supported_by@proof:{{id}}:{{criterion}}.
+ENDMACRO.
+
+MACRO NP_SELECTED(need, provider, selector, reason):
+EMIT need:{{need}}#selected_provider@provider:{{provider}}.
+EMIT need:{{need}}#has_selected@value:true.
+EMIT need:{{need}}#selected_by@engine:{{selector}}.
+EMIT need:{{need}}#selection_reason@value:{{reason}}.
+ENDMACRO.
+
+// Context (solver env / build flags)
+USE NP_CONTEXT(with-test, true).
+USE NP_CONTEXT(os, linux).
+
+// NEEDS
+USE NP_NEED(n_lwt, pkg:lwt).
+USE NP_NEED_ACCEPTS(n_lwt, lwt_ge_5_2).
+USE NP_NEED_REJECTS(n_lwt, lwt_eq_5_1).
+USE NP_NEED_POLICY(n_lwt, exactly_one).
+
+USE NP_NEED(n_alcotest, pkg:alcotest).
+USE NP_NEED_ACCEPTS(n_alcotest, with_test_true).
+USE NP_NEED_POLICY(n_alcotest, optional).
+
+USE NP_NEED(n_clock, vlib:clock).
+USE NP_NEED_ACCEPTS(n_clock, os_is_linux).
+USE NP_NEED_POLICY(n_clock, exactly_one).
+
+// Deliberately missing selection to demonstrate policy violation.
+USE NP_NEED(n_missing, pkg:fmt).
+USE NP_NEED_ACCEPTS(n_missing, fmt_any).
+USE NP_NEED_POLICY(n_missing, exactly_one).
+
+// Criteria metadata
+USE NP_CRITERION_VERSION(lwt_ge_5_2, gte, v5_2).
+USE NP_CRITERION_VERSION(lwt_eq_5_1, eq, v5_1).
+USE NP_CRITERION_CTX_EQ(with_test_true, with-test, true).
+USE NP_CRITERION_CTX_EQ(os_is_linux, os, linux).
+USE NP_CRITERION(fmt_any, unconstrained).
+
+// Providers
+USE NP_PROVIDER(lwt_5_1, pkg:lwt, v5_1).
+USE NP_PROVIDER(lwt_5_7, pkg:lwt, v5_7).
+USE NP_PROVIDER(alcotest_1_9, pkg:alcotest, v1_9).
+USE NP_PROVIDER(clock_unix, vlib:clock, v1).
+USE NP_PROVIDER(clock_mock, vlib:clock, v1).
+
+// Solver/evaluator assertions with proof.
+USE NP_MEETS_WITH_PROOF(lwt_5_7, lwt_ge_5_2, opam_solver, evidence:dune_lock).
+USE NP_MEETS_WITH_PROOF(lwt_5_1, lwt_eq_5_1, opam_solver, evidence:dune_lock).
+
+// Criteria derived from context.
+USE NP_PROVIDER_MEETS_IF_CONTEXT(alcotest_1_9, with_test_true).
+USE NP_PROVIDER_MEETS_IF_CONTEXT(clock_unix, os_is_linux).
+
+// Explicit selections produced by an external selector.
+USE NP_SELECTED(n_lwt, lwt_5_7, selection_engine, prefer_newest).
+USE NP_SELECTED(n_clock, clock_unix, selection_engine, first_match_select).
+
+RULE np_criterion_holds_from_context:
+IF ?crit#expects_ctx@?ctx AND context:solver#has@?ctx
+THEN ?crit#holds@value:true.
+
+RULE np_provider_meets_from_context:
+IF ?provider#meets_if@?crit AND ?crit#holds@value:true
+THEN ?provider#meets@?crit.
+
+RULE np_candidate_provider:
+IF ?need#kind@entity:need AND ?provider#kind@entity:provider AND ?need#target@?target AND ?provider#target@?target
+THEN ?need#candidate@?provider.
+
+RULE np_accepted_provider:
+IF ?need#candidate@?provider AND ?need#accepts@?crit AND ?provider#meets@?crit
+THEN ?need#accepted_by@?provider.
+
+RULE np_rejected_provider:
+IF ?need#candidate@?provider AND ?need#rejects@?crit AND ?provider#meets@?crit
+THEN ?need#rejected_by@?provider.
+
+RULE np_eligible_provider:
+IF ?need#accepted_by@?provider AND NOT ?need#rejected_by@?provider
+THEN ?need#eligible_provider@?provider.
+
+RULE np_effective_selection:
+IF ?need#selected_provider@?provider AND ?need#eligible_provider@?provider
+THEN ?need#effective_provider@?provider.
+
+RULE np_selected_without_eligibility:
+IF ?need#selected_provider@?provider AND NOT ?need#eligible_provider@?provider
+THEN ?need#selection_warning@value:selected_without_eligibility.
+
+RULE np_policy_exactly_one_missing_selection:
+IF ?need#policy@value:exactly_one AND NOT ?need#has_selected@value:true
+THEN ?need#selection_violation@value:missing_selection.
+
+QUERY candidates:
+FIND ?need ?provider WHERE ?need#candidate@?provider.
+
+QUERY accepted:
+FIND ?need ?provider WHERE ?need#accepted_by@?provider.
+
+QUERY rejected:
+FIND ?need ?provider WHERE ?need#rejected_by@?provider.
+
+QUERY eligible:
+FIND ?need ?provider WHERE ?need#eligible_provider@?provider.
+
+QUERY effective:
+FIND ?need ?provider WHERE ?need#effective_provider@?provider.
+
+QUERY policy_violations:
+FIND ?need ?v WHERE ?need#selection_violation@?v.
+
+QUERY selection_warnings:
+FIND ?need ?w WHERE ?need#selection_warning@?w.

@@ -1,0 +1,93 @@
+MODULE tlm.lib.
+
+// Shared transaction-level modeling macro layer.
+//
+// Purpose:
+// - provide one canonical TLM vocabulary reusable across repos
+// - keep TLM as a macro/domain layer (no core semantic changes)
+// - support both generic TLM models and link/stage-oriented workflows
+
+MACRO TLM_COMPONENT(name, role):
+EMIT tlm:component:{{name}}#kind@entity:tlm_component.
+EMIT tlm:component:{{name}}#role@value:{{role}}.
+ENDMACRO.
+
+MACRO TLM_TIMING_PROFILE(name, level, quantum_ns):
+EMIT tlm:timing:{{name}}#kind@entity:tlm_timing_profile.
+EMIT tlm:timing:{{name}}#level@value:{{level}}.
+EMIT tlm:timing:{{name}}#quantum_ns@value:{{quantum_ns}}.
+ENDMACRO.
+
+MACRO TLM_CHANNEL(name, src, dst, timing_profile):
+EMIT tlm:channel:{{name}}#kind@entity:tlm_channel.
+EMIT tlm:channel:{{name}}#from@tlm:component:{{src}}.
+EMIT tlm:channel:{{name}}#to@tlm:component:{{dst}}.
+EMIT tlm:channel:{{name}}#timing_profile@tlm:timing:{{timing_profile}}.
+ENDMACRO.
+
+MACRO TLM_BIND(component, channel, direction):
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#kind@entity:tlm_binding.
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#component@tlm:component:{{component}}.
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#channel@tlm:channel:{{channel}}.
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#direction@value:{{direction}}.
+ENDMACRO.
+
+MACRO TLM_LINK(channel, src, dst, timing_profile):
+EMIT USE TLM_CHANNEL({{channel}}, {{src}}, {{dst}}, {{timing_profile}}).
+EMIT USE TLM_BIND({{src}}, {{channel}}, initiator).
+EMIT USE TLM_BIND({{dst}}, {{channel}}, target).
+ENDMACRO.
+
+MACRO TLM_TRANSACTION(tx, cmd, addr, payload, size, priority, timing_level):
+EMIT tlm:tx:{{tx}}#kind@entity:tlm_transaction.
+EMIT tlm:tx:{{tx}}#command@value:{{cmd}}.
+EMIT tlm:tx:{{tx}}#address@value:{{addr}}.
+EMIT tlm:tx:{{tx}}#payload@value:{{payload}}.
+EMIT tlm:tx:{{tx}}#size@value:{{size}}.
+EMIT tlm:tx:{{tx}}#priority@value:{{priority}}.
+EMIT tlm:tx:{{tx}}#timing_level@value:{{timing_level}}.
+ENDMACRO.
+
+MACRO TLM_SEND(tx, src, channel):
+EMIT tlm:tx:{{tx}}#phase@value:communication.
+EMIT tlm:tx:{{tx}}#issued_by@tlm:component:{{src}}.
+EMIT tlm:tx:{{tx}}#via@tlm:channel:{{channel}}.
+EMIT tlm:tx:{{tx}}#status@value:issued.
+ENDMACRO.
+
+MACRO TLM_ACCEPT(tx, dst):
+EMIT tlm:tx:{{tx}}#accepted_by@tlm:component:{{dst}}.
+EMIT tlm:tx:{{tx}}#status@value:accepted.
+ENDMACRO.
+
+MACRO TLM_FAIL(tx, reason):
+EMIT tlm:tx:{{tx}}#status@value:failed.
+EMIT tlm:tx:{{tx}}#fail_reason@value:{{reason}}.
+ENDMACRO.
+
+// Link/stage convenience macros used by migration-style models.
+
+MACRO TLM_LINK_REQUIRES_STAGE(link, stage):
+EMIT {{link}}#requires_tlm_stage@value:{{stage}}.
+ENDMACRO.
+
+MACRO TLM_TX_FOR_LINK(tx, link, stage, cmd, src, dst, channel, timing_level):
+EMIT tlm:tx:{{tx}}#kind@entity:tlm_transaction.
+EMIT tlm:tx:{{tx}}#for_link@{{link}}.
+EMIT tlm:tx:{{tx}}#stage@value:{{stage}}.
+EMIT tlm:tx:{{tx}}#command@value:{{cmd}}.
+EMIT tlm:tx:{{tx}}#source@tlm:component:{{src}}.
+EMIT tlm:tx:{{tx}}#destination@tlm:component:{{dst}}.
+EMIT tlm:tx:{{tx}}#via@tlm:channel:{{channel}}.
+EMIT tlm:tx:{{tx}}#timing_level@value:{{timing_level}}.
+EMIT tlm:tx:{{tx}}#status@value:issued.
+ENDMACRO.
+
+MACRO TLM_TX_ACCEPT(tx):
+EMIT tlm:tx:{{tx}}#status@value:accepted.
+ENDMACRO.
+
+MACRO TLM_TX_FAIL(tx, reason):
+EMIT tlm:tx:{{tx}}#status@value:failed.
+EMIT tlm:tx:{{tx}}#fail_reason@value:{{reason}}.
+ENDMACRO.

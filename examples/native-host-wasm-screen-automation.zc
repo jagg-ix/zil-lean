@@ -1,0 +1,54 @@
+MODULE native_host.wasm.screen_automation.
+
+HOST operator_workstation [environment=prod, type=physical].
+HOST native_host_runtime [environment=prod, type=process].
+HOST browser_wasm_client [environment=prod, type=process].
+HOST linux_wayland_seat [environment=prod, type=process].
+HOST linux_xorg_server [environment=prod, type=process].
+
+SERVICE native_host_api [env=prod, criticality=high, uses=[native_host_core]].
+SERVICE native_host_core [env=prod, criticality=high, uses=[capture_adapter, frame_bus, trigger_engine, action_engine, policy_engine, plugin_runtime, audit_store]].
+SERVICE capture_adapter [env=prod, criticality=high, uses=[frame_bus]].
+SERVICE frame_bus [env=prod, criticality=high].
+SERVICE trigger_engine [env=prod, criticality=high, uses=[frame_bus]].
+SERVICE action_engine [env=prod, criticality=high, uses=[policy_engine, input_adapter]].
+SERVICE policy_engine [env=prod, criticality=high].
+SERVICE plugin_runtime [env=prod, criticality=high, uses=[frame_bus]].
+SERVICE opencv_processor [env=prod, criticality=high, uses=[frame_bus]].
+SERVICE wasm_plugin_processor [env=prod, criticality=low, uses=[plugin_runtime]].
+SERVICE gif_encoder [env=prod, criticality=low, uses=[frame_bus]].
+SERVICE video_encoder [env=prod, criticality=low, uses=[frame_bus]].
+SERVICE input_adapter [env=prod, criticality=high].
+SERVICE audit_store [env=prod, criticality=high].
+SERVICE wasm_ui_controller [env=prod, criticality=low, uses=[native_host_api]].
+
+DATASOURCE host_api_events [type=websocket, format=json, url="ws://127.0.0.1:39090/ws/events", poll_mode=interval, poll_every_ms=500].
+DATASOURCE frame_metadata_stream [type=socket, format=json, address="127.0.0.1:39100"].
+DATASOURCE action_audit_log [type=file, format=json, path="verification_results/runtime/native_host/action_audit.ndjson"].
+DATASOURCE policy_decisions_log [type=file, format=json, path="verification_results/runtime/native_host/policy_decisions.ndjson"].
+DATASOURCE capture_registry [type=file, format=edn, path="verification_results/runtime/native_host/capture_registry.edn"].
+DATASOURCE trigger_rules [type=file, format=json, path="verification_results/runtime/native_host/trigger_rules.json"].
+DATASOURCE host_capabilities [type=command, format=json, command="native_host_capability_probe"].
+
+METRIC action_rate [source=datasource:host_api_events, unit=events_per_min].
+METRIC policy_deny_rate [source=datasource:policy_decisions_log, unit=events_per_min].
+METRIC frame_ingest_rate [source=datasource:frame_metadata_stream, unit=frames_per_sec].
+
+EVENT cross_platform_target [criticality=high, labels=["windows","macos","linux","wayland","xorg"]].
+
+LTS_ATOM native_host_flow [states=#{idle host_ready capture_active processing trigger_raised action_authorized action_executed degraded halted}, initial=idle, transitions={[idle boot_host] [host_ready], [host_ready start_capture] [capture_active], [capture_active process_frames] [processing], [processing trigger_detected] [trigger_raised], [trigger_raised authorize_action] [action_authorized], [action_authorized execute_action] [action_executed], [action_executed continue_capture] [capture_active], [action_authorized deny_action] [capture_active], [capture_active capability_loss] [degraded], [degraded recover_capability] [capture_active], [host_ready emergency_stop] [halted], [capture_active emergency_stop] [halted], [halted restart_host] [host_ready]}].
+
+POLICY no_subprocess_execution [condition="host_exec_mode = in_process_only AND NOT subprocess_execution_enabled", criticality=high].
+POLICY capability_scoped_plugins [condition="plugin_request_must_match_declared_capabilities AND host_enforces_deny_by_default", criticality=high].
+POLICY loopback_control_api [condition="control_api_loopback_only AND auth_token_required", criticality=high].
+POLICY action_safety_gate [condition="allowlist_pass AND focus_check_pass AND rate_limit_pass AND kill_switch_off", criticality=high].
+POLICY wayland_input_guard [condition="(NOT platform_wayland) OR wayland_input_protocol_supported", criticality=low].
+
+QUERY high_criticality_policies:
+FIND ?p WHERE ?p#kind@entity:policy AND ?p#criticality@value:high.
+
+QUERY host_clients:
+FIND ?s WHERE ?s#kind@entity:service AND ?s#uses@service:native_host_api.
+
+QUERY flow_edges:
+FIND ?e WHERE lts_atom:native_host_flow#edge@?e.

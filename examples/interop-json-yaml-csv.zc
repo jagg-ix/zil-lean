@@ -1,0 +1,31 @@
+MODULE interop.json_yaml_csv.demo.
+
+// Use with preprocess to load lib/interop-macros.zc:
+//   ./bin/zil preprocess examples/interop-json-yaml-csv.zc /tmp/interop.pre.zc
+//   ./bin/zil /tmp/interop.pre.zc
+//
+// For runtime ingest:
+// - DATASOURCE declarations describe consume side.
+//
+// For exchange/export:
+// - IO_EXPORT declarations describe desired output artifacts.
+// - CLI command `export-data` produces JSON/YAML/CSV payloads.
+
+USE IO_FILE_SOURCE(ds_json, json, "examples/data/interop-sample.json").
+USE IO_FILE_SOURCE(ds_yaml, yaml, "examples/data/interop-sample.yaml").
+USE IO_FILE_SOURCE(ds_csv, csv, "examples/data/interop-sample.csv").
+
+service:api_gateway#state@value:healthy.
+service:api_gateway#owner@value:platform_sre.
+service:file_bridge#state@value:degraded.
+service:file_bridge#owner@value:migration_team.
+
+QUERY service_states:
+FIND ?svc ?state WHERE ?svc#state@?state.
+
+QUERY service_owners:
+FIND ?svc ?owner WHERE ?svc#owner@?owner.
+
+USE IO_EXPORT(states_json, service_states, json, "/tmp/service_states.json").
+USE IO_EXPORT(owners_yaml, service_owners, yaml, "/tmp/service_owners.yaml").
+USE IO_EXPORT(states_csv, service_states, csv, "/tmp/service_states.csv").

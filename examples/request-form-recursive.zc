@@ -1,0 +1,40 @@
+MODULE request.form.demo.
+
+// This example relies on RF_* macros defined in `lib/request-form-macros.zc`.
+// Run with:
+//   ./bin/zil preprocess examples/request-form-recursive.zc /tmp/request.pre.zc
+//   ./bin/zil /tmp/request.pre.zc
+
+USE RF_REQUEST(deploy_request, operator, dry_run).
+USE RF_COMPOUND(root_plan, seq).
+USE RF_ROOT(deploy_request, root_plan).
+
+USE RF_DATA(input_snapshot, "cluster_state_v3").
+USE RF_ACTION(apply_patch, patch, "k8s/deployment/api").
+USE RF_EFFECT(e_write_spec, writes, "deployment/spec").
+USE RF_ACTION_EFFECT(apply_patch, e_write_spec).
+
+USE RF_CONTAINS(root_plan, input_snapshot).
+USE RF_CONTAINS(root_plan, apply_patch).
+
+// Recursive sub-structure to model iterative reconciliation.
+USE RF_COMPOUND(loop_body, any).
+USE RF_ACTION(inspect_state, read_status, "k8s/deployment/api").
+USE RF_RECUR(loop_fix, R, loop_body).
+USE RF_CONTAINS(loop_body, inspect_state).
+USE RF_CONTAINS(loop_body, loop_fix).
+USE RF_CONTAINS(root_plan, loop_fix).
+
+USE RF_CRITERION(c_no_failed_pods, "failed_pods == 0").
+USE RF_CRITERION(c_rollout_complete, "rollout_status == complete").
+USE RF_REQUEST_ACCEPTS(deploy_request, c_no_failed_pods).
+USE RF_REQUEST_ACCEPTS(deploy_request, c_rollout_complete).
+
+QUERY request_contract:
+FIND ?c WHERE request:deploy_request#execution_contract@?c.
+
+QUERY recursive_nodes:
+FIND ?n WHERE ?n#is_recursive@value:true.
+
+QUERY request_contains:
+FIND ?n WHERE request:deploy_request#contains@?n.

@@ -1,0 +1,42 @@
+MODULE kubernetes.compat.negative.demo.
+
+// Negative-path Kubernetes compatibility scenario.
+// Intentionally leaves one required value unset and includes one unmanaged kind
+// to exercise khc_missing_required_values + khc_drift_candidates.
+// Run with:
+//   ./bin/zil preprocess examples/kubernetes-compat-negative.zc /tmp/kubernetes_compat_negative.pre.zc libsets/k8s-helm-compat
+//   ./bin/zil /tmp/kubernetes_compat_negative.pre.zc
+
+USE KHC_DOC(kubernetes_compat_negative_demo, kubernetes, staging).
+USE KHC_COMPAT_PROFILE(profile_k8s_staging, true, 300).
+
+USE KHC_CHART(chart_runtime_negative, runtime_negative, n_1_0_0, n_1_0_0).
+USE KHC_CHART_VALUE(chart_runtime_negative, image_repository, string, corp_runtime_negative, true).
+USE KHC_CHART_VALUE(chart_runtime_negative, image_tag, string, stable, true).
+USE KHC_CHART_VALUE(chart_runtime_negative, reconcile_interval_seconds, number, n_30, false).
+
+USE KHC_CRD(synccontract_sync_example_io_v1, sync_example_io, v1, synccontract, synccontracts, namespaced).
+
+// One compatible resource.
+USE KHC_TEMPLATE_RESOURCE(synccontract_orders_pipeline, chart_runtime_negative, sync_example_io_v1, synccontract, orders_pipeline).
+
+// One intentionally non-CRD-matched resource to trigger drift candidate.
+USE KHC_TEMPLATE_RESOURCE(deployment_runtime_negative, chart_runtime_negative, apps_v1, deployment, runtime_negative).
+
+USE KHC_RELEASE(staging_runtime, chart_runtime_negative, staging, profile_k8s_staging).
+
+// Intentionally set only one required path; leave image_tag missing.
+USE KHC_RELEASE_VALUE(staging_runtime, image_repository, corp_runtime_negative).
+USE KHC_RELEASE_VALUE(staging_runtime, reconcile_interval_seconds, n_30).
+
+QUERY khc_releases:
+FIND ?release ?namespace WHERE ?release#kind@entity:k8s_release AND ?release#namespace@?namespace.
+
+QUERY khc_missing_required_values:
+FIND ?release ?path WHERE ?release#missing_required_value@?path.
+
+QUERY khc_drift_candidates:
+FIND ?release ?res WHERE ?release#drift_candidate@?res.
+
+QUERY khc_release_requirements:
+FIND ?release ?crd WHERE ?release#requires_crd@?crd.

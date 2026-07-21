@@ -1,0 +1,19 @@
+MODULE tlm.formal.bridge.
+
+// Formal overlay for TLM models:
+// - LTS_ATOM declarations provide actor-level state machines for TLA+/Lean4 export.
+// - POLICY declarations provide SMT-checked constraints for Z3 gating.
+//
+// Keep this aligned with examples/tlm-domain-macros.zc vocabulary:
+// transaction lifecycle, channel lifecycle, and endpoint behavior.
+
+LTS_ATOM tlm_tx_flow [actor=TLMTx, actor_key=tlmTx, states=#{created issued accepted completed failed}, initial=created, transitions={[created issue] [issued], [issued accept] [accepted], [accepted complete] [completed], [issued fail] [failed], [failed retry] [issued]}].
+
+LTS_ATOM tlm_channel_flow [actor=TLMChannel, actor_key=tlmChannel, states=#{idle busy congested recovering}, initial=idle, transitions={[idle dispatch] [busy], [busy congest] [congested], [congested recover] [recovering], [recovering clear] [idle]}].
+
+LTS_ATOM tlm_endpoint_flow [actor=TLMEndpoint, actor_key=tlmEndpoint, states=#{ready issuing waiting_response done timeout}, initial=ready, transitions={[ready issue_tx] [issuing], [issuing wait_rsp] [waiting_response], [waiting_response recv_rsp] [done], [waiting_response timeout] [timeout], [timeout retry] [issuing], [done reset] [ready]}].
+
+POLICY tlm_latency_bound [condition="latency_ms >= 0 && latency_ms <= 5000", criticality=high].
+POLICY tlm_buffer_bounds [condition="buffer_fill >= 0 && buffer_fill <= buffer_capacity && buffer_capacity > 0", criticality=high].
+POLICY tlm_retry_budget [condition="retry_count >= 0 && retry_count <= 8", criticality=high].
+POLICY tlm_priority_window [condition="priority_level >= 0 && priority_level <= 3", criticality=high].

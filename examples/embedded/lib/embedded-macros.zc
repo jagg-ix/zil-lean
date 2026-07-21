@@ -1,0 +1,6 @@
+MODULE embedded.macros.
+
+MACRO FORMAL_CLAIM(theorem, claim):
+EMIT {{theorem}}#formalizes@{{claim}}.
+EMIT {{claim}}#formalized_by@{{theorem}}.
+ENDMACRO.

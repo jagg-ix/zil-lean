@@ -1,0 +1,15 @@
+MODULE acl2.proof.obligation.log.demo.
+
+// ACL2 log-driven proof obligation demo.
+// Run:
+//   ./bin/zil proof-obligation-check examples/acl2-proof-obligation-log.zc acl2
+// Optional command mode:
+//   PROOF_OBLIGATION ... [tool=acl2, command="acl2 < script.lsp", artifact_out="data/acl2-run.log", ...]
+
+REFINES core_to_logic [spec=tla:CoreMetaVM, impl=lean4:StepFn, mapping=map:core_to_logic].
+USE ACL2_CORRESPONDS(logic_to_runtime, lean4:StepFn, acl2:ExecStep, core_to_logic).
+
+USE ACL2_OBLIGATION_LOG(po_acl2_execstep, corresponds:logic_to_runtime, "ExecStep correspondence theorem", "data/acl2-proof-ok.log", high).
+
+QUERY acl2_obligations:
+FIND ?ob ?tool ?criticality WHERE ?ob#kind@entity:proof_obligation AND ?ob#tool@?tool AND ?ob#criticality@?criticality.

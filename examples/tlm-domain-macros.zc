@@ -1,0 +1,118 @@
+MODULE tlm.transaction.demo.
+
+// TLM domain macro layer for ZIL (pure macro lowering to core tuples).
+// Goal: separate computation (component-local work) from communication
+// (transaction movement over abstract channels).
+
+MACRO TLM_COMPONENT(name, role):
+EMIT tlm:component:{{name}}#kind@entity:tlm_component.
+EMIT tlm:component:{{name}}#role@value:{{role}}.
+ENDMACRO.
+
+MACRO TLM_TIMING_PROFILE(name, level, quantum_ns):
+EMIT tlm:timing:{{name}}#kind@entity:tlm_timing_profile.
+EMIT tlm:timing:{{name}}#level@value:{{level}}.
+EMIT tlm:timing:{{name}}#quantum_ns@value:{{quantum_ns}}.
+ENDMACRO.
+
+MACRO TLM_CHANNEL(name, src, dst, timing_profile):
+EMIT tlm:channel:{{name}}#kind@entity:tlm_channel.
+EMIT tlm:channel:{{name}}#from@tlm:component:{{src}}.
+EMIT tlm:channel:{{name}}#to@tlm:component:{{dst}}.
+EMIT tlm:channel:{{name}}#timing_profile@tlm:timing:{{timing_profile}}.
+ENDMACRO.
+
+MACRO TLM_BIND(component, channel, direction):
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#kind@entity:tlm_binding.
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#component@tlm:component:{{component}}.
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#channel@tlm:channel:{{channel}}.
+EMIT tlm:bind:{{component}}_{{channel}}_{{direction}}#direction@value:{{direction}}.
+ENDMACRO.
+
+MACRO TLM_LINK(channel, src, dst, timing_profile):
+EMIT USE TLM_CHANNEL({{channel}}, {{src}}, {{dst}}, {{timing_profile}}).
+EMIT USE TLM_BIND({{src}}, {{channel}}, initiator).
+EMIT USE TLM_BIND({{dst}}, {{channel}}, target).
+ENDMACRO.
+
+MACRO TLM_TRANSACTION(tx, cmd, addr, payload, size, priority, timing_level):
+EMIT tlm:tx:{{tx}}#kind@entity:tlm_transaction.
+EMIT tlm:tx:{{tx}}#command@value:{{cmd}}.
+EMIT tlm:tx:{{tx}}#address@value:{{addr}}.
+EMIT tlm:tx:{{tx}}#payload@value:{{payload}}.
+EMIT tlm:tx:{{tx}}#size@value:{{size}}.
+EMIT tlm:tx:{{tx}}#priority@value:{{priority}}.
+EMIT tlm:tx:{{tx}}#timing_level@value:{{timing_level}}.
+ENDMACRO.
+
+MACRO TLM_COMPUTE(step, component, operation):
+EMIT tlm:step:{{step}}#kind@entity:tlm_step.
+EMIT tlm:step:{{step}}#phase@value:compute.
+EMIT tlm:step:{{step}}#at@tlm:component:{{component}}.
+EMIT tlm:step:{{step}}#operation@value:{{operation}}.
+ENDMACRO.
+
+MACRO TLM_SEND(tx, src, channel):
+EMIT tlm:tx:{{tx}}#phase@value:communication.
+EMIT tlm:tx:{{tx}}#issued_by@tlm:component:{{src}}.
+EMIT tlm:tx:{{tx}}#via@tlm:channel:{{channel}}.
+EMIT tlm:tx:{{tx}}#status@value:issued.
+ENDMACRO.
+
+MACRO TLM_ACCEPT(tx, dst):
+EMIT tlm:tx:{{tx}}#accepted_by@tlm:component:{{dst}}.
+EMIT tlm:tx:{{tx}}#status@value:accepted.
+ENDMACRO.
+
+// Timing abstraction spectrum examples.
+USE TLM_TIMING_PROFILE(pv_fast, pv, 1000000).
+USE TLM_TIMING_PROFILE(lt_bus, loosely_timed, 10000).
+USE TLM_TIMING_PROFILE(at_bus, approximately_timed, 1000).
+USE TLM_TIMING_PROFILE(ut_func, untimed, 0).
+
+// Components + communication fabric.
+USE TLM_COMPONENT(cpu0, initiator).
+USE TLM_COMPONENT(mem0, target).
+USE TLM_COMPONENT(dma0, initiator).
+USE TLM_LINK(read_bus, cpu0, mem0, lt_bus).
+USE TLM_LINK(write_bus, dma0, mem0, at_bus).
+
+// Transactions and local compute steps.
+USE TLM_TRANSACTION(tx_read_1, read, addr_4096, word32, 4, high, loosely_timed).
+USE TLM_TRANSACTION(tx_write_7, write, addr_8192, burst8, 32, medium, approximately_timed).
+USE TLM_COMPUTE(cpu0_decode_read_1, cpu0, decode_read_request).
+USE TLM_COMPUTE(mem0_prepare_rsp_1, mem0, build_read_response).
+USE TLM_SEND(tx_read_1, cpu0, read_bus).
+USE TLM_ACCEPT(tx_read_1, mem0).
+USE TLM_SEND(tx_write_7, dma0, write_bus).
+
+RULE tx_source_consistent:
+IF ?tx#issued_by@?src AND ?tx#via@?channel AND ?channel#from@?src
+THEN ?tx#source_consistent@value:true.
+
+RULE tx_has_channel_timing:
+IF ?tx#via@?channel AND ?channel#timing_profile@?tp
+THEN ?tx#channel_timing_profile@?tp.
+
+RULE tx_is_coarse_timing:
+IF ?tx#timing_level@value:loosely_timed
+THEN ?tx#timing_class@value:coarse.
+
+RULE tx_is_coarse_timing_approx:
+IF ?tx#timing_level@value:approximately_timed
+THEN ?tx#timing_class@value:coarse.
+
+QUERY transaction_status:
+FIND ?tx WHERE ?tx#status@?status.
+
+QUERY source_consistency_ok:
+FIND ?tx WHERE ?tx#source_consistent@value:true.
+
+QUERY channel_timing_profiles:
+FIND ?tp WHERE ?tx#channel_timing_profile@?tp.
+
+QUERY compute_steps:
+FIND ?s WHERE ?s#phase@value:compute.
+
+QUERY coarse_timed_transactions:
+FIND ?tx WHERE ?tx#timing_class@value:coarse.

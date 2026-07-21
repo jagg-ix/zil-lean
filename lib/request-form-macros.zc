@@ -1,0 +1,102 @@
+MODULE request.form.lib.
+
+// Request Form macro layer:
+// formalize "requesting <something>" where <something> can be data,
+// effectful actions, compounds, and recursive structures.
+
+MACRO RF_REQUEST(id, requester, mode):
+EMIT request:{{id}}#kind@entity:request.
+EMIT request:{{id}}#requester@actor:{{requester}}.
+EMIT request:{{id}}#mode@value:{{mode}}.
+ENDMACRO.
+
+MACRO RF_ROOT(request_id, node_id):
+EMIT request:{{request_id}}#root@node:{{node_id}}.
+EMIT request:{{request_id}}#contains@node:{{node_id}}.
+ENDMACRO.
+
+MACRO RF_DATA(node_id, schema):
+EMIT node:{{node_id}}#kind@entity:data.
+EMIT node:{{node_id}}#schema@value:{{schema}}.
+ENDMACRO.
+
+MACRO RF_ACTION(node_id, verb, target):
+EMIT node:{{node_id}}#kind@entity:action.
+EMIT node:{{node_id}}#verb@value:{{verb}}.
+EMIT node:{{node_id}}#target@value:{{target}}.
+ENDMACRO.
+
+MACRO RF_COMPOUND(node_id, op):
+EMIT node:{{node_id}}#kind@entity:compound.
+EMIT node:{{node_id}}#op@value:{{op}}.
+ENDMACRO.
+
+MACRO RF_RECUR(node_id, var, body):
+EMIT node:{{node_id}}#kind@entity:recursive.
+EMIT node:{{node_id}}#bind@value:{{var}}.
+EMIT node:{{node_id}}#body@node:{{body}}.
+EMIT node:{{node_id}}#contains@node:{{body}}.
+ENDMACRO.
+
+MACRO RF_CONTAINS(parent, child):
+EMIT node:{{parent}}#contains@node:{{child}}.
+ENDMACRO.
+
+MACRO RF_EFFECT(effect_id, kind, target):
+EMIT effect:{{effect_id}}#kind@entity:effect.
+EMIT effect:{{effect_id}}#effect_kind@value:{{kind}}.
+EMIT effect:{{effect_id}}#target@value:{{target}}.
+ENDMACRO.
+
+MACRO RF_ACTION_EFFECT(action_node, effect_id):
+EMIT node:{{action_node}}#has_effect@effect:{{effect_id}}.
+ENDMACRO.
+
+MACRO RF_CRITERION(criterion_id, expr):
+EMIT criterion:{{criterion_id}}#kind@entity:criterion.
+EMIT criterion:{{criterion_id}}#expr@value:{{expr}}.
+ENDMACRO.
+
+MACRO RF_REQUEST_ACCEPTS(request_id, criterion_id):
+EMIT request:{{request_id}}#accepts@criterion:{{criterion_id}}.
+ENDMACRO.
+
+RULE rf_contains_transitive:
+IF ?x#contains@?y AND ?y#contains@?z
+THEN ?x#contains@?z.
+
+RULE rf_action_side_effectful:
+IF ?n#kind@entity:action AND ?n#has_effect@?e
+THEN ?n#side_effectful@value:true.
+
+RULE rf_request_has_side_effect:
+IF ?r#kind@entity:request AND ?r#contains@?n AND ?n#has_effect@?e
+THEN ?r#has_side_effect@value:true.
+
+RULE rf_request_mentions_action:
+IF ?r#kind@entity:request AND ?r#contains@?n AND ?n#kind@entity:action
+THEN ?r#mentions_action@value:true.
+
+RULE rf_node_recursive_cycle:
+IF ?n#contains@?n
+THEN ?n#is_recursive@value:true.
+
+RULE rf_request_recursive:
+IF ?r#kind@entity:request AND ?r#contains@?n AND ?n#kind@entity:recursive
+THEN ?r#is_recursive@value:true.
+
+RULE rf_request_dry_run_contract:
+IF ?r#mode@value:dry_run AND ?r#has_side_effect@value:true
+THEN ?r#execution_contract@value:plan_only.
+
+QUERY rf_requests_with_side_effects:
+FIND ?r WHERE ?r#has_side_effect@value:true.
+
+QUERY rf_recursive_requests:
+FIND ?r WHERE ?r#is_recursive@value:true.
+
+QUERY rf_request_acceptance:
+FIND ?r ?c WHERE ?r#accepts@?c.
+
+QUERY rf_action_effects:
+FIND ?a ?e WHERE ?a#has_effect@?e.

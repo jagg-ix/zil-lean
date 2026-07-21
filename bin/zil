@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ZIL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ZIL_JAR="${ZIL_JAR:-$ZIL_ROOT/dist/zil-standalone.jar}"
+
+if command -v java >/dev/null 2>&1 && [[ -f "$ZIL_JAR" ]]; then
+  exec java -jar "$ZIL_JAR" "$@"
+fi
+
+if command -v clojure >/dev/null 2>&1; then
+  cd "$ZIL_ROOT"
+  exec clojure -M -m zil.cli "$@"
+fi
+
+cat >&2 <<EOF
+[zil] no runtime found for CLI execution.
+
+Expected one of:
+  1) Java + built jar at: $ZIL_JAR
+  2) clojure CLI in PATH
+
+To build the standalone jar (requires clojure once):
+  $ZIL_ROOT/bin/build-jar
+EOF
+exit 2

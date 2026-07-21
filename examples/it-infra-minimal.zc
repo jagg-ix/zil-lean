@@ -1,0 +1,15 @@
+MODULE it.demo.
+
+location:dcA#connected_to@location:dcB [link="internet"].
+location:dcA#connected_to@location:dcB [link="mpls"].
+network:vpnAB#overlays@link:internetAB.
+
+app:svc1#deployed_on@location:dcA.
+app:svc1#mirrored_by@app:svc1_dcC.
+
+RULE dependency_failure:
+IF app:svc1#depends_on@service:db1 AND NOT service:db1#available@value:true
+THEN app:svc1#status@value:"degraded".
+
+QUERY mirror_check:
+FIND ?x WHERE ?x#mirrored_by@?y.

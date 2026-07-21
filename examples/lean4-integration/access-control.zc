@@ -1,0 +1,48 @@
+MODULE lean4.integration.access.control.
+
+// Level 2 (complex rules): RBAC/DAC macro layer — stratified negation,
+// grant-validity rules, violation detection.
+// Lean4 path: native zil-lean snapshot module (rules included).
+//
+//   ./bin/zil preprocess examples/lean4-integration/access-control.zc \
+//     /tmp/ac.pre.zc libsets/rbac-dac
+//   ./bin/zil export-snapshot /tmp/ac.pre.zc \
+//     /tmp/AccessControl.snapshot.json /tmp/AccessControl.lean Zil.Generated.AccessControl
+//   cd ../zil-lean && lake env lean /tmp/AccessControl.lean
+
+// Datasets and their owners.
+dataset:run_2026_04#kind@entity:object.
+dataset:run_2026_04#owner@subject:pi_alice.
+dataset:sim_ensemble#kind@entity:object.
+dataset:sim_ensemble#owner@subject:pi_bob.
+
+// A valid grant: the owner grants read access.
+grant:g1#kind@entity:dac_grant_subject.
+grant:g1#object@dataset:run_2026_04.
+grant:g1#grantor@subject:pi_alice.
+grant:g1#subject@subject:postdoc_carol.
+grant:g1#action@action:read.
+
+// An invalid grant: grantor does not own the dataset.
+grant:g2#kind@entity:dac_grant_subject.
+grant:g2#object@dataset:sim_ensemble.
+grant:g2#grantor@subject:pi_alice.
+grant:g2#subject@subject:postdoc_carol.
+grant:g2#action@action:write.
+
+// Access requests to evaluate.
+request:r1#kind@entity:access_request.
+request:r1#subject@subject:postdoc_carol.
+request:r1#object@dataset:run_2026_04.
+request:r1#action@action:read.
+
+request:r2#kind@entity:access_request.
+request:r2#subject@subject:postdoc_carol.
+request:r2#object@dataset:sim_ensemble.
+request:r2#action@action:write.
+
+QUERY allowed_requests:
+FIND ?req ?mech WHERE ?req#allowed_by@?mech.
+
+QUERY policy_violations:
+FIND ?g ?v WHERE ?g#policy_violation@?v.

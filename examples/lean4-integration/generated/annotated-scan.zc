@@ -1,0 +1,12 @@
+MODULE lean4.integration.annotated.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:243051a545ec1b0b"#kind@"embedded_zil_block".
+"embedded:243051a545ec1b0b"#target@"lean:AnnotatedExample.add_comm".
+"embedded:243051a545ec1b0b"#trust@"trust:asserted_annotation".
+"embedded:243051a545ec1b0b"#source_hash@"sha256:af60c2c8ca46d958b5f290f1531d396703ff50960ee57d85fa10dd6965335ecb".
+"embedded:243051a545ec1b0b"#macro_revision@"sha256:8052a70616142dfb7cf450cf2ccbb46ae04e271fd933ada22a9e68fa45253f0d".
+"embedded:243051a545ec1b0b"#start_line@"13".
+"embedded:243051a545ec1b0b"#end_line@"16".
+lean:AnnotatedExample.add_comm#formalizes@claim:addition_commutative.
+lean:AnnotatedExample.add_comm#requires@assumption:natural_number_axioms.

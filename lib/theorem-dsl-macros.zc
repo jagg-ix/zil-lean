@@ -1,0 +1,100 @@
+MODULE theorem.dsl.lib.
+
+// Optional high-level theorem DSL, implemented as macro wrappers
+// over canonical theorem-impact macros/facts.
+
+MACRO ASSUMPTION(id, class):
+EMIT USE THM_ASSUMPTION({{id}}, {{class}}).
+ENDMACRO.
+
+MACRO ASSUMPTION_FROM_SIGNAL(assumption, signal):
+EMIT USE THM_ASSUMPTION_FROM_SIGNAL({{assumption}}, {{signal}}).
+ENDMACRO.
+
+MACRO ASSUME_HOLDS(id, source):
+EMIT USE THM_ASSUME_HOLDS({{id}}, {{source}}).
+ENDMACRO.
+
+MACRO ASSUME_BROKEN(id, source, reason):
+EMIT USE THM_ASSUME_BROKEN({{id}}, {{source}}, {{reason}}).
+ENDMACRO.
+
+MACRO LEMMA(id, criticality):
+EMIT USE THM_LEMMA({{id}}, {{criticality}}).
+ENDMACRO.
+
+MACRO LEMMA_REQUIRES_ASSUMPTION(lemma, assumption):
+EMIT USE THM_LEMMA_REQUIRES_ASSUMPTION({{lemma}}, {{assumption}}).
+ENDMACRO.
+
+MACRO LEMMA_REQUIRES_LEMMA(lemma, dep_lemma):
+EMIT USE THM_LEMMA_REQUIRES_LEMMA({{lemma}}, {{dep_lemma}}).
+ENDMACRO.
+
+MACRO THEOREM(id, criticality):
+EMIT USE THM_THEOREM({{id}}, {{criticality}}).
+ENDMACRO.
+
+MACRO THEOREM_REQUIRES_ASSUMPTION(theorem, assumption):
+EMIT USE THM_THEOREM_REQUIRES_ASSUMPTION({{theorem}}, {{assumption}}).
+ENDMACRO.
+
+MACRO THEOREM_REQUIRES_LEMMA(theorem, lemma):
+EMIT USE THM_THEOREM_REQUIRES_LEMMA({{theorem}}, {{lemma}}).
+ENDMACRO.
+
+MACRO THEOREM_ENSURES(theorem, guarantee):
+EMIT USE THM_THEOREM_ENSURES({{theorem}}, {{guarantee}}).
+ENDMACRO.
+
+MACRO EVIDENCE(kind, id, engine, evidence):
+EMIT evidence:{{kind}}:{{id}}#kind@entity:evidence.
+EMIT evidence:{{kind}}:{{id}}#engine@engine:{{engine}}.
+EMIT evidence:{{kind}}:{{id}}#value@evidence:{{evidence}}.
+ENDMACRO.
+
+MACRO EVIDENCE_FOR_LEMMA(id, engine, evidence):
+EMIT USE THM_LEMMA_PROOF({{id}}, {{engine}}, {{evidence}}).
+EMIT USE EVIDENCE(lemma, {{id}}, {{engine}}, {{evidence}}).
+ENDMACRO.
+
+MACRO EVIDENCE_FOR_THEOREM(id, engine, evidence):
+EMIT USE THM_THEOREM_PROOF({{id}}, {{engine}}, {{evidence}}).
+EMIT USE EVIDENCE(theorem, {{id}}, {{engine}}, {{evidence}}).
+ENDMACRO.
+
+MACRO INCIDENT(id, severity):
+EMIT incident:{{id}}#kind@entity:incident.
+EMIT incident:{{id}}#severity@value:{{severity}}.
+ENDMACRO.
+
+MACRO INCIDENT_BREAK_COMPONENT(incident, component, source, reason):
+EMIT incident:{{incident}}#breaks_component@component:{{component}}.
+EMIT USE THM_COMPONENT_BROKEN({{component}}, {{source}}, {{reason}}).
+ENDMACRO.
+
+MACRO INCIDENT_BREAK_SIGNAL(incident, signal, source, reason):
+EMIT incident:{{incident}}#breaks_signal@signal:{{signal}}.
+EMIT USE THM_SIGNAL_BROKEN({{signal}}, {{source}}, {{reason}}).
+ENDMACRO.
+
+MACRO INCIDENT_BREAK_ASSUMPTION(incident, assumption, source, reason):
+EMIT incident:{{incident}}#breaks_assumption@assumption:{{assumption}}.
+EMIT USE THM_ASSUME_BROKEN({{assumption}}, {{source}}, {{reason}}).
+ENDMACRO.
+
+MACRO INCIDENT_LINK_THEOREM(incident, theorem):
+EMIT incident:{{incident}}#concerns_theorem@theorem:{{theorem}}.
+ENDMACRO.
+
+// Optional query pack for operators.
+MACRO DSL_SUMMARY_QUERIES():
+EMIT QUERY dsl_theorem_statuses:
+EMIT FIND ?theorem ?status WHERE ?theorem#kind@entity:theorem AND ?theorem#status@?status.
+EMIT QUERY dsl_conditional_dependencies:
+EMIT FIND ?theorem ?dep WHERE ?theorem#conditional_on@?dep.
+EMIT QUERY dsl_break_roots:
+EMIT FIND ?node WHERE ?node#is_break_root@value:true.
+EMIT QUERY dsl_impact_set:
+EMIT FIND ?theorem ?root WHERE ?theorem#kind@entity:theorem AND ?theorem#impacted_by_root@?root.
+ENDMACRO.

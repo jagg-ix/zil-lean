@@ -1,0 +1,360 @@
+MODULE incident.workflow.dsl.lib.
+
+// Incident workflow + tool/DSL analysis macro layer.
+//
+// Purpose:
+// - model incident lifecycle, roles, channels, and artifacts
+// - encode requirements and implication links
+// - derive recommended tool features and options
+// - derive DSL constructs needed for fast operations + expert control
+
+MACRO IWF_STATE(id, order):
+EMIT iwf:state:{{id}}#kind@entity:state.
+EMIT iwf:state:{{id}}#order@value:{{order}}.
+ENDMACRO.
+
+MACRO IWF_EVENT(id, stage):
+EMIT iwf:event:{{id}}#kind@entity:event.
+EMIT iwf:event:{{id}}#stage@value:{{stage}}.
+ENDMACRO.
+
+MACRO IWF_TRANSITION(from, event, to):
+EMIT iwf:transition:{{from}}_{{event}}_{{to}}#kind@entity:transition.
+EMIT iwf:transition:{{from}}_{{event}}_{{to}}#from@state:{{from}}.
+EMIT iwf:transition:{{from}}_{{event}}_{{to}}#event@event:{{event}}.
+EMIT iwf:transition:{{from}}_{{event}}_{{to}}#to@state:{{to}}.
+ENDMACRO.
+
+MACRO IWF_ROLE(id, purpose):
+EMIT iwf:role:{{id}}#kind@entity:role.
+EMIT iwf:role:{{id}}#purpose@value:{{purpose}}.
+ENDMACRO.
+
+MACRO IWF_CHANNEL(id, plane, mode):
+EMIT iwf:channel:{{id}}#kind@entity:channel.
+EMIT iwf:channel:{{id}}#plane@value:{{plane}}.
+EMIT iwf:channel:{{id}}#mode@value:{{mode}}.
+ENDMACRO.
+
+MACRO IWF_ARTIFACT(id, plane):
+EMIT iwf:artifact:{{id}}#kind@entity:artifact.
+EMIT iwf:artifact:{{id}}#plane@value:{{plane}}.
+ENDMACRO.
+
+MACRO IWF_REQUIREMENT(id, priority, category):
+EMIT req:{{id}}#kind@entity:requirement.
+EMIT req:{{id}}#priority@value:{{priority}}.
+EMIT req:{{id}}#category@value:{{category}}.
+ENDMACRO.
+
+MACRO IWF_REQ_TAG(id, tag):
+EMIT req:{{id}}#tag@value:{{tag}}.
+ENDMACRO.
+
+MACRO IWF_REQ_SOURCE(id, source):
+EMIT req:{{id}}#source@source:{{source}}.
+ENDMACRO.
+
+MACRO IWF_REQ_NEEDS_ROLE(id, role):
+EMIT req:{{id}}#needs_role@role:{{role}}.
+ENDMACRO.
+
+MACRO IWF_REQ_NEEDS_CHANNEL(id, channel):
+EMIT req:{{id}}#needs_channel@channel:{{channel}}.
+ENDMACRO.
+
+MACRO IWF_REQ_NEEDS_STATE(id, state):
+EMIT req:{{id}}#needs_state@state:{{state}}.
+ENDMACRO.
+
+MACRO IWF_REQ_NEEDS_EVENT(id, event):
+EMIT req:{{id}}#needs_event@event:{{event}}.
+ENDMACRO.
+
+MACRO IWF_REQ_NEEDS_ARTIFACT(id, artifact):
+EMIT req:{{id}}#needs_artifact@artifact:{{artifact}}.
+ENDMACRO.
+
+MACRO IWF_REQ_IMPLIES(req_a, req_b):
+EMIT req:{{req_a}}#implies@requirement:{{req_b}}.
+ENDMACRO.
+
+MACRO IWF_MODEL_FIELD(model, field):
+EMIT iwf:model:{{model}}#kind@entity:model_shape.
+EMIT iwf:model:{{model}}#field@value:{{field}}.
+ENDMACRO.
+
+MACRO IWF_INVARIANT(id, severity):
+EMIT iwf:invariant:{{id}}#kind@entity:invariant.
+EMIT iwf:invariant:{{id}}#severity@value:{{severity}}.
+ENDMACRO.
+
+MACRO IWF_INVARIANT_REQUIRES(invariant, requirement):
+EMIT iwf:invariant:{{invariant}}#requires_requirement@requirement:{{requirement}}.
+ENDMACRO.
+
+RULE iwf_req_implies_transitive:
+IF ?a#implies@?b AND ?b#implies@?c
+THEN ?a#implies@?c.
+
+RULE iwf_req_state_machine_feature:
+IF ?r#tag@value:state_machine
+THEN feature:state_machine_engine#feature_recommended_by@?r.
+
+RULE iwf_req_single_owner_feature:
+IF ?r#tag@value:single_owner
+THEN feature:single_owner_lock#feature_recommended_by@?r.
+
+RULE iwf_req_role_split_feature:
+IF ?r#tag@value:role_split
+THEN feature:role_based_workspace#feature_recommended_by@?r.
+
+RULE iwf_req_multi_plane_feature:
+IF ?r#tag@value:multi_plane_comms
+THEN feature:multi_plane_communications#feature_recommended_by@?r.
+
+RULE iwf_req_timeline_feature:
+IF ?r#tag@value:timeline
+THEN feature:incident_timeline#feature_recommended_by@?r.
+
+RULE iwf_req_external_updates_feature:
+IF ?r#tag@value:external_updates
+THEN feature:stakeholder_update_templates#feature_recommended_by@?r.
+
+RULE iwf_req_resolution_summary_feature:
+IF ?r#tag@value:resolution_summary
+THEN feature:resolution_summary_gate#feature_recommended_by@?r.
+
+RULE iwf_req_postmortem_feature:
+IF ?r#tag@value:postmortem
+THEN feature:postmortem_workspace#feature_recommended_by@?r.
+
+RULE iwf_req_action_tracking_feature:
+IF ?r#tag@value:action_tracking
+THEN feature:action_item_tracker#feature_recommended_by@?r.
+
+RULE iwf_req_fix_proposal_feature:
+IF ?r#tag@value:fix_proposal
+THEN feature:fix_proposal_registry#feature_recommended_by@?r.
+
+RULE iwf_req_test_gate_feature:
+IF ?r#tag@value:test_gates
+THEN feature:test_gate_engine#feature_recommended_by@?r.
+
+RULE iwf_req_invariants_feature:
+IF ?r#tag@value:invariants
+THEN feature:invariant_checker#feature_recommended_by@?r.
+
+RULE iwf_feature_kind:
+IF ?f#feature_recommended_by@?r
+THEN ?f#kind@entity:tool_feature.
+
+RULE iwf_feature_priority_must:
+IF ?f#feature_recommended_by@?r AND ?r#priority@value:high
+THEN ?f#priority@value:must_have.
+
+RULE iwf_feature_priority_should:
+IF ?f#feature_recommended_by@?r AND ?r#priority@value:medium
+THEN ?f#priority@value:should_have.
+
+RULE iwf_feature_source_trace:
+IF ?f#feature_recommended_by@?r AND ?r#source@?s
+THEN ?f#source_support@?s.
+
+RULE iwf_option_state_machine_strict:
+IF feature:state_machine_engine#feature_recommended_by@?r
+THEN option:strict_transition_validation#option_recommended_by@feature:state_machine_engine.
+
+RULE iwf_option_state_machine_invalid_transition_guard:
+IF feature:state_machine_engine#feature_recommended_by@?r
+THEN option:reject_invalid_state_jumps#option_recommended_by@feature:state_machine_engine.
+
+RULE iwf_option_single_owner_token:
+IF feature:single_owner_lock#feature_recommended_by@?r
+THEN option:exclusive_incident_lead_token#option_recommended_by@feature:single_owner_lock.
+
+RULE iwf_option_handoff_ack:
+IF feature:single_owner_lock#feature_recommended_by@?r
+THEN option:lead_handoff_requires_ack#option_recommended_by@feature:single_owner_lock.
+
+RULE iwf_option_role_views:
+IF feature:role_based_workspace#feature_recommended_by@?r
+THEN option:role_specific_dashboards#option_recommended_by@feature:role_based_workspace.
+
+RULE iwf_option_multi_plane_templates:
+IF feature:multi_plane_communications#feature_recommended_by@?r
+THEN option:separate_internal_external_templates#option_recommended_by@feature:multi_plane_communications.
+
+RULE iwf_option_channel_binding:
+IF feature:multi_plane_communications#feature_recommended_by@?r
+THEN option:channel_to_state_binding#option_recommended_by@feature:multi_plane_communications.
+
+RULE iwf_option_timeline_capture:
+IF feature:incident_timeline#feature_recommended_by@?r
+THEN option:auto_timeline_capture#option_recommended_by@feature:incident_timeline.
+
+RULE iwf_option_timeline_hash:
+IF feature:incident_timeline#feature_recommended_by@?r
+THEN option:evidence_hash_for_timeline_entries#option_recommended_by@feature:incident_timeline.
+
+RULE iwf_option_external_state_ref:
+IF feature:stakeholder_update_templates#feature_recommended_by@?r
+THEN option:external_updates_require_state_reference#option_recommended_by@feature:stakeholder_update_templates.
+
+RULE iwf_option_resolution_gate:
+IF feature:resolution_summary_gate#feature_recommended_by@?r
+THEN option:block_resolve_until_summary_present#option_recommended_by@feature:resolution_summary_gate.
+
+RULE iwf_option_postmortem_deadline:
+IF feature:postmortem_workspace#feature_recommended_by@?r
+THEN option:postmortem_due_date_policy#option_recommended_by@feature:postmortem_workspace.
+
+RULE iwf_option_action_block_close:
+IF feature:action_item_tracker#feature_recommended_by@?r
+THEN option:block_postmortem_close_on_open_critical_actions#option_recommended_by@feature:action_item_tracker.
+
+RULE iwf_option_fix_fields_required:
+IF feature:fix_proposal_registry#feature_recommended_by@?r
+THEN option:require_fix_risk_blast_radius_rollback_fields#option_recommended_by@feature:fix_proposal_registry.
+
+RULE iwf_option_test_gate_matrix:
+IF feature:test_gate_engine#feature_recommended_by@?r
+THEN option:enforce_repro_mitigation_rollback_regression_tests#option_recommended_by@feature:test_gate_engine.
+
+RULE iwf_option_invariant_runtime:
+IF feature:invariant_checker#feature_recommended_by@?r
+THEN option:runtime_invariant_evaluator#option_recommended_by@feature:invariant_checker.
+
+RULE iwf_option_kind:
+IF ?o#option_recommended_by@?f
+THEN ?o#kind@entity:tool_option.
+
+RULE iwf_option_priority_must:
+IF ?o#option_recommended_by@?f AND ?f#priority@value:must_have
+THEN ?o#priority@value:must_have.
+
+RULE iwf_option_priority_should:
+IF ?o#option_recommended_by@?f AND ?f#priority@value:should_have
+THEN ?o#priority@value:should_have.
+
+RULE iwf_option_source_trace:
+IF ?o#option_recommended_by@?f AND ?f#source_support@?s
+THEN ?o#source_support@?s.
+
+RULE iwf_dsl_state:
+IF ?r#tag@value:state_machine
+THEN dsl:STATE#dsl_recommended_by@?r.
+
+RULE iwf_dsl_event:
+IF ?r#tag@value:state_machine
+THEN dsl:EVENT#dsl_recommended_by@?r.
+
+RULE iwf_dsl_transition:
+IF ?r#tag@value:state_machine
+THEN dsl:TRANSITION#dsl_recommended_by@?r.
+
+RULE iwf_dsl_role:
+IF ?r#tag@value:role_split
+THEN dsl:ROLE#dsl_recommended_by@?r.
+
+RULE iwf_dsl_channel:
+IF ?r#tag@value:multi_plane_comms
+THEN dsl:CHANNEL#dsl_recommended_by@?r.
+
+RULE iwf_dsl_incident:
+IF ?r#tag@value:timeline
+THEN dsl:INCIDENT#dsl_recommended_by@?r.
+
+RULE iwf_dsl_problem_block:
+IF ?r#tag@value:fix_proposal
+THEN dsl:PROBLEM#dsl_recommended_by@?r.
+
+RULE iwf_dsl_test_block:
+IF ?r#tag@value:test_gates
+THEN dsl:TEST#dsl_recommended_by@?r.
+
+RULE iwf_dsl_fix_block:
+IF ?r#tag@value:fix_proposal
+THEN dsl:FIX_PROPOSAL#dsl_recommended_by@?r.
+
+RULE iwf_dsl_postmortem:
+IF ?r#tag@value:postmortem
+THEN dsl:POSTMORTEM#dsl_recommended_by@?r.
+
+RULE iwf_dsl_action_item:
+IF ?r#tag@value:action_tracking
+THEN dsl:ACTION_ITEM#dsl_recommended_by@?r.
+
+RULE iwf_dsl_invariant:
+IF ?r#tag@value:invariants
+THEN dsl:INVARIANT#dsl_recommended_by@?r.
+
+RULE iwf_dsl_implies:
+IF ?a#implies@?b
+THEN dsl:IMPLIES#dsl_recommended_by@?a.
+
+RULE iwf_dsl_kind:
+IF ?d#dsl_recommended_by@?x
+THEN ?d#kind@entity:dsl_construct.
+
+RULE iwf_dsl_priority_must:
+IF ?d#dsl_recommended_by@?r AND ?r#priority@value:high
+THEN ?d#priority@value:must_have.
+
+RULE iwf_dsl_priority_should:
+IF ?d#dsl_recommended_by@?r AND ?r#priority@value:medium
+THEN ?d#priority@value:should_have.
+
+RULE iwf_dsl_priority_from_feature_must:
+IF ?d#dsl_recommended_by@?f AND ?f#priority@value:must_have
+THEN ?d#priority@value:must_have.
+
+RULE iwf_dsl_source_trace:
+IF ?d#dsl_recommended_by@?r AND ?r#source@?s
+THEN ?d#source_support@?s.
+
+RULE iwf_req_needs_model_problem:
+IF ?r#tag@value:fix_proposal
+THEN ?r#needs_model@model:problem.
+
+RULE iwf_req_needs_model_test:
+IF ?r#tag@value:test_gates
+THEN ?r#needs_model@model:test_plan.
+
+RULE iwf_req_needs_model_fix:
+IF ?r#tag@value:fix_proposal
+THEN ?r#needs_model@model:fix_proposal.
+
+RULE iwf_req_needs_model_postmortem:
+IF ?r#tag@value:postmortem
+THEN ?r#needs_model@model:postmortem.
+
+QUERY iwf_workflow_transitions:
+FIND ?from ?event ?to WHERE ?t#kind@entity:transition AND ?t#from@?from AND ?t#event@?event AND ?t#to@?to.
+
+QUERY iwf_requirement_graph:
+FIND ?req_a ?req_b WHERE ?req_a#implies@?req_b.
+
+QUERY iwf_recommended_features:
+FIND ?feature ?priority WHERE ?feature#kind@entity:tool_feature AND ?feature#priority@?priority.
+
+QUERY iwf_feature_traceability:
+FIND ?feature ?requirement ?source WHERE ?feature#feature_recommended_by@?requirement AND ?feature#source_support@?source.
+
+QUERY iwf_recommended_options:
+FIND ?option ?priority ?feature WHERE ?option#kind@entity:tool_option AND ?option#priority@?priority AND ?option#option_recommended_by@?feature.
+
+QUERY iwf_option_traceability:
+FIND ?option ?source WHERE ?option#kind@entity:tool_option AND ?option#source_support@?source.
+
+QUERY iwf_recommended_dsl_constructs:
+FIND ?construct ?priority WHERE ?construct#kind@entity:dsl_construct AND ?construct#priority@?priority.
+
+QUERY iwf_dsl_traceability:
+FIND ?construct ?source WHERE ?construct#kind@entity:dsl_construct AND ?construct#source_support@?source.
+
+QUERY iwf_model_shapes:
+FIND ?model ?field WHERE ?model#kind@entity:model_shape AND ?model#field@?field.
+
+QUERY iwf_requirement_model_links:
+FIND ?requirement ?model WHERE ?requirement#kind@entity:requirement AND ?requirement#needs_model@?model.

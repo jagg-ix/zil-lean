@@ -1,0 +1,48 @@
+MODULE supply.chain.domain.library.demo.
+
+// Domain library layer (implemented with language-native macros)
+MACRO PRODUCT(name, category):
+EMIT product:{{name}}#kind@entity:product.
+EMIT product:{{name}}#category@value:{{category}}.
+ENDMACRO.
+
+MACRO WAREHOUSE(name, region):
+EMIT warehouse:{{name}}#kind@entity:warehouse.
+EMIT warehouse:{{name}}#region@value:{{region}}.
+ENDMACRO.
+
+MACRO STOCK(product, warehouse, qty):
+EMIT stock:{{product}}_{{warehouse}}#kind@entity:stock_record.
+EMIT stock:{{product}}_{{warehouse}}#product@product:{{product}}.
+EMIT stock:{{product}}_{{warehouse}}#warehouse@warehouse:{{warehouse}}.
+EMIT stock:{{product}}_{{warehouse}}#qty@value:{{qty}}.
+ENDMACRO.
+
+MACRO LOW_STOCK_RULE(product, warehouse, min_qty):
+EMIT RULE low_stock_{{product}}_{{warehouse}}:
+EMIT IF stock:{{product}}_{{warehouse}}#qty@?q AND ?q#less_than@value:{{min_qty}}
+EMIT THEN alert:{{product}}_{{warehouse}}#kind@entity:alert AND alert:{{product}}_{{warehouse}}#type@value:low_stock.
+ENDMACRO.
+
+MACRO REORDER_LIBRARY(product, warehouse, supplier, min_qty):
+EMIT USE LOW_STOCK_RULE({{product}}, {{warehouse}}, {{min_qty}}).
+EMIT supplier:{{supplier}}#kind@entity:supplier.
+EMIT supplier:{{supplier}}#replenishes@product:{{product}}.
+EMIT warehouse:{{warehouse}}#preferred_supplier@supplier:{{supplier}}.
+ENDMACRO.
+
+// Model declarations using the macro "library"
+USE PRODUCT(widgetA, electronics).
+USE WAREHOUSE(wh_north, north).
+USE STOCK(widgetA, wh_north, 12).
+value:12#less_than@value:20.
+USE REORDER_LIBRARY(widgetA, wh_north, acme_supply, 20).
+
+QUERY low_stock_alerts:
+FIND ?a WHERE ?a#type@value:low_stock.
+
+QUERY supplier_for_wh_north:
+FIND ?s WHERE warehouse:wh_north#preferred_supplier@?s.
+
+QUERY stock_records:
+FIND ?r WHERE ?r#kind@entity:stock_record.

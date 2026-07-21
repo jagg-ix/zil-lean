@@ -1,0 +1,79 @@
+MODULE dune.needs.criteria.providers.
+
+// Minimal runnable encoding of Dune-like dependency semantics:
+// NEED + acceptance criteria + providers that satisfy criteria.
+//
+// This models package-plane behavior:
+// - NEED targets a package.
+// - NEED accepts one or more criteria (OR over normalized criteria).
+// - Provider candidate must target same package.
+// - Provider is accepted when it meets at least one accepted criterion.
+
+MACRO NEED(id, pkg):
+EMIT need:{{id}}#kind@entity:need.
+EMIT need:{{id}}#for_package@pkg:{{pkg}}.
+ENDMACRO.
+
+MACRO NEED_ACCEPTS(id, criterion):
+EMIT need:{{id}}#accepts@crit:{{criterion}}.
+ENDMACRO.
+
+MACRO PROVIDER(id, pkg, version):
+EMIT provider:{{id}}#kind@entity:provider.
+EMIT provider:{{id}}#provides_package@pkg:{{pkg}}.
+EMIT provider:{{id}}#version@ver:{{version}}.
+ENDMACRO.
+
+MACRO PROVIDER_MEETS(id, criterion):
+EMIT provider:{{id}}#meets@crit:{{criterion}}.
+ENDMACRO.
+
+MACRO PROVIDER_PREFERRED(id):
+EMIT provider:{{id}}#preferred@value:true.
+ENDMACRO.
+
+// NEEDS extracted from dune/opam-style declarations (normalized)
+// n_lwt: lwt with criterion equivalent to ">= 5.2"
+// n_alcotest: alcotest with criterion equivalent to ":with-test"
+USE NEED(n_lwt, lwt).
+USE NEED_ACCEPTS(n_lwt, lwt_ge_5_2).
+
+USE NEED(n_alcotest, alcotest).
+USE NEED_ACCEPTS(n_alcotest, with_test_true).
+
+// Providers available in the universe
+USE PROVIDER(lwt_5_1, lwt, v5_1).
+USE PROVIDER(lwt_5_7, lwt, v5_7).
+USE PROVIDER(alcotest_1_9, alcotest, v1_9).
+
+// Criteria satisfaction facts normally come from an adapter/solver pass.
+USE PROVIDER_MEETS(lwt_5_7, lwt_ge_5_2).
+USE PROVIDER_MEETS(alcotest_1_9, with_test_true).
+
+// Preferred providers can be emitted by a solver policy (e.g. newest)
+USE PROVIDER_PREFERRED(lwt_5_7).
+USE PROVIDER_PREFERRED(alcotest_1_9).
+
+RULE candidate_provider:
+IF ?need#for_package@?pkg AND ?provider#provides_package@?pkg
+THEN ?need#candidate@?provider.
+
+RULE accepted_provider:
+IF ?need#candidate@?provider AND ?need#accepts@?crit AND ?provider#meets@?crit
+THEN ?need#accepted_by@?provider.
+
+RULE selected_provider:
+IF ?need#accepted_by@?provider AND ?provider#preferred@value:true
+THEN ?need#selected_provider@?provider.
+
+QUERY needs:
+FIND ?n WHERE ?n#kind@entity:need.
+
+QUERY candidates:
+FIND ?n ?p WHERE ?n#candidate@?p.
+
+QUERY accepted:
+FIND ?n ?p WHERE ?n#accepted_by@?p.
+
+QUERY selected:
+FIND ?n ?p WHERE ?n#selected_provider@?p.

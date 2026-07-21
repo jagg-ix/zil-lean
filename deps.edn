@@ -1,0 +1,9 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/data.json {:mvn/version "2.5.1"}
+        datascript/datascript {:mvn/version "1.7.8"}
+        org.xerial/sqlite-jdbc {:mvn/version "3.48.0.0"}}
+ :aliases {:test {:extra-paths ["test"]
+                  :main-opts ["-m" "zil.test-runner"]}
+           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+                   :ns-default build}}}

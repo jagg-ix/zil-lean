@@ -1,0 +1,311 @@
+{
+  "source_pdf": "2505.17335v2.pdf",
+  "pdf_info": {
+    "Title": "Secure Parsing and Serializing with Separation Logic Applied to CBOR, CDDL, and COSE",
+    "Subject": "-  Software and its engineering  ->  Source code generation.Specification languages.Correctness.Formal software verification.-  Information systems  ->  Data layout.Data encoding and canonicalization.-  Security and privacy  ->  Key management.Embedded systems security.Trusted computing.Management and querying of encrypted data.",
+    "Keywords": "Binary data formats, CBOR, CDDL, COSE, DICE, DPE, Formal verification, Measured boot, Secrets management",
+    "Author": "Tahina Ramananandro; Gabriel Ebner; Guido Mart\u00ednez; Nikhil Swamy",
+    "Creator": "arXiv GenPDF (tex2pdf:)",
+    "Producer": "pikepdf 8.15.1",
+    "CreationDate": "Thu Jul 17 18:57:18 2025 CST",
+    "ModDate": "Thu Jul 17 18:57:18 2025 CST",
+    "Custom Metadata": "yes",
+    "Metadata Stream": "yes",
+    "Tagged": "no",
+    "UserProperties": "no",
+    "Suspects": "no",
+    "Form": "none",
+    "JavaScript": "no",
+    "Pages": "17",
+    "Encrypted": "no",
+    "Page size": "612 x 792 pts (letter)",
+    "Page rot": "0",
+    "File size": "824030 bytes",
+    "Optimized": "no",
+    "PDF version": "1.5"
+  },
+  "stats": {
+    "chars": 110553,
+    "sentences": 637,
+    "contributions_found": 4,
+    "claims_total": 15,
+    "claims_covered": 14,
+    "claims_gap": 1
+  },
+  "keyword_counts": {
+    "pulseparse": 38,
+    "everparse": 14,
+    "evercbor": 17,
+    "evercddl": 41,
+    "cbor": 282,
+    "cddl": 124,
+    "cose": 48,
+    "dpe": 22,
+    "memory_safety": 2,
+    "arithmetic_safety": 0,
+    "functional_correctness": 6,
+    "non_malleable": 13,
+    "non_ambiguous": 1,
+    "constant_stack_space": 7,
+    "adversarial_inputs": 1,
+    "karamel": 4
+  },
+  "contributions": [
+    {
+      "ordinal": "first",
+      "section": "2",
+      "statement": "PulseParse, a new verified library for secure parsing and serialization",
+      "statement_token": "pulseparse_a_new_verified_library_for_secure_parsing_and_serialization"
+    },
+    {
+      "ordinal": "second",
+      "section": "3",
+      "statement": "EverCBOR, a formalization of CBOR, including a proof that its deterministic encoding is indeed non-malleable\u2014the first such proof",
+      "statement_token": "evercbor_a_formalization_of_cbor_including_a_proof_that_its_deterministic_encoding_is_indeed_non_malleable_the_first_suc"
+    },
+    {
+      "ordinal": "third",
+      "section": "4",
+      "statement": "a formalization of CDDL, including inferring well-formedness conditions on CDDL definitions (in the form of a new elaboration algorithm, proven sound) that yield unambiguous and non-malleable formats",
+      "statement_token": "a_formalization_of_cddl_including_inferring_well_formedness_conditions_on_cddl_definitions_in_the_form_of_a_new_elaborat"
+    },
+    {
+      "ordinal": "fourth",
+      "section": "5",
+      "statement": "to evaluate our libraries on two applications, COSE and DPE",
+      "statement_token": "to_evaluate_our_libraries_on_two_applications_cose_and_dpe"
+    }
+  ],
+  "claims": [
+    {
+      "id": "pulseparse_verified_library",
+      "summary": "pulseparse_verified_parser_serializer_library",
+      "mode": "all",
+      "probes": [
+        "pulseparse",
+        "verified library for secure parsing and serialization"
+      ],
+      "matched_probes": [
+        "pulseparse",
+        "verified library for secure parsing and serialization"
+      ],
+      "detected": true,
+      "excerpt": "Towards this end, we present PulseParse, a library of verified parser and serializer combinators for non-malleable binary formats."
+    },
+    {
+      "id": "recursive_constant_stack_space",
+      "summary": "recursive_formats_constant_stack_space_validation",
+      "mode": "all",
+      "probes": [
+        "recursive formats",
+        "constant stack space"
+      ],
+      "matched_probes": [
+        "recursive formats",
+        "constant stack space"
+      ],
+      "detected": true,
+      "excerpt": "PulseParse also supports a class of recursive formats\u2014with a focus on security and handling adversarial inputs, we show how to parse such formats with only a constant amount of stack space."
+    },
+    {
+      "id": "evercbor_deterministic_non_malleable",
+      "summary": "evercbor_deterministic_fragment_non_malleable",
+      "mode": "all",
+      "probes": [
+        "evercbor",
+        "deterministic encoding",
+        "non-malleable"
+      ],
+      "matched_probes": [
+        "evercbor",
+        "deterministic encoding",
+        "non-malleable"
+      ],
+      "detected": true,
+      "excerpt": "Towards this end, we present PulseParse, a library of verified parser and serializer combinators for non-malleable binary formats."
+    },
+    {
+      "id": "evercddl_well_formedness_sound",
+      "summary": "evercddl_well_formedness_elaboration_sound",
+      "mode": "all",
+      "probes": [
+        "evercddl",
+        "well-formedness",
+        "proven sound"
+      ],
+      "matched_probes": [
+        "evercddl",
+        "well-formedness",
+        "proven sound"
+      ],
+      "detected": true,
+      "excerpt": "We identify well-formedness conditions on CDDL definitions that ensure that they yield unambiguous, non-malleable formats, and implement EverCDDL, a tool that checks that a CDDL definition is well-formed, and then produces verified parsers and serializers for it."
+    },
+    {
+      "id": "cose_verified_signing",
+      "summary": "verified_cose_signing_implementation",
+      "mode": "all",
+      "probes": [
+        "cose",
+        "verified library",
+        "signature"
+      ],
+      "matched_probes": [
+        "cose",
+        "verified library",
+        "signature"
+      ],
+      "detected": true,
+      "excerpt": "Secure Parsing and Serializing with Separation Logic Applied to CBOR, CDDL, and COSE TAHINA RAMANANANDRO, GABRIEL EBNER, GUIDO MART\u00cdNEZ, and NIKHIL SWAMY, Microsoft arXiv:2505.17335v2 [cs.CR] 17 Jul 2025 Research, USA Incorrect handling of security-critical data formats, particularly in low-level languages, are the root cause of many security vulnerabilities."
+    },
+    {
+      "id": "dpe_generated_verified_code",
+      "summary": "dpe_generated_verified_parsers_serializers",
+      "mode": "all",
+      "probes": [
+        "dpe",
+        "generate verified code"
+      ],
+      "matched_probes": [
+        "dpe",
+        "generate verified code"
+      ],
+      "detected": true,
+      "excerpt": "We also use our toolchain to generate verified code for other standards specified in CDDL, including DICE Protection Environment, a secure boot protocol standard."
+    },
+    {
+      "id": "memory_safety_guarantee",
+      "summary": "memory_safety_guarantee",
+      "mode": "any",
+      "probes": [
+        "memory safe",
+        "memory safety"
+      ],
+      "matched_probes": [
+        "memory safe",
+        "memory safety"
+      ],
+      "detected": true,
+      "excerpt": "2025], with formal proofs of memory safety, functional correctness, and non-malleability (i.e., unique binary representation) of formats."
+    },
+    {
+      "id": "arithmetic_safety_guarantee",
+      "summary": "arithmetic_safety_guarantee",
+      "mode": "any",
+      "probes": [
+        "arithmetically safe",
+        "arithmetic safety"
+      ],
+      "matched_probes": [
+        "arithmetically safe"
+      ],
+      "detected": true,
+      "excerpt": "2019) Theorems Memory-Safe Arithmetically Safe Functionally Correct Non-malleable Non-ambiguous \u00a72: PulseParse impl."
+    },
+    {
+      "id": "functional_correctness_guarantee",
+      "summary": "functional_correctness_guarantee",
+      "mode": "any",
+      "probes": [
+        "functionally correct",
+        "functional correctness"
+      ],
+      "matched_probes": [
+        "functionally correct",
+        "functional correctness"
+      ],
+      "detected": true,
+      "excerpt": "2019) Theorems Memory-Safe Arithmetically Safe Functionally Correct Non-malleable Non-ambiguous \u00a72: PulseParse impl."
+    },
+    {
+      "id": "non_malleability_guarantee",
+      "summary": "non_malleability_guarantee",
+      "mode": "any",
+      "probes": [
+        "non-malleable",
+        "non-malleability"
+      ],
+      "matched_probes": [
+        "non-malleable",
+        "non-malleability"
+      ],
+      "detected": true,
+      "excerpt": "Towards this end, we present PulseParse, a library of verified parser and serializer combinators for non-malleable binary formats."
+    },
+    {
+      "id": "non_ambiguity_guarantee",
+      "summary": "non_ambiguity_guarantee",
+      "mode": "any",
+      "probes": [
+        "non-ambiguous",
+        "unambiguous"
+      ],
+      "matched_probes": [
+        "non-ambiguous",
+        "unambiguous"
+      ],
+      "detected": true,
+      "excerpt": "We identify well-formedness conditions on CDDL definitions that ensure that they yield unambiguous, non-malleable formats, and implement EverCDDL, a tool that checks that a CDDL definition is well-formed, and then produces verified parsers and serializers for it."
+    },
+    {
+      "id": "c_and_rust_extraction",
+      "summary": "karamel_extraction_to_c_and_safe_rust",
+      "mode": "all",
+      "probes": [
+        "karamel",
+        "standalone library in c",
+        "safe rust"
+      ],
+      "matched_probes": [
+        "karamel",
+        "standalone library in c",
+        "safe rust"
+      ],
+      "detected": true,
+      "excerpt": "combinators + Recursion \u00a73: EverCBOR Verified CBOR Library CBOR.c CBOR.rs \u00a74: EverCDDL Verified Code Generator for CDDL Karamel code generator from F* to C/Rust (Protzenko et al."
+    },
+    {
+      "id": "performance_evaluation",
+      "summary": "performance_comparison_with_common_cbor_libraries",
+      "mode": "all",
+      "probes": [
+        "evaluate evercbor",
+        "competitive in speed",
+        "memory consumption"
+      ],
+      "matched_probes": [
+        "evaluate evercbor",
+        "competitive in speed",
+        "memory consumption"
+      ],
+      "detected": true,
+      "excerpt": "We evaluate EverCBOR against commonly used unverified CBOR libraries such as QCBOR [Lundblade 2023] and TinyCBOR [Intel 2021], noting that we support more CBOR features (including arbitrary maps), and implement all necessary checks, find that our verified code is competitive in speed and memory consumption."
+    },
+    {
+      "id": "adversarial_input_focus",
+      "summary": "security_focus_under_adversarial_inputs",
+      "mode": "all",
+      "probes": [
+        "adversarial inputs",
+        "security"
+      ],
+      "matched_probes": [
+        "adversarial inputs",
+        "security"
+      ],
+      "detected": true,
+      "excerpt": "Secure Parsing and Serializing with Separation Logic Applied to CBOR, CDDL, and COSE TAHINA RAMANANANDRO, GABRIEL EBNER, GUIDO MART\u00cdNEZ, and NIKHIL SWAMY, Microsoft arXiv:2505.17335v2 [cs.CR] 17 Jul 2025 Research, USA Incorrect handling of security-critical data formats, particularly in low-level languages, are the root cause of many security vulnerabilities."
+    },
+    {
+      "id": "double_fetch_freedom",
+      "summary": "double_fetch_freedom_explicit_claim",
+      "mode": "any",
+      "probes": [
+        "double-fetch"
+      ],
+      "matched_probes": [],
+      "detected": false,
+      "excerpt": ""
+    }
+  ]
+}
