@@ -6,6 +6,7 @@ import Zil.Profile.Core
 import Zil.Profile.Research
 import Zil.Environment.Knowledge
 import Zil.Engine.Query
+import Zil.Engine.Report
 import Zil.Lint.Coverage
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
