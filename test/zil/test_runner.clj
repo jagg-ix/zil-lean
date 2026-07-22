@@ -22,6 +22,7 @@
             [zil.preprocess-test]
             [zil.profile-z3-test]
             [zil.relational-ir-test]
+            [zil.relation-profile-test]
             [zil.runtime-datascript-vector-clock-test]
             [zil.runtime-ingest-test]
             [zil.recovery-drift-test]
@@ -54,6 +55,7 @@
                                          'zil.preprocess-test
                                          'zil.profile-z3-test
                                          'zil.relational-ir-test
+                                         'zil.relation-profile-test
                                          'zil.runtime-datascript-vector-clock-test
                                          'zil.runtime-ingest-test
                                          'zil.recovery-drift-test
