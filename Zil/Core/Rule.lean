@@ -21,13 +21,21 @@ structure Rule where
 
 namespace Rule
 
+private def termBound (bound : Array Name) : Term → Bool
+  | .var name => bound.contains name
+  | .node _ => true
+
+private def relationVariablesBound (bound : Array Name) (relation : RelExpr) : Bool :=
+  termBound bound relation.subject && termBound bound relation.object
+
 /-- Every variable occurring in a rule conclusion must be explicitly bound. -/
 def conclusionVariablesBound (rule : Rule) : Bool :=
-  let bound := rule.variables
-  let termBound : Term → Bool
-    | .var name => bound.contains name
-    | .node _ => true
-  termBound rule.conclusion.subject && termBound rule.conclusion.object
+  relationVariablesBound rule.variables rule.conclusion
+
+/-- Every variable occurring in premises or the conclusion must be explicitly bound. -/
+def allVariablesBound (rule : Rule) : Bool :=
+  rule.premises.all (relationVariablesBound rule.variables) &&
+  relationVariablesBound rule.variables rule.conclusion
 
 end Rule
 end Zil

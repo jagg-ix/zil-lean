@@ -1,4 +1,5 @@
 import Zil
+import Zil.Test.NativeSyntax
 
 open Zil
 
@@ -32,6 +33,7 @@ private def requirementQuery : Query :=
   { formalizes with source := { frontend := "embedded", line := some 12 } }
 
 #guard transferRule.conclusionVariablesBound
+#guard transferRule.allVariablesBound
 #guard requirementQuery.selectedVariablesBound
 #guard !(Query.selectedVariablesBound
   { requirementQuery with select := #[`undeclared] })
@@ -40,8 +42,10 @@ private def requirementQuery : Query :=
 def main : IO Unit := do
   unless formalizes.semanticallyEqual formalizes do
     throw <| IO.userError "relation semantic equality failed"
-  unless transferRule.conclusionVariablesBound do
+  unless transferRule.allVariablesBound do
     throw <| IO.userError "rule binding validation failed"
   unless requirementQuery.selectedVariablesBound do
     throw <| IO.userError "query binding validation failed"
-  IO.println "zil-lean core IR validation passed"
+  unless schwarzschildClaimRequirement.allVariablesBound do
+    throw <| IO.userError "native zil_rule validation failed"
+  IO.println "zil-lean core IR and native syntax validation passed"
