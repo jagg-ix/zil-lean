@@ -1,4 +1,5 @@
 import Zil
+import Zil.Test.NativeSyntax
 
 open Zil
 
@@ -44,4 +45,6 @@ def main : IO Unit := do
     throw <| IO.userError "rule binding validation failed"
   unless requirementQuery.selectedVariablesBound do
     throw <| IO.userError "query binding validation failed"
-  IO.println "zil-lean core IR validation passed"
+  unless Zil.Syntax.schwarzschildClaimRequirement.conclusionVariablesBound do
+    throw <| IO.userError "native zil_rule validation failed"
+  IO.println "zil-lean core IR and native syntax validation passed"
