@@ -1,0 +1,6 @@
+ZILX	1
+revision	3
+profile	Zil.Profile.research	0.1
+fact	rel\tnode:lean.Schwarzschild.metric\tzil.formalizes\tnode:claim.schwarzschildMetric
+fact	rel\tnode:lean.Schwarzschild.metric\tzil.requires\tnode:requirement.lorentzianMetric
+rule	rule\tschwarzschildClaimRequirement\tdeclaration,claim,requirement\tgraphDerived\npremise\trel\tvar:declaration\tzil.formalizes\tvar:claim\npremise\trel\tvar:declaration\tzil.requires\tvar:requirement\nconclusion\trel\tvar:claim\tzil.requiresClaim\tvar:requirement
