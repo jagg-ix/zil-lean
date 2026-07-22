@@ -10,6 +10,7 @@ import Zil.Engine.Report
 import Zil.Lint.Coverage
 import Zil.Contract.Core
 import Zil.Recovery.Core
+import Zil.Codec.Canonical
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
 import Zil.Syntax.TypedRule
