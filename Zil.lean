@@ -7,6 +7,7 @@ import Zil.Profile.Research
 import Zil.Environment.Knowledge
 import Zil.Engine.Query
 import Zil.Engine.Report
+import Zil.Engine.Provenance
 import Zil.Lint.Coverage
 import Zil.Contract.Core
 import Zil.Recovery.Core
