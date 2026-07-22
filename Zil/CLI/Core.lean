@@ -17,6 +17,14 @@ inductive Command where
   | export (format : Zil.Export.LogicFormat)
   deriving Repr, Inhabited
 
+private def relationVariables (relation : Zil.RelExpr) : Array Name :=
+  let variables := match relation.subject with
+    | .var name => #[name]
+    | .node _ => #[]
+  match relation.object with
+  | .var name => if variables.contains name then variables else variables.push name
+  | .node _ => variables
+
 private def renderBinding (binding : Zil.Engine.Binding) : String :=
   String.intercalate ", " <| binding.toList.map fun pair =>
     s!"{pair.1}={repr pair.2}"
@@ -41,10 +49,11 @@ def execute (session : Session) : Command → String
       if Zil.Engine.entails session.envelope.facts session.envelope.rules relation
       then "true" else "false"
   | .query pattern =>
+      let variables := relationVariables pattern
       let query : Zil.Query := {
         name := `cli.query
-        variables := pattern.variables
-        select := pattern.variables
+        variables
+        select := variables
         premises := #[pattern] }
       let closed := Zil.Engine.closure session.envelope.facts session.envelope.rules
       let answers := Zil.Engine.solve closed query
