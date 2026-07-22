@@ -6,7 +6,7 @@ namespace Zil.Interop
 structure ExchangeEnvelope where
   schemaVersion : String := "1"
   knowledgeRevision : Nat
-  profileName : Option Name := none
+  profileName : Option String := none
   profileVersion : Option String := none
   facts : Array Zil.RelExpr := #[]
   rules : Array Zil.Rule := #[]
@@ -25,10 +25,6 @@ private def unescape (value : String) : String :=
     | c :: rest => loop rest (out.push c)
   loop value.data ""
 
-private def optionName : Option Name → String
-  | none => "-"
-  | some name => escape name.toString
-
 private def optionString : Option String → String
   | none => "-"
   | some value => escape value
@@ -38,14 +34,11 @@ def encodeEnvelope (envelope : ExchangeEnvelope) : String :=
   let header := #[
     s!"ZILX\t{envelope.schemaVersion}",
     s!"revision\t{envelope.knowledgeRevision}",
-    s!"profile\t{optionName envelope.profileName}\t{optionString envelope.profileVersion}"
+    s!"profile\t{optionString envelope.profileName}\t{optionString envelope.profileVersion}"
   ]
   let facts := envelope.facts.map fun fact => s!"fact\t{escape (Zil.Codec.encodeRelation fact)}"
   let rules := envelope.rules.map fun rule => s!"rule\t{escape (Zil.Codec.encodeRule rule)}"
   String.intercalate "\n" (header ++ facts ++ rules).toList
-
-private def parseOptionName (value : String) : Option Name :=
-  if value == "-" then none else some (Name.mkSimple (unescape value))
 
 private def parseOptionString (value : String) : Option String :=
   if value == "-" then none else some (unescape value)
@@ -68,7 +61,7 @@ def decodeEnvelope (text : String) : Except String ExchangeEnvelope := do
   let profileParts := profileLine.splitOn "\t"
   unless profileParts.length == 3 && profileParts[0]? == some "profile" do
     throw "invalid profile row"
-  let profileName := parseOptionName (profileParts[1]!.trim)
+  let profileName := parseOptionString (profileParts[1]!.trim)
   let profileVersion := parseOptionString (profileParts[2]!.trim)
   let mut facts : Array Zil.RelExpr := #[]
   let mut rules : Array Zil.Rule := #[]
@@ -92,7 +85,7 @@ def semanticallyEqual (left right : ExchangeEnvelope) : Bool :=
   left.profileVersion == right.profileVersion &&
   left.facts.size == right.facts.size &&
   left.rules.size == right.rules.size &&
-  left.facts.zip right.facts |>.all fun pair => pair.1.semanticallyEqual pair.2 &&
-  left.rules.zip right.rules |>.all fun pair => Zil.Codec.ruleSemanticallyEqual pair.1 pair.2
+  (left.facts.zip right.facts |>.all fun pair => pair.1.semanticallyEqual pair.2) &&
+  (left.rules.zip right.rules |>.all fun pair => Zil.Codec.ruleSemanticallyEqual pair.1 pair.2)
 
 end Zil.Interop
