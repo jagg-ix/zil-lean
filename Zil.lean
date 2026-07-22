@@ -11,6 +11,7 @@ import Zil.Lint.Coverage
 import Zil.Contract.Core
 import Zil.Recovery.Core
 import Zil.Codec.Canonical
+import Zil.Trust.Certified
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
 import Zil.Syntax.TheoremRule
@@ -19,3 +20,4 @@ import Zil.Syntax.Environment
 import Zil.Syntax.Lint
 import Zil.Syntax.Contract
 import Zil.Syntax.Recovery
+import Zil.Syntax.Certified
