@@ -25,6 +25,10 @@ def semanticallyEqual (left right : RelExpr) : Bool :=
   left.relation == right.relation &&
   left.object == right.object
 
+/-- True when neither endpoint is a rule/query variable. -/
+def isGround (relation : RelExpr) : Bool :=
+  !relation.subject.isVariable && !relation.object.isVariable
+
 /-- Construct a canonical relation without source metadata. -/
 def mk' (subject : Term) (relation : Name) (object : Term) : RelExpr :=
   { subject, relation, object }
