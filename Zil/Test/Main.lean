@@ -1,5 +1,6 @@
 import Zil
 import Zil.Test.NativeSyntax
+import Zil.Test.TypedProfiles
 
 open Zil
 
@@ -48,4 +49,8 @@ def main : IO Unit := do
     throw <| IO.userError "query binding validation failed"
   unless schwarzschildClaimRequirement.allVariablesBound do
     throw <| IO.userError "native zil_rule validation failed"
-  IO.println "zil-lean core IR and native syntax validation passed"
+  unless typedSchwarzschildRequirement.valid do
+    throw <| IO.userError "typed relation profile validation failed"
+  if invalidFormalizesRequirement.valid then
+    throw <| IO.userError "typed relation profile accepted a category error"
+  IO.println "zil-lean core IR, native syntax, and typed profiles validation passed"
