@@ -4,12 +4,12 @@
             [zil.migrate :as migrate]))
 
 (def lossless-source
-  "MODULE migration.demo.\n\
-lean.Theorem#formalizes@claim.demo.\n\
-lean.Theorem#requires@requirement.demo.\n\
-RULE transfer:\n\
-IF ?declaration#formalizes@?claim AND ?declaration#requires@?requirement\n\
-THEN ?claim#requires_claim@?requirement.\n")
+  (str "MODULE migration.demo.\n"
+       "lean.Theorem#formalizes@claim.demo.\n"
+       "lean.Theorem#requires@requirement.demo.\n"
+       "RULE transfer:\n"
+       "IF ?declaration#formalizes@?claim AND ?declaration#requires@?requirement\n"
+       "THEN ?claim#requires_claim@?requirement.\n"))
 
 (deftest lossless-zc-to-zilx-migration
   (let [{:keys [envelope report]} (migrate/migrate-text lossless-source)
