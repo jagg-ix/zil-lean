@@ -101,26 +101,85 @@
   [input-path output-path report-path options]
   (let [{:keys [envelope report]}
         (migrate-text (slurp input-path) (assoc options :source input-path))]
+    (io/make-parents output-path)
+    (io/make-parents report-path)
     (spit output-path (exchange/encode-envelope envelope))
     (spit report-path (pr-str report))
-    {:output output-path :report report-path :summary report}))
+    {:input input-path :output output-path :report report-path :summary report}))
+
+(defn- relative-path [root file]
+  (let [root-path (.toPath (.getCanonicalFile (io/file root)))
+        file-path (.toPath (.getCanonicalFile (io/file file)))]
+    (str (.relativize root-path file-path))))
+
+(defn- replace-extension [path extension]
+  (str/replace path #"(?i)\.zc$" extension))
+
+(defn migrate-tree!
+  "Recursively migrate every `.zc` file below `input-root`.
+
+  Output snapshots and EDN reports preserve the source directory structure.
+  A manifest is always written, even when individual files fail. In strict mode
+  the function throws after writing the manifest if any file failed."
+  [input-root output-root options]
+  (let [files (->> (file-seq (io/file input-root))
+                   (filter #(.isFile %))
+                   (filter #(str/ends-with? (str/lower-case (.getName %)) ".zc"))
+                   (sort-by #(.getCanonicalPath %)))
+        results (mapv
+                 (fn [file]
+                   (let [relative (relative-path input-root file)
+                         snapshot (str (io/file output-root (replace-extension relative ".zilx")))
+                         report (str (io/file output-root (replace-extension relative ".migration.edn")))]
+                     (try
+                       (assoc (migrate-file! (str file) snapshot report options) :status :ok)
+                       (catch Exception error
+                         {:input (str file)
+                          :output snapshot
+                          :report report
+                          :status :error
+                          :message (.getMessage error)
+                          :data (ex-data error)}))))
+                 files)
+        manifest {:input-root input-root
+                  :output-root output-root
+                  :strict? (get options :strict? true)
+                  :files (count files)
+                  :migrated (count (filter #(= :ok (:status %)) results))
+                  :failed (count (filter #(= :error (:status %)) results))
+                  :results results}
+        manifest-path (str (io/file output-root "migration-manifest.edn"))]
+    (io/make-parents manifest-path)
+    (spit manifest-path (pr-str manifest))
+    (when (and (get options :strict? true) (pos? (:failed manifest)))
+      (throw (ex-info "One or more legacy files failed migration"
+                      {:manifest manifest-path :failed (:failed manifest)})))
+    manifest))
 
 (defn- usage []
-  (str "Usage: clojure -M:migrate [--allow-lossy] INPUT.zc OUTPUT.zilx REPORT.edn\n"
+  (str "Usage:\n"
+       "  clojure -M:migrate [--allow-lossy] INPUT.zc OUTPUT.zilx REPORT.edn\n"
+       "  clojure -M:migrate [--allow-lossy] --tree INPUT_DIR OUTPUT_DIR\n"
        "Strict lossless migration is the default."))
 
-(defn -main [& args]
-  (let [[strict? args] (if (= "--allow-lossy" (first args))
-                         [false (rest args)]
-                         [true args])]
-    (if-not (= 3 (count args))
-      (do (binding [*out* *err*] (println (usage))) (System/exit 2))
-      (let [[input output report] args]
-        (try
-          (let [result (migrate-file! input output report {:strict? strict?})]
-            (println (pr-str result)))
-          (catch Exception error
-            (binding [*out* *err*]
-              (println (.getMessage error))
-              (when-let [data (ex-data error)] (println (pr-str data))))
-            (System/exit 1)))))))
+(defn -main [& raw-args]
+  (let [[strict? args] (if (= "--allow-lossy" (first raw-args))
+                         [false (rest raw-args)]
+                         [true raw-args])]
+    (try
+      (cond
+        (and (= "--tree" (first args)) (= 3 (count args)))
+        (let [[_ input output] args]
+          (println (pr-str (migrate-tree! input output {:strict? strict?}))))
+
+        (= 3 (count args))
+        (let [[input output report] args]
+          (println (pr-str (migrate-file! input output report {:strict? strict?}))))
+
+        :else
+        (do (binding [*out* *err*] (println (usage))) (System/exit 2)))
+      (catch Exception error
+        (binding [*out* *err*]
+          (println (.getMessage error))
+          (when-let [data (ex-data error)] (println (pr-str data))))
+        (System/exit 1)))))
