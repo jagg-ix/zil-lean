@@ -3,6 +3,7 @@ import Zil.Test.NativeSyntax
 import Zil.Test.TypedProfiles
 import Zil.Test.Environment.B
 import Zil.Test.Environment.Diamond
+import Zil.Test.QueryEngine
 
 open Zil
 
@@ -56,4 +57,4 @@ def main : IO Unit := do
     throw <| IO.userError "typed relation profile validation failed"
   if invalidFormalizesRequirement.valid then
     throw <| IO.userError "typed relation profile accepted a category error"
-  IO.println "zil-lean IR, syntax, profiles, and persistent environment validation passed"
+  IO.println "zil-lean IR, syntax, profiles, environment, and query engine validation passed"
