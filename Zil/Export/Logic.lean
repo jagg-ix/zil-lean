@@ -1,4 +1,4 @@
-import Zil.Core.Rule
+import Zil.Environment.Knowledge
 
 namespace Zil.Export
 
@@ -12,8 +12,9 @@ private def sanitizeChar (c : Char) : Char :=
 
 private def sanitizeName (name : Name) : String :=
   let raw := name.toString.map sanitizeChar
-  if raw.isEmpty then "zil_relation"
-  else if raw.front.isDigit then "zil_" ++ raw else raw
+  match raw.front? with
+  | none => "zil_relation"
+  | some first => if first.isDigit then "zil_" ++ raw else raw
 
 private def escapeAtom (value : String) : String :=
   value.replace "\\" "\\\\" |>.replace "'" "\\'"
