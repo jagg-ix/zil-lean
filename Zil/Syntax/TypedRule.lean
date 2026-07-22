@@ -35,7 +35,7 @@ macro_rules
       let ruleNameTerm := quote ruleName.getId
       let expandedKinds ← variableKinds.mapM expandVariableKind
       let variableNames := expandedKinds.map (·.1)
-      let kindTerms := expandedKinds.map fun pair =>
+      let kindTerms ← expandedKinds.mapM fun pair => do
         let variableName := pair.1
         let kindName := pair.2
         `(Zil.VariableKind.mk $variableName (Zil.NodeKind.ofName $kindName))
