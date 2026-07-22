@@ -30,9 +30,9 @@ zil_rule groundClaimEvidence where
 private def unboundPremiseRule : Rule :=
   { name := `unboundPremiseRule
     variables := #[`claim]
-    premises := #[RelExpr.mk' (Term.variable `declaration) `formalizes
+    premises := #[RelExpr.mk' (Term.variable `declaration) `zil.formalizes
       (Term.variable `claim)]
-    conclusion := RelExpr.mk' (Term.variable `claim) `status
+    conclusion := RelExpr.mk' (Term.variable `claim) `zil.status
       (Term.ground `status.proposed) }
 
 #guard schwarzschildClaimRequirement.variables ==
@@ -44,6 +44,6 @@ private def unboundPremiseRule : Rule :=
 #guard groundClaimEvidence.allVariablesBound
 #guard !unboundPremiseRule.allVariablesBound
 #guard schwarzschildClaimRequirement.trust == .graphDerived
-#guard schwarzschildClaimRequirement.conclusion.relation == `requiresClaim
+#guard schwarzschildClaimRequirement.conclusion.relation == `zil.requiresClaim
 #guard groundClaimEvidence.conclusion.subject ==
   Term.ground `claim.schwarzschildMetric
