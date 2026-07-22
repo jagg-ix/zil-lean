@@ -19,7 +19,7 @@ structure Node where
 
 structure DAG where
   nodes : Array Node := #[]
-  completeness : Zil.Engine.Completeness := .complete
+  complete : Bool := true
   deriving Repr, Inhabited
 
 private def lookupBinding (binding : Binding) (name : Name) : Option Zil.Term :=
@@ -92,10 +92,10 @@ def build (facts : Array Zil.RelExpr) (rules : Array Zil.Rule) (fuel : Nat := 64
     match remaining with
     | 0 =>
         let next := step nodes rules
-        { nodes, completeness := if next.size == nodes.size then .complete else .fuelExhausted }
+        { nodes, complete := next.size == nodes.size }
     | n + 1 =>
         let next := step nodes rules
-        if next.size == nodes.size then { nodes, completeness := .complete }
+        if next.size == nodes.size then { nodes, complete := true }
         else loop next n
   loop initial fuel
 
