@@ -1,0 +1,8 @@
+MODULE migration.schwarzschild.
+
+lean.Schwarzschild.metric#formalizes@claim.schwarzschildMetric.
+lean.Schwarzschild.metric#requires@requirement.lorentzianMetric.
+
+RULE schwarzschildClaimRequirement:
+IF ?declaration#formalizes@?claim AND ?declaration#requires@?requirement
+THEN ?claim#requires_claim@?requirement.
