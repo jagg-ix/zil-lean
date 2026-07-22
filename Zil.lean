@@ -12,6 +12,7 @@ import Zil.Contract.Core
 import Zil.Recovery.Core
 import Zil.Codec.Canonical
 import Zil.Interop.Exchange
+import Zil.Interop.Delta
 import Zil.Trust.Certified
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
