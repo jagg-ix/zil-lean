@@ -38,12 +38,12 @@ zil_typed_rule invalidFormalizesRequirement using Zil.Profile.research where
 
 /-- Ground nodes are validated from stable namespace prefixes. -/
 def validGroundRelation : RelExpr :=
-  .mk' (.ground `lean.Schwarzschild.metric) `formalizes
+  .mk' (.ground `lean.Schwarzschild.metric) `zil.formalizes
     (.ground `claim.schwarzschildMetric)
 
 /-- A paper cannot be the subject of `formalizes`. -/
 def invalidPaperFormalizer : RelExpr :=
-  .mk' (.ground `paper.schwarzschild1916) `formalizes
+  .mk' (.ground `paper.schwarzschild1916) `zil.formalizes
     (.ground `claim.schwarzschildMetric)
 
 #guard typedSchwarzschildRequirement.valid
