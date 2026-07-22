@@ -18,6 +18,6 @@ run_cmd do
   let links := Zil.Environment.linksForDeclaration env
     `Zil.Test.EnvironmentA.sampleDeclaration
   unless links.size == 1 do
-    throwError "expected exactly one imported declaration link, found {links.size}"
-  unless Zil.Environment.facts env |>.size == 2 do
+    throwError m!"expected exactly one imported declaration link, found {links.size}"
+  unless (Zil.Environment.facts env).size == 2 do
     throwError "expected one fact plus one declaration-linked fact"
