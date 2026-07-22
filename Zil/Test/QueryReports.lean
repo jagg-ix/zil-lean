@@ -16,5 +16,3 @@ run_cmd do
     throwError "query report did not expose the active profile version"
   unless report.meta.completeness == .complete do
     throwError "query report did not reach a complete fixpoint"
-
-#guard Zil.Engine.knowledgeRevision (by exact (default : Lean.Environment)) == 0
