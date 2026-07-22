@@ -4,6 +4,8 @@ import Zil.Core.Rule
 import Zil.Core.Query
 import Zil.Profile.Core
 import Zil.Profile.Research
+import Zil.Environment.Knowledge
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
 import Zil.Syntax.TypedRule
+import Zil.Syntax.Environment
