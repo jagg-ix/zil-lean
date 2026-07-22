@@ -2,19 +2,19 @@ import Zil.CLI.Core
 
 namespace Zil.CLI
 
-private def usage : String :=
+def usage : String :=
   "zil <summary|closure|check|query|export|repl|apply-delta> <snapshot.zilx> [argument]\n" ++
   "  check/query argument uses canonical relation encoding\n" ++
   "  export argument is souffle or prolog\n" ++
   "  apply-delta <snapshot.zilx> <delta.zild> <output.zilx>"
 
-private def loadSession (path : String) : IO Session := do
+def loadSession (path : String) : IO Session := do
   let text ← IO.FS.readFile path
   match Zil.Interop.decodeEnvelope text with
   | .ok envelope => pure ⟨envelope⟩
   | .error error => throw <| IO.userError error
 
-private partial def repl (session : Session) : IO Unit := do
+partial def repl (session : Session) : IO Unit := do
   IO.print "zil> "
   let line ← (← IO.getStdin).getLine
   let line := line.trim
@@ -25,7 +25,7 @@ private partial def repl (session : Session) : IO Unit := do
     | .error error => IO.eprintln error
     repl session
 
-private def runBatch (command snapshot : String) (argument : Option String) : IO Unit := do
+def runBatch (command snapshot : String) (argument : Option String) : IO Unit := do
   let session ← loadSession snapshot
   let parsed ← match command with
     | "summary" => pure Command.summary
@@ -50,7 +50,7 @@ private def runBatch (command snapshot : String) (argument : Option String) : IO
     | _ => throw <| IO.userError s!"unknown command {command}"
   IO.println (execute session parsed)
 
-private def applyDeltaFile (snapshotPath deltaPath outputPath : String) : IO Unit := do
+def applyDeltaFile (snapshotPath deltaPath outputPath : String) : IO Unit := do
   let snapshotText ← IO.FS.readFile snapshotPath
   let deltaText ← IO.FS.readFile deltaPath
   let snapshot ← match Zil.Interop.decodeEnvelope snapshotText with
