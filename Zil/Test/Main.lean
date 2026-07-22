@@ -9,6 +9,7 @@ import Zil.Test.Lint.Good
 import Zil.Test.Lint.Incomplete
 import Zil.Test.Contracts
 import Zil.Test.Recovery
+import Zil.Test.CanonicalCodec
 
 open Zil
 
@@ -62,4 +63,4 @@ def main : IO Unit := do
     throw <| IO.userError "typed relation profile validation failed"
   if invalidFormalizesRequirement.valid then
     throw <| IO.userError "typed relation profile accepted a category error"
-  IO.println "zil-lean IR, reports, contracts, and recovery guard validation passed"
+  IO.println "zil-lean IR, recovery, and canonical codec validation passed"
