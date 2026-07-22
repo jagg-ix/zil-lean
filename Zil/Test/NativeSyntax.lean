@@ -27,12 +27,22 @@ zil_rule groundClaimEvidence where
   conclusion
     node(claim.schwarzschildMetric) ⟶[supportedBy] node(paper.schwarzschild1916)
 
+private def unboundPremiseRule : Rule :=
+  { name := `unboundPremiseRule
+    variables := #[`claim]
+    premises := #[RelExpr.mk' (Term.variable `declaration) `formalizes
+      (Term.variable `claim)]
+    conclusion := RelExpr.mk' (Term.variable `claim) `status
+      (Term.ground `status.proposed) }
+
 #guard schwarzschildClaimRequirement.variables ==
   #[`claim, `requirement, `declaration]
 #guard schwarzschildClaimRequirement.premises.size == 2
 #guard schwarzschildClaimRequirement.conclusionVariablesBound
-#guard schwarzschildClaimEvidence.conclusionVariablesBound
-#guard groundClaimEvidence.conclusionVariablesBound
+#guard schwarzschildClaimRequirement.allVariablesBound
+#guard schwarzschildClaimEvidence.allVariablesBound
+#guard groundClaimEvidence.allVariablesBound
+#guard !unboundPremiseRule.allVariablesBound
 #guard schwarzschildClaimRequirement.trust == .graphDerived
 #guard schwarzschildClaimRequirement.conclusion.relation == `requiresClaim
 #guard groundClaimEvidence.conclusion.subject ==
