@@ -28,10 +28,12 @@ private def hasRelationFrom (facts : Array Zil.RelExpr) (subject : Zil.Term)
     (relation : Name) : Bool :=
   facts.any fun fact => fact.subject == subject && fact.relation == relation
 
-private def declarationIsLinked (env : Lean.Environment) (declaration : Zil.Term) : Bool :=
-  match declaration with
-  | .var _ => false
-  | .node node => !(Zil.Environment.linksForDeclaration env node.name).isEmpty
+private def linkedSubjects (env : Lean.Environment) : Array Zil.Term :=
+  (Zil.Environment.entries env).foldl (init := #[]) fun subjects entry =>
+    match entry with
+    | .declarationLink _ relation =>
+        if subjects.contains relation.subject then subjects else subjects.push relation.subject
+    | _ => subjects
 
 private def pushIssue (issues : Array Issue) (issue : Issue) : Array Issue :=
   if issues.any fun current =>
@@ -45,9 +47,7 @@ def scan (env : Lean.Environment) (fuel : Nat := 64) : Array Issue :=
   let facts := Zil.Engine.closureOfEnvironment env fuel
   let formalizes := relationsNamed facts `zil.formalizes
   let requires := relationsNamed facts `zil.requires
-  let linkedDeclarations := (Zil.Environment.entries env).filterMap fun
-    | .declarationLink name _ => some (Zil.Term.ground name)
-    | _ => none
+  let linkedDeclarations := linkedSubjects env
 
   let issues := formalizes.foldl (init := #[]) fun issues relation =>
     let issues :=
@@ -57,7 +57,7 @@ def scan (env : Lean.Environment) (fuel : Nat := 64) : Array Issue :=
         subject := relation.object
         related := some relation.subject
         message := s!"claim {repr relation.object} has no supportedBy evidence" }
-    if declarationIsLinked env relation.subject then issues
+    if linkedDeclarations.contains relation.subject then issues
     else pushIssue issues {
       kind := .unlinkedDeclaration
       subject := relation.subject
