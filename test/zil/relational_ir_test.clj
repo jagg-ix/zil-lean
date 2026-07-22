@@ -1,5 +1,5 @@
 (ns zil.relational-ir-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing thrown-with-msg?]]
             [zil.core :as core]
             [zil.relational-ir :as ir]))
 
