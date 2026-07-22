@@ -13,6 +13,7 @@ import Zil.Recovery.Core
 import Zil.Codec.Canonical
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
+import Zil.Syntax.TheoremRule
 import Zil.Syntax.TypedRule
 import Zil.Syntax.Environment
 import Zil.Syntax.Lint
