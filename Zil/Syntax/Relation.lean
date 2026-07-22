@@ -22,12 +22,18 @@ private def expandEndpoint : Syntax → MacroM Syntax
       `(Zil.Term.ground $(quote id.getId))
   | stx => Macro.throwErrorAt stx "invalid ZIL relation endpoint"
 
+/-- Unqualified core relation names are stored under the canonical `zil` namespace. -/
+def canonicalRelationName : Name → Name
+  | .str .anonymous value => .str `zil value
+  | name => name
+
 /-- Lower native relation syntax into the canonical `Zil.RelExpr` IR. -/
 def expandRelation : Syntax → MacroM Syntax
   | `(zilRelation| $subject:zilEndpoint ⟶[$relation:ident] $object:zilEndpoint) => do
       let subjectTerm ← expandEndpoint subject
       let objectTerm ← expandEndpoint object
-      `(Zil.RelExpr.mk' $subjectTerm $(quote relation.getId) $objectTerm)
+      let relationName := canonicalRelationName relation.getId
+      `(Zil.RelExpr.mk' $subjectTerm $(quote relationName) $objectTerm)
   | stx => Macro.throwErrorAt stx "invalid ZIL relation expression"
 
 end Zil.Syntax
