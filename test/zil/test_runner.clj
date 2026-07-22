@@ -20,6 +20,7 @@
             [zil.import-hcl-test]
             [zil.interop-test]
             [zil.lower-test]
+            [zil.migrate-test]
             [zil.model-exchange-test]
             [zil.preprocess-test]
             [zil.profile-z3-test]
@@ -55,6 +56,7 @@
                                          'zil.import-hcl-test
                                          'zil.interop-test
                                          'zil.lower-test
+                                         'zil.migrate-test
                                          'zil.model-exchange-test
                                          'zil.preprocess-test
                                          'zil.profile-z3-test
