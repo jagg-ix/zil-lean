@@ -12,7 +12,7 @@
     :variables ["declaration" "claim" "requirement"]
     :premises [(ir/relation-expr "?declaration" :formalizes "?claim")
                (ir/relation-expr "?declaration" :requires "?requirement")]
-    :conclusion (ir/relation-expr "?claim" :requires-claim "?requirement")
+    :conclusion (ir/relation-expr "?claim" :requires_claim "?requirement")
     :trust :graph-derived}))
 
 (def envelope
