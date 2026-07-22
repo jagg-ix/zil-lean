@@ -14,6 +14,7 @@ import Zil.Test.CanonicalCodec
 import Zil.Test.CertifiedRules
 import Zil.Test.Exchange
 import Zil.Test.Delta
+import Zil.Test.LogicExport
 
 open Zil
 
@@ -32,4 +33,4 @@ def main : IO Unit := do
     throw <| IO.userError "certified wrapper lost its trust boundary"
   unless theoremShapedRequirement.trust == .graphDerived do
     throw <| IO.userError "ordinary theorem-shaped graph rule was upgraded"
-  IO.println "zil-lean cross-runtime exchange and incremental delta validation passed"
+  IO.println "zil-lean exchange, deltas, and logic export validation passed"
