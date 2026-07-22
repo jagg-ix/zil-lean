@@ -14,6 +14,7 @@
             [zil.bridge-vstack-test]
             [zil.bridge-tla-test]
             [zil.core-test]
+            [zil.delta-test]
             [zil.embedded-test]
             [zil.exchange-test]
             [zil.import-hcl-test]
@@ -48,6 +49,7 @@
                                          'zil.bridge-vstack-test
                                          'zil.bridge-tla-test
                                          'zil.core-test
+                                         'zil.delta-test
                                          'zil.embedded-test
                                          'zil.exchange-test
                                          'zil.import-hcl-test
