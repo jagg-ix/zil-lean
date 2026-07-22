@@ -15,7 +15,7 @@ namespace Query
 
 /-- Selected variables must be declared by the query. -/
 def selectedVariablesBound (query : Query) : Bool :=
-  query.select.all query.variables.contains
+  query.select.all (fun name => query.variables.contains name)
 
 end Query
 end Zil
