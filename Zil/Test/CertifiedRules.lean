@@ -11,7 +11,7 @@ private def graphRule : Rule :=
 
 private theorem certificateProposition : True := True.intro
 
-private def certified : Zil.Trust.CertifiedRule :=
+def certified : Zil.Trust.CertifiedRule :=
   .mkChecked graphRule True certificateProposition
 
 zil_register_certified_rule certified
