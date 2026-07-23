@@ -9,7 +9,7 @@ private def declarationSource : String :=
   "DATASOURCE app_metrics [type=rest, format=json].\n" ++
   "METRIC latency [source=datasource:app_metrics, unit=ms].\n" ++
   "QUERY dependencies:\n" ++
-  "FIND ?dependency WHERE service:api#dependsOn@?dependency.\n"
+  "FIND ?dependency WHERE service:api#depends_on@?dependency.\n"
 
 private def tmSource : String :=
   "MODULE tm.native.\n" ++
