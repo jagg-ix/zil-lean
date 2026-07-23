@@ -1,81 +1,42 @@
 # Native Lean CLI example
 
-The snapshot `schwarzschild.zilx` contains two asserted facts and one Horn rule.
+This is an optional companion to the direct Lean examples in
+[`../lean/README.md`](../lean/README.md).
 
-Build the Lean package:
-
-```bash
-lake build
-```
-
-Inspect the snapshot:
+The prepared `schwarzschild.zilx` snapshot can be inspected without writing a
+new Lean module:
 
 ```bash
 lake exe zil -- summary examples/native-cli/schwarzschild.zilx
-```
-
-Expected summary:
-
-```text
-schema: 1
-revision: 3
-profile: Zil.Profile.research
-profile-version: 0.1
-facts: 2
-rules: 1
-```
-
-Compute closure:
-
-```bash
 lake exe zil -- closure examples/native-cli/schwarzschild.zilx
 ```
 
-The closure includes the derived fact:
-
-```text
-rel	node:claim.schwarzschildMetric	zil.requiresClaim	node:requirement.lorentzianMetric
-```
-
-Check entailment directly:
+Check the derived requirement:
 
 ```bash
 lake exe zil -- check examples/native-cli/schwarzschild.zilx \
   $'rel\tnode:claim.schwarzschildMetric\tzil.requiresClaim\tnode:requirement.lorentzianMetric'
 ```
 
-Expected output:
-
-```text
-true
-```
-
-Run a variable query:
+Query for the requirement variable:
 
 ```bash
 lake exe zil -- query examples/native-cli/schwarzschild.zilx \
   $'rel\tnode:claim.schwarzschildMetric\tzil.requiresClaim\tvar:requirement'
 ```
 
-Export the same native state:
+Export the same graph:
 
 ```bash
 lake exe zil -- export examples/native-cli/schwarzschild.zilx souffle
 lake exe zil -- export examples/native-cli/schwarzschild.zilx prolog
 ```
 
-Start the interactive shell:
+Start the interactive REPL:
 
 ```bash
 lake exe zil -- repl examples/native-cli/schwarzschild.zilx
 ```
 
-Example session:
-
-```text
-zil> summary
-zil> closure
-zil> query rel	node:claim.schwarzschildMetric	zil.requiresClaim	var:requirement
-zil> export prolog
-zil> quit
-```
+This example is useful after learning the Lean API. It demonstrates that the
+same canonical graph can be inspected from the standalone Lean executable.
