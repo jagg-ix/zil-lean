@@ -9,6 +9,9 @@ native_help() {
 Usage:
   bin/zil compile <input.zc> [output.lean|-] [namespace]
   bin/zil expand <input.zc> [output.zc|-]
+  bin/zil macro-compile <input.zc> [--output FILE|-] [--namespace NAME] [--lib DIR]
+  bin/zil macro-expand <input.zc> [--output FILE|-] [--lib DIR]
+  bin/zil macro-parity <input.zc> [--output FILE|-] [--lib DIR]
   bin/zil conformance <input.zc> [output.zilc|-]
   bin/zil formalization-plan <input.zc> [output.txt|-]
   bin/zil formalization-next <input.zc> [output.txt|-]
@@ -16,6 +19,9 @@ Usage:
   bin/zil revision-summary <input.zilr>
   bin/zil snapshot <input.zilr> <revision> [output.txt|-]
   bin/zil causal-check <input.zilr>
+
+Macro extension commands compose sorted non-recursive lib/*.zc files before the
+model. Without --lib, the nearest ancestor lib/ directory is discovered.
 
 Legacy integrations remain available explicitly:
   bin/zil --legacy <legacy-command> [arguments]
@@ -34,11 +40,38 @@ run_native() {
   exec lake exe zil -- "$@"
 }
 
+run_macro() {
+  local mode="$1"
+  shift
+  if ! command -v clojure >/dev/null 2>&1; then
+    echo "[zil] clojure is required for lib/*.zc discovery and parity reporting" >&2
+    exit 2
+  fi
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for native macro compilation" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec clojure -M:macro-native "$mode" "$@"
+}
+
 command_name="${1:-}"
 
 case "$command_name" in
   compile|expand|conformance|formalization-plan|formalization-next|authorize|revision-summary|snapshot|causal-check)
     run_native "$@"
+    ;;
+  macro-compile)
+    shift
+    run_macro compile "$@"
+    ;;
+  macro-expand)
+    shift
+    run_macro expand "$@"
+    ;;
+  macro-parity)
+    shift
+    run_macro parity "$@"
     ;;
   --legacy)
     shift
