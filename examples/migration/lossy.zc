@@ -1,6 +1,0 @@
-MODULE migration.lossy.
-
-claim.experimental#supported_by@paper.example [confidence=0.8].
-
-QUERY supportedClaims:
-FIND ?claim WHERE ?claim#supported_by@paper.example.
