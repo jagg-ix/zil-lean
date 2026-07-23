@@ -12,7 +12,7 @@
 (def check-format "zil.theorem-lock-check.v0.1")
 (def resolution-statuses
   #{"resolved" "missing" "ambiguous" "module_mismatch" "kind_mismatch"
-    "kernel_missing" "uses_sorry" "trust_mismatch"})
+    "kernel_missing" "uses_sorry" "trust_mismatch" "fingerprint_missing"})
 
 (defn- value [m key]
   (if (contains? m key)
