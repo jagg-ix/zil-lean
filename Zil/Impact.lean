@@ -67,19 +67,27 @@ private def insertName (value : Name) : List Name → List Name
 private def sortedNames (names : Array Name) : Array Name :=
   (names.foldl (init := []) fun out name => insertName name out).toArray
 
-private def edgeBefore (left right : Edge) : Bool :=
-  let leftKey := (left.dependency.toString, left.dependent.toString,
-                  left.relation.toString, left.factId)
-  let rightKey := (right.dependency.toString, right.dependent.toString,
-                   right.relation.toString, right.factId)
-  leftKey < rightKey
+private def edgeOrder (left right : Edge) : Ordering :=
+  match compare left.dependency.toString right.dependency.toString with
+  | .lt => .lt
+  | .gt => .gt
+  | .eq =>
+      match compare left.dependent.toString right.dependent.toString with
+      | .lt => .lt
+      | .gt => .gt
+      | .eq =>
+          match compare left.relation.toString right.relation.toString with
+          | .lt => .lt
+          | .gt => .gt
+          | .eq => compare left.factId right.factId
 
 private def insertEdge (value : Edge) : List Edge → List Edge
   | [] => [value]
   | head :: tail =>
-      if edgeBefore value head then value :: head :: tail
-      else if value == head then head :: tail
-      else head :: insertEdge value tail
+      match edgeOrder value head with
+      | .lt => value :: head :: tail
+      | .eq => head :: tail
+      | .gt => head :: insertEdge value tail
 
 private def sortedEdges (edges : Array Edge) : Array Edge :=
   (edges.foldl (init := []) fun out edge => insertEdge edge out).toArray
@@ -144,11 +152,10 @@ private def reaches
 
 /-- Nodes participating in direct or transitive dependency cycles. -/
 def cyclicNodes (graph : Graph) : Array Name :=
-  graph.nodes.filter fun node =>
+  sortedNames <| graph.nodes.filter fun node =>
     (graph.outgoing node).any fun edge =>
       edge.dependency == node ||
       reaches graph edge.dependency node #[node] (graph.nodes.size + 1)
-  |> sortedNames
 
 end Graph
 
