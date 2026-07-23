@@ -153,7 +153,7 @@
                       (request {:operation operation
                                 :input-path input-path
                                 :arguments operation-arguments}))]
-        (println (json/write-str response :escape-slash false))
+        (println (json/write-str response))
         (System/exit (if (= "ok" (:status response)) 0 1))))
     (catch Exception error
       (binding [*out* *err*]
