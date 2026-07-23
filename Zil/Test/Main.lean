@@ -20,7 +20,8 @@ import Zil.Test.AgentContext
 import Zil.Test.ProofObligation
 import Zil.Test.TheoremAudit
 import Zil.Test.RecoveryAudit
+import Zil.Test.Exchange
 
-/-- Executable validation target for native mutation recovery contracts. -/
+/-- Executable validation target for native safety and hybrid exchange contracts. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
