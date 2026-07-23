@@ -36,6 +36,8 @@
    :block-count 2})
 
 (defn- policy [root]
+  (doseq [relative ["src" "test" "docs"]]
+    (.mkdirs (io/file root relative)))
   {:repository-root (.getPath root)
    :scan-roots ["src" "test" "docs"]
    :non-blocking-prefixes ["test/" "docs/"]
@@ -55,12 +57,12 @@
         _ (write! root "src/app.clj" "(ns app (:require [zil.cli :as legacy]))\n")
         _ (write! root "docs/legacy.md" "Use zil.cli for old workflows.\n")
         report (retirement/evaluate ready-gate verified embedded (policy root))
-        component (get-in report [:components :legacy-runtime])]
+        component (get-in report [:components :legacy-runtime])
+        blocker (first (filter :blocking (:consumers component)))]
     (is (false? (:ok report)))
     (is (= :frozen (:state component)))
     (is (= 1 (:blocking-consumer-count component)))
-    (is (= "src/app.clj"
-           (get-in component [:consumers 1 :path])))
+    (is (= "src/app.clj" (:path blocker)))
     (is (some :non-blocking (:consumers component)))))
 
 (deftest owned-implementation-and-doc-references-allow-removal-test
@@ -119,6 +121,21 @@
     (is (= :component-not-ready (get-in report [:failures 0 :kind])))
     (is (= "ZIL-RETIREMENT/1"
            (:schema (edn/read-string (slurp output)))))))
+
+(deftest missing-policy-is-rejected-test
+  (let [root (temp-dir)
+        gate-file (write! root "gate.edn" (str (pr-str ready-gate) "\n"))
+        verification-file (write! root "verification.edn" (str (pr-str verified) "\n"))
+        embedded-file (write! root "embedded.edn" (str (pr-str embedded) "\n"))]
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"policy does not exist"
+         (retirement/run-guard!
+          {:gate (.getPath gate-file)
+           :verification (.getPath verification-file)
+           :embedded (.getPath embedded-file)
+           :policy (.getPath (io/file root "missing.edn"))
+           :output (.getPath (io/file root "retirement.edn"))})))))
 
 (deftest public-wrapper-is-native-first-test
   (let [wrapper (slurp "bin/zil")
