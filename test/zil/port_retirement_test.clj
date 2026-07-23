@@ -33,7 +33,9 @@
 (def embedded
   {:schema "ZIL-EMBEDDED-MANIFEST/1"
    :ok true
-   :block-count 2})
+   :verify-generated true
+   :block-count 2
+   :verified 2})
 
 (defn- policy [root]
   (doseq [relative ["src" "test" "docs"]]
@@ -47,6 +49,7 @@
      :require-verification true
      :require-aggregate true
      :require-embedded true
+     :require-embedded-verification true
      :min-embedded-blocks 1
      :patterns [{:id :legacy-api :pattern "zil\\.cli"}]
      :allow-paths ["src/zil/cli.clj"]}}})
@@ -92,7 +95,7 @@
   (let [root (temp-dir)
         _ (write! root "src/zil/cli.clj" "(ns zil.cli)\n")
         bad-verification (assoc verified :aggregate {:status :blocked})
-        bad-embedded (assoc embedded :block-count 0)
+        bad-embedded (assoc embedded :block-count 0 :verified 0)
         report (retirement/evaluate ready-gate bad-verification bad-embedded
                                     (policy root))
         failures (set (map :kind
@@ -100,7 +103,36 @@
                                    [:components :legacy-runtime :evidence-failures])))]
     (is (= :active (get-in report [:components :legacy-runtime :state])))
     (is (contains? failures :aggregate-not-verified))
-    (is (contains? failures :embedded-block-coverage))))
+    (is (contains? failures :embedded-block-coverage))
+    (is (contains? failures :embedded-modules-not-verified))))
+
+(deftest translation-only-embedded-report-does-not-permit-retirement-test
+  (let [root (temp-dir)
+        _ (write! root "src/zil/cli.clj" "(ns zil.cli)\n")
+        translated (assoc embedded
+                          :verify-generated false
+                          :verified 0
+                          :compiled 2)
+        report (retirement/evaluate ready-gate verified translated (policy root))
+        failure (first (filter #(= :embedded-modules-not-verified (:kind %))
+                               (get-in report
+                                       [:components :legacy-runtime :evidence-failures])))]
+    (is (= :active (get-in report [:components :legacy-runtime :state])))
+    (is failure)
+    (is (false? (:verify-generated failure)))
+    (is (= 0 (:verified failure)))
+    (is (= 2 (:blocks failure)))))
+
+(deftest partial-embedded-verification-does-not-permit-retirement-test
+  (let [root (temp-dir)
+        _ (write! root "src/zil/cli.clj" "(ns zil.cli)\n")
+        partial (assoc embedded :verified 1)
+        report (retirement/evaluate ready-gate verified partial (policy root))
+        failures (set (map :kind
+                           (get-in report
+                                   [:components :legacy-runtime :evidence-failures])))]
+    (is (= :active (get-in report [:components :legacy-runtime :state])))
+    (is (contains? failures :embedded-modules-not-verified))))
 
 (deftest run-guard-require-ready-writes-failing-report-test
   (let [root (temp-dir)
