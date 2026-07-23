@@ -1,4 +1,4 @@
-import Zil.Parser.MacroProgram
+import Zil.Parser.DeclarationProgram
 
 namespace Zil.CLI
 
@@ -6,29 +6,29 @@ namespace Zil.CLI
 def usage : String :=
   "zil compile <input.zc> [output.lean|-] [namespace]\n" ++
   "zil expand <input.zc> [output.zc|-]\n" ++
-  "  compile accepts MODULE, tuples, RULE, QUERY, MACRO, and USE\n" ++
+  "  compile accepts MODULE, tuples, RULE, QUERY, MACRO, USE, and typed declarations\n" ++
   "  expand prints the source statements produced after macro expansion"
 
 private def namespaceFromArgument
     (program : Zil.Program) (value : Option String) : IO Name :=
   match value with
-  | none => pure (Zil.Parser.MacroProgram.defaultNamespace program)
+  | none => pure (Zil.Parser.DeclarationProgram.defaultNamespace program)
   | some text =>
       match Zil.Parser.nameFromToken text with
       | .ok name => pure name
       | .error error => throw <| IO.userError error
 
-/-- Parse one macro-enabled `.zc` source file and emit a native ZIL Lean module. -/
+/-- Parse one declaration-enabled `.zc` source file and emit a native ZIL Lean module. -/
 def compileFile
     (inputPath : String)
     (outputPath : Option String := none)
     (namespaceText : Option String := none) : IO Unit := do
-  let parsed ← Zil.Parser.MacroProgram.parseFile inputPath
+  let parsed ← Zil.Parser.DeclarationProgram.parseFile inputPath
   let program ← match parsed with
     | .ok value => pure value
     | .error error => throw <| IO.userError error.render
   let namespaceName ← namespaceFromArgument program namespaceText
-  let source ← match Zil.Parser.MacroProgram.renderLeanModule program namespaceName with
+  let source ← match Zil.Parser.DeclarationProgram.renderLeanModule program namespaceName with
     | .ok value => pure value
     | .error error => throw <| IO.userError error
   match outputPath with
