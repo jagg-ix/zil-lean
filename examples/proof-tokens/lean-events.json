@@ -1,0 +1,22 @@
+{
+  "format": "zil.lean-events.v0.1",
+  "profile": "lean-declarations-v0.1",
+  "complete": true,
+  "lean_version": "4.32.0",
+  "module": "Demo",
+  "event_count": 1,
+  "events": [
+    {
+      "operation": "linkLeanDecl",
+      "declaration": "Demo.answer",
+      "module": "Demo",
+      "kind": "theorem",
+      "kernel_present": true,
+      "trust": "kernel_checked_term",
+      "uses_sorry": false,
+      "proved_claim": false,
+      "type_fingerprint": "lean-hash:demo-answer-v1",
+      "dependencies": ["Nat"]
+    }
+  ]
+}
