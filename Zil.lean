@@ -12,6 +12,7 @@ import Zil.Core.Revision
 import Zil.Profile.Core
 import Zil.Environment.Knowledge
 import Zil.Engine.Query
+import Zil.Engine.Provenance
 import Zil.Codec.Attribute
 import Zil.Codec.Canonical
 import Zil.Codec.Userset
