@@ -1,5 +1,6 @@
 import Zil.Core.Userset
 import Zil.Core.Query
+import Zil.Core.Macro
 
 namespace Zil
 
@@ -9,6 +10,8 @@ structure Program where
   tuples : Array TupleExpr := #[]
   rules : Array Rule := #[]
   queries : Array Query := #[]
+  macros : Array MacroDef := #[]
+  expansions : Array MacroExpansion := #[]
   deriving Repr, Inhabited
 
 namespace Program
@@ -25,8 +28,9 @@ def facts (program : Program) : Array RelExpr :=
 def allRules (program : Program) : Array Rule :=
   program.tupleProgram.lower.rules ++ program.rules
 
-/-- Structural safety for rules and queries before stratification. -/
+/-- Structural safety for macros, rules, and queries before stratification. -/
 def valid (program : Program) : Bool :=
+  program.macros.all MacroDef.valid &&
   program.allRules.all (fun rule => rule.allVariablesBound && rule.safe) &&
   program.queries.all (fun query => query.selectedVariablesBound && query.safe)
 

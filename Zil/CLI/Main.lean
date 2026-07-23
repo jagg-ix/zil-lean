@@ -1,35 +1,49 @@
-import Zil.Parser.Program
+import Zil.Parser.MacroProgram
 
 namespace Zil.CLI
 
-/-- Native command-line usage for source compilation. -/
+/-- Native command-line usage for source compilation and macro inspection. -/
 def usage : String :=
   "zil compile <input.zc> [output.lean|-] [namespace]\n" ++
-  "  parses MODULE, tuple facts, RULE blocks, and QUERY blocks\n" ++
-  "  prints generated Lean when output is omitted or '-'"
+  "zil expand <input.zc> [output.zc|-]\n" ++
+  "  compile accepts MODULE, tuples, RULE, QUERY, MACRO, and USE\n" ++
+  "  expand prints the source statements produced after macro expansion"
 
 private def namespaceFromArgument
     (program : Zil.Program) (value : Option String) : IO Name :=
   match value with
-  | none => pure (Zil.Parser.Program.defaultNamespace program)
+  | none => pure (Zil.Parser.MacroProgram.defaultNamespace program)
   | some text =>
       match Zil.Parser.nameFromToken text with
       | .ok name => pure name
       | .error error => throw <| IO.userError error
 
-/-- Parse one `.zc` source file and emit a native ZIL Lean module. -/
+/-- Parse one macro-enabled `.zc` source file and emit a native ZIL Lean module. -/
 def compileFile
     (inputPath : String)
     (outputPath : Option String := none)
     (namespaceText : Option String := none) : IO Unit := do
-  let parsed ← Zil.Parser.Program.parseFile inputPath
+  let parsed ← Zil.Parser.MacroProgram.parseFile inputPath
   let program ← match parsed with
     | .ok value => pure value
     | .error error => throw <| IO.userError error.render
   let namespaceName ← namespaceFromArgument program namespaceText
-  let source ← match Zil.Parser.Program.renderLeanModule program namespaceName with
+  let source ← match Zil.Parser.MacroProgram.renderLeanModule program namespaceName with
     | .ok value => pure value
     | .error error => throw <| IO.userError error
+  match outputPath with
+  | none => IO.print source
+  | some "-" => IO.print source
+  | some path => IO.FS.writeFile path source
+
+/-- Expand source macros without compiling the resulting statements. -/
+def expandFile
+    (inputPath : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let expanded ← Zil.Parser.MacroProgram.expandFile inputPath
+  let source ← match expanded with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error.render
   match outputPath with
   | none => IO.print source
   | some "-" => IO.print source
@@ -49,6 +63,12 @@ def main (args : List String) : IO UInt32 := do
         pure 0
     | ["compile", input, output, namespaceName] =>
         Zil.CLI.compileFile input (some output) (some namespaceName)
+        pure 0
+    | ["expand", input] =>
+        Zil.CLI.expandFile input
+        pure 0
+    | ["expand", input, output] =>
+        Zil.CLI.expandFile input (some output)
         pure 0
     | _ =>
         IO.eprintln Zil.CLI.usage
