@@ -22,21 +22,36 @@
    "impact" 1
    "recovery-audit" 1})
 
+(def request-fields
+  ["schema" "request_id" "protocol_version" "operation" "input_path"
+   "base_revision" "input_sha256" "capabilities" "arguments"])
+
+(def ^:private request-field-rank
+  (zipmap request-fields (range)))
+
+(defn- compare-request-fields [left right]
+  (let [left-rank (get request-field-rank left Integer/MAX_VALUE)
+        right-rank (get request-field-rank right Integer/MAX_VALUE)]
+    (if (= left-rank right-rank)
+      (compare left right)
+      (compare left-rank right-rank))))
+
 (defn canonical-request
-  "Construct a stable insertion-ordered request map."
+  "Construct a request map with explicit stable field order."
   [{:keys [request-id operation input-path base-revision input-sha256
            capabilities arguments]
     :or {base-revision "-" capabilities [] arguments []}}]
-  (array-map
-   "schema" schema
-   "request_id" (str request-id)
-   "protocol_version" protocol-version
-   "operation" (str operation)
-   "input_path" (str input-path)
-   "base_revision" (str base-revision)
-   "input_sha256" (str input-sha256)
-   "capabilities" (vec (sort (distinct (map str capabilities))))
-   "arguments" (vec (map str arguments))))
+  (into
+   (sorted-map-by compare-request-fields)
+   [["schema" schema]
+    ["request_id" (str request-id)]
+    ["protocol_version" protocol-version]
+    ["operation" (str operation)]
+    ["input_path" (str input-path)]
+    ["base_revision" (str base-revision)]
+    ["input_sha256" (str input-sha256)]
+    ["capabilities" (vec (sort (distinct (map str capabilities))))]
+    ["arguments" (vec (map str arguments))]]))
 
 (defn validate-request!
   "Fail closed before a request reaches the Lean worker."
