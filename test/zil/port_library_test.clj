@@ -180,5 +180,5 @@
                  :runner (fn [command]
                            {:exit 1 :out "" :err "line 1: invalid source" :command command})})]
     (is (false? (:ok report)))
-    (is (= :failed (:status (first (:entries report))))
+    (is (= :failed (:status (first (:entries report)))))
     (is (= "line 1: invalid source" (:error (first (:entries report)))))))
