@@ -121,3 +121,29 @@
         (is (= {:closed true :workers 2} (pool/stop-pool! workers)))
         (is (= #{1 2} (set @stopped)))
         (is (thrown? Exception (pool/acquire! workers 1)))))))
+
+(deftest transport-failure-replaces-worker
+  (let [started (atom 0)
+        stopped (atom [])]
+    (with-redefs [client/start-worker!
+                  (fn [_]
+                    {:id (swap! started inc)
+                     :alive (atom true)})
+                  client/alive?
+                  (fn [worker] @(:alive worker))
+                  client/stop-worker!
+                  (fn [worker]
+                    (reset! (:alive worker) false)
+                    (swap! stopped conj (:id worker))
+                    {:exit 0})
+                  client/invoke!
+                  (fn [_ _]
+                    (throw (ex-info "malformed worker response"
+                                    {:kind :transport-error})))]
+      (let [workers (pool/start-pool! {:size 1})]
+        (is (thrown? Exception
+                     (pool/invoke! workers {:request_id "request:bad"} 100)))
+        (is (= 2 @started))
+        (is (= [1] @stopped))
+        (pool/stop-pool! workers)
+        (is (= #{1 2} (set @stopped)))))))
