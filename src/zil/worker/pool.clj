@@ -55,7 +55,7 @@
         nil))))
 
 (defn acquire!
-  ([pool] (acquire! pool 30000))
+  ([pool] (acquire! pool client/default-timeout-ms))
   ([^WorkerPool pool timeout-ms]
    (when (closed? pool)
      (throw (ex-info "worker pool is closed" {:kind :transport-error})))
@@ -76,12 +76,12 @@
     (discard-worker! pool worker)))
 
 (defn invoke!
-  ([pool request] (invoke! pool request 30000))
+  ([pool request] (invoke! pool request client/default-timeout-ms))
   ([^WorkerPool pool request timeout-ms]
    (let [worker (acquire! pool timeout-ms)
          discard? (atom false)]
      (try
-       (client/invoke! worker request)
+       (client/invoke! worker request timeout-ms)
        (catch Exception error
          (when (= :transport-error (:kind (ex-data error)))
            (reset! discard? true))
