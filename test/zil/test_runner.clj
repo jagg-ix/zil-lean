@@ -6,6 +6,7 @@
             [zil.bridge-lean-delta-test]
             [zil.bridge-snapshot-test]
             [zil.bridge-workflow-lean-test]
+            [zil.bridge-proof-token-test]
             [zil.bridge-souffle-test]
             [zil.bridge-theorem-ci-test]
             [zil.bridge-theorem-dsl-ci-test]
@@ -45,6 +46,7 @@
                                           'zil.bridge-lean-delta-test
                                           'zil.bridge-snapshot-test
                                           'zil.bridge-workflow-lean-test
+                                          'zil.bridge-proof-token-test
                                           'zil.bridge-souffle-test
                                           'zil.bridge-theorem-ci-test
                                           'zil.bridge-theorem-dsl-ci-test

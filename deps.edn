@@ -13,5 +13,6 @@
            :embedded-native {:main-opts ["-m" "zil.port.embedded-native"]}
            :retirement {:main-opts ["-m" "zil.port.retirement"]}
            :workflow-native {:main-opts ["-m" "zil.bridge.workflow-runner"]}
+           :proof-tokens {:main-opts ["-m" "zil.bridge.proof-token"]}
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
                    :ns-default build}}}
