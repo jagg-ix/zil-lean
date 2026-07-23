@@ -230,38 +230,30 @@ private def evaluate (program : Zil.Program) (obligation : Obligation) : Result 
   let known := relationKnown program obligation.relation
   let hasEvidence := !obligation.evidence.isEmpty
   let waiverPresent := obligation.waiverReason.map nonempty? |>.getD false
-  let mut reasons : Array String := #[]
-  unless known do reasons := reasons.push "unknown-relation"
-  let verdict :=
-    if !known then .blocked
+  let decision : Verdict × Array String :=
+    if !known then (.blocked, #["unknown-relation"])
     else
       match obligation.status with
-      | .failed => .violated
+      | .failed => (.violated, #[])
       | .open | .pending =>
           if !obligation.tool.nativeBackend && !hasEvidence then
-            reasons := reasons.push "backend-unavailable-without-evidence"
+            (.blocked, #["backend-unavailable-without-evidence"])
           else
-            reasons := reasons.push "obligation-not-discharged"
-          .blocked
+            (.blocked, #["obligation-not-discharged"])
       | .proved =>
-          if hasEvidence then .satisfied
-          else
-            reasons := reasons.push "proved-status-requires-evidence"
-            .blocked
+          if hasEvidence then (.satisfied, #[])
+          else (.blocked, #["proved-status-requires-evidence"])
       | .waived =>
-          if !waiverPresent then
-            reasons := reasons.push "waiver-reason-missing"
-            .blocked
+          if !waiverPresent then (.blocked, #["waiver-reason-missing"])
           else if obligation.criticality == .critical then
-            reasons := reasons.push "critical-obligation-cannot-be-waived"
-            .blocked
-          else .waived
+            (.blocked, #["critical-obligation-cannot-be-waived"])
+          else (.waived, #[])
   {
     obligation
-    verdict
+    verdict := decision.1
     relationKnown := known
     nativeBackend := obligation.tool.nativeBackend
-    reasons
+    reasons := decision.2
   }
 
 /-- Audit proof obligations without pretending to execute unavailable backends. -/
