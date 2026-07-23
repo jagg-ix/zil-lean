@@ -9,3 +9,6 @@ lean_lib Zil where
 
 lean_exe zilLeanTests where
   root := `Zil.Test.Main
+
+lean_exe zil where
+  root := `Zil.CLI.Main
