@@ -55,17 +55,16 @@ structure Decision where
 private def containsFact (facts : Array Zil.RelExpr) (target : Zil.RelExpr) : Bool :=
   facts.any (·.semanticallyEqual target)
 
-private def insertString (value : String) : List String → List String
+private def insertName (value : Name) : List Name → List Name
   | [] => [value]
   | head :: tail =>
-      match compare value head with
-      | .lt | .eq => value :: head :: tail
-      | .gt => head :: insertString value tail
+      match compare value.toString head.toString with
+      | .lt => value :: head :: tail
+      | .eq => head :: tail
+      | .gt => head :: insertName value tail
 
 private def sortedUniqueNames (names : Array Name) : Array Name :=
-  let strings := names.foldl (init := []) fun out name =>
-    if out.contains name.toString then out else insertString name.toString out
-  strings.toArray.map Name.mkSimple
+  (names.foldl (init := []) fun out name => insertName name out).toArray
 
 private def candidateRules (program : Zil.Program) (relation : Name) : Array Name :=
   program.allRules
