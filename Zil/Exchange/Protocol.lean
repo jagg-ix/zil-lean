@@ -113,7 +113,7 @@ def Request.parse (line : String) : Except String Request := do
 private def stringArrayJson (values : Array String) : Json :=
   Json.arr (values.map Json.str)
 
-/-- Canonical field order for worker responses. -/
+/-- Structured representation for callers that do not require canonical field order. -/
 def Response.toJson (response : Response) : Json :=
   Json.mkObj [
     ("schema", Json.str response.schema),
@@ -130,9 +130,28 @@ def Response.toJson (response : Response) : Json :=
     ("warnings", stringArrayJson response.warnings)
   ]
 
-/-- Compact one-line JSON suitable for the JSON Lines transport. -/
+private def jsonString (value : String) : String :=
+  (Json.str value).compress
+
+private def jsonStrings (values : Array String) : String :=
+  (stringArrayJson values).compress
+
+/-- Compact JSON with an explicit protocol field order. -/
 def Response.render (response : Response) : String :=
-  response.toJson.compress
+  "{" ++
+  "\"schema\":" ++ jsonString response.schema ++ "," ++
+  "\"request_id\":" ++ jsonString response.requestId ++ "," ++
+  "\"protocol_version\":" ++ toString response.protocolVersion ++ "," ++
+  "\"operation\":" ++ jsonString response.operation ++ "," ++
+  "\"status\":" ++ jsonString response.status ++ "," ++
+  "\"authority\":" ++ jsonString response.authority ++ "," ++
+  "\"assurance\":" ++ jsonString response.assurance ++ "," ++
+  "\"input_sha256\":" ++ jsonString response.inputSha256 ++ "," ++
+  "\"result_sha256\":" ++ jsonString response.resultSha256 ++ "," ++
+  "\"payload\":" ++ jsonString response.payload ++ "," ++
+  "\"errors\":" ++ jsonStrings response.errors ++ "," ++
+  "\"warnings\":" ++ jsonStrings response.warnings ++
+  "}"
 
 /-- Successful authoritative evaluation. -/
 def Response.success
