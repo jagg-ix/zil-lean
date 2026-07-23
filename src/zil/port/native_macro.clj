@@ -1,8 +1,7 @@
 (ns zil.port.native-macro
   "Compose Clojure-style macro libraries and execute the native Lean frontend."
   (:gen-class)
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [zil.core :as core]
             [zil.preprocess :as preprocess])
@@ -47,6 +46,33 @@
    (cond-> {}
      lib-dir (assoc :lib-dir lib-dir))))
 
+(defn prepare-source
+  "Return the exact source text that native and Clojure consumers should use.
+
+  Direct members of the selected `lib/` directory remain standalone so a
+  library file is never prepended to itself. Other files are composed with the
+  sorted, non-recursive library sources discovered by `preprocess-model`."
+  [source-path {:keys [lib-dir] :as options}]
+  (let [source-file (.getCanonicalFile (io/file source-path))
+        resolved (preprocess/resolve-lib-dir source-path lib-dir)
+        resolved-file (some-> resolved .getCanonicalFile)
+        direct-library-member?
+        (and resolved-file
+             (= resolved-file (.getCanonicalFile (.getParentFile source-file))))]
+    (if direct-library-member?
+      (let [text (slurp source-file)]
+        {:ok true
+         :model (.getCanonicalPath source-file)
+         :lib_dir (.getCanonicalPath resolved-file)
+         :lib_files []
+         :composed false
+         :text text
+         :source_sha256 (sha256 text)})
+      (let [composition (compose-model source-path options)]
+        (assoc composition
+               :composed (boolean (seq (:lib_files composition)))
+               :source_sha256 (sha256 (:text composition)))))))
+
 (defn- write-atomic! [path text]
   (let [target (absolute-path path)
         parent (.getParent target)
@@ -78,10 +104,10 @@
       base)))
 
 (defn invoke-native
-  "Run the native frontend over already composed source text.
+  "Run the native frontend over already prepared source text.
 
-  `mode` is `compile` or `expand`. Output is captured from stdout so callers can
-  write atomically or compare it against the Clojure expansion."
+  `mode` may be any native source operation such as `compile`, `expand`, or
+  `conformance`. Output is captured from stdout."
   [{:keys [runner temp-root directory]
     :or {runner run-command}
     :as options}
@@ -102,7 +128,7 @@
 
 (defn compile-model!
   [{:keys [model output namespace] :as options}]
-  (let [composition (compose-model model options)
+  (let [composition (prepare-source model options)
         result (invoke-native options "compile" (:text composition) namespace)]
     (when-not (zero? (:exit result))
       (throw (ex-info "Native macro compilation failed"
@@ -117,14 +143,15 @@
      :model (:model composition)
      :lib_dir (:lib_dir composition)
      :lib_files (:lib_files composition)
-     :source_sha256 (sha256 (:text composition))
+     :composed (:composed composition)
+     :source_sha256 (:source_sha256 composition)
      :output (or output "-")
      :namespace namespace
      :command (:command result)}))
 
 (defn expand-model!
   [{:keys [model output] :as options}]
-  (let [composition (compose-model model options)
+  (let [composition (prepare-source model options)
         result (invoke-native options "expand" (:text composition) nil)]
     (when-not (zero? (:exit result))
       (throw (ex-info "Native macro expansion failed"
@@ -139,7 +166,8 @@
      :model (:model composition)
      :lib_dir (:lib_dir composition)
      :lib_files (:lib_files composition)
-     :source_sha256 (sha256 (:text composition))
+     :composed (:composed composition)
+     :source_sha256 (:source_sha256 composition)
      :output (or output "-")
      :command (:command result)}))
 
@@ -150,9 +178,9 @@
        vec))
 
 (defn parity-report
-  "Compare Clojure and native Lean macro expansion over the same composed source."
+  "Compare Clojure and native Lean macro expansion over one prepared source."
   [{:keys [model] :as options}]
-  (let [composition (compose-model model options)
+  (let [composition (prepare-source model options)
         legacy-lines (vec (core/expand-macros (:text composition)))
         native-result (invoke-native options "expand" (:text composition) nil)
         native-lines (if (zero? (:exit native-result))
@@ -167,7 +195,8 @@
                 :model (:model composition)
                 :lib_dir (:lib_dir composition)
                 :lib_files (:lib_files composition)
-                :source_sha256 (sha256 (:text composition))
+                :composed (:composed composition)
+                :source_sha256 (:source_sha256 composition)
                 :legacy_count (count legacy-lines)
                 :native_count (count native-lines)
                 :exact exact
