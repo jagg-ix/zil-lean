@@ -92,28 +92,32 @@
 (defn read-line [text]
   (json/read-str text :key-fn keyword))
 
+(defn- transport-error [message data]
+  (ex-info message (assoc data :kind :transport-error)))
+
 (defn validate-response!
   [request response]
   (when-not (= schema (:schema response))
-    (throw (ex-info "worker returned an unsupported schema" {:response response})))
+    (throw (transport-error "worker returned an unsupported schema" {:response response})))
   (when-not (= protocol-version (:protocol_version response))
-    (throw (ex-info "worker returned an unsupported protocol version" {:response response})))
+    (throw (transport-error "worker returned an unsupported protocol version"
+                            {:response response})))
   (when-not (= (get request "request_id") (:request_id response))
-    (throw (ex-info "worker response request_id mismatch"
-                    {:request request :response response})))
+    (throw (transport-error "worker response request_id mismatch"
+                            {:request request :response response})))
   (when-not (= (get request "operation") (:operation response))
-    (throw (ex-info "worker response operation mismatch"
-                    {:request request :response response})))
+    (throw (transport-error "worker response operation mismatch"
+                            {:request request :response response})))
   (when-not (= (get request "input_sha256") (:input_sha256 response))
-    (throw (ex-info "worker response input_sha256 mismatch"
-                    {:request request :response response})))
+    (throw (transport-error "worker response input_sha256 mismatch"
+                            {:request request :response response})))
   (when-not (= "lean" (:authority response))
-    (throw (ex-info "worker response lost Lean authority" {:response response})))
+    (throw (transport-error "worker response lost Lean authority" {:response response})))
   (when-not (str/blank? (:result_sha256 response))
-    (throw (ex-info "Lean worker must leave result_sha256 for client attestation"
-                    {:response response})))
+    (throw (transport-error "Lean worker must leave result_sha256 for client attestation"
+                            {:response response})))
   (when (and (= "ok" (:status response))
              (not= "validated" (:assurance response)))
-    (throw (ex-info "successful worker response lost validated assurance"
-                    {:response response})))
+    (throw (transport-error "successful worker response lost validated assurance"
+                            {:response response})))
   response)
