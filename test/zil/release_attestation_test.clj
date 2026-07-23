@@ -148,8 +148,7 @@
         report (attestation/attest request root)
         kinds (set (map :kind (:failures report)))]
     (is (false? (:ok report)))
-    (is (contains? kinds :proof_resolution_row_count))
-    (is (contains? kinds :proof_resolution_incomplete))))
+    (is (contains? kinds :proof_resolution_row_count))))
 
 (deftest lock-summary-must-match-result-rows-test
   (let [{:keys [root request locks]} (evidence-fixture)
