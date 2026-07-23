@@ -1,0 +1,13 @@
+{
+  "format": "zil.workflow-verification.v0.1",
+  "ok": true,
+  "module": "Demo",
+  "revision": "rev:1",
+  "complete": true,
+  "action_count": 1,
+  "output": "workflow/Demo.lean",
+  "output_sha256": "sha256:f6bd2a33b683e4149cf9c5ea68553184a57ca1edcdda304700fa124708a5b931",
+  "verification": {
+    "status": "verified"
+  }
+}
