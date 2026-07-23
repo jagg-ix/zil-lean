@@ -1,6 +1,5 @@
 (ns zil.bridge-proof-token-test
   (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
             [zil.bridge.proof-token :as proof-token]))
 
@@ -77,7 +76,8 @@
                  (token "proof:kind" "Demo.definition")
                  (token "proof:kernel" "Demo.noKernel")
                  (token "proof:sorry" "Demo.sorry")
-                 (token "proof:trust" "Demo.asserted")])
+                 (token "proof:trust" "Demo.asserted")
+                 (token "proof:fingerprint" "Demo.noFingerprint")])
         events (event-batch
                 [(event "Demo.duplicate")
                  (event "Demo.duplicate")
@@ -85,7 +85,8 @@
                  (event "Demo.definition" {"kind" "def"})
                  (event "Demo.noKernel" {"kernel_present" false})
                  (event "Demo.sorry" {"uses_sorry" true})
-                 (event "Demo.asserted" {"trust" "asserted"})])
+                 (event "Demo.asserted" {"trust" "asserted"})
+                 (event "Demo.noFingerprint" {"type_fingerprint" ""})])
         report (proof-token/resolve-batches tokens events)
         statuses (into {} (map (juxt :token_id :status) (:resolutions report)))]
     (is (false? (:ok report)))
@@ -96,7 +97,8 @@
     (is (= :kind_mismatch (statuses "proof:kind")))
     (is (= :kernel_missing (statuses "proof:kernel")))
     (is (= :uses_sorry (statuses "proof:sorry")))
-    (is (= :trust_mismatch (statuses "proof:trust")))))
+    (is (= :trust_mismatch (statuses "proof:trust")))
+    (is (= :fingerprint_missing (statuses "proof:fingerprint")))))
 
 (deftest accepts-explicit-trust-policy-test
   (let [tokens (token-batch
@@ -149,4 +151,5 @@
       (is (:ok report))
       (is (= proof-token/resolution-format (get decoded "format")))
       (is (= 1 (get decoded "resolved")))
+      (is (= "resolved" (get-in decoded ["resolutions" 0 "status"])))
       (is (= 1 (count (get decoded "resolutions")))))))
