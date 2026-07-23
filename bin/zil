@@ -22,6 +22,7 @@ Usage:
   bin/zil impact <input.zc> <changed-node> [output.txt|-]
   bin/zil action-token <input.zc> <request-node> [output|-]
   bin/zil token-lifecycle <input.zc> <request-node> [output|-]
+  bin/zil recovery-audit <input.zc> <request-node> [output|-]
   bin/zil agent-context <input.zc> <task-id> <agent-id> <scope> <changed-nodes> [queries|-] [targets|-] [output|-]
   bin/zil proof-obligations <input.zc> [tool|-] [output|-]
   bin/zil theorem-audit <input.zc> [output|-]
@@ -35,6 +36,9 @@ Usage:
 Action-token validates preflight evidence and token intent. Token-lifecycle replays
 checkpoint binding and single-use execution with revision, expiry, lease, store,
 and observed-output hash checks.
+
+Recovery-audit verifies required postconditions and validates any recovery against
+the exact rollback or compensation precommitted by the issued token.
 
 Comma-separated name lists are used by agent-context. The canonical report bytes
 may be hashed as the durable context_bundle_id for action-token issuance.
@@ -83,6 +87,16 @@ run_token_lifecycle() {
   fi
   cd "$ZIL_ROOT"
   exec lake exe zilTokenLifecycle -- "$@"
+}
+
+run_recovery_audit() {
+  shift
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for native recovery auditing" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zilRecoveryAudit -- "$@"
 }
 
 run_agent_context() {
@@ -141,6 +155,9 @@ case "$command_name" in
     ;;
   token-lifecycle)
     run_token_lifecycle "$@"
+    ;;
+  recovery-audit)
+    run_recovery_audit "$@"
     ;;
   agent-context)
     run_agent_context "$@"
