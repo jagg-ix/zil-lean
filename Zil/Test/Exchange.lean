@@ -17,12 +17,24 @@ private def request : Request := {
   arguments := #[]
 }
 
-#guard request.validate.isOk
+#guard match request.validate with
+  | .ok _ => true
+  | .error _ => false
+
 #guard requiredCapability? "authorize" == some "authorization-v1"
 #guard requiredArity? "authorize" == some 3
-#guard (Request.validate { request with capabilities := #[] }).isError
-#guard (Request.validate { request with operation := "shell" }).isError
-#guard (Request.validate { request with inputSha256 := "sha256:bad" }).isError
+
+#guard match Request.validate { request with capabilities := #[] } with
+  | .error _ => true
+  | .ok _ => false
+
+#guard match Request.validate { request with operation := "shell" } with
+  | .error _ => true
+  | .ok _ => false
+
+#guard match Request.validate { request with inputSha256 := "sha256:bad" } with
+  | .error _ => true
+  | .ok _ => false
 
 private def requestJson : String :=
   "{\"schema\":\"ZIL-EXCHANGE/1\",\"request_id\":\"request:test\"," ++
