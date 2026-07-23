@@ -2,6 +2,7 @@ import Zil.Parser.DeclarationProgram
 import Zil.Codec.Revision
 import Zil.Codec.Conformance
 import Zil.Engine.Provenance
+import Zil.CLI.Impact
 import Zil.Formalization
 import Zil.Authorization
 import Zil.QueryGovernance
@@ -18,6 +19,8 @@ def usage : String :=
   "zil trace <input.zc> [output.txt|-]\n" ++
   "zil explain-query <input.zc> <query> [output.txt|-]\n" ++
   "zil explain-authorization <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
+  "zil dependency-graph <input.zc> [output.txt|-]\n" ++
+  "zil impact <input.zc> <changed-node> [output.txt|-]\n" ++
   "zil formalization-plan <input.zc> [output.txt|-]\n" ++
   "zil formalization-next <input.zc> [output.txt|-]\n" ++
   "zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
@@ -278,6 +281,16 @@ def main (args : List String) : IO UInt32 := do
     | ["explain-authorization", input, object, relation, subject, output] =>
         let allowed ← Zil.CLI.explainAuthorizationFile input object relation subject (some output)
         pure (if allowed then 0 else 1)
+    | ["dependency-graph", input] =>
+        Zil.CLI.dependencyGraphFile input; pure 0
+    | ["dependency-graph", input, output] =>
+        Zil.CLI.dependencyGraphFile input (some output); pure 0
+    | ["impact", input, changed] =>
+        let known ← Zil.CLI.changeImpactFile input changed
+        pure (if known then 0 else 1)
+    | ["impact", input, changed, output] =>
+        let known ← Zil.CLI.changeImpactFile input changed (some output)
+        pure (if known then 0 else 1)
     | ["formalization-plan", input] => Zil.CLI.formalizationPlanFile input; pure 0
     | ["formalization-plan", input, output] =>
         Zil.CLI.formalizationPlanFile input (some output); pure 0
