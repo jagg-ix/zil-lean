@@ -14,6 +14,8 @@ import Zil.Test.Authorization
 import Zil.Test.QueryGovernance
 import Zil.Test.Provenance
 import Zil.Test.Impact
+import Zil.Test.ActionToken
+import Zil.Test.TokenLifecycle
 import Zil.Test.AgentContext
 import Zil.Test.ProofObligation
 import Zil.Test.TheoremAudit

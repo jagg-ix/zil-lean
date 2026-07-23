@@ -34,6 +34,8 @@ import Zil.Formalization
 import Zil.Authorization
 import Zil.QueryGovernance
 import Zil.Impact
+import Zil.ActionToken
+import Zil.TokenLifecycle
 import Zil.AgentContext
 import Zil.ProofObligation
 import Zil.TheoremAudit

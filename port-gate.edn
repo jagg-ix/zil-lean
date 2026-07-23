@@ -60,6 +60,32 @@
     "docs/lean4/native-change-impact.md"
     "spec/change-impact-v1.md"]}
 
+  :native-action-token
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/ActionToken.lean"
+    "Zil/CLI/ActionToken.lean"
+    "Zil/CLI/ActionTokenMain.lean"
+    "Zil/Test/ActionToken.lean"
+    "examples/action-token/request.zc"
+    "docs/lean4/native-action-token.md"
+    "spec/action-token-v1.md"]}
+
+  :native-token-lifecycle
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/TokenLifecycle.lean"
+    "Zil/CLI/TokenLifecycle.lean"
+    "Zil/CLI/TokenLifecycleMain.lean"
+    "Zil/Test/TokenLifecycle.lean"
+    "examples/token-lifecycle/lifecycle.zc"
+    "docs/lean4/native-token-lifecycle.md"
+    "spec/token-lifecycle-v1.md"]}
+
   :native-agent-context
   {:features #{:facts :rules :queries :declarations}
    :min-feature-sources 1

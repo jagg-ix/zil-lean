@@ -13,6 +13,12 @@ lean_exe zilLeanTests where
 lean_exe zil where
   root := `Zil.CLI.Main
 
+lean_exe zilActionToken where
+  root := `Zil.CLI.ActionTokenMain
+
+lean_exe zilTokenLifecycle where
+  root := `Zil.CLI.TokenLifecycleMain
+
 lean_exe zilAgentContext where
   root := `Zil.CLI.AgentContextMain
 
