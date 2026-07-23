@@ -30,7 +30,8 @@
             [zil.safety-action-test]
             [zil.safety-token-action-test]
             [zil.store-sqlite-test]
-            [zil.port-library-test]))
+            [zil.port-library-test]
+            [zil.port-conformance-test]))
 
 (defn -main
   [& _]
@@ -64,5 +65,6 @@
                                           'zil.safety-action-test
                                           'zil.safety-token-action-test
                                           'zil.store-sqlite-test
-                                          'zil.port-library-test)]
+                                          'zil.port-library-test
+                                          'zil.port-conformance-test)]
     (System/exit (if (pos? (+ fail error)) 1 0))))
