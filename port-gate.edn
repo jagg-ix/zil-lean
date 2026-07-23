@@ -60,45 +60,6 @@
     "docs/lean4/native-change-impact.md"
     "spec/change-impact-v1.md"]}
 
-  :native-agent-context
-  {:features #{:facts :rules :queries :declarations}
-   :min-feature-sources 1
-   :min-sources 1
-   :evidence-files
-   ["Zil/AgentContext.lean"
-    "Zil/CLI/AgentContext.lean"
-    "Zil/CLI/AgentContextMain.lean"
-    "Zil/Test/AgentContext.lean"
-    "examples/agent-context/project.zc"
-    "docs/lean4/agent-context-bundles.md"
-    "spec/agent-context-v1.md"]}
-
-  :native-proof-obligations
-  {:features #{:declarations :facts :rules}
-   :min-feature-sources 1
-   :min-sources 1
-   :evidence-files
-   ["Zil/ProofObligation.lean"
-    "Zil/CLI/ProofObligation.lean"
-    "Zil/CLI/ProofObligationMain.lean"
-    "Zil/Test/ProofObligation.lean"
-    "examples/proof-obligations/governance.zc"
-    "docs/lean4/native-proof-obligations.md"
-    "spec/proof-obligation-governance-v1.md"]}
-
-  :native-theorem-audit
-  {:features #{:facts :rules}
-   :min-feature-sources 1
-   :min-sources 1
-   :evidence-files
-   ["Zil/TheoremAudit.lean"
-    "Zil/CLI/TheoremAudit.lean"
-    "Zil/CLI/TheoremAuditMain.lean"
-    "Zil/Test/TheoremAudit.lean"
-    "examples/theorem-audit/contracts.zc"
-    "docs/lean4/theorem-and-claim-audits.md"
-    "spec/theorem-audit-v1.md"]}
-
   :native-action-token
   {:features #{:attributes :facts}
    :min-feature-sources 1
@@ -124,6 +85,19 @@
     "examples/token-lifecycle/lifecycle.zc"
     "docs/lean4/native-token-lifecycle.md"
     "spec/token-lifecycle-v1.md"]}
+
+  :native-agent-context
+  {:features #{:facts :rules :queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/AgentContext.lean"
+    "Zil/CLI/AgentContext.lean"
+    "Zil/CLI/AgentContextMain.lean"
+    "Zil/Test/AgentContext.lean"
+    "examples/agent-context/project.zc"
+    "docs/lean4/agent-context-bundles.md"
+    "spec/agent-context-v1.md"]}
 
   :negation-runtime
   {:features #{:negation}
