@@ -2,6 +2,9 @@ import Zil
 
 open Zil
 
+private def containsText (text needle : String) : Bool :=
+  (text.splitOn needle).length > 1
+
 private def attrSource : String :=
   "MODULE service.map.\n" ++
   "service:api#depends_on@service:db [critical=true, retries=3, ratio=0.75, owner=team:platform, note=\"primary\"].\n"
@@ -83,5 +86,5 @@ run_cmd do
       match Zil.Parser.renderLeanModule program (Zil.Parser.defaultNamespace program) with
       | .error error => throwError error
       | .ok rendered =>
-          unless rendered.contains "zil_register_tuple sourceTuple0" do
+          unless containsText rendered "zil_register_tuple sourceTuple0" do
             throwError "generated module did not register its lossless tuple"
