@@ -153,7 +153,8 @@ def dslProfiles (program : Zil.Program) : Except String (Array DslProfile) := do
 /-- The first explicit profile hint wins, matching the legacy declaration order. -/
 def plannerHint (program : Zil.Program) : Except String PlannerHint := do
   let profiles ← dslProfiles program
-  pure <| (profiles.findSome? (·.plannerHint)).getD .highSelectivityFirst
+  let hints := profiles.filterMap (·.plannerHint)
+  pure <| hints[0]?.getD .highSelectivityFirst
 
 private def relationCardinality (facts : Array Zil.RelExpr) (relation : Name) : Nat :=
   (facts.filter fun fact => fact.relation == relation).size
@@ -365,7 +366,7 @@ def renderCi (report : CiReport) : String :=
      "status\t" ++ (if report.ok then "pass" else "fail"),
      "module\t" ++ report.moduleName.toString,
      "planner-hint\t" ++ report.plannerHint.token,
-     "requested-profile\t" ++ report.requestedProfile.map Name.toString |>.getD "",
+     "requested-profile\t" ++ (report.requestedProfile.map Name.toString).getD "",
      "active-profiles\t" ++ namesText report.activeProfiles,
      "selected-profiles\t" ++ namesText report.selectedProfiles,
      "selected-packs\t" ++ namesText report.selectedPacks,
