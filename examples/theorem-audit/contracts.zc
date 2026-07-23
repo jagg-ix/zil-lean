@@ -1,0 +1,23 @@
+MODULE theorem.contracts.
+
+assumption:finiteInput#kind@entity:assumption.
+lemma:normalizationClosed#kind@entity:lemma.
+proof:normalizedSound#kind@entity:proof.
+document:design#kind@entity:document.
+experiment:regression#kind@entity:experiment.
+
+theorem:normalizedSound#kind@entity:theorem.
+theorem:normalizedSound#requires_assumption@assumption:finiteInput.
+theorem:normalizedSound#requires_lemma@lemma:normalizationClosed.
+theorem:normalizedSound#ensures@guarantee:normalizedOutputSafe.
+theorem:normalizedSound#criticality@value:high.
+theorem:normalizedSound#proof_token@proof:normalizedSound.
+
+theorem:identity#kind@entity:theorem.
+theorem:identity#unconditional@value:true.
+theorem:identity#ensures@guarantee:identityPreserved.
+
+claim:normalizerReliable#kind@entity:claim.
+claim:normalizerReliable#supported_by@document:design.
+claim:normalizerReliable#supported_by@experiment:regression.
+claim:normalizerReliable#supported_by@theorem:normalizedSound.

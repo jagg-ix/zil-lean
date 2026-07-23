@@ -21,6 +21,8 @@ Usage:
   bin/zil dependency-graph <input.zc> [output.txt|-]
   bin/zil impact <input.zc> <changed-node> [output.txt|-]
   bin/zil agent-context <input.zc> <task-id> <agent-id> <scope> <changed-nodes> [queries|-] [targets|-] [output|-]
+  bin/zil proof-obligations <input.zc> [tool|-] [output|-]
+  bin/zil theorem-audit <input.zc> [output|-]
   bin/zil formalization-plan <input.zc> [output.txt|-]
   bin/zil formalization-next <input.zc> [output.txt|-]
   bin/zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]
@@ -30,6 +32,12 @@ Usage:
 
 Comma-separated name lists are used by agent-context. The canonical report bytes
 may be hashed as the durable context_bundle_id for action-token issuance.
+
+Proof-obligations accepts all, -, z3, tlaps, lean4, acl2, or manual. Native
+governance audits evidence and status but does not pretend to execute external solvers.
+
+Theorem-audit checks theorem non-vacuity, dependencies, guarantees, proof evidence,
+and the external claim boundary. It does not promote graph support to kernel proof.
 
 Macro extension commands compose sorted non-recursive lib/*.zc files before the
 model. Without --lib, the nearest ancestor lib/ directory is discovered.
@@ -61,6 +69,26 @@ run_agent_context() {
   exec lake exe zilAgentContext -- "$@"
 }
 
+run_proof_obligations() {
+  shift
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for native proof obligation governance" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zilProofObligations -- "$@"
+}
+
+run_theorem_audit() {
+  shift
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for native theorem auditing" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zilTheoremAudit -- "$@"
+}
+
 run_macro() {
   local mode="$1"
   shift
@@ -84,6 +112,12 @@ case "$command_name" in
     ;;
   agent-context)
     run_agent_context "$@"
+    ;;
+  proof-obligations)
+    run_proof_obligations "$@"
+    ;;
+  theorem-audit)
+    run_theorem_audit "$@"
     ;;
   macro-compile)
     shift
