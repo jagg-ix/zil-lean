@@ -1,0 +1,70 @@
+{:repository-root "."
+
+ :scan-roots
+ ["bin" "src" "test" "docs" "examples" "deps.edn" "build.clj"]
+
+ :non-blocking-prefixes
+ ["test/" "docs/" "examples/"]
+
+ :components
+ {:legacy-public-cli
+  {:require-gate-ok true
+   :gate-components
+   [:tuple-frontend
+    :attribute-frontend
+    :rule-query-runtime
+    :negation-runtime
+    :macro-frontend
+    :declaration-lowering
+    :library-corpus
+    :revision-causal]
+   :require-verification true
+   :require-aggregate true
+   :require-embedded true
+   :min-embedded-blocks 1
+   :patterns
+   [{:id :clojure-main
+     :pattern "(?:-m\\s+zil\\.cli|\\(ns\\s+zil\\.cli)"}
+    {:id :standalone-jar
+     :pattern "zil-standalone\\.jar"}]
+   :allow-paths
+   ["bin/zil-legacy"
+    "bin/build-jar"
+    "build.clj"
+    "src/zil/cli.clj"]}
+
+  :legacy-tuple-exporter
+  {:gate-components
+   [:tuple-frontend
+    :attribute-frontend
+    :macro-frontend
+    :declaration-lowering
+    :library-corpus]
+   :require-verification true
+   :require-aggregate true
+   :patterns
+   [{:id :tuple-exporter-namespace
+     :pattern "zil\\.bridge\\.tuple-lean"}
+    {:id :tuple-exporter-alias
+     :pattern ":tuple-lean"}]
+   :allow-paths
+   ["src/zil/bridge/tuple_lean.clj"
+    "test/zil/bridge_tuple_lean_test.clj"
+    "bin/zil-tuples-lean"
+    "deps.edn"]}
+
+  :legacy-embedded-cli
+  {:gate-components
+   [:tuple-frontend
+    :attribute-frontend
+    :macro-frontend
+    :library-corpus]
+   :require-verification true
+   :require-aggregate true
+   :require-embedded true
+   :min-embedded-blocks 1
+   :patterns
+   [{:id :embedded-command
+     :pattern "(?:embedded-scan|embedded-snapshot|embedded-drift-check)"}]
+   :allow-paths
+   ["src/zil/cli.clj"]}}}
