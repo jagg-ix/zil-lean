@@ -8,6 +8,7 @@
             [zil.bridge.tuple-lean :as tuple-lean]
             [zil.core :as core]
             [zil.port.library :as library]
+            [zil.port.native-macro :as native-macro]
             [zil.relational-ir :as rir]))
 
 (def default-command ["lake" "exe" "zil" "--"])
@@ -270,14 +271,40 @@
 (defn- native-run [runner command operation source-path]
   (runner (into (vec command) [operation source-path])))
 
+(defn- runner-adapter [runner]
+  (fn [{:keys [command]}] (runner command)))
+
+(defn- native-prepared-run [options operation prepared original-path]
+  (if (:composed prepared)
+    (native-macro/invoke-native
+     {:native-command (:command options default-command)
+      :runner (runner-adapter (:runner options library/run-command))}
+     operation (:text prepared) nil)
+    (native-run (:runner options library/run-command)
+                (:command options default-command)
+                operation original-path)))
+
+(defn- common-entry [path source-file prepared]
+  (sorted-map
+   :source path
+   :source-sha256 (library/file-sha256 source-file)
+   :compiled-source-sha256 (:source_sha256 prepared)
+   :macro-composed (boolean (:composed prepared))
+   :lib-dir (:lib_dir prepared)
+   :lib-files (vec (:lib_files prepared))))
+
 (defn compare-file
   [{:keys [runner command sections]
     :or {runner library/run-command
          command default-command
-         sections default-sections}}
+         sections default-sections}
+    :as options}
    source-file]
   (let [path (.getCanonicalPath (io/file source-file))
-        source (slurp path)
+        options (assoc options :runner runner :command command :sections sections)
+        prepared (native-macro/prepare-source path options)
+        source (:text prepared)
+        base (common-entry path source-file prepared)
         legacy-result (try
                         {:ok true
                          :report (legacy-report source)
@@ -286,31 +313,28 @@
                           {:ok false
                            :error (.getMessage error)
                            :data (ex-data error)}))
-        native-report (native-run runner command "conformance" path)
-        native-expand (native-run runner command "expand" path)
+        native-report (native-prepared-run options "conformance" prepared path)
+        native-expand (native-prepared-run options "expand" prepared path)
         native-ok (zero? (:exit native-report))]
     (cond
       (and (not (:ok legacy-result)) (not native-ok))
-      (sorted-map :source path
-                  :source-sha256 (library/file-sha256 source-file)
-                  :status :both-rejected
-                  :ok true
-                  :legacy-error (:error legacy-result)
-                  :native-error (str/trim (:err native-report)))
+      (assoc base
+             :status :both-rejected
+             :ok true
+             :legacy-error (:error legacy-result)
+             :native-error (str/trim (:err native-report)))
 
       (not (:ok legacy-result))
-      (sorted-map :source path
-                  :source-sha256 (library/file-sha256 source-file)
-                  :status :legacy-rejected
-                  :ok false
-                  :legacy-error (:error legacy-result))
+      (assoc base
+             :status :legacy-rejected
+             :ok false
+             :legacy-error (:error legacy-result))
 
       (not native-ok)
-      (sorted-map :source path
-                  :source-sha256 (library/file-sha256 source-file)
-                  :status :native-rejected
-                  :ok false
-                  :native-error (str/trim (:err native-report)))
+      (assoc base
+             :status :native-rejected
+             :ok false
+             :native-error (str/trim (:err native-report)))
 
       :else
       (let [comparison (compare-reports (:report legacy-result)
@@ -319,15 +343,15 @@
             expansion-equal (and (zero? (:exit native-expand))
                                  (= (:expanded legacy-result) (:out native-expand)))
             ok (and (:ok comparison) expansion-equal)]
-        (sorted-map :source path
-                    :source-sha256 (library/file-sha256 source-file)
-                    :status (if ok :pass :mismatch)
-                    :ok ok
-                    :sections (:sections comparison)
-                    :differences (:differences comparison)
-                    :expansion-equal expansion-equal
-                    :native-expansion-error (when-not (zero? (:exit native-expand))
-                                              (str/trim (:err native-expand))))))))
+        (assoc base
+               :status (if ok :pass :mismatch)
+               :ok ok
+               :sections (:sections comparison)
+               :differences (:differences comparison)
+               :expansion-equal expansion-equal
+               :native-expansion-error
+               (when-not (zero? (:exit native-expand))
+                 (str/trim (:err native-expand))))))))
 
 (defn- write-report! [path report]
   (let [file (io/file path)]
@@ -345,6 +369,7 @@
         report (sorted-map
                 :schema "ZIL-CONFORMANCE/1"
                 :roots (mapv #(.getCanonicalPath (io/file %)) roots)
+                :lib-dir (some-> (:lib-dir options) io/file .getCanonicalPath)
                 :sections (vec (sort sections))
                 :ok (every? :ok entries)
                 :entries entries)]
@@ -352,7 +377,7 @@
     report))
 
 (def usage
-  "zil-conformance [--root DIR]* [--output FILE]")
+  "zil-conformance [--root DIR]* [--output FILE] [--lib DIR]")
 
 (defn- parse-cli [args]
   (loop [remaining (seq args)
@@ -365,6 +390,8 @@
                           (update options :roots conj (second remaining)))
           "--output" (recur (nnext remaining)
                             (assoc options :output (second remaining)))
+          "--lib" (recur (nnext remaining)
+                         (assoc options :lib-dir (second remaining)))
           "--help" (assoc options :help true)
           (throw (ex-info "Unknown conformance option" {:option arg})))))))
 
