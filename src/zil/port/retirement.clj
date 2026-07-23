@@ -115,6 +115,10 @@
 (defn- gate-component-ready? [gate component]
   (true? (get-in gate [:components component :retirable])))
 
+(defn- embedded-fully-verified? [embedded]
+  (and (:verify-generated embedded)
+       (= (:verified embedded 0) (:block-count embedded 0))))
+
 (defn- evidence-failures [gate verification embedded config]
   (cond-> []
     (and (:require-gate-ok config) (not (:ok gate)))
@@ -139,7 +143,14 @@
     (< (:block-count embedded 0) (:min-embedded-blocks config 0))
     (conj {:kind :embedded-block-coverage
            :actual (:block-count embedded 0)
-           :required (:min-embedded-blocks config)})))
+           :required (:min-embedded-blocks config)})
+
+    (and (:require-embedded-verification config)
+         (not (embedded-fully-verified? embedded)))
+    (conj {:kind :embedded-modules-not-verified
+           :verify-generated (boolean (:verify-generated embedded))
+           :verified (:verified embedded 0)
+           :blocks (:block-count embedded 0)})))
 
 (defn evaluate-component
   [repository-root files non-blocking-prefixes gate verification embedded
