@@ -35,6 +35,7 @@ expected_kind is absent or equals event.kind
 event.kernel_present is true
 event.uses_sorry is false
 event.trust is included in acceptable_trust
+event.type_fingerprint is nonempty
 ```
 
 The default accepted trust set is:
@@ -72,6 +73,8 @@ kernel_checked_term
 }
 ```
 
+Canonical output converts keyword keys and values to ordinary JSON strings. It never emits colon-prefixed field names.
+
 ## Failure states
 
 ```text
@@ -82,9 +85,10 @@ kind_mismatch
 kernel_missing
 uses_sorry
 trust_mismatch
+fingerprint_missing
 ```
 
-`:ok` is true exactly when every token has `resolved` status.
+`:ok` is true exactly when every token has `resolved` status. Every resolved row is immediately eligible for theorem statement locking.
 
 ## Claim boundary
 

@@ -27,9 +27,10 @@ A token resolves when exactly one Lean event has the requested declaration and:
 - the declaration kind matches when specified;
 - `kernel_present` is true;
 - `uses_sorry` is false;
-- the event trust class is accepted by the token.
+- the event trust class is accepted by the token;
+- `type_fingerprint` is present and nonempty.
 
-Successful results copy the declaration's current `type_fingerprint` and sorted dependency list.
+Successful results copy the declaration's current `type_fingerprint` and sorted dependency list. Every resolved result is therefore valid input for theorem statement locks.
 
 ## Result states
 
@@ -42,9 +43,12 @@ kind_mismatch
 kernel_missing
 uses_sorry
 trust_mismatch
+fingerprint_missing
 ```
 
 Both input batches receive deterministic SHA-256 fingerprints in the result. These identify the exact token request and Lean declaration snapshot used for resolution.
+
+Output uses ordinary JSON field names and string status values, including `"format"` and `"resolved"`.
 
 ## Trust boundary
 
