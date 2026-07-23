@@ -74,26 +74,44 @@ private def nameFromString (value : String) : Name :=
 
 private def requiredToken
     (declaration : Zil.Declaration) (key : Name) : Except String String := do
-  let attr ← declaration.attr? key |>.toExcept s!"{declaration.name}: missing {key}"
-  let token ← attr.value.token?.toExcept s!"{declaration.name}: {key} must be scalar"
+  let attr ← match declaration.attr? key with
+    | some value => pure value
+    | none => throw s!"{declaration.name}: missing {key}"
+  let token ← match attr.value.token? with
+    | some value => pure value
+    | none => throw s!"{declaration.name}: {key} must be scalar"
   if token.isEmpty then throw s!"{declaration.name}: {key} must be nonempty"
   pure token
 
 private def priorityOf (declaration : Zil.Declaration) : Except String Nat := do
-  let attr ← declaration.attr? `priority |>.toExcept s!"{declaration.name}: missing priority"
+  let attr ← match declaration.attr? `priority with
+    | some value => pure value
+    | none => throw s!"{declaration.name}: missing priority"
   match attr.value with
   | .scalar (.integer value) =>
       if value < 0 then throw s!"{declaration.name}: priority must be nonnegative"
       else pure value.toNat
   | value =>
-      let token ← value.token?.toExcept s!"{declaration.name}: priority must be an integer"
-      token.toNat?.toExcept s!"{declaration.name}: priority must be a nonnegative integer"
+      let token ← match value.token? with
+        | some result => pure result
+        | none => throw s!"{declaration.name}: priority must be an integer"
+      match token.toNat? with
+      | some result => pure result
+      | none => throw s!"{declaration.name}: priority must be a nonnegative integer"
+
+private def attrValueToken? : Zil.AttrValue → Option String
+  | .text value => some value
+  | .integer value => some (toString value)
+  | .decimal value => some value
+  | .boolean value => some (if value then "true" else "false")
+  | .term (.node node) => some node.name.toString
+  | .term (.var _) => none
 
 private def dependenciesOf (declaration : Zil.Declaration) : Array Name :=
   match declaration.attr? `dependencies with
   | none => #[]
   | some attr => attr.value.scalarValues.filterMap fun value =>
-      match Zil.DeclValue.scalar value |>.token? with
+      match attrValueToken? value with
       | some token => if token.isEmpty then none else some (nameFromString token)
       | none => none
 
@@ -105,7 +123,9 @@ def ofDeclaration (declaration : Zil.Declaration) : Except String Target := do
   let file ← requiredToken declaration `file
   let declarationName ← requiredToken declaration `declaration
   let statusToken ← requiredToken declaration `status
-  let status ← Status.ofToken? statusToken |>.toExcept s!"{declaration.name}: invalid status {statusToken}"
+  let status ← match Status.ofToken? statusToken with
+    | some value => pure value
+    | none => throw s!"{declaration.name}: invalid status {statusToken}"
   let priority ← priorityOf declaration
   pure {
     id := declaration.name
@@ -176,12 +196,7 @@ def validate (targets : Array Target) : Except String Unit := do
   unless cycles.isEmpty do
     throw s!"formalization dependency cycle: {String.intercalate "," (cycles.toList.map Name.toString)}"
 
-private def dependencyReady (targets : Array Target) (dependency : Name) : Bool :=
-  match findTarget? targets dependency with
-  | some target => target.status.accepted
-  | none => false
-
-private def decisionFor (targets : Array Target) (target : Target) : Decision :=
+private def decisionFor (targets : Array Target) (target : Target) : Decision := Id.run do
   let mut reasons : Array String := #[]
   unless target.status.selectable do
     reasons := reasons.push s!"status:{target.status.token}"
@@ -191,7 +206,7 @@ private def decisionFor (targets : Array Target) (target : Target) : Decision :=
     | some required =>
         unless required.status.accepted do
           reasons := reasons.push s!"dependency:{dependency}:{required.status.token}"
-  { target, ready := reasons.isEmpty, reasons }
+  return { target, ready := reasons.isEmpty, reasons }
 
 private def comesBefore (left right : Decision) : Bool :=
   left.target.priority > right.target.priority ||
