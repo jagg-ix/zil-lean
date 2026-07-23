@@ -28,6 +28,14 @@ private def request : Request := {
   | .error _ => true
   | .ok _ => false
 
+#guard match Request.validate { request with capabilities := #["parse-v1", "parse-v1"] } with
+  | .error _ => true
+  | .ok _ => false
+
+#guard match Request.validate { request with capabilities := #["query-v1", "parse-v1"] } with
+  | .error _ => true
+  | .ok _ => false
+
 #guard match Request.validate { request with operation := "shell" } with
   | .error _ => true
   | .ok _ => false
