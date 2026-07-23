@@ -2,6 +2,9 @@ import Zil
 
 open Zil
 
+private def containsText (text needle : String) : Bool :=
+  (text.splitOn needle).length > 1
+
 private def programSource : String :=
   "MODULE policy.access.\n" ++
   "doc:readme#viewer@group:eng [source=manual].\n" ++
@@ -78,9 +81,9 @@ run_cmd do
           program (Zil.Parser.Program.defaultNamespace program) with
       | .error error => throwError error
       | .ok rendered =>
-          unless rendered.contains "sourceRule0" do
+          unless containsText rendered "sourceRule0" do
             throwError "generated Lean omitted source rules"
-          unless rendered.contains "sourceQuery0" do
+          unless containsText rendered "sourceQuery0" do
             throwError "generated Lean omitted source queries"
-          unless rendered.contains "sourceProgram" do
+          unless containsText rendered "sourceProgram" do
             throwError "generated Lean omitted the source program value"
