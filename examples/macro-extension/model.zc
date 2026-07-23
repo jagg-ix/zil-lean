@@ -1,0 +1,3 @@
+MODULE macro.extension.demo.
+
+USE SERVICE_EXTENSION(service:api, team:platform).
