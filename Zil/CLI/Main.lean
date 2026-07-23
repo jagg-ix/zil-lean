@@ -1,6 +1,8 @@
 import Zil.Parser.DeclarationProgram
 import Zil.Codec.Revision
 import Zil.Codec.Conformance
+import Zil.Engine.Provenance
+import Zil.CLI.Impact
 import Zil.Formalization
 import Zil.Authorization
 import Zil.QueryGovernance
@@ -14,6 +16,11 @@ def usage : String :=
   "zil conformance <input.zc> [output.zilc|-]\n" ++
   "zil query-plan <input.zc> [output.txt|-]\n" ++
   "zil query-ci <input.zc> [profile|-] [output.txt|-]\n" ++
+  "zil trace <input.zc> [output.txt|-]\n" ++
+  "zil explain-query <input.zc> <query> [output.txt|-]\n" ++
+  "zil explain-authorization <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
+  "zil dependency-graph <input.zc> [output.txt|-]\n" ++
+  "zil impact <input.zc> <changed-node> [output.txt|-]\n" ++
   "zil formalization-plan <input.zc> [output.txt|-]\n" ++
   "zil formalization-next <input.zc> [output.txt|-]\n" ++
   "zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
@@ -36,6 +43,11 @@ private def profileFromArgument (value : String) : IO (Option Name) :=
     match Zil.Parser.nameFromToken value with
     | .ok name => pure (some name)
     | .error error => throw <| IO.userError error
+
+private def nameFromArgument (value : String) : IO Name :=
+  match Zil.Parser.nameFromToken value with
+  | .ok name => pure name
+  | .error error => throw <| IO.userError error
 
 private def parseNatIO (value message : String) : IO Nat :=
   match value.toNat? with
@@ -120,6 +132,44 @@ def queryCiFile
     | .error error => throw <| IO.userError error
   writeOutput (Zil.QueryGovernance.renderCi report) outputPath
   pure report.ok
+
+/-- Emit the complete checked closure with fact origins. -/
+def traceFile
+    (inputPath : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let program ← loadProgram inputPath
+  let trace ← match Zil.Engine.Provenance.traceProgram program with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  writeOutput (Zil.Engine.Provenance.renderTrace trace) outputPath
+
+/-- Explain every concrete witness for one named query. -/
+def explainQueryFile
+    (inputPath queryText : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let program ← loadProgram inputPath
+  let queryName ← nameFromArgument queryText
+  let query ← match program.queries.find? (fun query => query.name == queryName) with
+    | some value => pure value
+    | none => throw <| IO.userError s!"query {queryName} was not found"
+  let trace ← match Zil.Engine.Provenance.traceProgram program with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  let witnesses := Zil.Engine.Provenance.queryWitnesses trace query
+  writeOutput (Zil.Engine.Provenance.renderQueryWitnesses trace query witnesses) outputPath
+
+/-- Explain one exact authorization fact. Returns whether the fact is present. -/
+def explainAuthorizationFile
+    (inputPath object relation subject : String)
+    (outputPath : Option String := none) : IO Bool := do
+  let program ← loadProgram inputPath
+  let request ← authorizationRequest object relation subject
+  let trace ← match Zil.Engine.Provenance.traceProgram program with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  let explanation := Zil.Engine.Provenance.explainFact trace request.fact
+  writeOutput (Zil.Engine.Provenance.renderFactExplanation trace explanation) outputPath
+  pure explanation.allowed
 
 /-- Emit all formalization scheduling decisions. -/
 def formalizationPlanFile
@@ -219,6 +269,28 @@ def main (args : List String) : IO UInt32 := do
         let selected ← Zil.CLI.profileFromArgument profile
         let ok ← Zil.CLI.queryCiFile input selected (some output)
         pure (if ok then 0 else 1)
+    | ["trace", input] => Zil.CLI.traceFile input; pure 0
+    | ["trace", input, output] => Zil.CLI.traceFile input (some output); pure 0
+    | ["explain-query", input, query] =>
+        Zil.CLI.explainQueryFile input query; pure 0
+    | ["explain-query", input, query, output] =>
+        Zil.CLI.explainQueryFile input query (some output); pure 0
+    | ["explain-authorization", input, object, relation, subject] =>
+        let allowed ← Zil.CLI.explainAuthorizationFile input object relation subject
+        pure (if allowed then 0 else 1)
+    | ["explain-authorization", input, object, relation, subject, output] =>
+        let allowed ← Zil.CLI.explainAuthorizationFile input object relation subject (some output)
+        pure (if allowed then 0 else 1)
+    | ["dependency-graph", input] =>
+        Zil.CLI.dependencyGraphFile input; pure 0
+    | ["dependency-graph", input, output] =>
+        Zil.CLI.dependencyGraphFile input (some output); pure 0
+    | ["impact", input, changed] =>
+        let known ← Zil.CLI.changeImpactFile input changed
+        pure (if known then 0 else 1)
+    | ["impact", input, changed, output] =>
+        let known ← Zil.CLI.changeImpactFile input changed (some output)
+        pure (if known then 0 else 1)
     | ["formalization-plan", input] => Zil.CLI.formalizationPlanFile input; pure 0
     | ["formalization-plan", input, output] =>
         Zil.CLI.formalizationPlanFile input (some output); pure 0
