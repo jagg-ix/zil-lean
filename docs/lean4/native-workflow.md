@@ -78,6 +78,34 @@ The command:
 
 The five-argument `export-workflow!` API remains translation-only for existing callers. Pass `{:verify-generated true}` to use the verified API directly.
 
+## Versioned verification report
+
+Add one optional final path to emit JSON suitable for release attestations:
+
+```bash
+bin/zil-workflow \
+  store.sqlite \
+  Demo \
+  generated/workflow/Demo.lean \
+  Zil.Generated.WorkflowDemo \
+  150 \
+  generated/workflow/Demo.workflow.json
+```
+
+The JSON format is:
+
+```text
+zil.workflow-verification.v0.1
+```
+
+It contains the normal export result plus:
+
+- canonical string keys and status values;
+- generated module SHA-256 in `output_sha256`;
+- verification status and command metadata.
+
+The release attestor requires `verification.status=verified` and binds `output_sha256` to a hashed release artifact.
+
 ## Validation
 
 ```bash
