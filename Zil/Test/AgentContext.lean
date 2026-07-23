@@ -38,7 +38,7 @@ private def request : Request := {
           bundle.changedNodes == #[`lean.Parser.parse] &&
           bundle.affectedNodes == #[`lean.Normalize.normalize, `lean.Proof.sound] &&
           bundle.selectedQueries.map (·.name) == #[`parserDependencies] &&
-          bundle.selectedTargets.map (·.id) == #[`parser_review] &&
+          bundle.selectedTargets.map (·.id) == #[`parser_review, `proof_review] &&
           bundle.originatingRules.isEmpty &&
           !bundle.relevantFacts.isEmpty
       | .error _ => false
@@ -98,5 +98,6 @@ run_cmd do
             throwError "agent context lost transitive impact"
           unless hasSubstring report "query\tparserDependencies" do
             throwError "agent context lost the selected query"
-          unless hasSubstring report "target\tparser_review" do
-            throwError "agent context lost the formalization target"
+          unless hasSubstring report "target\tparser_review" &&
+                 hasSubstring report "target\tproof_review" do
+            throwError "agent context lost a relevant formalization target"
