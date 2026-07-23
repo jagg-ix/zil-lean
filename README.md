@@ -1,89 +1,122 @@
 # ZIL Lean
 
-ZIL is a small language for describing **named things**, the **relationships**
-between them, and rules that derive additional relationships.
+ZIL is a small relational language for describing named objects, the relationships between them, and rules that derive new relationships.
 
-A ZIL model can describe statements such as:
+ZIL Lean implements that language inside Lean 4. Lean checks definitions, executable programs, theorem statements, and proofs. ZIL adds a queryable project-knowledge layer around those checked declarations.
+
+That layer can record information such as:
 
 ```text
-this Lean declaration formalizes associativity of addition
-this theorem uses the definition of a monoid
-this result depends on another lemma
-this claim is supported by a textbook section
+this declaration implements this requirement
+this theorem formalizes this claim
+this test validates this component
+this file depends on this assumption
+this task is blocked by this missing result
+this change affects these downstream modules
 ```
 
-ZIL Lean implements this relational model inside Lean 4. Lean is a programming
-and theorem-proving language: it checks definitions, executable code, theorem
-statements, and proofs. ZIL adds a queryable knowledge graph alongside those
-Lean declarations.
+The purpose is to make project structure explicit enough for people, tools, and AI agents to inspect it rather than reconstruct it repeatedly from filenames, comments, and conversation history.
 
-A project can therefore use Lean to check mathematics and programs, while ZIL
-records how definitions, lemmas, theorems, claims, assumptions, sources, and
-work items relate to one another.
+## A first project example
 
-## A first example
-
-A ZIL relation connects a subject to an object:
+Consider a project that contains a parser, a normalization pass, and a theorem about normalized output.
 
 ```lean
 import Zil
 
 zil_fact
-  node(lean.Arithmetic.add_assoc)
-    ⟶[formalizes]
-  node(claim.additionAssociative)
-```
+  node(lean.Parser.parse)
+    ⟶[implements]
+  node(requirement.parseInput)
 
-This relation says that the Lean declaration named
-`lean.Arithmetic.add_assoc` formalizes the mathematical claim named
-`claim.additionAssociative`.
-
-A second fact can record a dependency:
-
-```lean
 zil_fact
-  node(lean.Arithmetic.add_assoc)
-    ⟶[requires]
-  node(requirement.binaryAddition)
+  node(lean.Normalize.normalize)
+    ⟶[dependsOn]
+  node(lean.Parser.parse)
+
+zil_fact
+  node(lean.Normalize.normalized_sound)
+    ⟶[validates]
+  node(lean.Normalize.normalize)
 ```
 
-A rule can combine both facts:
+These facts form a small knowledge graph:
+
+```text
+requirement.parseInput
+          ▲
+          │ implements
+lean.Parser.parse
+          ▲
+          │ dependsOn
+lean.Normalize.normalize
+          ▲
+          │ validates
+lean.Normalize.normalized_sound
+```
+
+Lean knows the types and proofs of these declarations. ZIL records their project-level roles and relationships.
+
+A query can now ask which declarations are affected by a parser change, which requirements have an implementation, or which components still lack validation.
+
+## Rules derive project knowledge
+
+A ZIL rule can propagate impact through dependencies:
 
 ```lean
-zil_theorem_rule propagateRequirement
-  {declaration claim requirement : Zil.Node}
-  (hFormalizes : declaration ⟶[formalizes] claim)
-  (hRequires : declaration ⟶[requires] requirement)
-  : claim ⟶[requiresClaim] requirement
+zil_theorem_rule propagateImpact
+  {changed dependent : Zil.Node}
+  (hDepends : dependent ⟶[dependsOn] changed)
+  : changed ⟶[affects] dependent
 ```
 
-The rule means:
+Given the earlier dependency fact, the graph derives:
 
 ```text
-when a declaration formalizes a claim
-and that declaration requires something,
-then the claim inherits that requirement.
+lean.Parser.parse
+  ── affects ──▶
+lean.Normalize.normalize
 ```
 
-The native Horn engine can derive:
+A second rule can continue propagation through multiple levels:
 
-```text
-claim.additionAssociative
-  ── requiresClaim ──▶
-requirement.binaryAddition
+```lean
+zil_theorem_rule propagateTransitiveImpact
+  {source middle target : Zil.Node}
+  (hFirst : source ⟶[affects] middle)
+  (hSecond : target ⟶[dependsOn] middle)
+  : source ⟶[affects] target
 ```
+
+This turns a collection of local annotations into a reusable change-impact model.
+
+## What ZIL adds beside Lean
+
+Lean answers questions about terms, types, definitions, theorem statements, and proof correctness. ZIL addresses questions about the structure and intent of a whole project.
+
+Examples include:
+
+- Which declaration implements a requirement?
+- Which theorem validates a transformation?
+- Which modules are affected by a changed dependency?
+- Which claims have supporting evidence?
+- Which work items remain blocked?
+- Which file advertises a capability without linking an implementation?
+- Which derived relationship came from which facts and rule?
+- Which project assumptions changed since an AI agent last worked on the repository?
+
+These questions often span several modules and involve concepts that are useful to the project but are not themselves theorem propositions.
 
 ## Core model
 
 ZIL uses four main structures:
 
-- **nodes** name declarations, definitions, lemmas, theorems, claims, sources,
-  requirements, files, or other project objects;
+- **nodes** identify declarations, requirements, claims, tests, files, tasks, evidence, or other project objects;
 - **relations** connect two nodes;
-- **rules** derive relations from other relations;
-- **queries** retrieve matching nodes and variable bindings.
+- **rules** derive relations from existing relations;
+- **queries** return matching nodes and variable bindings.
 
-The basic shape is:
+The basic relation shape is:
 
 ```text
 subject ── relation ──▶ object
@@ -92,50 +125,24 @@ subject ── relation ──▶ object
 Examples:
 
 ```text
-Lean declaration ── formalizes ────▶ mathematical claim
-Lean theorem ─────── usesDefinition ─▶ definition
-Lean theorem ─────── dependsOn ──────▶ another theorem
-claim ────────────── supportedBy ─────▶ source
-claim ────────────── requiresClaim ───▶ inherited requirement
+declaration ── implements ──▶ requirement
+theorem ────── validates ────▶ component
+module ─────── dependsOn ────▶ module
+claim ──────── supportedBy ──▶ evidence
+task ───────── blockedBy ────▶ missing result
+change ─────── affects ──────▶ declaration
 ```
 
 Nodes use stable names:
 
 ```text
-lean.Algebra.Group.mul_assoc
-claim.multiplicationAssociative
-requirement.binaryOperation
-evidence.textbook.chapter2
+lean.Parser.parse
+lean.Normalize.normalized_sound
+requirement.parseInput
+component.normalizer
+issue.missingTerminationProof
+document.design.section4
 ```
-
-These names let the graph connect Lean declarations with concepts and artifacts
-that are useful across a repository.
-
-## How ZIL complements Lean 4
-
-Lean theorem types express precise propositions. ZIL describes the surrounding
-project knowledge.
-
-For example, Lean may contain a theorem proving associativity, while ZIL records:
-
-```text
-textbook.chapter2 ── supports ───────▶ claim.additionAssociative
-lean.Arithmetic.add_assoc ── formalizes ▶ claim.additionAssociative
-lean.Arithmetic.add_assoc ── requires ──▶ definition.binaryAddition
-claim.additionAssociative ── usedBy ────▶ claim.naturalNumbersFormMonoid
-```
-
-This supports questions such as:
-
-- Which declaration formalizes a mathematical claim?
-- Which definitions are used by a theorem?
-- Which results depend on a changed lemma?
-- Which claims require a particular axiom or assumption?
-- Which formalization targets remain incomplete?
-- Which facts and rules produced a derived relationship?
-
-ZIL keeps this information in Lean modules, so imports reconstruct the graph in
-the same way they reconstruct Lean declarations.
 
 ## Quick start
 
@@ -145,14 +152,14 @@ The repository pins Lean to:
 leanprover/lean4:v4.31.0
 ```
 
-Build the package and run the executable tests:
+Build the package and run the Lean tests:
 
 ```bash
 lake build
 lake exe zilLeanTests
 ```
 
-The progressive examples are in:
+Progressive examples are under:
 
 ```text
 examples/lean/
@@ -171,74 +178,65 @@ lake env lean examples/lean/05_ImportedKnowledge.lean
 
 ## Facts and rules
 
-### Register a fact
+Register a ground fact:
 
 ```lean
 zil_fact
-  node(lean.Algebra.Group.mul_assoc)
-    ⟶[formalizes]
-  node(claim.multiplicationAssociative)
+  node(lean.Parser.parse)
+    ⟶[implements]
+  node(requirement.parseInput)
 ```
 
-`zil_fact` stores a ground relation in a persistent Lean environment extension.
-Compiled modules preserve those entries through normal imports.
-
-### Declare a theorem-shaped rule
+Declare a theorem-shaped graph rule:
 
 ```lean
-zil_theorem_rule claimRequirement
-  {declaration claim requirement : Zil.Node}
-  (hFormalizes : declaration ⟶[formalizes] claim)
-  (hRequires : declaration ⟶[requires] requirement)
-  : claim ⟶[requiresClaim] requirement
+zil_theorem_rule implementationCoversRequirement
+  {declaration requirement : Zil.Node}
+  (hImplements : declaration ⟶[implements] requirement)
+  : requirement ⟶[coveredBy] declaration
 ```
 
-This syntax lowers to a canonical `Zil.Rule`. The theorem-like layout makes
-variables, premises, and the conclusion easy to read in a Lean file.
-
-The block form expresses the same rule:
+The block form expresses the same structure:
 
 ```lean
-zil_rule claimRequirement where
-  variables declaration claim requirement
+zil_rule implementationCoversRequirement where
+  variables declaration requirement
   premises
-    declaration ⟶[formalizes] claim
-    declaration ⟶[requires] requirement
+    declaration ⟶[implements] requirement
   conclusion
-    claim ⟶[requiresClaim] requirement
+    requirement ⟶[coveredBy] declaration
 ```
+
+Both forms lower to the canonical `Zil.Rule` representation used by the engine and tooling.
 
 ## Typed relation profiles
 
-A relation profile assigns expected endpoint kinds:
+A relation profile records expected endpoint kinds:
 
 ```text
-formalizes     : theorem → claim
-usesDefinition : theorem → definition
-dependsOn      : theorem → theorem
-requiresClaim  : claim → requirement
-supportedBy    : claim → evidence
+implements : declaration → requirement
+validates  : theorem → component
+dependsOn  : declaration → declaration
+blockedBy  : task → requirement
+supportedBy : claim → evidence
 ```
 
 A typed rule declares the kind of each variable:
 
 ```lean
-zil_typed_rule typedClaimRequirement using Zil.Profile.research where
+zil_typed_rule typedCoverage using Zil.Profile.research where
   variables
     declaration : declaration
-    claim : claim
     requirement : requirement
   premises
-    declaration ⟶[formalizes] claim
-    declaration ⟶[requires] requirement
+    declaration ⟶[implements] requirement
   conclusion
-    claim ⟶[requiresClaim] requirement
+    requirement ⟶[coveredBy] declaration
 
-#guard typedClaimRequirement.valid
+#guard typedCoverage.valid
 ```
 
-Profiles make category mistakes visible while retaining the canonical rule for
-diagnostics and tooling.
+Profiles expose category errors early while preserving the canonical rule for diagnostics and tooling.
 
 ## Closure and queries
 
@@ -249,82 +247,117 @@ import Zil
 
 open Zil
 
-private def declaration : Term :=
-  .ground `lean.Arithmetic.add_assoc
-
-private def claim : Term :=
-  .ground `claim.additionAssociative
-
-private def requirement : Term :=
-  .ground `requirement.binaryAddition
+private def parser : Term := .ground `lean.Parser.parse
+private def requirement : Term := .ground `requirement.parseInput
 
 private def facts : Array RelExpr := #[
-  .mk' declaration `zil.formalizes claim,
-  .mk' declaration `zil.requires requirement
+  .mk' parser `zil.implements requirement
 ]
 
 private def target : RelExpr :=
-  .mk' claim `zil.requiresClaim requirement
+  .mk' requirement `zil.coveredBy parser
 
-#guard Zil.Engine.entails facts #[claimRequirement] target
+#guard Zil.Engine.entails facts #[implementationCoversRequirement] target
 ```
 
-A query can select variable bindings:
+A query can retrieve the declaration covering a requirement:
 
 ```lean
-private def requirementQuery : Zil.Query := {
-  name := `requirementsOfAssociativity
-  variables := #[`requirement]
-  select := #[`requirement]
+private def coverageQuery : Zil.Query := {
+  name := `implementationForRequirement
+  variables := #[`declaration]
+  select := #[`declaration]
   premises := #[
     .mk'
-      (.ground `claim.additionAssociative)
-      `zil.requiresClaim
-      (.variable `requirement)
+      (.ground `requirement.parseInput)
+      `zil.coveredBy
+      (.variable `declaration)
   ]
 }
-
-private def answers :=
-  Zil.Engine.solve
-    (Zil.Engine.closure facts #[claimRequirement])
-    requirementQuery
 ```
 
-The query engine performs unification, conjunctive matching, semantic
-deduplication, and bounded least-fixpoint evaluation.
+The query engine performs variable binding, conjunctive matching, semantic deduplication, and bounded least-fixpoint evaluation.
+
+## How ZIL helps AI-assisted projects
+
+AI agents often lose context between sessions, branches, or repositories. Natural-language summaries help, but they are difficult to validate and easy to make stale. ZIL gives selected project facts a stable machine-readable representation inside the repository.
+
+### 1. Preserve intent
+
+```text
+file.Parser.lean ── responsibleFor ──▶ requirement.parseInput
+lean.Parser.parse ── implements ─────▶ requirement.parseInput
+```
+
+An agent can inspect why a file exists and which requirement its declarations serve before editing it.
+
+### 2. Expose missing work
+
+```text
+requirement.totalParser ── blockedBy ──▶ issue.missingTerminationProof
+issue.missingTerminationProof ── assignedTo ──▶ task.proveTermination
+```
+
+Queries can identify requirements with blockers, tasks with no owner, or declared capabilities with no implementation link.
+
+### 3. Calculate change impact
+
+```text
+lean.Normalize.normalize ── dependsOn ──▶ lean.Parser.parse
+lean.Codegen.emit ───────── dependsOn ──▶ lean.Normalize.normalize
+```
+
+Impact rules can derive which downstream components should be reviewed when `lean.Parser.parse` changes.
+
+### 4. Guard long-running work
+
+ZIL records knowledge revisions, contract revisions, and rollback checkpoints:
+
+```lean
+zil_checkpoint beforeParserRefactor
+#zil_check_mutation token
+```
+
+A mutation check can surface stale graph state, changed contracts, theorem-intent drift, and missing rollback checkpoints before an automated edit continues.
+
+### 5. Audit derived context
+
+The provenance engine records the rule, variable binding, trust class, and premise node identifiers behind each derived relation. An agent can inspect how a conclusion was obtained instead of receiving only the final graph edge.
+
+### 6. Share context between agents
+
+Canonical snapshots and deltas allow one tool to produce project knowledge and another tool to consume the same state. This supports workflows where separate agents inspect requirements, implement code, verify proofs, and review impact.
 
 ## Persistent project knowledge
 
-Facts, rules, profiles, contracts, checkpoints, declaration links, and certified
-rules use Lean environment extensions.
+Facts, rules, profiles, contracts, checkpoints, declaration links, and certified rules use Lean environment extensions.
 
 A module can register knowledge:
 
 ```lean
--- ArithmeticKnowledge.lean
+-- ProjectKnowledge.lean
 import Zil
 
 zil_fact
-  node(lean.Arithmetic.add_assoc)
-    ⟶[formalizes]
-  node(claim.additionAssociative)
+  node(lean.Parser.parse)
+    ⟶[implements]
+  node(requirement.parseInput)
 ```
 
-Another module can import and query it:
+Another module can import it:
 
 ```lean
--- Consumer.lean
-import ArithmeticKnowledge
+-- Review.lean
+import ProjectKnowledge
 
 #eval Zil.Environment.facts (← Lean.getEnv)
 ```
 
-Diamond imports are semantically deduplicated.
+Compiled `.olean` imports reconstruct the registered entries. Diamond imports are semantically deduplicated.
 
-## Formalization coverage and contracts
+## Coverage linting and contracts
 
-The coverage linter checks relationships across the graph closure. It reports
-conditions such as:
+The coverage linter evaluates relationships across graph closure and reports conditions such as:
 
 ```text
 unsupportedClaim
@@ -333,14 +366,14 @@ unlinkedDeclaration
 linkedWithoutClaim
 ```
 
-Run it from a Lean module:
+Run it inside Lean:
 
 ```lean
 #zil_lint
 #zil_lint!
 ```
 
-A formalization contract records expectations for a file or work item:
+A formalization contract can record:
 
 ```text
 advertised scope
@@ -356,27 +389,11 @@ Register and check contracts with:
 
 ```lean
 zil_register_contract contract
-
 #zil_contract_check
 #zil_contract_check!
 ```
 
-Contracts give maintainers and automated agents a shared description of what a
-formalization is expected to contain.
-
-## Agent recovery and guarded changes
-
-ZIL records knowledge revisions, contract revisions, and rollback checkpoints.
-A mutation token can be checked before an automated change:
-
-```lean
-zil_checkpoint beforeRefactor
-#zil_check_mutation token
-```
-
-The check can detect stale graph state, changed contracts, theorem-intent drift,
-and missing rollback checkpoints. This supports long-running or multi-session
-formalization work.
+Contracts give maintainers and agents an explicit description of the expected result of a task or file.
 
 ## Trust and Lean proofs
 
@@ -389,10 +406,8 @@ certified
 ```
 
 - `asserted` marks directly registered project knowledge;
-- `graphDerived` marks a relation produced by a graph rule;
+- `graphDerived` marks a relationship produced by a graph rule;
 - `certified` associates a graph rule with a Lean proposition and proof term.
-
-Example:
 
 ```lean
 private theorem certificate : True := True.intro
@@ -403,8 +418,7 @@ private def certifiedRule : Zil.Trust.CertifiedRule :=
 zil_register_certified_rule certifiedRule
 ```
 
-Lean checks the proposition and proof term. ZIL records the relation between that
-checked object and the surrounding project graph.
+Lean checks the proposition and proof term. ZIL records how that checked object participates in the surrounding project graph.
 
 ## Derivation provenance
 
@@ -431,10 +445,7 @@ let explanation :=
   Zil.Engine.Provenance.explain dag root
 ```
 
-Explanations are topologically ordered, with premise facts before the derived
-result. A mathematical example may show that a theorem uses a definition, that
-the definition requires an operation, and that the resulting claim inherits the
-same requirement.
+Explanations are topologically ordered, with premise facts before the derived result.
 
 Run the example:
 
@@ -444,14 +455,13 @@ lake env lean --run examples/provenance/DerivationDAG.lean
 
 ## Native CLI
 
-The `zil` executable reads canonical `ZILX/1` snapshots and uses the native Lean
-graph engine:
+The `zil` executable reads canonical `ZILX/1` snapshots and uses the native Lean graph engine:
 
 ```bash
-lake exe zil -- summary path/to/arithmetic.zilx
-lake exe zil -- closure path/to/arithmetic.zilx
-lake exe zil -- export path/to/arithmetic.zilx prolog
-lake exe zil -- repl path/to/arithmetic.zilx
+lake exe zil -- summary examples/native-cli/project.zilx
+lake exe zil -- closure examples/native-cli/project.zilx
+lake exe zil -- export examples/native-cli/project.zilx prolog
+lake exe zil -- repl examples/native-cli/project.zilx
 ```
 
 Available operations:
@@ -467,12 +477,9 @@ apply-delta
 repl
 ```
 
-The interactive shell uses the same canonical terms, rules, queries, and closure
-engine as the Lean library.
+## Interchange
 
-## Interchange and external tools
-
-### Canonical codecs
+Canonical relations and rules have deterministic text encodings:
 
 ```lean
 Zil.Codec.encodeRelation
@@ -481,19 +488,7 @@ Zil.Codec.encodeRule
 Zil.Codec.decodeRule
 ```
 
-The encoding preserves names, variables, premise order, conclusions, and trust.
-
-### Snapshots and deltas
-
-`ZILX/1` stores a revisioned snapshot containing a schema version, knowledge
-revision, relation profile, facts, and rules.
-
-`ZILD/1` stores an incremental update containing base and target revisions,
-fact additions and removals, rule changes, and profile changes.
-
-The Lean and Clojure implementations use the same line-oriented exchange format.
-
-### Logic-program export
+`ZILX/1` stores revisioned snapshots. `ZILD/1` stores incremental updates with base and target revisions, fact changes, rule changes, and profile changes.
 
 Canonical facts and rules can be exported to Soufflé Datalog or Prolog:
 
@@ -502,72 +497,53 @@ Canonical facts and rules can be exported to Soufflé Datalog or Prolog:
 #zil_export_prolog
 ```
 
-These exports support external inspection and analysis with established logic
-programming tools.
+These interfaces allow external analysis tools and agents to consume the same relational state used by the Lean implementation.
 
 ## Use cases
 
-### Mathematical-library maps
+ZIL Lean can support:
 
-Record how definitions, lemmas, theorems, and claims connect across a library.
-Queries can identify theorems using a definition or results affected by a changed
-lemma.
+- formalization maps connecting informal claims to Lean declarations;
+- requirement-to-implementation traceability;
+- theorem and component dependency analysis;
+- change-impact queries across modules;
+- evidence and source tracking;
+- repository coverage checks;
+- explicit task contracts for people and agents;
+- multi-session AI work with revision and checkpoint guards;
+- provenance explanations for derived project knowledge;
+- exchange of graph state with Datalog and Prolog tooling;
+- policy, architecture, and authorization models represented as relations and rules.
 
-### Informal-to-formal traceability
+The same relational model can be applied to mathematics, software verification, infrastructure, scientific formalization, documentation, and other projects where relationships between artifacts matter.
 
-Connect textbook statements, paper sections, or design notes to the Lean
-declarations that formalize them.
+## Existing `.zc` runtime
 
-### Assumption and axiom tracking
-
-Propagate requirements from declarations to claims and inspect which results rely
-on a selected assumption.
-
-### Formalization planning
-
-Represent proposed claims, required declarations, completion states, and
-contracts before or during implementation.
-
-### Multi-agent formalization
-
-Persist project knowledge, revisions, contracts, and checkpoints so separate
-agents can continue work with a shared relational state.
-
-### Other domains
-
-The same graph model can describe software architecture, verification targets,
-policies, infrastructure, and scientific formalizations by defining suitable
-node kinds and relations.
-
-## Legacy `.zc` runtime
-
-The repository also contains the earlier standalone ZIL surface syntax and its
-Clojure/DataScript runtime. It supports `.zc` files, macros, import and export
-tools, compatibility profiles, and migration into canonical `ZILX/1` snapshots.
-
-Example:
+The repository also contains the earlier standalone ZIL syntax and Clojure/DataScript runtime. It supports `.zc` files, macros, import/export tooling, embedded annotations, and adapters.
 
 ```bash
 clojure -M -m zil.cli examples/it-infra-minimal.zc
 ```
 
-The native Lean examples are the recommended starting point for learning how ZIL
-integrates with Lean modules and declarations.
+The canonical exchange layer connects that runtime with the native Lean representation.
 
 ## Repository layout
 
 ```text
-Zil/                 native Lean implementation
-Zil/Engine/          closure, queries, and provenance
-Zil/Environment/     persistent Lean environment extensions
-examples/lean/       progressive native Lean examples
+Zil/                 native Lean library
+Zil/Engine/          Horn evaluation and provenance
+Zil/Trust/           certified graph rules
+Zil/Exchange/        snapshots and deltas
+examples/lean/       progressive native examples
 examples/provenance/ derivation DAG example
-examples/native-cli/ CLI examples and snapshots
-src/zil/             Clojure runtime and migration tooling
-spec/                language and exchange specifications
+examples/native-cli/ CLI snapshot example
+src/zil/             Clojure runtime and tooling
+spec/                language and runtime specifications
 ```
 
 ## Validation
+
+Expected repository validation:
 
 ```bash
 lake build
@@ -575,4 +551,4 @@ lake exe zilLeanTests
 clojure -M:test
 ```
 
-The repository is pinned to Lean `v4.31.0`.
+The Lean toolchain is pinned to `leanprover/lean4:v4.31.0`.
