@@ -42,9 +42,9 @@
         "pub fn run() {}\n")
 
    "guide.md"
-   (str "<!-- @zil target=markdown:guide -->\n"
-        "<!-- self#documents@concept:guide. -->\n"
-        "<!-- @endzil -->\n")})
+   (str "@zil target=markdown:guide\n"
+        "self#documents@concept:guide.\n"
+        "@endzil\n")})
 
 (defn- populate! [root]
   (doseq [[relative content] host-fixtures]
