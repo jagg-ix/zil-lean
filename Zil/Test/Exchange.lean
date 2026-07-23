@@ -40,6 +40,10 @@ private def request : Request := {
   | .error _ => true
   | .ok _ => false
 
+#guard ({ request with operation := "shell" } : Request).validationStatus == "unsupported"
+#guard ({ request with protocolVersion := 2 } : Request).validationStatus == "unsupported"
+#guard ({ request with capabilities := #[] } : Request).validationStatus == "invalid"
+
 #guard match Request.validate { request with inputSha256 := "sha256:bad" } with
   | .error _ => true
   | .ok _ => false
@@ -49,6 +53,10 @@ private def requestJson : String :=
   "\"protocol_version\":1,\"operation\":\"parse\"," ++
   "\"input_path\":\"examples/authorization/access.zc\",\"base_revision\":\"-\"," ++
   "\"input_sha256\":\"" ++ digest ++ "\",\"capabilities\":[\"parse-v1\"],\"arguments\":[]}"
+
+#guard match Request.decode requestJson with
+  | .ok value => value.requestId == "request:test" && value.operation == "parse"
+  | .error _ => false
 
 #guard match Request.parse requestJson with
   | .ok value => value.requestId == "request:test" && value.operation == "parse"
