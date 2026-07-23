@@ -14,13 +14,14 @@
          workers []]
     (if (zero? remaining)
       workers
-      (try
-        (recur (dec remaining)
-               (conj workers (client/start-worker! worker-options)))
-        (catch Exception error
-          (doseq [worker workers]
-            (try (client/stop-worker! worker) (catch Exception _)))
-          (throw error))))))
+      (let [worker
+            (try
+              (client/start-worker! worker-options)
+              (catch Exception error
+                (doseq [started workers]
+                  (try (client/stop-worker! started) (catch Exception _)))
+                (throw error)))]
+        (recur (dec remaining) (conj workers worker))))))
 
 (defn start-pool!
   ([] (start-pool! {}))
@@ -39,6 +40,7 @@
 
 (defn- replace-worker! [^WorkerPool pool failed]
   (when-not (closed? pool)
+    (try (client/stop-worker! failed) (catch Exception _))
     (let [replacement (client/start-worker! (:worker-options pool))]
       (swap! (:workers pool)
              (fn [workers]
