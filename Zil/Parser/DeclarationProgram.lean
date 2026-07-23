@@ -44,6 +44,15 @@ def parseText (text : String) (limit : Nat := 10000) : Except ParseError Zil.Pro
     throw { line := 1, message := "program contains an invalid declaration, rule, or query" }
   pure program
 
+/-- Parse a model after prepending ordered macro-library sources. Unlike the
+semantic-only helper, this entry point retains typed declarations emitted by
+library macros. -/
+def parseTextWithLibraries
+    (libraries : Array Zil.Parser.MacroProgram.LibrarySource)
+    (modelLabel modelText : String)
+    (limit : Nat := 10000) : Except ParseError Zil.Program :=
+  parseText (Zil.Parser.MacroProgram.composeLibraries libraries modelLabel modelText) limit
+
 /-- Read one complete macro- and declaration-enabled source file. -/
 def parseFile (path : String) (limit : Nat := 10000) : IO (Except ParseError Zil.Program) := do
   let text ← IO.FS.readFile path
