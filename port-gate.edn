@@ -86,6 +86,19 @@
     "docs/lean4/native-proof-obligations.md"
     "spec/proof-obligation-governance-v1.md"]}
 
+  :native-theorem-audit
+  {:features #{:facts :rules}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/TheoremAudit.lean"
+    "Zil/CLI/TheoremAudit.lean"
+    "Zil/CLI/TheoremAuditMain.lean"
+    "Zil/Test/TheoremAudit.lean"
+    "examples/theorem-audit/contracts.zc"
+    "docs/lean4/theorem-and-claim-audits.md"
+    "spec/theorem-audit-v1.md"]}
+
   :negation-runtime
   {:features #{:negation}
    :min-feature-sources 1
