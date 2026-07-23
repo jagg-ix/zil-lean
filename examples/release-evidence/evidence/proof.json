@@ -1,0 +1,21 @@
+{
+  "format": "zil.proof-token-resolution.v0.1",
+  "ok": true,
+  "module": "Demo",
+  "lean_version": "4.32.0",
+  "event_batch_fingerprint": "sha256:events",
+  "token_batch_fingerprint": "sha256:tokens",
+  "token_count": 1,
+  "resolved": 1,
+  "unresolved": 0,
+  "resolutions": [
+    {
+      "token_id": "proof:demo",
+      "declaration": "Demo.answer",
+      "status": "resolved",
+      "module": "Demo",
+      "kind": "theorem",
+      "type_fingerprint": "lean-hash:demo-v1"
+    }
+  ]
+}

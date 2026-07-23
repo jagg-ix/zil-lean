@@ -1,0 +1,12 @@
+MODULE authorization.access.
+
+group:eng#member@user:11.
+doc:readme#viewer@group:eng#member.
+doc:readme#owner@user:10.
+
+service:api#depends_on@service:db.
+service:db#operator@user:12.
+
+RULE serviceOperator:
+IF ?service#depends_on@?dependency AND ?dependency#operator@?user
+THEN ?service#operator@?user.
