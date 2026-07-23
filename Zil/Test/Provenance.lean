@@ -137,5 +137,7 @@ run_cmd do
               let witnesses := queryWitnesses trace query
               unless witnesses.size == 2 do
                 throwError "ancestor query should retain direct and transitive witnesses"
-              unless hasSubstring (renderQueryWitnesses trace query witnesses) "premise" do
-                throwError "query explanation lost premise evidence"
+              let explanation := renderQueryWitnesses trace query witnesses
+              unless hasSubstring explanation "witness\tancestors" &&
+                     hasSubstring explanation "origin\t" do
+                throwError "query explanation lost witness or origin evidence"
