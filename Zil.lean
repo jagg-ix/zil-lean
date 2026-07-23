@@ -40,3 +40,5 @@ import Zil.AgentContext
 import Zil.ProofObligation
 import Zil.TheoremAudit
 import Zil.RecoveryAudit
+import Zil.Exchange.Protocol
+import Zil.Exchange.Dispatch
