@@ -25,10 +25,10 @@ def facts (program : Program) : Array RelExpr :=
 def allRules (program : Program) : Array Rule :=
   program.tupleProgram.lower.rules ++ program.rules
 
-/-- Basic structural validation for parsed programs. -/
+/-- Structural safety for rules and queries before stratification. -/
 def valid (program : Program) : Bool :=
-  program.rules.all Rule.allVariablesBound &&
-  program.queries.all Query.selectedVariablesBound
+  program.allRules.all (fun rule => rule.allVariablesBound && rule.safe) &&
+  program.queries.all (fun query => query.selectedVariablesBound && query.safe)
 
 end Program
 
