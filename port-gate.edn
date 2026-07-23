@@ -1,0 +1,57 @@
+{:global
+ {:min-compile-ratio 1.0
+  :min-parity-ratio 1.0
+  :min-exact-ratio 1.0
+  :min-native-acceptance-ratio 1.0
+  :max-mismatch 0
+  :max-native-rejected 0
+  :max-legacy-rejected 0
+  :max-missing-conformance 0}
+
+ :required-roots ["lib" "libsets" "examples"]
+
+ :components
+ {:tuple-frontend
+  {:features #{:facts :usersets}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :attribute-frontend
+  {:features #{:attributes}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :rule-query-runtime
+  {:features #{:rules :queries}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :negation-runtime
+  {:features #{:negation}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :macro-frontend
+  {:features #{:macros}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :declaration-lowering
+  {:features #{:declarations :tm-atoms :lts-atoms}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :library-corpus
+  {:features #{}
+   :source-scope :all
+   :min-sources 1}
+
+  :revision-causal
+  {:features #{}
+   :source-scope :none
+   :min-sources 0
+   :evidence-files
+   ["Zil/Core/Revision.lean"
+    "Zil/Codec/Revision.lean"
+    "Zil/Test/RevisionCausal.lean"
+    "spec/revision-causal-v0.1.md"]}}}
