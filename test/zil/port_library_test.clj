@@ -2,7 +2,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]
+            [clojure.test :refer [deftest is]]
             [zil.port.library :as library]))
 
 (defn- temp-dir []
@@ -68,15 +68,16 @@
                  :command ["fake-zil" "compile"]
                  :runner runner})
         entry (first (:entries report))
+        invocation (first @calls)
         manifest-data (edn/read-string (slurp manifest))]
     (is (:ok report))
     (is (= :compiled (:status entry)))
     (is (.exists (io/file (:output entry))))
-    (is (= "fake-zil" (ffirst @calls)))
-    (is (= (.getCanonicalPath source)
-           (second (first @calls))))
-    (is (= "-" (nth (first @calls) 2)))
-    (is (= (:namespace entry) (nth (first @calls) 3)))
+    (is (= "fake-zil" (nth invocation 0)))
+    (is (= "compile" (nth invocation 1)))
+    (is (= (.getCanonicalPath source) (nth invocation 2)))
+    (is (= "-" (nth invocation 3)))
+    (is (= (:namespace entry) (nth invocation 4)))
     (is (= "ZIL-LIBRARY-MANIFEST/1" (:schema manifest-data)))
     (is (= (:output-sha256 entry)
            (:output-sha256 (first (:entries manifest-data)))))))
