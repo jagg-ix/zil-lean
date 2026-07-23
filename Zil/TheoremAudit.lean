@@ -149,9 +149,9 @@ private def trueFact (program : Zil.Program) (subject relation : Name) : Bool :=
 private def theoremCriticality
     (program : Zil.Program)
     (theorem : Name) : Criticality :=
-  let values := (factsFor program theorem).filter fun fact =>
-    fact.relation == `zil.criticality
-  (values.findSome? fun fact => Criticality.ofTerm? fact.object).getD .low
+  let values := (factsFor program theorem).filterMap fun fact =>
+    if fact.relation == `zil.criticality then Criticality.ofTerm? fact.object else none
+  values[0]?.getD .low
 
 private def proofEvidence (program : Zil.Program) (theorem : Name) : Array Name :=
   let relations : Array Name := #[`zil.proofToken, `zil.validatedBy, `zil.proves]
@@ -170,7 +170,7 @@ private def missingDeclared
 
 private def theoremContract
     (program : Zil.Program)
-    (theorem : Name) : TheoremContract :=
+    (theorem : Name) : TheoremContract := Id.run do
   let assumptions := objectsFor program theorem `zil.requiresAssumption
   let lemmas := objectsFor program theorem `zil.requiresLemma
   let guarantees := objectsFor program theorem `zil.ensures
@@ -191,7 +191,7 @@ private def theoremContract
     issues := issues.push s!"missing-lemma:{lemma}"
   if criticality.requiresProofEvidence && evidence.isEmpty then
     issues := issues.push "proof-evidence-missing"
-  {
+  return {
     theorem
     assumptions
     lemmas
@@ -219,7 +219,7 @@ private def evidenceClass (program : Zil.Program) (node : Name) : EvidenceClass 
   else if hasAnyKind program node then .graph
   else .unknown
 
-private def claimAudit (program : Zil.Program) (claim : Name) : ClaimAudit :=
+private def claimAudit (program : Zil.Program) (claim : Name) : ClaimAudit := Id.run do
   let supportNodes := objectsFor program claim `zil.supportedBy
   let supports := supportNodes.map fun node => {
     node
@@ -234,7 +234,7 @@ private def claimAudit (program : Zil.Program) (claim : Name) : ClaimAudit :=
       issues := issues.push s!"support-kind-missing:{support.node}"
   if assertedProved then
     issues := issues.push "external-claim-proof-boundary"
-  {
+  return {
     claim
     supports
     assertedProved
