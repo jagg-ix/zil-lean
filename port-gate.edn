@@ -116,6 +116,7 @@
     "Zil/Test/Exchange.lean"
     "src/zil/worker/protocol.clj"
     "src/zil/worker/client.clj"
+    "src/zil/worker/pool.clj"
     "test/zil/worker_protocol_test.clj"
     "examples/exchange/parse-request.json"
     "docs/lean4/hybrid-exchange-worker.md"]}
