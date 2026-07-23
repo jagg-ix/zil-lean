@@ -29,7 +29,11 @@
             [zil.formalization-target-test]
             [zil.safety-action-test]
             [zil.safety-token-action-test]
-            [zil.store-sqlite-test]))
+            [zil.store-sqlite-test]
+            [zil.port-library-test]
+            [zil.port-conformance-test]
+            [zil.port-gate-test]
+            [zil.port-verify-test]))
 
 (defn -main
   [& _]
@@ -62,5 +66,9 @@
                                           'zil.formalization-target-test
                                           'zil.safety-action-test
                                           'zil.safety-token-action-test
-                                          'zil.store-sqlite-test)]
+                                          'zil.store-sqlite-test
+                                          'zil.port-library-test
+                                          'zil.port-conformance-test
+                                          'zil.port-gate-test
+                                          'zil.port-verify-test)]
     (System/exit (if (pos? (+ fail error)) 1 0))))
