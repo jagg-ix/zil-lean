@@ -31,10 +31,10 @@ private def modelSource : String :=
       program.queries.size == 1 &&
       match program.declarations[0]?, program.queries[0]? with
       | some declaration, some query =>
-          declaration.kind == .service &&
-          declaration.name == `service.api &&
-          let closed := Zil.Engine.closure program.facts program.allRules
-          !(Zil.Engine.solve closed query).isEmpty
+          if declaration.kind != .service || declaration.name != `service.api then false
+          else
+            let closed := Zil.Engine.closure program.facts program.allRules
+            !(Zil.Engine.solve closed query).isEmpty
       | _, _ => false
   | .error _ => false
 
