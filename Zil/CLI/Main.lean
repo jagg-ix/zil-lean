@@ -3,6 +3,7 @@ import Zil.Codec.Revision
 import Zil.Codec.Conformance
 import Zil.Formalization
 import Zil.Authorization
+import Zil.QueryGovernance
 
 namespace Zil.CLI
 
@@ -11,6 +12,8 @@ def usage : String :=
   "zil compile <input.zc> [output.lean|-] [namespace]\n" ++
   "zil expand <input.zc> [output.zc|-]\n" ++
   "zil conformance <input.zc> [output.zilc|-]\n" ++
+  "zil query-plan <input.zc> [output.txt|-]\n" ++
+  "zil query-ci <input.zc> [profile|-] [output.txt|-]\n" ++
   "zil formalization-plan <input.zc> [output.txt|-]\n" ++
   "zil formalization-next <input.zc> [output.txt|-]\n" ++
   "zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
@@ -26,6 +29,13 @@ private def namespaceFromArgument
       match Zil.Parser.nameFromToken text with
       | .ok name => pure name
       | .error error => throw <| IO.userError error
+
+private def profileFromArgument (value : String) : IO (Option Name) :=
+  if value == "-" then pure none
+  else
+    match Zil.Parser.nameFromToken value with
+    | .ok name => pure (some name)
+    | .error error => throw <| IO.userError error
 
 private def parseNatIO (value message : String) : IO Nat :=
   match value.toNat? with
@@ -88,6 +98,28 @@ def conformanceFile
     | .ok value => pure value
     | .error error => throw <| IO.userError error
   writeOutput report outputPath
+
+/-- Emit the adaptive native query plan. -/
+def queryPlanFile
+    (inputPath : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let program ← loadProgram inputPath
+  let report ← match Zil.QueryGovernance.planProgram program with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  writeOutput (Zil.QueryGovernance.renderPlan report) outputPath
+
+/-- Run DSL-profile and query-pack governance. Returns the pass decision. -/
+def queryCiFile
+    (inputPath : String)
+    (profile : Option Name := none)
+    (outputPath : Option String := none) : IO Bool := do
+  let program ← loadProgram inputPath
+  let report ← match Zil.QueryGovernance.checkProgram program profile with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  writeOutput (Zil.QueryGovernance.renderCi report) outputPath
+  pure report.ok
 
 /-- Emit all formalization scheduling decisions. -/
 def formalizationPlanFile
@@ -174,6 +206,19 @@ def main (args : List String) : IO UInt32 := do
     | ["expand", input, output] => Zil.CLI.expandFile input (some output); pure 0
     | ["conformance", input] => Zil.CLI.conformanceFile input; pure 0
     | ["conformance", input, output] => Zil.CLI.conformanceFile input (some output); pure 0
+    | ["query-plan", input] => Zil.CLI.queryPlanFile input; pure 0
+    | ["query-plan", input, output] => Zil.CLI.queryPlanFile input (some output); pure 0
+    | ["query-ci", input] =>
+        let ok ← Zil.CLI.queryCiFile input
+        pure (if ok then 0 else 1)
+    | ["query-ci", input, profile] =>
+        let selected ← Zil.CLI.profileFromArgument profile
+        let ok ← Zil.CLI.queryCiFile input selected
+        pure (if ok then 0 else 1)
+    | ["query-ci", input, profile, output] =>
+        let selected ← Zil.CLI.profileFromArgument profile
+        let ok ← Zil.CLI.queryCiFile input selected (some output)
+        pure (if ok then 0 else 1)
     | ["formalization-plan", input] => Zil.CLI.formalizationPlanFile input; pure 0
     | ["formalization-plan", input, output] =>
         Zil.CLI.formalizationPlanFile input (some output); pure 0
