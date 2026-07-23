@@ -50,18 +50,32 @@
   (doseq [[relative content] host-fixtures]
     (write! root relative content)))
 
-(defn- fake-runner [calls]
-  (fn [command]
-    (let [source-path (nth command (- (count command) 3))
-          namespace (last command)
-          source (slurp source-path)]
-      (swap! calls conj {:command command :source source :namespace namespace})
-      {:exit 0
-       :out (str "import Zil\nnamespace " namespace "\nend " namespace "\n")
-       :err ""
-       :command command})))
+(defn- compile-request? [request]
+  (some #{"compile"} (:command request)))
 
-(deftest compiles-blocks-from-all-supported-host-languages-test
+(defn- fake-runner [calls]
+  (fn [request]
+    (if (compile-request? request)
+      (let [command (:command request)
+            source-path (nth command (- (count command) 3))
+            namespace (last command)
+            source (slurp source-path)]
+        (swap! calls conj {:phase :compile
+                           :command command
+                           :source source
+                           :namespace namespace
+                           :environment (:environment request)})
+        {:exit 0
+         :out (str "import Zil\nnamespace " namespace "\nend " namespace "\n")
+         :err ""
+         :command command})
+      (do
+        (swap! calls conj {:phase :verify
+                           :command (:command request)
+                           :environment (:environment request)})
+        {:exit 0 :out "" :err "" :command (:command request)}))))
+
+(deftest compiles-and-verifies-blocks-from-all-supported-host-languages-test
   (let [workspace (temp-dir)
         root (io/file workspace "hosts")
         _ (populate! root)
@@ -74,22 +88,32 @@
                  :manifest (.getPath manifest)
                  :namespace-prefix "Project.Embedded"
                  :command ["fake-zil" "compile"]
+                 :verify-command ["fake-lean"]
                  :runner (fake-runner calls)
                  :require-blocks true})
         languages (set (map :language (:entries report)))
-        targets (set (map :target (:entries report)))]
+        targets (set (map :target (:entries report)))
+        compile-calls (filter #(= :compile (:phase %)) @calls)
+        verify-calls (filter #(= :verify (:phase %)) @calls)]
     (is (:ok report))
     (is (= 5 (:block-count report)))
+    (is (= 5 (:verified report)))
+    (is (:verify-generated report))
     (is (= #{"lean4" "python" "clojure" "rust" "markdown"} languages))
     (is (contains? targets "lean:Demo.answer"))
     (is (contains? targets "python:work"))
     (is (contains? targets "clojure:resolve-item"))
     (is (contains? targets "rust:run"))
     (is (contains? targets "markdown:guide"))
-    (is (every? #(= :compiled (:status %)) (:entries report)))
+    (is (every? #(= :verified (:status %)) (:entries report)))
     (is (every? #(.exists (io/file (:output %))) (:entries report)))
-    (is (= 5 (count @calls)))
-    (is (every? #(str/starts-with? (:source %) "MODULE embedded.block.") @calls))
+    (is (= 10 (count @calls)))
+    (is (= 5 (count compile-calls)))
+    (is (= 5 (count verify-calls)))
+    (is (every? #(str/starts-with? (:source %) "MODULE embedded.block.") compile-calls))
+    (is (every? #(str/includes? (get-in % [:environment "LEAN_PATH"])
+                                (.getCanonicalPath output))
+                verify-calls))
     (is (= "ZIL-EMBEDDED-MANIFEST/1"
            (:schema (edn/read-string (slurp manifest)))))))
 
@@ -110,38 +134,90 @@
     (is (str/starts-with? (:source_hash entry) "sha256:"))
     (is (str/starts-with? (:macro_revision entry) "sha256:"))
     (is (= 64 (count (:zc-sha256 entry))))
-    (is (str/includes? (:lean-namespace entry) "Nested.Model.Block0"))))
+    (is (str/includes? (:lean-namespace entry) "Nested.Model.Block0"))
+    (is (= :verified (:status entry)))))
 
-(deftest native-failure-is-recorded-without-writing-output-test
+(deftest native-compile-failure-is-recorded-without-writing-output-test
   (let [workspace (temp-dir)
         root (io/file workspace "src")
         _ (write! root "Model.lean" (get host-fixtures "Model.lean"))
+        calls (atom [])
         report (native/compile-embedded!
                 {:roots [(.getPath root)]
                  :output-root (.getPath (io/file workspace "generated"))
                  :manifest (.getPath (io/file workspace "manifest.edn"))
-                 :runner (fn [command]
-                           {:exit 1 :out "" :err "native parse error" :command command})})
+                 :runner (fn [request]
+                           (swap! calls conj request)
+                           {:exit 1 :out "" :err "native parse error"
+                            :command (:command request)})})
         entry (first (:entries report))]
     (is (false? (:ok report)))
     (is (= :failed (:status entry)))
+    (is (= :compile (:phase entry)))
     (is (= "native parse error" (:error entry)))
-    (is (not (.exists (io/file (:output entry)))))))
+    (is (not (.exists (io/file (:output entry)))))
+    (is (= 1 (count @calls)))))
 
-(deftest check-only-validates-without-writing-output-test
+(deftest generated-elaboration-failure-is-recorded-test
+  (let [workspace (temp-dir)
+        root (io/file workspace "src")
+        _ (write! root "Model.lean" (get host-fixtures "Model.lean"))
+        calls (atom [])
+        runner (fn [request]
+                 (swap! calls conj request)
+                 (if (compile-request? request)
+                   {:exit 0 :out "import Missing.Module\n" :err ""
+                    :command (:command request)}
+                   {:exit 1 :out "" :err "unknown module Missing.Module"
+                    :command (:command request)}))
+        report (native/compile-embedded!
+                {:roots [(.getPath root)]
+                 :output-root (.getPath (io/file workspace "generated"))
+                 :manifest (.getPath (io/file workspace "manifest.edn"))
+                 :runner runner})
+        entry (first (:entries report))]
+    (is (false? (:ok report)))
+    (is (= :verification-failed (:status entry)))
+    (is (= :verify (:phase entry)))
+    (is (= "unknown module Missing.Module" (:error entry)))
+    (is (.exists (io/file (:output entry))))
+    (is (= 2 (count @calls)))))
+
+(deftest check-only-validates-source-without-writing-or-elaborating-test
   (let [workspace (temp-dir)
         root (io/file workspace "src")
         _ (write! root "worker.py" (get host-fixtures "worker.py"))
+        calls (atom [])
         report (native/compile-embedded!
                 {:roots [(.getPath root)]
                  :output-root (.getPath (io/file workspace "generated"))
                  :manifest (.getPath (io/file workspace "manifest.edn"))
                  :check-only true
-                 :runner (fake-runner (atom []))})
+                 :runner (fake-runner calls)})
         entry (first (:entries report))]
     (is (:ok report))
     (is (= :checked (:status entry)))
-    (is (not (.exists (io/file (:output entry)))))))
+    (is (not (.exists (io/file (:output entry)))))
+    (is (= 1 (count @calls)))
+    (is (= :compile (:phase (first @calls))))))
+
+(deftest no-verify-mode-generates-without-elaboration-test
+  (let [workspace (temp-dir)
+        root (io/file workspace "src")
+        _ (write! root "worker.py" (get host-fixtures "worker.py"))
+        calls (atom [])
+        report (native/compile-embedded!
+                {:roots [(.getPath root)]
+                 :output-root (.getPath (io/file workspace "generated"))
+                 :manifest (.getPath (io/file workspace "manifest.edn"))
+                 :verify-generated false
+                 :runner (fake-runner calls)})
+        entry (first (:entries report))]
+    (is (:ok report))
+    (is (false? (:verify-generated report)))
+    (is (= :compiled (:status entry)))
+    (is (.exists (io/file (:output entry))))
+    (is (= 1 (count @calls)))))
 
 (deftest scan-errors-and-required-empty-corpus-fail-test
   (let [workspace (temp-dir)
