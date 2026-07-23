@@ -60,24 +60,27 @@ private def encodeRelations (relations : Array Zil.RelExpr) : String :=
   let encoded := relations.map (escape ∘ encodeRelation)
   String.intercalate "|" (sortedStrings encoded)
 
+private def encodeNames (names : Array Name) : String :=
+  String.intercalate "," (names.toList.map Name.toString)
+
+private def encodeSortedNames (names : Array Name) : String :=
+  String.intercalate "," (sortedStrings (names.map Name.toString))
+
 private def encodeRule (rule : Zil.Rule) : String :=
   String.intercalate "\t" [
     "rule",
-    String.intercalate "," (rule.variables.toList.map Name.toString),
+    encodeSortedNames rule.variables,
     trustName rule.trust,
     encodeRelations rule.premises,
     encodeRelations rule.negativePremises,
     escape (encodeRelation rule.conclusion)
   ]
 
-private def encodeNames (names : Array Name) : String :=
-  String.intercalate "," (names.toList.map Name.toString)
-
 private def encodeQuery (query : Zil.Query) : String :=
   String.intercalate "\t" [
     "query",
     query.name.toString,
-    encodeNames query.variables,
+    encodeSortedNames query.variables,
     encodeNames query.select,
     encodeRelations query.premises,
     encodeRelations query.negativePremises
