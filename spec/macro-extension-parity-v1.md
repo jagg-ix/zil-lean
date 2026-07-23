@@ -53,12 +53,13 @@ structure LibrarySource where
   label : String
   text : String
 
-composeLibraries : Array LibrarySource → String → String → String
-parseTextWithLibraries : Array LibrarySource → String → String → Nat → Except ParseError Program
-expandTextWithLibraries : Array LibrarySource → String → String → Nat → Except ParseError String
+MacroProgram.composeLibraries
+MacroProgram.parseTextWithLibraries
+MacroProgram.expandTextWithLibraries
+DeclarationProgram.parseTextWithLibraries
 ```
 
-Library order is caller-controlled. The model is appended after every library source.
+Library order is caller-controlled. The model is appended after every library source. `DeclarationProgram.parseTextWithLibraries` retains typed declarations emitted by extension macros.
 
 ## Filesystem composition
 
@@ -70,7 +71,7 @@ The command adapter uses the existing Clojure-compatible resolution rule:
 4. lexicographic filename order;
 5. libraries before the model.
 
-The search is non-recursive.
+The search is non-recursive. A file that is itself a direct member of the selected library remains standalone and is not prepended to itself. A selected library with no `.zc` files leaves the model source unchanged.
 
 ## Commands
 
@@ -80,7 +81,7 @@ bin/zil macro-expand <model.zc> [--output FILE|-] [--lib DIR]
 bin/zil macro-parity <model.zc> [--output FILE|-] [--lib DIR]
 ```
 
-`macro-compile` and `macro-expand` invoke the native Lean frontend over one composed temporary source file.
+`macro-compile` and `macro-expand` invoke the native Lean frontend over one prepared temporary source file.
 
 ## Parity report
 
@@ -90,6 +91,7 @@ bin/zil macro-parity <model.zc> [--output FILE|-] [--lib DIR]
  :model "/absolute/model.zc"
  :lib_dir "/absolute/lib"
  :lib_files ["/absolute/lib/10-base.zc"]
+ :composed true
  :source_sha256 "..."
  :legacy_count 5
  :native_count 5
@@ -102,6 +104,20 @@ bin/zil macro-parity <model.zc> [--output FILE|-] [--lib DIR]
 ```
 
 `:ok` is true exactly when native expansion exits zero and the ordered normalized statement vector equals `zil.core/expand-macros` output.
+
+## Corpus integration
+
+Recursive compilation and differential conformance use the same prepared source. Per-source records include:
+
+```text
+source-sha256
+compiled-source-sha256
+macro-composed
+lib-dir
+lib-files
+```
+
+`source-sha256` covers the raw model. `compiled-source-sha256` covers the exact library-plus-model source given to both frontends. Library-backed models must therefore compile and achieve exact semantic and expansion parity; unresolved macro invocations are not accepted as shared rejection evidence.
 
 ## Compatibility and stronger checks
 
