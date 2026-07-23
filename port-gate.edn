@@ -86,6 +86,19 @@
     "docs/lean4/native-token-lifecycle.md"
     "spec/token-lifecycle-v1.md"]}
 
+  :native-recovery-audit
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/RecoveryAudit.lean"
+    "Zil/CLI/RecoveryAudit.lean"
+    "Zil/CLI/RecoveryAuditMain.lean"
+    "Zil/Test/RecoveryAudit.lean"
+    "examples/recovery-audit/recovered.zc"
+    "docs/lean4/native-recovery-audit.md"
+    "spec/recovery-audit-v1.md"]}
+
   :native-agent-context
   {:features #{:facts :rules :queries :declarations}
    :min-feature-sources 1
