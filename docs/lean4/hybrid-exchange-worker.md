@@ -46,8 +46,10 @@ The client:
 
 - computes SHA-256 over exact input bytes;
 - starts or reuses a Lean worker;
-- validates response schema, request identity, operation, input binding, and Lean authority;
+- validates response schema, request identity, operation, input binding, status, and Lean authority;
+- requires successful responses to retain `validated` assurance and the pending-attestation marker;
 - refuses a response that is already transport-attested;
+- enforces a configurable response deadline and invalidates timed-out processes;
 - computes SHA-256 over exact payload bytes;
 - never changes Lean semantic assurance, payload, or errors.
 
@@ -87,10 +89,10 @@ clojure -M:exchange authorize \
 The pool provides:
 
 - a fixed concurrency bound;
-- timeout-based acquisition;
+- timeout-based acquisition and response deadlines;
 - cleanup when partial startup fails;
 - reuse of healthy workers;
-- replacement of dead workers;
+- eviction and replacement after timeout or transport-contract failure;
 - deterministic shutdown of every supervised process.
 
 ## Initial operations
@@ -111,6 +113,8 @@ Every operation has a compiled handler and a required capability token. The work
 `status=ok` means that Lean evaluated the operation. It does not mean that authorization allowed, impact knew the node, or recovery was safe. Those are semantic values inside the deterministic payload.
 
 `invalid`, `unsupported`, and `error` identify request or evaluation failures. A missing or malformed worker response is represented by the Clojure client as a transport error and is not converted into a semantic denial.
+
+Decodable invalid requests preserve `request_id`, `operation`, and `input_sha256` in their response. Unknown schemas, protocol versions, and operations return `unsupported`. Only malformed JSON or missing required fields use anonymous transport-failure identity.
 
 ## Digest boundary
 
