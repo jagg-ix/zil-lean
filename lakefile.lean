@@ -19,6 +19,9 @@ lean_exe zilActionToken where
 lean_exe zilTokenLifecycle where
   root := `Zil.CLI.TokenLifecycleMain
 
+lean_exe zilRecoveryAudit where
+  root := `Zil.CLI.RecoveryAuditMain
+
 lean_exe zilAgentContext where
   root := `Zil.CLI.AgentContextMain
 

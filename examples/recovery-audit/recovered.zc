@@ -1,0 +1,75 @@
+MODULE recovery.audit.example.
+
+request:issue#action_token_request@entity:request [
+  token_id="acttok:example",
+  task_id="task:recovery-audit",
+  agent_id="agent:builder",
+  module="Demo",
+  base_revision="rev:42",
+  current_revision="rev:42",
+  scope="src/Demo.lean",
+  lease_id="lease:42",
+  context_bundle_id="sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  now=100,
+  ttl_seconds=120,
+  lease_agent_id="agent:builder",
+  lease_module="Demo",
+  lease_scope="src/Demo.lean",
+  lease_base_revision="rev:42",
+  lease_expires_at=200,
+  lease_active=true,
+  action_type="modify_file",
+  action_target="file:src/Demo.lean",
+  expected_effects="compile|record_artifact",
+  required_postconditions="file_compiles|artifact_recorded",
+  rollback_kind="rollback",
+  rollback_reference="git:checkpoint-42",
+  context_fresh=true,
+  context_complete=true,
+  no_critical_conflict=true,
+  authorized=true,
+  valid_lease=true,
+  preconditions_pass=true,
+  recovery_available=true,
+  store_integrity=true
+].
+
+request:issue#checkpoint_event@checkpoint:42 [
+  checkpoint_id="checkpoint:42",
+  agent_id="agent:builder",
+  current_revision="rev:42",
+  snapshot_digest="sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  now=120
+].
+
+request:issue#execution_event@action:42 [
+  action_id="action:42",
+  checkpoint_id="checkpoint:42",
+  current_revision="rev:42",
+  now=130,
+  store_integrity=true,
+  lease_agent_id="agent:builder",
+  lease_module="Demo",
+  lease_scope="src/Demo.lean",
+  lease_base_revision="rev:42",
+  lease_expires_at=200,
+  lease_active=true,
+  observed_outputs="file:src/Demo.lean=sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+].
+
+request:issue#postcondition_event@post:file_compiles [
+  passed=true,
+  evidence="artifact:lean-elaboration-report"
+].
+
+request:issue#postcondition_event@post:artifact_recorded [
+  passed=false,
+  evidence="artifact:missing-release-record"
+].
+
+request:issue#recovery_event@recovery:42 [
+  kind="rollback",
+  reference="git:checkpoint-42",
+  completed=true,
+  evidence="artifact:rollback-report"
+].
