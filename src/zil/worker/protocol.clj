@@ -58,7 +58,9 @@
   [request]
   (let [operation (get request "operation")
         capability (get operation-capabilities operation)
-        arity (get operation-arities operation)]
+        arity (get operation-arities operation)
+        capabilities (vec (get request "capabilities" []))
+        canonical-capabilities (vec (sort (distinct capabilities)))]
     (when-not (= schema (get request "schema"))
       (throw (ex-info "unsupported exchange schema" {:request request})))
     (when-not (= protocol-version (get request "protocol_version"))
@@ -67,11 +69,15 @@
       (throw (ex-info "request_id must be nonempty" {:request request})))
     (when (str/blank? (get request "input_path"))
       (throw (ex-info "input_path must be nonempty" {:request request})))
+    (when (str/blank? (get request "base_revision"))
+      (throw (ex-info "base_revision must be nonempty" {:request request})))
     (when-not (re-matches #"sha256:[0-9a-fA-F]{64}" (get request "input_sha256" ""))
       (throw (ex-info "input_sha256 must be sha256:<64 hex>" {:request request})))
+    (when-not (= canonical-capabilities capabilities)
+      (throw (ex-info "capabilities must be sorted and unique" {:request request})))
     (when-not capability
       (throw (ex-info "unsupported operation" {:operation operation})))
-    (when-not (some #{capability} (get request "capabilities"))
+    (when-not (some #{capability} capabilities)
       (throw (ex-info "required capability is missing"
                       {:operation operation :capability capability})))
     (when-not (= arity (count (get request "arguments")))
@@ -98,6 +104,16 @@
   (when-not (= (get request "operation") (:operation response))
     (throw (ex-info "worker response operation mismatch"
                     {:request request :response response})))
+  (when-not (= (get request "input_sha256") (:input_sha256 response))
+    (throw (ex-info "worker response input_sha256 mismatch"
+                    {:request request :response response})))
   (when-not (= "lean" (:authority response))
     (throw (ex-info "worker response lost Lean authority" {:response response})))
+  (when-not (str/blank? (:result_sha256 response))
+    (throw (ex-info "Lean worker must leave result_sha256 for client attestation"
+                    {:response response})))
+  (when (and (= "ok" (:status response))
+             (not= "validated" (:assurance response)))
+    (throw (ex-info "successful worker response lost validated assurance"
+                    {:response response})))
   response)
