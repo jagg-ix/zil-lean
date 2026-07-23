@@ -21,6 +21,7 @@
    :require-verification true
    :require-aggregate true
    :require-embedded true
+   :require-embedded-verification true
    :min-embedded-blocks 1
    :patterns
    [{:id :clojure-main
@@ -62,6 +63,7 @@
    :require-verification true
    :require-aggregate true
    :require-embedded true
+   :require-embedded-verification true
    :min-embedded-blocks 1
    :patterns
    [{:id :embedded-command
