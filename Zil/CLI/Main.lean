@@ -2,6 +2,7 @@ import Zil.Parser.DeclarationProgram
 import Zil.Codec.Revision
 import Zil.Codec.Conformance
 import Zil.Formalization
+import Zil.Authorization
 
 namespace Zil.CLI
 
@@ -12,6 +13,7 @@ def usage : String :=
   "zil conformance <input.zc> [output.zilc|-]\n" ++
   "zil formalization-plan <input.zc> [output.txt|-]\n" ++
   "zil formalization-next <input.zc> [output.txt|-]\n" ++
+  "zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
   "zil revision-summary <input.zilr>\n" ++
   "zil snapshot <input.zilr> <revision> [output.txt|-]\n" ++
   "zil causal-check <input.zilr>\n"
@@ -41,6 +43,19 @@ private def writeOutput (text : String) (outputPath : Option String) : IO Unit :
   | none => IO.print text
   | some "-" => IO.print text
   | some path => IO.FS.writeFile path text
+
+private def authorizationRequest
+    (object relation subject : String) : IO Zil.Authorization.Request := do
+  let objectTerm ← match Zil.Parser.termFromToken object with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  let relationName ← match Zil.Parser.relationNameFromToken relation with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  let subjectTerm ← match Zil.Parser.termFromToken subject with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  pure { object := objectTerm, relation := relationName, subject := subjectTerm }
 
 /-- Parse one declaration-enabled `.zc` source file and emit a native ZIL Lean module. -/
 def compileFile
@@ -100,6 +115,18 @@ def formalizationNextFile
     | .error error => throw <| IO.userError error
   writeOutput report outputPath
 
+/-- Decide one exact authorization request. Returns the allow decision. -/
+def authorizeFile
+    (inputPath object relation subject : String)
+    (outputPath : Option String := none) : IO Bool := do
+  let program ← loadProgram inputPath
+  let request ← authorizationRequest object relation subject
+  let decision ← match Zil.Authorization.decide program request with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  writeOutput (Zil.Authorization.render decision) outputPath
+  pure decision.allowed
+
 private def loadRevisionStore (path : String) : IO Zil.RevisionStore := do
   let text ← IO.FS.readFile path
   match Zil.Codec.Revision.decodeStore text with
@@ -153,6 +180,12 @@ def main (args : List String) : IO UInt32 := do
     | ["formalization-next", input] => Zil.CLI.formalizationNextFile input; pure 0
     | ["formalization-next", input, output] =>
         Zil.CLI.formalizationNextFile input (some output); pure 0
+    | ["authorize", input, object, relation, subject] =>
+        let allowed ← Zil.CLI.authorizeFile input object relation subject
+        pure (if allowed then 0 else 1)
+    | ["authorize", input, object, relation, subject, output] =>
+        let allowed ← Zil.CLI.authorizeFile input object relation subject (some output)
+        pure (if allowed then 0 else 1)
     | ["revision-summary", input] => Zil.CLI.revisionSummary input; pure 0
     | ["snapshot", input, revision] =>
         let frontier ← Zil.CLI.parseNatIO revision "invalid snapshot revision"
