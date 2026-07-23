@@ -108,7 +108,7 @@
                     (swap! stopped conj (:id worker))
                     {:exit 0})
                   client/invoke!
-                  (fn [worker request]
+                  (fn [worker request _timeout-ms]
                     (swap! invoked conj [(:id worker) request])
                     {:status "ok" :worker (:id worker)})]
       (let [workers (pool/start-pool! {:size 2})
@@ -137,7 +137,7 @@
                     (swap! stopped conj (:id worker))
                     {:exit 0})
                   client/invoke!
-                  (fn [_ _]
+                  (fn [_ _ _timeout-ms]
                     (throw (ex-info "malformed worker response"
                                     {:kind :transport-error})))]
       (let [workers (pool/start-pool! {:size 1})]
