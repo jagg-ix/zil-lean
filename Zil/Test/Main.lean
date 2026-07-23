@@ -16,7 +16,8 @@ import Zil.Test.Provenance
 import Zil.Test.Impact
 import Zil.Test.AgentContext
 import Zil.Test.ProofObligation
+import Zil.Test.TheoremAudit
 
-/-- Executable validation target for native proof obligation governance. -/
+/-- Executable validation target for native theorem and claim audits. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
