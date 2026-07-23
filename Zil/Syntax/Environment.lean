@@ -1,5 +1,6 @@
 import Lean
 import Zil.Environment.Knowledge
+import Zil.Core.Userset
 import Zil.Syntax.Relation
 
 namespace Zil.Syntax
@@ -17,6 +18,21 @@ macro_rules
           unless fact.isGround do
             throwError "zil_fact requires ground node(...) endpoints"
           Zil.Environment.addEntry (.fact fact))
+
+/-- Register one lossless tuple and all facts/rules produced by its lowering. -/
+syntax (name := zilRegisterTupleDecl) "zil_register_tuple " term : command
+
+macro_rules
+  | `(zil_register_tuple $tuple:term) =>
+      `(run_cmd do
+          let value : Zil.TupleExpr := $tuple
+          unless value.isGround do
+            throwError "zil_register_tuple requires a ground tuple"
+          let lowered := value.lower
+          for fact in lowered.facts do
+            Zil.Environment.addEntry (.fact fact)
+          for rule in lowered.rules do
+            Zil.Environment.addEntry (.rule rule))
 
 /-- Register an existing closed `Zil.Rule` value in the persistent environment. -/
 syntax (name := zilRegisterRuleDecl) "zil_register_rule " term : command
