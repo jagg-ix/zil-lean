@@ -23,8 +23,8 @@
 (defn- canonical-value [item]
   (cond
     (map? item) (into (sorted-map)
-                      (map (fn [[key value]]
-                             [(canonical-key key) (canonical-value value)]))
+                      (map (fn [[key item-value]]
+                             [(canonical-key key) (canonical-value item-value)]))
                       item)
     (vector? item) (mapv canonical-value item)
     (sequential? item) (mapv canonical-value item)
@@ -49,6 +49,18 @@
   (when-not condition
     (throw (ex-info message (assoc data :code :validation)))))
 
+(defn- nonempty-string? [item]
+  (and (string? item) (not (str/blank? item))))
+
+(defn- sha256-string? [item]
+  (and (nonempty-string? item) (str/starts-with? item "sha256:")))
+
+(defn- status-name [item]
+  (cond
+    (keyword? item) (name item)
+    (string? item) item
+    :else nil))
+
 (defn read-json! [file expected-format]
   (let [path (io/file file)]
     (require-value! (.isFile path) "Evidence file does not exist" {:path (.getPath path)})
@@ -61,7 +73,7 @@
       document)))
 
 (defn- contained-file! [root raw-path]
-  (require-value! (and (string? raw-path) (not (str/blank? raw-path)))
+  (require-value! (nonempty-string? raw-path)
                   "Evidence path must be non-empty" {:path raw-path})
   (let [raw (io/file raw-path)]
     (require-value! (not (.isAbsolute raw))
@@ -80,8 +92,7 @@
                   "Unsupported release request format"
                   {:format (value request "format")})
   (doseq [key ["release_id" "module"]]
-    (require-value! (and (string? (value request key))
-                         (not (str/blank? (value request key))))
+    (require-value! (nonempty-string? (value request key))
                     "Release request field must be non-empty"
                     {:field key}))
   (let [artifacts (value request "artifacts")
@@ -92,23 +103,48 @@
       (require-value! (= (count paths) (count (distinct paths)))
                       "Release artifact paths must be unique" {:paths paths}))
     (doseq [artifact artifacts]
-      (require-value! (and (string? (value artifact "path"))
-                           (not (str/blank? (value artifact "path"))))
+      (require-value! (nonempty-string? (value artifact "path"))
                       "Release artifact path must be non-empty" {:artifact artifact})
-      (require-value! (and (string? (value artifact "sha256"))
-                           (str/starts-with? (value artifact "sha256") "sha256:"))
+      (require-value! (sha256-string? (value artifact "sha256"))
                       "Release artifact requires a sha256 fingerprint"
                       {:artifact artifact}))
     (require-value! (map? evidence) "Release request evidence must be an object" {})
-    (doseq [key ["workflow" "proof_tokens" "theorem_locks"
-                 "authorization" "formalization"]]
-      (require-value! (map? (value evidence key))
-                      "Release request is missing required evidence"
-                      {:evidence key})
-      (require-value! (and (string? (value (value evidence key) "path"))
-                           (not (str/blank? (value (value evidence key) "path"))))
-                      "Release evidence path must be non-empty"
-                      {:evidence key})))
+    (let [evidence-keys ["workflow" "proof_tokens" "theorem_locks"
+                         "authorization" "formalization"]]
+      (doseq [key evidence-keys]
+        (require-value! (map? (value evidence key))
+                        "Release request is missing required evidence"
+                        {:evidence key})
+        (require-value! (nonempty-string? (value (value evidence key) "path"))
+                        "Release evidence path must be non-empty"
+                        {:evidence key}))
+      (let [paths (mapv #(value (value evidence %) "path") evidence-keys)]
+        (require-value! (= (count paths) (count (distinct paths)))
+                        "Release evidence paths must be unique" {:paths paths})))
+    (let [workflow (value evidence "workflow")
+          authorization (value evidence "authorization")
+          formalization (value evidence "formalization")
+          artifact-paths (set (map #(value % "path") artifacts))
+          minimum-actions (or (value workflow "minimum_actions") 1)
+          required-targets (value formalization "required_targets")]
+      (require-value! (and (nonempty-string? (value workflow "artifact"))
+                           (contains? artifact-paths (value workflow "artifact")))
+                      "Workflow evidence must name one release artifact"
+                      {:artifact (value workflow "artifact")})
+      (require-value! (and (integer? minimum-actions) (pos? minimum-actions))
+                      "Workflow minimum_actions must be a positive integer"
+                      {:minimum_actions minimum-actions})
+      (doseq [key ["object" "relation" "subject"]]
+        (require-value! (nonempty-string? (value authorization key))
+                        "Authorization evidence expectation must be non-empty"
+                        {:field key}))
+      (require-value! (and (vector? required-targets)
+                           (seq required-targets)
+                           (every? nonempty-string? required-targets)
+                           (= (count required-targets)
+                              (count (distinct required-targets))))
+                      "Formalization evidence requires unique target IDs"
+                      {:required_targets required-targets})))
   request)
 
 (defn- evidence-row [kind path sha status details]
@@ -136,8 +172,9 @@
 
 (defn- validate-workflow [document module minimum-actions]
   (let [verification (value document "verification")
-        status (some-> (value verification "status") name)
-        action-count (long (or (value document "action_count") 0))
+        verification-status (status-name (value verification "status"))
+        action-count (if (integer? (value document "action_count"))
+                       (long (value document "action_count")) 0)
         failures (cond-> []
                    (not= true (value document "ok"))
                    (conj {:kind :workflow_not_ok})
@@ -146,13 +183,13 @@
                           :expected module :actual (value document "module")})
                    (not= true (value document "complete"))
                    (conj {:kind :workflow_incomplete})
-                   (not= "verified" status)
-                   (conj {:kind :workflow_module_not_verified :status status})
+                   (not= "verified" verification-status)
+                   (conj {:kind :workflow_module_not_verified
+                          :status verification-status})
                    (< action-count minimum-actions)
                    (conj {:kind :workflow_action_coverage
                           :required minimum-actions :actual action-count})
-                   (not (and (string? (value document "output_sha256"))
-                             (str/starts-with? (value document "output_sha256") "sha256:")))
+                   (not (sha256-string? (value document "output_sha256")))
                    (conj {:kind :workflow_output_hash_missing}))]
     {:ok (empty? failures)
      :failures failures
@@ -161,23 +198,42 @@
                :output_sha256 (value document "output_sha256")}}))
 
 (defn- validate-proof [document module]
-  (let [token-count (long (or (value document "token_count") 0))
-        resolved (long (or (value document "resolved") 0))
-        unresolved (long (or (value document "unresolved") 0))
+  (let [rows-raw (value document "resolutions")
+        rows (if (vector? rows-raw) rows-raw [])
+        token-count (if (integer? (value document "token_count"))
+                      (long (value document "token_count")) 0)
+        resolved (if (integer? (value document "resolved"))
+                   (long (value document "resolved")) 0)
+        unresolved (if (integer? (value document "unresolved"))
+                     (long (value document "unresolved")) 0)
+        row-statuses (mapv #(status-name (value % "status")) rows)
+        token-ids (mapv #(value % "token_id") rows)
         failures (cond-> []
                    (not= true (value document "ok"))
                    (conj {:kind :proof_tokens_not_ok})
                    (not= module (value document "module"))
                    (conj {:kind :proof_module_mismatch
                           :expected module :actual (value document "module")})
+                   (not (vector? rows-raw))
+                   (conj {:kind :proof_resolution_rows_missing})
+                   (not (pos? token-count))
+                   (conj {:kind :proof_token_set_empty})
+                   (not= token-count (count rows))
+                   (conj {:kind :proof_resolution_row_count
+                          :tokens token-count :rows (count rows)})
                    (not= token-count resolved)
                    (conj {:kind :proof_resolution_incomplete
                           :tokens token-count :resolved resolved})
                    (not= 0 unresolved)
                    (conj {:kind :proof_tokens_unresolved :count unresolved})
-                   (not (string? (value document "event_batch_fingerprint")))
+                   (not (every? #(= "resolved" %) row-statuses))
+                   (conj {:kind :proof_resolution_row_statuses
+                          :statuses row-statuses})
+                   (not= (count token-ids) (count (distinct token-ids)))
+                   (conj {:kind :proof_token_ids_duplicate})
+                   (not (sha256-string? (value document "event_batch_fingerprint")))
                    (conj {:kind :proof_event_fingerprint_missing})
-                   (not (string? (value document "token_batch_fingerprint")))
+                   (not (sha256-string? (value document "token_batch_fingerprint")))
                    (conj {:kind :proof_token_fingerprint_missing}))]
     {:ok (empty? failures)
      :failures failures
@@ -186,9 +242,16 @@
                :token_batch_fingerprint (value document "token_batch_fingerprint")}}))
 
 (defn- validate-locks [document module proof-document]
-  (let [changed (long (or (value document "changed") 0))
-        lock-count (long (or (value document "lock_count") 0))
-        unchanged (long (or (value document "unchanged") 0))
+  (let [rows-raw (value document "results")
+        rows (if (vector? rows-raw) rows-raw [])
+        changed (if (integer? (value document "changed"))
+                  (long (value document "changed")) 0)
+        lock-count (if (integer? (value document "lock_count"))
+                     (long (value document "lock_count")) 0)
+        unchanged (if (integer? (value document "unchanged"))
+                    (long (value document "unchanged")) 0)
+        row-statuses (mapv #(status-name (value % "status")) rows)
+        token-ids (mapv #(value % "token_id") rows)
         same-events (= (value document "current_event_batch_fingerprint")
                        (value proof-document "event_batch_fingerprint"))
         same-tokens (= (value document "current_token_batch_fingerprint")
@@ -199,16 +262,29 @@
                    (not= module (value document "module"))
                    (conj {:kind :theorem_lock_module_mismatch
                           :expected module :actual (value document "module")})
+                   (not (vector? rows-raw))
+                   (conj {:kind :theorem_lock_rows_missing})
+                   (not (pos? lock-count))
+                   (conj {:kind :theorem_lock_set_empty})
                    (not= 0 changed)
                    (conj {:kind :theorem_statement_drift :changed changed})
                    (not= lock-count unchanged)
                    (conj {:kind :theorem_lock_coverage
                           :locks lock-count :unchanged unchanged})
+                   (not= unchanged
+                         (count (filter #(= "unchanged" %) row-statuses)))
+                   (conj {:kind :theorem_lock_row_count
+                          :unchanged unchanged :statuses row-statuses})
+                   (not (every? #{"unchanged" "additional_allowed"} row-statuses))
+                   (conj {:kind :theorem_lock_row_statuses
+                          :statuses row-statuses})
+                   (not= (count token-ids) (count (distinct token-ids)))
+                   (conj {:kind :theorem_lock_token_ids_duplicate})
                    (not same-events)
                    (conj {:kind :theorem_lock_event_snapshot_mismatch})
                    (not same-tokens)
                    (conj {:kind :theorem_lock_token_snapshot_mismatch})
-                   (not (string? (value document "lock_document_fingerprint")))
+                   (not (sha256-string? (value document "lock_document_fingerprint")))
                    (conj {:kind :theorem_lock_fingerprint_missing}))]
     {:ok (empty? failures)
      :failures failures
@@ -276,23 +352,19 @@
                          "Formalization plan row has the wrong number of fields"
                          {:row line})
          (let [[kind id status priority readiness dependencies reasons
-                module file declaration] parts]
+                module file-path declaration] parts]
            (require-value! (= "target" kind)
                            "Formalization plan row must begin with target"
                            {:row line})
            {:id id :status status :priority priority :readiness readiness
             :dependencies dependencies :reasons reasons :module module
-            :file file :declaration declaration})))
+            :file file-path :declaration declaration})))
      (rest lines))))
 
 (defn- validate-formalization [file config]
   (let [rows (formalization-rows file)
         by-id (into {} (map (juxt :id identity)) rows)
         required (value config "required_targets")]
-    (require-value! (and (vector? required) (seq required)
-                         (every? string? required))
-                    "Formalization evidence requires target IDs"
-                    {:required_targets required})
     (require-value! (= (count rows) (count by-id))
                     "Formalization plan target IDs must be unique" {})
     (let [failures (reduce
@@ -316,8 +388,7 @@
                 (if (:ok validation) :verified :failed)
                 (:details validation)))
 
-(defn attest
-  [request root]
+(defn attest [request root]
   (validate-request! request)
   (let [module (value request "module")
         evidence (value request "evidence")
@@ -345,7 +416,7 @@
         authorization-result (validate-authorization authorization-file authorization-config)
         formalization-result (validate-formalization formalization-file formalization-config)
         workflow-artifact (value workflow-config "artifact")
-        workflow-artifact-row (some #(when (= workflow-artifact (:path %)) %) artifacts)
+        workflow-artifact-row (first (filter #(= workflow-artifact (:path %)) artifacts))
         workflow-binding-failures
         (cond-> []
           (nil? workflow-artifact-row)
