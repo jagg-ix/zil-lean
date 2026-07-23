@@ -99,6 +99,28 @@
     "docs/lean4/native-recovery-audit.md"
     "spec/recovery-audit-v1.md"]}
 
+  :hybrid-exchange
+  {:features #{:attributes :facts :rules :queries :declarations :macros}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["docs/architecture/hybrid-system.md"
+    "docs/architecture/capability-ownership.md"
+    "architecture/capability-ownership.edn"
+    "spec/exchange-protocol-v1.md"
+    "spec/extension-manifest-v1.md"
+    "spec/assurance-levels-v1.md"
+    "Zil/Exchange/Protocol.lean"
+    "Zil/Exchange/Dispatch.lean"
+    "Zil/CLI/WorkerMain.lean"
+    "Zil/Test/Exchange.lean"
+    "src/zil/worker/protocol.clj"
+    "src/zil/worker/client.clj"
+    "src/zil/worker/pool.clj"
+    "test/zil/worker_protocol_test.clj"
+    "examples/exchange/parse-request.json"
+    "docs/lean4/hybrid-exchange-worker.md"]}
+
   :native-agent-context
   {:features #{:facts :rules :queries :declarations}
    :min-feature-sources 1

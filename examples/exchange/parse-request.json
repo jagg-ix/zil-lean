@@ -1,0 +1,1 @@
+{"schema":"ZIL-EXCHANGE/1","request_id":"request:parse-example","protocol_version":1,"operation":"parse","input_path":"examples/authorization/access.zc","base_revision":"-","input_sha256":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","capabilities":["parse-v1"],"arguments":[]}

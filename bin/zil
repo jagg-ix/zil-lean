@@ -32,6 +32,12 @@ Usage:
   bin/zil revision-summary <input.zilr>
   bin/zil snapshot <input.zilr> <revision> [output.txt|-]
   bin/zil causal-check <input.zilr>
+  bin/zil worker [--stdio|--once]
+  bin/zil exchange <operation> <input.zc> [operation-arguments...]
+
+Worker exposes the allowlisted ZIL-EXCHANGE/1 JSON Lines protocol. Exchange uses
+Clojure for process supervision and SHA-256 transport attestation while Lean remains
+the semantic authority for parse, expand, query, authorize, impact, and recovery-audit.
 
 Action-token validates preflight evidence and token intent. Token-lifecycle replays
 checkpoint binding and single-use execution with revision, expiry, lease, store,
@@ -67,6 +73,30 @@ run_native() {
   fi
   cd "$ZIL_ROOT"
   exec lake exe zil -- "$@"
+}
+
+run_worker() {
+  shift
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for the native exchange worker" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zilWorker -- "$@"
+}
+
+run_exchange() {
+  shift
+  if ! command -v clojure >/dev/null 2>&1; then
+    echo "[zil] clojure is required for exchange supervision and transport attestation" >&2
+    exit 2
+  fi
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for the Lean exchange worker" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec clojure -M:exchange "$@"
 }
 
 run_action_token() {
@@ -150,6 +180,12 @@ case "$command_name" in
   compile|expand|conformance|query-plan|query-ci|trace|explain-query|explain-authorization|dependency-graph|impact|formalization-plan|formalization-next|authorize|revision-summary|snapshot|causal-check)
     run_native "$@"
     ;;
+  worker)
+    run_worker "$@"
+    ;;
+  exchange)
+    run_exchange "$@"
+    ;;
   action-token)
     run_action_token "$@"
     ;;
@@ -197,7 +233,7 @@ case "$command_name" in
       exec "$SCRIPT_DIR/zil-legacy" "$@"
     fi
     cat >&2 <<EOF
-[zil] '$command_name' is not a native command.
+[zil] '$command_name' is not a native or registered control-plane command.
 
 Use one of:
   bin/zil --legacy $*
