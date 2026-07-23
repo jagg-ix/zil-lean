@@ -15,6 +15,7 @@
 (def default-manifest "generated/embedded/manifest.edn")
 (def default-namespace "Zil.Embedded")
 (def default-command ["lake" "exe" "zil" "--" "compile"])
+(def default-verify-command ["lake" "env" "lean"])
 (def supported-extensions #{"lean" "py" "clj" "cljs" "cljc" "rs" "md"})
 
 (defn- absolute-path ^Path [value]
@@ -191,8 +192,12 @@
      :scan-errors (:errors scan)
      :entries entries}))
 
-(defn run-command [command]
+(defn run-command
+  [{:keys [command environment directory]}]
   (let [builder (ProcessBuilder. ^java.util.List (vec command))
+        _ (when directory (.directory builder (io/file directory)))
+        env (.environment builder)
+        _ (doseq [[key value] environment] (.put env (str key) (str value)))
         process (.start builder)
         out-future (future (slurp (.getInputStream process)))
         err-future (future (slurp (.getErrorStream process)))
@@ -218,9 +223,21 @@
                                 [StandardCopyOption/REPLACE_EXISTING]))))
     target))
 
+(defn- lean-path-environment [output-root]
+  (let [root (path-string (absolute-path output-root))
+        existing (System/getenv "LEAN_PATH")
+        separator (System/getProperty "path.separator")]
+    {"LEAN_PATH" (if (str/blank? existing)
+                   root
+                   (str root separator existing))}))
+
 (defn- compile-entry
-  [{:keys [runner command check-only temp-root]
-    :or {runner run-command command default-command}}
+  [{:keys [runner command verify-command check-only temp-root output-root
+           verify-generated directory]
+    :or {runner run-command
+         command default-command
+         verify-command default-verify-command
+         verify-generated true}}
    entry]
   (let [temporary-root (absolute-path (or temp-root (System/getProperty "java.io.tmpdir")))
         _ (Files/createDirectories temporary-root
@@ -230,24 +247,57 @@
     (try
       (Files/writeString temporary (:source-text entry) StandardCharsets/UTF_8
                          (into-array java.nio.file.OpenOption []))
-      (let [invocation (into (vec command)
-                             [(path-string temporary) "-" (:lean-namespace entry)])
-            result (runner invocation)]
-        (if (zero? (:exit result))
-          (do
-            (when-not check-only (atomic-write! (:output entry) (:out result)))
-            (-> entry
-                (dissoc :source-text)
-                (assoc :status (if check-only :checked :compiled)
-                       :output-sha256 (library/text-sha256 (:out result))
-                       :bytes (count (.getBytes (str (:out result))
-                                                StandardCharsets/UTF_8)))))
+      (let [compile-invocation (into (vec command)
+                                     [(path-string temporary) "-" (:lean-namespace entry)])
+            compiled (runner {:command compile-invocation
+                              :directory directory
+                              :environment {}})]
+        (if-not (zero? (:exit compiled))
           (-> entry
               (dissoc :source-text)
               (assoc :status :failed
-                     :exit (:exit result)
-                     :error (str/trim (or (:err result) ""))
-                     :command (:command result invocation)))))
+                     :phase :compile
+                     :exit (:exit compiled)
+                     :error (str/trim (or (:err compiled) ""))
+                     :command (:command compiled compile-invocation)))
+          (let [output-sha (library/text-sha256 (:out compiled))
+                bytes (count (.getBytes (str (:out compiled)) StandardCharsets/UTF_8))]
+            (cond
+              check-only
+              (-> entry
+                  (dissoc :source-text)
+                  (assoc :status :checked
+                         :output-sha256 output-sha
+                         :bytes bytes))
+
+              :else
+              (do
+                (atomic-write! (:output entry) (:out compiled))
+                (if-not verify-generated
+                  (-> entry
+                      (dissoc :source-text)
+                      (assoc :status :compiled
+                             :output-sha256 output-sha
+                             :bytes bytes))
+                  (let [verify-invocation (into (vec verify-command) [(:output entry)])
+                        verified (runner {:command verify-invocation
+                                          :directory directory
+                                          :environment (lean-path-environment output-root)})]
+                    (if (zero? (:exit verified))
+                      (-> entry
+                          (dissoc :source-text)
+                          (assoc :status :verified
+                                 :output-sha256 output-sha
+                                 :bytes bytes))
+                      (-> entry
+                          (dissoc :source-text)
+                          (assoc :status :verification-failed
+                                 :phase :verify
+                                 :output-sha256 output-sha
+                                 :bytes bytes
+                                 :exit (:exit verified)
+                                 :error (str/trim (or (:err verified) ""))
+                                 :command (:command verified verify-invocation)))))))))))
       (finally
         (Files/deleteIfExists temporary)))))
 
@@ -255,28 +305,41 @@
   (atomic-write! path (str (pr-str data) "\n")))
 
 (defn compile-embedded!
-  [{:keys [roots output-root manifest namespace-prefix check-only require-blocks]
+  [{:keys [roots output-root manifest namespace-prefix check-only require-blocks
+           verify-generated]
     :or {roots default-roots
          output-root default-output
          manifest default-manifest
-         namespace-prefix default-namespace}
+         namespace-prefix default-namespace
+         verify-generated true}
     :as options}]
   (let [{:keys [hosts scan-errors entries]} (plan options)
-        results (mapv #(compile-entry options %) entries)
+        compile-options (assoc options
+                               :output-root output-root
+                               :verify-generated verify-generated)
+        results (mapv #(compile-entry compile-options %) entries)
         no-block-failure (and require-blocks (empty? results))
+        accepted-statuses (if verify-generated
+                            #{:verified :checked}
+                            #{:compiled :checked})
         ok (and (empty? scan-errors)
                 (not no-block-failure)
-                (every? #(contains? #{:compiled :checked} (:status %)) results))
+                (every? #(contains? accepted-statuses (:status %)) results))
         report (sorted-map
                 :schema "ZIL-EMBEDDED-MANIFEST/1"
                 :roots (mapv #(path-string (absolute-path %)) roots)
                 :output-root (path-string (absolute-path output-root))
                 :namespace-prefix namespace-prefix
                 :check-only (boolean check-only)
+                :verify-generated (boolean verify-generated)
                 :require-blocks (boolean require-blocks)
                 :ok ok
                 :host-count (count hosts)
                 :block-count (count results)
+                :verified (count (filter #(= :verified (:status %)) results))
+                :compiled (count (filter #(= :compiled (:status %)) results))
+                :checked (count (filter #(= :checked (:status %)) results))
+                :failed (count (remove #(contains? accepted-statuses (:status %)) results))
                 :hosts hosts
                 :scan-errors scan-errors
                 :entries results
@@ -288,7 +351,7 @@
 
 (def usage
   (str "zil-embedded-native [--root PATH]... [--out DIR] [--manifest FILE] "
-       "[--namespace NAME] [--lib DIR] [--check] [--require-blocks]"))
+       "[--namespace NAME] [--lib DIR] [--check] [--no-verify] [--require-blocks]"))
 
 (defn- value! [remaining flag]
   (or (second remaining)
@@ -299,7 +362,8 @@
          options {:roots []
                   :output-root default-output
                   :manifest default-manifest
-                  :namespace-prefix default-namespace}]
+                  :namespace-prefix default-namespace
+                  :verify-generated true}]
     (if-not remaining
       (update options :roots #(if (seq %) % default-roots))
       (case (first remaining)
@@ -314,6 +378,7 @@
         "--lib" (recur (nnext remaining)
                        (assoc options :lib-dir (value! remaining "--lib")))
         "--check" (recur (next remaining) (assoc options :check-only true))
+        "--no-verify" (recur (next remaining) (assoc options :verify-generated false))
         "--require-blocks" (recur (next remaining) (assoc options :require-blocks true))
         "--help" (assoc options :help true)
         (throw (ex-info "Unknown embedded compiler argument"

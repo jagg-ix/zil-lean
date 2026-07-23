@@ -19,6 +19,12 @@ Each block is compiled as an independent `.zc` source unit containing:
 
 The temporary source is removed after native compilation.
 
+## Verification
+
+Unless disabled with `--no-verify`, generated Lean is written atomically and elaborated with `lake env lean`. The generated output root is prepended to `LEAN_PATH`.
+
+Check-only mode compiles the temporary `.zc` unit and hashes generated output without writing or elaborating it.
+
 ## Deterministic identity
 
 A block identity is based on the selected root label, root-relative host path, and ordinal. The plan rejects duplicate block IDs, generated namespaces, or output paths.
@@ -31,10 +37,15 @@ A block identity is based on the selected root label, root-relative host path, a
  :output-root "/absolute/generated/embedded"
  :namespace-prefix "Zil.Embedded"
  :check-only false
+ :verify-generated true
  :require-blocks true
  :ok true
  :host-count 4
  :block-count 6
+ :verified 6
+ :compiled 0
+ :checked 0
+ :failed 0
  :hosts [...]
  :scan-errors []
  :entries [...]
@@ -61,7 +72,7 @@ A block identity is based on the selected root label, root-relative host path, a
  :output "/absolute/generated/embedded/Src/Auth/Policy/Block0.lean"
  :zc-sha256 "..."
  :zc-bytes 192
- :status :compiled
+ :status :verified
  :output-sha256 "..."
  :bytes 891}
 ```
@@ -69,10 +80,24 @@ A block identity is based on the selected root label, root-relative host path, a
 ## Entry states
 
 ```text
-:compiled generated Lean was written atomically
-:checked  native compilation succeeded without writing output
-:failed   native compilation returned nonzero
+:verified             native compilation and Lean elaboration succeeded
+:compiled             generated Lean was written with verification disabled
+:checked              native compilation succeeded without writing output
+:failed               native `.zc` compilation returned nonzero
+:verification-failed  generated Lean elaboration returned nonzero
 ```
+
+Failures include:
+
+```clojure
+{:status :verification-failed
+ :phase :verify
+ :exit 1
+ :error "..."
+ :command [...]}
+```
+
+Source compilation failures use `:phase :compile`.
 
 ## Scan errors
 
@@ -86,10 +111,12 @@ Host-level extraction errors are retained as:
 
 ## Success
 
-`:ok` is true exactly when:
+With generated verification enabled, `:ok` is true exactly when:
 
 - no host scan error exists;
-- every block is compiled or checked;
+- every block is `:verified` or check-only `:checked`;
 - `--require-blocks` is either disabled or at least one block exists.
+
+With `--no-verify`, generated entries may use `:compiled`.
 
 The manifest contains no timestamp.
