@@ -29,7 +29,7 @@
   (let [name (.getName (io/file file))]
     (or (contains? text-extensions (extension file))
         (contains? #{"deps.edn" "build.clj" "Makefile"} name)
-        (and (.canExecute (io/file file)) (not (str/includes? name "."))))))
+        (not (str/includes? name ".")))))
 
 (defn source-files [repository-root roots]
   (->> roots
@@ -38,7 +38,9 @@
                  (cond
                    (.isFile root) [root]
                    (.isDirectory root) (filter #(.isFile %) (file-seq root))
-                   :else [])))
+                   :else
+                   (throw (ex-info "Retirement scan root does not exist"
+                                   {:root (.getPath root)})))))
        (filter text-file?)
        (map canonical-file)
        distinct
@@ -54,6 +56,20 @@
         (throw (ex-info "Unsupported retirement evidence schema"
                         {:path path :expected schema :actual (:schema data)})))
       data)))
+
+(defn- read-policy! [path]
+  (let [file (io/file path)]
+    (when-not (.exists file)
+      (throw (ex-info "Retirement policy does not exist" {:path path})))
+    (let [policy (edn/read-string (slurp file))]
+      (when-not (seq (:components policy))
+        (throw (ex-info "Retirement policy requires at least one component"
+                        {:path path})))
+      (doseq [[component config] (:components policy)]
+        (when-not (seq (:patterns config))
+          (throw (ex-info "Retirement component requires at least one consumer pattern"
+                          {:component component}))))
+      policy)))
 
 (defn- path-matches? [path exact prefixes]
   (or (contains? (set exact) path)
@@ -205,10 +221,7 @@
   (let [gate-data (read-edn! gate "ZIL-PORT-GATE/1")
         verification-data (read-edn! verification "ZIL-LEAN-VERIFY/1")
         embedded-data (read-edn! embedded "ZIL-EMBEDDED-MANIFEST/1")
-        policy-data (if (.exists (io/file policy))
-                      (deep-merge default-policy-data
-                                  (edn/read-string (slurp policy)))
-                      default-policy-data)
+        policy-data (deep-merge default-policy-data (read-policy! policy))
         report (evaluate gate-data verification-data embedded-data policy-data)
         report (if require-ready
                  (let [not-ready (->> (:components report)
