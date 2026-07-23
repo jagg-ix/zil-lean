@@ -59,7 +59,7 @@ clojure -M:retirement --require-ready
 
 ### `:active`
 
-Required compiler, parity, elaboration, aggregate-import, or embedded-block evidence is incomplete. Existing consumers remain allowed while the missing evidence is addressed.
+Required compiler, parity, elaboration, aggregate-import, or embedded verification evidence is incomplete. Existing consumers remain allowed while the missing evidence is addressed.
 
 ### `:frozen`
 
@@ -85,9 +85,19 @@ For each component, the policy declares:
 - whether generated-module verification is required;
 - whether aggregate import verification is required;
 - whether native embedded compilation is required;
+- whether every embedded generated module must be elaborated;
 - minimum embedded block coverage;
 - source patterns that identify consumers;
 - exact implementation files that remain allowed.
+
+When `:require-embedded-verification true`, the embedded report must satisfy:
+
+```text
+:verify-generated true
+:verified == :block-count
+```
+
+Translation-only `:compiled` entries and partially verified corpora keep the component `:active`.
 
 Tests, documentation, and examples are inventoried but do not block a component. New production references outside the allowlist do block it once its evidence is complete.
 
@@ -109,12 +119,21 @@ The report includes:
 - active components;
 - strict-readiness failures.
 
+Embedded verification failures are reported as:
+
+```clojure
+{:kind :embedded-modules-not-verified
+ :verify-generated false
+ :verified 0
+ :blocks 12}
+```
+
 ## Merge and removal procedure
 
 1. Run the library compiler and conformance harness.
 2. Pass the port gate.
 3. Verify generated Lean modules and the aggregate import.
-4. Compile the selected embedded host roots.
+4. Compile and elaborate the selected embedded host roots.
 5. Run the retirement guard.
 6. Remove one ready component in a separate PR.
 7. Update its allowlist and rerun the guard.
