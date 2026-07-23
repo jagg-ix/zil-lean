@@ -87,13 +87,15 @@ def validatesRelation
         signature.objectKind == objectKind
   | _, _ => false
 
-/-- Check every premise and the conclusion of a rule. -/
+/-- Check positive premises, negative premises, safety, and the conclusion. -/
 def validatesRule
     (profile : Profile)
     (variables : Array VariableKind)
     (rule : Rule) : Bool :=
   rule.allVariablesBound &&
+  rule.safe &&
   rule.premises.all (validatesRelation profile variables) &&
+  rule.negativePremises.all (validatesRelation profile variables) &&
   validatesRelation profile variables rule.conclusion
 
 end Profile
