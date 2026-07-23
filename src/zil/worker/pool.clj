@@ -38,14 +38,21 @@
 (defn closed? [^WorkerPool pool]
   @(:closed? pool))
 
-(defn- replace-worker! [^WorkerPool pool failed]
+(defn- remove-worker! [^WorkerPool pool failed]
+  (swap! (:workers pool)
+         (fn [workers]
+           (vec (remove #(identical? % failed) workers)))))
+
+(defn- discard-worker! [^WorkerPool pool failed]
+  (try (client/stop-worker! failed) (catch Exception _))
+  (remove-worker! pool failed)
   (when-not (closed? pool)
-    (try (client/stop-worker! failed) (catch Exception _))
-    (let [replacement (client/start-worker! (:worker-options pool))]
-      (swap! (:workers pool)
-             (fn [workers]
-               (conj (vec (remove #(identical? % failed) workers)) replacement)))
-      replacement)))
+    (try
+      (let [replacement (client/start-worker! (:worker-options pool))]
+        (swap! (:workers pool) conj replacement)
+        (.put ^ArrayBlockingQueue (:available pool) replacement))
+      (catch Exception _
+        nil))))
 
 (defn acquire!
   ([pool] (acquire! pool 30000))
@@ -66,17 +73,23 @@
     (.put ^ArrayBlockingQueue (:available pool) worker)
 
     :else
-    (when-let [replacement (replace-worker! pool worker)]
-      (.put ^ArrayBlockingQueue (:available pool) replacement))))
+    (discard-worker! pool worker)))
 
 (defn invoke!
   ([pool request] (invoke! pool request 30000))
   ([^WorkerPool pool request timeout-ms]
-   (let [worker (acquire! pool timeout-ms)]
+   (let [worker (acquire! pool timeout-ms)
+         discard? (atom false)]
      (try
        (client/invoke! worker request)
+       (catch Exception error
+         (when (= :transport-error (:kind (ex-data error)))
+           (reset! discard? true))
+         (throw error))
        (finally
-         (release! pool worker))))))
+         (if @discard?
+           (discard-worker! pool worker)
+           (release! pool worker)))))))
 
 (defn stop-pool! [^WorkerPool pool]
   (when (compare-and-set! (:closed? pool) false true)
