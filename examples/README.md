@@ -35,7 +35,7 @@ doc:readme#viewer@group:eng#member.
 Generate native `zil_fact` declarations and userset rules with:
 
 ```bash
-clojure -M -m zil.bridge.tuple-lean \
+clojure -M:tuple-lean \
   examples/tuple-lean/access.zc \
   examples/tuple-lean/Access.lean \
   Zil.Generated.Access
