@@ -6,8 +6,7 @@ import Zil.Test.StratifiedNegation
 import Zil.Test.Macro
 import Zil.Test.Declarations
 import Zil.Test.RevisionCausal
-import Zil.Test.Conformance
 
-/-- Executable validation target for differential conformance reporting. -/
+/-- Executable validation target for revisioned facts and causal order. -/
 def main : IO Unit := do
-  IO.println "zil-lean differential conformance validation passed"
+  IO.println "zil-lean revision and causal core validation passed"
