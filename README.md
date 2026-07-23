@@ -484,21 +484,7 @@ zil_register_certified_rule certifiedRule
 
 Lean checks the proposition and proof term. ZIL records how the checked declaration participates in the project map.
 
-The explanation API builds a directed graph whose entries record the project fact, source, rule name, variable binding, trust level, and input relation identifiers:
-
-```lean
-let dag :=
-  Zil.Engine.Provenance.build facts rules
-
-let some root :=
-  Zil.Engine.Provenance.rootFor? dag target
-  | failure
-
-let explanation :=
-  Zil.Engine.Provenance.explain dag root
-```
-
-The public identifier remains visible in the code sample so the example matches the current API. The surrounding documentation uses “explanation” to describe the feature.
+For inferred relationships, the explanation data records the project fact, source, rule name, variable binding, trust level, and input relation identifiers. Developers and tools can use that data to show how a result was reached.
 
 ## Native CLI and data exchange
 
