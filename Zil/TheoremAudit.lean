@@ -55,7 +55,7 @@ end EvidenceClass
 
 structure EvidenceRef where
   node : Name
-  class : EvidenceClass
+  evidenceClass : EvidenceClass
   deriving Repr, BEq, Inhabited
 
 structure TheoremContract where
@@ -223,14 +223,14 @@ private def claimAudit (program : Zil.Program) (claim : Name) : ClaimAudit := Id
   let supportNodes := objectsFor program claim `zil.supportedBy
   let supports := supportNodes.map fun node => {
     node
-    class := evidenceClass program node
+    evidenceClass := evidenceClass program node
   }
   let assertedProved := trueFact program claim `zil.provedClaim
   let mut issues : Array String := #[]
   if supports.isEmpty then
     issues := issues.push "support-missing"
   for support in supports do
-    if support.class == .unknown then
+    if support.evidenceClass == .unknown then
       issues := issues.push s!"support-kind-missing:{support.node}"
   if assertedProved then
     issues := issues.push "external-claim-proof-boundary"
@@ -268,7 +268,7 @@ private def namesText (names : Array Name) : String :=
 
 private def evidenceText (evidence : Array EvidenceRef) : String :=
   String.intercalate "," (evidence.toList.map fun item =>
-    item.node.toString ++ ":" ++ item.class.token)
+    item.node.toString ++ ":" ++ item.evidenceClass.token)
 
 private def stringsText (values : Array String) : String :=
   String.intercalate "," values.toList
