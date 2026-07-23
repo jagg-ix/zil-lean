@@ -14,7 +14,8 @@ import Zil.Test.Authorization
 import Zil.Test.QueryGovernance
 import Zil.Test.Provenance
 import Zil.Test.Impact
+import Zil.Test.AgentContext
 
-/-- Executable validation target for native ZIL change impact analysis. -/
+/-- Executable validation target for native ZIL agent context bundles. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
