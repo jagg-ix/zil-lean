@@ -1,0 +1,103 @@
+{:schema "ZIL-CAPABILITY-OWNERSHIP/1"
+ :authorities #{:lean :clojure :shared :external}
+ :assurance-levels #{:exploratory :validated :kernel-backed :externally-attested :byte-attested}
+ :capabilities
+ [{:id :parse-v1
+   :operation "parse"
+   :authority :lean
+   :modules ["Zil.Parser.DeclarationProgram" "Zil.Core.Program"]
+   :commands ["compile"]
+   :assurance :validated}
+  {:id :expand-v1
+   :operation "expand"
+   :authority :lean
+   :modules ["Zil.Parser.Macro" "Zil.Parser.MacroProgram"]
+   :commands ["expand" "macro-expand"]
+   :assurance :validated}
+  {:id :query-v1
+   :operation "query"
+   :authority :lean
+   :modules ["Zil.Engine.Query" "Zil.Engine.Provenance" "Zil.QueryGovernance"]
+   :commands ["query-plan" "query-ci" "explain-query"]
+   :assurance :validated}
+  {:id :authorization-v1
+   :operation "authorize"
+   :authority :lean
+   :modules ["Zil.Authorization"]
+   :commands ["authorize" "explain-authorization"]
+   :assurance :validated}
+  {:id :impact-v1
+   :operation "impact"
+   :authority :lean
+   :modules ["Zil.Impact" "Zil.Engine.Provenance"]
+   :commands ["dependency-graph" "impact"]
+   :assurance :validated}
+  {:id :formalization-v1
+   :authority :lean
+   :modules ["Zil.Formalization"]
+   :commands ["formalization-plan" "formalization-next"]
+   :assurance :validated}
+  {:id :agent-context-v1
+   :authority :lean
+   :modules ["Zil.AgentContext"]
+   :commands ["agent-context"]
+   :assurance :validated}
+  {:id :proof-obligation-v1
+   :authority :lean
+   :modules ["Zil.ProofObligation"]
+   :commands ["proof-obligations"]
+   :assurance :validated
+   :external-evidence true}
+  {:id :theorem-audit-v1
+   :authority :lean
+   :modules ["Zil.TheoremAudit"]
+   :commands ["theorem-audit"]
+   :assurance :kernel-backed
+   :external-evidence true}
+  {:id :action-token-v1
+   :authority :lean
+   :modules ["Zil.ActionToken"]
+   :commands ["action-token"]
+   :assurance :validated
+   :durable-commit-authority :clojure}
+  {:id :token-lifecycle-v1
+   :authority :lean
+   :modules ["Zil.TokenLifecycle"]
+   :commands ["token-lifecycle"]
+   :assurance :validated
+   :durable-commit-authority :clojure}
+  {:id :recovery-audit-v1
+   :operation "recovery-audit"
+   :authority :lean
+   :modules ["Zil.RecoveryAudit"]
+   :commands ["recovery-audit"]
+   :assurance :validated
+   :durable-commit-authority :clojure}
+  {:id :workspace-v1
+   :authority :clojure
+   :namespaces ["zil.port.library" "zil.port.native-macro"]
+   :assurance :exploratory}
+  {:id :event-store-v1
+   :authority :clojure
+   :namespaces ["zil.store.sqlite" "zil.runtime.ingest"]
+   :assurance :byte-attested}
+  {:id :worker-supervision-v1
+   :authority :clojure
+   :namespaces ["zil.worker.client" "zil.worker.protocol"]
+   :assurance :byte-attested}
+  {:id :external-tool-v1
+   :authority :external
+   :control-plane :clojure
+   :assurance :externally-attested}
+  {:id :exchange-v1
+   :authority :shared
+   :lean-modules ["Zil.Exchange.Protocol" "Zil.Exchange.Dispatch"]
+   :clojure-namespaces ["zil.worker.protocol" "zil.worker.client"]
+   :schema "ZIL-EXCHANGE/1"}]
+ :invariants
+ [{:id :semantic-authority :owner :lean}
+  {:id :durable-transaction :owner :clojure}
+  {:id :transport-sha256 :owner :clojure}
+  {:id :kernel-evidence :owner :lean}
+  {:id :external-result :owner :external :auditor :lean}
+  {:id :protocol-schema :owner :shared}]}
