@@ -10,6 +10,8 @@ Usage:
   bin/zil compile <input.zc> [output.lean|-] [namespace]
   bin/zil expand <input.zc> [output.zc|-]
   bin/zil conformance <input.zc> [output.zilc|-]
+  bin/zil formalization-plan <input.zc> [output.txt|-]
+  bin/zil formalization-next <input.zc> [output.txt|-]
   bin/zil revision-summary <input.zilr>
   bin/zil snapshot <input.zilr> <revision> [output.txt|-]
   bin/zil causal-check <input.zilr>
@@ -34,7 +36,7 @@ run_native() {
 command_name="${1:-}"
 
 case "$command_name" in
-  compile|expand|conformance|revision-summary|snapshot|causal-check)
+  compile|expand|conformance|formalization-plan|formalization-next|revision-summary|snapshot|causal-check)
     run_native "$@"
     ;;
   --legacy)
