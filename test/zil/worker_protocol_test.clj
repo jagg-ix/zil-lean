@@ -1,6 +1,7 @@
 (ns zil.worker-protocol-test
   (:require [clojure.test :refer [deftest is]]
             [zil.worker.client :as client]
+            [zil.worker.pool :as pool]
             [zil.worker.protocol :as protocol])
   (:import (java.nio.charset StandardCharsets)
            (java.nio.file Files)
@@ -37,6 +38,9 @@
     (is (thrown? Exception
                  (protocol/validate-request! (assoc base "capabilities" []))))
     (is (thrown? Exception
+                 (protocol/validate-request! (assoc base "capabilities"
+                                                    ["parse-v1" "parse-v1"]))))
+    (is (thrown? Exception
                  (protocol/validate-request! (assoc base "arguments" ["extra"]))))))
 
 (deftest response-attestation-preserves-semantic-fields
@@ -47,6 +51,7 @@
                   :status "ok"
                   :authority "lean"
                   :assurance "validated"
+                  :input_sha256 (str "sha256:" (apply str (repeat 64 "a")))
                   :payload "ZIL-AUTHORIZATION\t1\nstatus\tdeny\n"
                   :result_sha256 ""
                   :errors []
@@ -59,17 +64,60 @@
     (is (empty? (:warnings attested)))))
 
 (deftest response-identity-is-checked
-  (let [request (protocol/canonical-request
+  (let [digest (str "sha256:" (apply str (repeat 64 "a")))
+        request (protocol/canonical-request
                  {:request-id "request:test"
                   :operation "parse"
                   :input-path "model.zc"
                   :base-revision "-"
-                  :input-sha256 (str "sha256:" (apply str (repeat 64 "a")))
+                  :input-sha256 digest
                   :capabilities ["parse-v1"]
                   :arguments []})
         response {:schema protocol/schema
                   :request_id "request:wrong"
                   :protocol_version protocol/protocol-version
                   :operation "parse"
+                  :input_sha256 digest
+                  :result_sha256 ""
                   :authority "lean"}]
-    (is (thrown? Exception (protocol/validate-response! request response)))))
+    (is (thrown? Exception (protocol/validate-response! request response)))
+    (is (thrown? Exception
+                 (protocol/validate-response!
+                  request
+                  (assoc response :request_id "request:test"
+                         :input_sha256 (str "sha256:" (apply str (repeat 64 "b")))))))
+    (is (thrown? Exception
+                 (protocol/validate-response!
+                  request
+                  (assoc response :request_id "request:test"
+                         :result_sha256 digest))))))
+
+(deftest bounded-pool-reuses-and-stops-workers
+  (let [started (atom 0)
+        stopped (atom [])
+        invoked (atom [])]
+    (with-redefs [client/start-worker!
+                  (fn [_]
+                    {:id (swap! started inc)
+                     :alive (atom true)})
+                  client/alive?
+                  (fn [worker] @(:alive worker))
+                  client/stop-worker!
+                  (fn [worker]
+                    (reset! (:alive worker) false)
+                    (swap! stopped conj (:id worker))
+                    {:exit 0})
+                  client/invoke!
+                  (fn [worker request]
+                    (swap! invoked conj [(:id worker) request])
+                    {:status "ok" :worker (:id worker)})]
+      (let [workers (pool/start-pool! {:size 2})
+            first-result (pool/invoke! workers {:request_id "request:1"} 100)
+            second-result (pool/invoke! workers {:request_id "request:2"} 100)]
+        (is (= 2 @started))
+        (is (= "ok" (:status first-result)))
+        (is (= "ok" (:status second-result)))
+        (is (= 2 (count @invoked)))
+        (is (= {:closed true :workers 2} (pool/stop-pool! workers)))
+        (is (= #{1 2} (set @stopped)))
+        (is (thrown? Exception (pool/acquire! workers 1)))))))
