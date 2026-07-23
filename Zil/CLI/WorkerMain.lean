@@ -1,9 +1,19 @@
 import Zil.Exchange.Dispatch
 
 private def responseForLine (line : String) : IO Zil.Exchange.Response := do
-  match Zil.Exchange.Request.parse line.trim with
-  | .ok request => Zil.Exchange.dispatch request
-  | .error error => pure (Zil.Exchange.Response.transportFailure error)
+  match Zil.Exchange.Request.decode line.trim with
+  | .error error =>
+      pure (Zil.Exchange.Response.transportFailure error)
+  | .ok request =>
+      match request.validate with
+      | .ok _ => Zil.Exchange.dispatch request
+      | .error error =>
+          pure <| Zil.Exchange.Response.failure
+            request.requestId
+            request.operation
+            request.inputSha256
+            request.validationStatus
+            error
 
 private def writeResponse (stdout : IO.FS.Stream) (response : Zil.Exchange.Response) : IO Unit := do
   stdout.putStrLn response.render
