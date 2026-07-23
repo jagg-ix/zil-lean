@@ -30,3 +30,4 @@ import Zil.Syntax.Environment
 import Zil.Syntax.Declaration
 import Zil.Workflow
 import Zil.Formalization
+import Zil.Authorization
