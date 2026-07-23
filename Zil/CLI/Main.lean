@@ -58,6 +58,19 @@ def expandFile
   | some "-" => IO.print source
   | some path => IO.FS.writeFile path source
 
+/-- Emit the deterministic semantic report consumed by the differential harness. -/
+def conformanceFile
+    (inputPath : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let text ← IO.FS.readFile inputPath
+  let report ← match Zil.Codec.Conformance.renderSource text with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  match outputPath with
+  | none => IO.print report
+  | some "-" => IO.print report
+  | some path => IO.FS.writeFile path report
+
 private def loadRevisionStore (path : String) : IO Zil.RevisionStore := do
   let text ← IO.FS.readFile path
   match Zil.Codec.Revision.decodeStore text with
@@ -106,6 +119,8 @@ def main (args : List String) : IO UInt32 := do
         Zil.CLI.compileFile input (some output) (some namespaceName); pure 0
     | ["expand", input] => Zil.CLI.expandFile input; pure 0
     | ["expand", input, output] => Zil.CLI.expandFile input (some output); pure 0
+    | ["conformance", input] => Zil.CLI.conformanceFile input; pure 0
+    | ["conformance", input, output] => Zil.CLI.conformanceFile input (some output); pure 0
     | ["revision-summary", input] => Zil.CLI.revisionSummary input; pure 0
     | ["snapshot", input, revision] =>
         let frontier ← Zil.CLI.parseNatIO revision "invalid snapshot revision"
