@@ -35,6 +35,13 @@
          "output" "workflow/Demo.lean"
          "output_sha256" artifact-sha
          "verification" {"status" "verified"}}
+        proof-row
+        {"token_id" "proof:demo"
+         "declaration" "Demo.answer"
+         "status" "resolved"
+         "module" "Demo"
+         "kind" "theorem"
+         "type_fingerprint" "lean-hash:demo-v1"}
         proof
         {"format" attestation/proof-format
          "ok" true
@@ -44,7 +51,12 @@
          "unresolved" 0
          "event_batch_fingerprint" "sha256:events"
          "token_batch_fingerprint" "sha256:tokens"
-         "resolutions" []}
+         "resolutions" [proof-row]}
+        lock-row
+        {"token_id" "proof:demo"
+         "declaration" "Demo.answer"
+         "status" "unchanged"
+         "type_fingerprint" "lean-hash:demo-v1"}
         locks
         {"format" attestation/lock-format
          "ok" true
@@ -55,7 +67,7 @@
          "lock_document_fingerprint" "sha256:locks"
          "current_event_batch_fingerprint" "sha256:events"
          "current_token_batch_fingerprint" "sha256:tokens"
-         "results" []}
+         "results" [lock-row]}
         authorization
         (str "ZIL-AUTHORIZATION\t1\n"
              "decision\tallow\n"
@@ -129,6 +141,25 @@
     (is (some #(= :theorem_lock_event_snapshot_mismatch (:kind %))
               (:failures report)))))
 
+(deftest proof-summary-must-match-resolution-rows-test
+  (let [{:keys [root request proof]} (evidence-fixture)
+        _ (write-json! root "evidence/proof.json"
+                       (assoc proof "resolutions" []))
+        report (attestation/attest request root)
+        kinds (set (map :kind (:failures report)))]
+    (is (false? (:ok report)))
+    (is (contains? kinds :proof_resolution_row_count))
+    (is (contains? kinds :proof_resolution_incomplete))))
+
+(deftest lock-summary-must-match-result-rows-test
+  (let [{:keys [root request locks]} (evidence-fixture)
+        _ (write-json! root "evidence/locks.json"
+                       (assoc locks "results" []))
+        report (attestation/attest request root)]
+    (is (false? (:ok report)))
+    (is (some #(= :theorem_lock_row_count (:kind %))
+              (:failures report)))))
+
 (deftest workflow-must-be-verified-and-bind-artifact-test
   (let [{:keys [root request workflow]} (evidence-fixture)
         _ (write-json! root "evidence/workflow.json"
@@ -178,6 +209,21 @@
     (is (false? (:ok report)))
     (is (some #(= :formalization_target_missing (:kind %))
               (:failures report)))))
+
+(deftest invalid-nested-request-fields-are-rejected-test
+  (let [{:keys [request]} (evidence-fixture)]
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"Workflow evidence must name one release artifact"
+         (attestation/validate-request!
+          (assoc-in request ["evidence" "workflow" "artifact"] "missing.lean"))))
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"unique target IDs"
+         (attestation/validate-request!
+          (assoc-in request
+                    ["evidence" "formalization" "required_targets"]
+                    ["foundations" "foundations"]))))))
 
 (deftest evidence-path-escape-is-rejected-test
   (let [{:keys [root request]} (evidence-fixture)
