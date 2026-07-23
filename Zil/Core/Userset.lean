@@ -112,7 +112,8 @@ namespace TupleProgram
 private def rulesSemanticallyEqual (left right : Rule) : Bool :=
   left.variables == right.variables &&
   left.premises.size == right.premises.size &&
-  (left.premises.zip right.premises).all fun pair => pair.1.semanticallyEqual pair.2 &&
+  ((left.premises.zip right.premises).all fun pair =>
+    pair.1.semanticallyEqual pair.2) &&
   left.conclusion.semanticallyEqual right.conclusion
 
 private def appendRuleIfMissing (rules : Array Rule) (candidate : Rule) : Array Rule :=
