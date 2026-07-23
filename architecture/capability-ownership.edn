@@ -83,7 +83,7 @@
    :assurance :byte-attested}
   {:id :worker-supervision-v1
    :authority :clojure
-   :namespaces ["zil.worker.client" "zil.worker.protocol"]
+   :namespaces ["zil.worker.client" "zil.worker.pool" "zil.worker.protocol"]
    :assurance :byte-attested}
   {:id :external-tool-v1
    :authority :external
@@ -92,7 +92,7 @@
   {:id :exchange-v1
    :authority :shared
    :lean-modules ["Zil.Exchange.Protocol" "Zil.Exchange.Dispatch"]
-   :clojure-namespaces ["zil.worker.protocol" "zil.worker.client"]
+   :clojure-namespaces ["zil.worker.protocol" "zil.worker.client" "zil.worker.pool"]
    :schema "ZIL-EXCHANGE/1"}]
  :invariants
  [{:id :semantic-authority :owner :lean}
