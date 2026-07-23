@@ -1,24 +1,34 @@
 # Provenance DAG example
 
-`DerivationDAG.lean` derives one claim requirement from two asserted facts and prints the complete explanation in topological order.
+This example is the advanced continuation of the native Lean learning path in
+[`../lean/README.md`](../lean/README.md).
 
-Run it with the repository toolchain:
+Run it with:
 
 ```bash
 lake env lean --run examples/provenance/DerivationDAG.lean
 ```
 
-The explanation contains three nodes:
+The program constructs two asserted facts and one graph rule, builds the
+least-fixpoint derivation DAG, locates the derived requirement fact, and prints a
+topologically ordered explanation.
 
-1. the asserted `formalizes` fact;
-2. the asserted `requires` fact;
-3. the derived `requiresClaim` fact.
+Each printed node includes:
 
-The root node records:
+- its stable numeric identifier;
+- the canonical relation;
+- whether it was asserted or derived;
+- the rule and concrete variable binding for derived nodes;
+- the graph trust class;
+- premise node identifiers.
 
-- rule name `schwarzschildClaimRequirement`;
-- the concrete variable binding;
-- `.graphDerived` trust;
-- premise node IDs pointing to both asserted leaves.
+The resulting shape is:
 
-The DAG is graph provenance only. It is not a Lean proof of the represented scientific claim.
+```text
+asserted formalizes fact ─┐
+                          ├─ propagateRequirement ─ derived requiresClaim fact
+asserted requires fact ───┘
+```
+
+The DAG is graph provenance only. It does not create a Lean proof term and does
+not discharge a Lean theorem.

@@ -1,54 +1,52 @@
-# End-to-end examples
+# ZIL examples
 
-These examples exercise the three system-boundary targets together.
+The primary learning path is written directly in Lean:
 
-## 1. Use a prepared native snapshot
+```text
+examples/lean/
+```
+
+Start with:
 
 ```bash
-lake build
+lake env lean examples/lean/01_FactsAndRelations.lean
+```
+
+Then continue in numeric order through:
+
+1. facts and native relations;
+2. theorem-shaped graph rules;
+3. typed profile validation;
+4. multi-step closure and queries;
+5. persistent knowledge across Lean imports.
+
+See [`lean/README.md`](lean/README.md) for the complete guide.
+
+## Additional examples
+
+The native CLI example uses a prepared canonical snapshot:
+
+```bash
 lake exe zil -- summary examples/native-cli/schwarzschild.zilx
 lake exe zil -- closure examples/native-cli/schwarzschild.zilx
 ```
 
-See [`native-cli/README.md`](native-cli/README.md) for checks, queries, exports, and the interactive REPL.
+See [`native-cli/README.md`](native-cli/README.md).
 
-## 2. Migrate legacy `.zc` knowledge
-
-```bash
-mkdir -p build/examples
-
-clojure -M:migrate \
-  examples/migration/schwarzschild.zc \
-  build/examples/schwarzschild.zilx \
-  build/examples/schwarzschild.migration.edn
-```
-
-The generated snapshot is immediately consumable by the Lean executable:
-
-```bash
-lake exe zil -- summary build/examples/schwarzschild.zilx
-lake exe zil -- closure build/examples/schwarzschild.zilx
-lake exe zil -- export build/examples/schwarzschild.zilx prolog
-```
-
-See [`migration/README.md`](migration/README.md) for strict, lossy, and recursive migration.
-
-## 3. Inspect a derivation DAG in Lean
+The provenance example displays the explanation DAG for a derived fact:
 
 ```bash
 lake env lean --run examples/provenance/DerivationDAG.lean
 ```
 
-The program prints asserted leaves before the derived root and includes the applied rule, binding, trust class, and premise node IDs.
+See [`provenance/README.md`](provenance/README.md).
 
-See [`provenance/README.md`](provenance/README.md) for the explanation model and trust boundary.
-
-## Complete validation
+## Validation
 
 ```bash
 lake build
 lake exe zilLeanTests
-clojure -M:test
 ```
 
-The examples deliberately use one knowledge scenario across all three workflows so the migrated snapshot, native closure, query result, and derivation explanation can be compared directly.
+These examples use the native Lean implementation. No `.zc` migration step is
+required.
