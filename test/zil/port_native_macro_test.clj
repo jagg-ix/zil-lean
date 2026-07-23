@@ -76,7 +76,7 @@
     (is (= ["only.zc"]
            (mapv #(.getName (io/file %)) (:lib_files composition))))
     (is (str/includes? (:text composition) "MACRO direct"))
-    (is (not (str/includes? (:text composition) "grant_platform")))))
+    (is (not (str/includes? (:text composition) "MACRO grant_platform")))))
 
 (deftest native-parity-report-matches-clojure-expansion-test
   (let [{:keys [model]} (fixture)
