@@ -16,6 +16,7 @@ import Zil.Codec.Attribute
 import Zil.Codec.Canonical
 import Zil.Codec.Userset
 import Zil.Codec.Revision
+import Zil.Codec.Conformance
 import Zil.Parser.Tuple
 import Zil.Parser.Macro
 import Zil.Parser.Program
