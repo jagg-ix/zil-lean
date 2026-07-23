@@ -48,6 +48,8 @@ The native frontend additionally records expansion stacks and source lines, reje
 
 ## Native source composition API
 
+Semantic programs:
+
 ```lean
 Zil.Parser.MacroProgram.LibrarySource
 Zil.Parser.MacroProgram.composeLibraries
@@ -55,7 +57,13 @@ Zil.Parser.MacroProgram.parseTextWithLibraries
 Zil.Parser.MacroProgram.expandTextWithLibraries
 ```
 
-Callers provide an ordered array of library sources. The model is appended last. This keeps parsing and expansion native while allowing different filesystem or package managers to supply extension libraries.
+Typed declaration programs:
+
+```lean
+Zil.Parser.DeclarationProgram.parseTextWithLibraries
+```
+
+Callers provide an ordered array of library sources. The model is appended last. The declaration-aware entry point allows library macros to emit tuples, usersets, rules, queries, and every supported typed declaration.
 
 ## Filesystem workflow
 
@@ -88,6 +96,8 @@ Select an explicit library:
 bin/zil macro-compile model.zc --lib path/to/lib
 ```
 
+Direct files inside the selected `lib/` directory remain standalone. They are never prepended to themselves.
+
 ## Differential parity check
 
 ```bash
@@ -100,6 +110,26 @@ The command composes the source once, then expands it through:
 - `lake exe zil -- expand`.
 
 The check passes only when both ordered expanded statement vectors are exactly equal. The report also includes source SHA-256, library paths, statement counts, frontend-only statements, native exit status, and diagnostics.
+
+## Corpus compilation and conformance
+
+The recursive library compiler and differential conformance harness use the same prepared-source function as the direct macro commands.
+
+For a model backed by a nearest or explicit macro library, manifest and conformance entries record:
+
+```text
+source-sha256
+compiled-source-sha256
+macro-composed
+lib-dir
+lib-files
+```
+
+The raw source hash identifies the model file. The compiled-source hash identifies the exact concatenated library-plus-model input supplied to both frontends.
+
+The conformance harness compiles and expands the same prepared text on both sides. A valid library-backed model can no longer appear as a misleading shared rejection caused by an unresolved macro invocation.
+
+The port retirement gate requires exact parity for macro-bearing corpus sources and checks that the native parser, library API, tests, command adapter, and parity specification remain present.
 
 ## Comments and strings
 
@@ -121,6 +151,12 @@ Macros are source-to-source extensions. They do not execute Clojure or Lean meta
 lake build
 lake exe zilLeanTests
 clojure -M:test
+
+clojure -M:library --check \
+  --root lib --root libsets --root examples
+
+clojure -M:conformance \
+  --root lib --root libsets --root examples
 
 bin/zil macro-parity \
   examples/macro-extension/model.zc \
