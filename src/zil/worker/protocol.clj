@@ -1,0 +1,88 @@
+(ns zil.worker.protocol
+  "Language-neutral request construction and response verification for ZIL-EXCHANGE/1."
+  (:require [clojure.data.json :as json]
+            [clojure.string :as str]))
+
+(def schema "ZIL-EXCHANGE/1")
+(def protocol-version 1)
+
+(def operation-capabilities
+  {"parse" "parse-v1"
+   "expand" "expand-v1"
+   "query" "query-v1"
+   "authorize" "authorization-v1"
+   "impact" "impact-v1"
+   "recovery-audit" "recovery-audit-v1"})
+
+(def operation-arities
+  {"parse" 0
+   "expand" 0
+   "query" 1
+   "authorize" 3
+   "impact" 1
+   "recovery-audit" 1})
+
+(defn canonical-request
+  "Construct a stable insertion-ordered request map."
+  [{:keys [request-id operation input-path base-revision input-sha256
+           capabilities arguments]
+    :or {base-revision "-" capabilities [] arguments []}}]
+  (array-map
+   "schema" schema
+   "request_id" (str request-id)
+   "protocol_version" protocol-version
+   "operation" (str operation)
+   "input_path" (str input-path)
+   "base_revision" (str base-revision)
+   "input_sha256" (str input-sha256)
+   "capabilities" (vec (sort (distinct (map str capabilities))))
+   "arguments" (vec (map str arguments))))
+
+(defn validate-request!
+  "Fail closed before a request reaches the Lean worker."
+  [request]
+  (let [operation (get request "operation")
+        capability (get operation-capabilities operation)
+        arity (get operation-arities operation)]
+    (when-not (= schema (get request "schema"))
+      (throw (ex-info "unsupported exchange schema" {:request request})))
+    (when-not (= protocol-version (get request "protocol_version"))
+      (throw (ex-info "unsupported protocol version" {:request request})))
+    (when (str/blank? (get request "request_id"))
+      (throw (ex-info "request_id must be nonempty" {:request request})))
+    (when (str/blank? (get request "input_path"))
+      (throw (ex-info "input_path must be nonempty" {:request request})))
+    (when-not (re-matches #"sha256:[0-9a-fA-F]{64}" (get request "input_sha256" ""))
+      (throw (ex-info "input_sha256 must be sha256:<64 hex>" {:request request})))
+    (when-not capability
+      (throw (ex-info "unsupported operation" {:operation operation})))
+    (when-not (some #{capability} (get request "capabilities"))
+      (throw (ex-info "required capability is missing"
+                      {:operation operation :capability capability})))
+    (when-not (= arity (count (get request "arguments")))
+      (throw (ex-info "invalid operation argument count"
+                      {:operation operation :expected arity
+                       :actual (count (get request "arguments"))})))
+    request))
+
+(defn write-line [value]
+  (json/write-str value :escape-slash false))
+
+(defn read-line [text]
+  (json/read-str text :key-fn keyword))
+
+(defn validate-response!
+  [request response]
+  (when-not (= schema (:schema response))
+    (throw (ex-info "worker returned an unsupported schema" {:response response})))
+  (when-not (= protocol-version (:protocol_version response))
+    (throw (ex-info "worker returned an unsupported protocol version" {:response response})))
+  (when-not (= (get request "request_id") (:request_id response))
+    (throw (ex-info "worker response request_id mismatch"
+                    {:request request :response response})))
+  (when-not (= (get request "operation") (:operation response))
+    (throw (ex-info "worker response operation mismatch"
+                    {:request request :response response})))
+  (when-not (= "lean" (:authority response))
+    (throw (ex-info "worker response lost Lean authority" {:response response})))
+  response)
