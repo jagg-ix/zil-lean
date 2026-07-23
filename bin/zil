@@ -3,25 +3,66 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ZIL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-ZIL_JAR="${ZIL_JAR:-$ZIL_ROOT/dist/zil-standalone.jar}"
 
-if command -v java >/dev/null 2>&1 && [[ -f "$ZIL_JAR" ]]; then
-  exec java -jar "$ZIL_JAR" "$@"
-fi
+native_help() {
+  cat <<'EOF'
+Usage:
+  bin/zil compile <input.zc> [output.lean|-] [namespace]
+  bin/zil expand <input.zc> [output.zc|-]
+  bin/zil conformance <input.zc> [output.zilc|-]
+  bin/zil revision-summary <input.zilr>
+  bin/zil snapshot <input.zilr> <revision> [output.txt|-]
+  bin/zil causal-check <input.zilr>
 
-if command -v clojure >/dev/null 2>&1; then
-  cd "$ZIL_ROOT"
-  exec clojure -M -m zil.cli "$@"
-fi
+Legacy integrations remain available explicitly:
+  bin/zil --legacy <legacy-command> [arguments]
+  bin/zil-legacy <legacy-command> [arguments]
 
-cat >&2 <<EOF
-[zil] no runtime found for CLI execution.
-
-Expected one of:
-  1) Java + built jar at: $ZIL_JAR
-  2) clojure CLI in PATH
-
-To build the standalone jar (requires clojure once):
-  $ZIL_ROOT/bin/build-jar
+Set ZIL_LEGACY_MODE=allow to temporarily route unknown commands to the legacy CLI.
 EOF
-exit 2
+}
+
+run_native() {
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for the native CLI" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zil -- "$@"
+}
+
+command_name="${1:-}"
+
+case "$command_name" in
+  compile|expand|conformance|revision-summary|snapshot|causal-check)
+    run_native "$@"
+    ;;
+  --legacy)
+    shift
+    exec "$SCRIPT_DIR/zil-legacy" "$@"
+    ;;
+  --help|-h)
+    native_help
+    exit 0
+    ;;
+  "")
+    native_help >&2
+    exit 2
+    ;;
+  *)
+    if [[ "${ZIL_LEGACY_MODE:-deny}" == "allow" ]]; then
+      exec "$SCRIPT_DIR/zil-legacy" "$@"
+    fi
+    cat >&2 <<EOF
+[zil] '$command_name' is not a native command.
+
+Use one of:
+  bin/zil --legacy $*
+  bin/zil-legacy $*
+
+For a source file, use:
+  bin/zil compile <input.zc>
+EOF
+    exit 2
+    ;;
+esac

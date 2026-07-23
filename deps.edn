@@ -10,5 +10,7 @@
            :conformance {:main-opts ["-m" "zil.port.conformance"]}
            :port-gate {:main-opts ["-m" "zil.port.gate-runner"]}
            :verify-generated {:main-opts ["-m" "zil.port.verify"]}
+           :embedded-native {:main-opts ["-m" "zil.port.embedded-native"]}
+           :retirement {:main-opts ["-m" "zil.port.retirement"]}
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
                    :ns-default build}}}
