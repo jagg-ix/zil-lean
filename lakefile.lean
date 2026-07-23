@@ -18,3 +18,6 @@ lean_exe zilAgentContext where
 
 lean_exe zilProofObligations where
   root := `Zil.CLI.ProofObligationMain
+
+lean_exe zilTheoremAudit where
+  root := `Zil.CLI.TheoremAuditMain
