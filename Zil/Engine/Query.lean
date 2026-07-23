@@ -109,7 +109,7 @@ namespace Strata
 def lookup (strata : Strata) (relation : Name) : Nat :=
   ((strata.find? fun entry => entry.1 == relation).map (·.2)).getD 0
 
-private def set (strata : Strata) (relation : Name) (level : Nat) : Strata :=
+def set (strata : Strata) (relation : Name) (level : Nat) : Strata :=
   if strata.any fun entry => entry.1 == relation then
     strata.map fun entry => if entry.1 == relation then (relation, level) else entry
   else strata.push (relation, level)
@@ -137,7 +137,7 @@ private def relationNames (rules : Array Zil.Rule) : Array Name :=
 
 private def relaxEdge (strata : Strata) (edge : DependencyEdge) : Strata :=
   let source := strata.lookup edge.from
-  let required := source + if edge.strict then 1 else 0
+  let required := source + (if edge.strict then 1 else 0)
   let current := strata.lookup edge.to
   if current < required then strata.set edge.to required else strata
 
