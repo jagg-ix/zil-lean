@@ -32,7 +32,8 @@
             [zil.store-sqlite-test]
             [zil.port-library-test]
             [zil.port-conformance-test]
-            [zil.port-gate-test]))
+            [zil.port-gate-test]
+            [zil.port-verify-test]))
 
 (defn -main
   [& _]
@@ -68,5 +69,6 @@
                                           'zil.store-sqlite-test
                                           'zil.port-library-test
                                           'zil.port-conformance-test
-                                          'zil.port-gate-test)]
+                                          'zil.port-gate-test
+                                          'zil.port-verify-test)]
     (System/exit (if (pos? (+ fail error)) 1 0))))
