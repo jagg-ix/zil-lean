@@ -39,6 +39,7 @@
             [zil.port-embedded-native-test]
             [zil.port-retirement-test]
             [zil.port-native-macro-test]
+            [zil.worker-protocol-test]
             [zil.release-attestation-test]))
 
 (defn -main
@@ -82,5 +83,6 @@
                                           'zil.port-embedded-native-test
                                           'zil.port-retirement-test
                                           'zil.port-native-macro-test
+                                          'zil.worker-protocol-test
                                           'zil.release-attestation-test)]
     (System/exit (if (pos? (+ fail error)) 1 0))))
