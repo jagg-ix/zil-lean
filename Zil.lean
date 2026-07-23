@@ -8,12 +8,14 @@ import Zil.Core.Macro
 import Zil.Core.Declaration
 import Zil.Core.DeclarationSet
 import Zil.Core.Program
+import Zil.Core.Revision
 import Zil.Profile.Core
 import Zil.Environment.Knowledge
 import Zil.Engine.Query
 import Zil.Codec.Attribute
 import Zil.Codec.Canonical
 import Zil.Codec.Userset
+import Zil.Codec.Revision
 import Zil.Parser.Tuple
 import Zil.Parser.Macro
 import Zil.Parser.Program
