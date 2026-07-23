@@ -43,21 +43,44 @@
   (let [builder (ProcessBuilder. ^java.util.List (vec command))
         _ (when directory (.directory builder (io/file directory)))
         env (.environment builder)
-        _ (doseq [[key value] environment] (.put env (name key) (str value)))
+        _ (doseq [[key value] environment] (.put env (str key) (str value)))
         process (.start builder)
         out-future (future (slurp (.getInputStream process)))
         err-future (future (slurp (.getErrorStream process)))
         exit (.waitFor process)]
     {:exit exit :out @out-future :err @err-future :command (vec command)}))
 
+(defn- require-field! [manifest key predicate message]
+  (when-not (predicate (get manifest key))
+    (throw (ex-info message {:key key :value (get manifest key)}))))
+
+(defn- validate-manifest! [manifest]
+  (when-not (= "ZIL-LIBRARY-MANIFEST/1" (:schema manifest))
+    (throw (ex-info "Unsupported library manifest" {:schema (:schema manifest)})))
+  (require-field! manifest :output-root
+                  #(and (string? %) (not (str/blank? %)))
+                  "Library manifest requires a nonempty output root")
+  (require-field! manifest :entries vector?
+                  "Library manifest requires an entries vector")
+  (when (empty? (:entries manifest))
+    (throw (ex-info "Library manifest contains no generated modules" {})))
+  (doseq [entry (:entries manifest)]
+    (doseq [key [:source :output :namespace :output-sha256 :status]]
+      (when-not (contains? entry key)
+        (throw (ex-info "Library manifest entry is incomplete"
+                        {:entry entry :missing key})))))
+  (doseq [[label values] [[:output (map :output (:entries manifest))]
+                          [:namespace (map :namespace (:entries manifest))]]]
+    (when-not (= (count values) (count (distinct values)))
+      (throw (ex-info "Library manifest contains duplicate generated identities"
+                      {:field label :values values}))))
+  manifest)
+
 (defn read-manifest! [path]
   (let [file (io/file path)]
     (when-not (.exists file)
       (throw (ex-info "Library manifest does not exist" {:path path})))
-    (let [manifest (edn/read-string (slurp file))]
-      (when-not (= "ZIL-LIBRARY-MANIFEST/1" (:schema manifest))
-        (throw (ex-info "Unsupported library manifest" {:schema (:schema manifest)})))
-      manifest)))
+    (-> (edn/read-string (slurp file)) validate-manifest!)))
 
 (defn aggregate-source [entries]
   (let [namespaces (->> entries
@@ -85,27 +108,28 @@
       (not (.exists file))
       (assoc (base-entry entry) :status :missing)
 
-      (not= (:output-sha256 entry) (library/file-sha256 file))
-      (assoc (base-entry entry) :status :hash-mismatch
-             :actual-output-sha256 (library/file-sha256 file))
-
       :else
-      (let [invocation (into (vec command) [(.getCanonicalPath file)])
-            result (runner {:command invocation :directory directory :environment {}})]
-        (if (zero? (:exit result))
-          (assoc (base-entry entry) :status :verified)
-          (assoc (base-entry entry)
-                 :status :failed
-                 :exit (:exit result)
-                 :error (str/trim (or (:err result) ""))
-                 :command (:command result invocation)))))))
+      (let [actual-sha (library/file-sha256 file)]
+        (if (not= (:output-sha256 entry) actual-sha)
+          (assoc (base-entry entry) :status :hash-mismatch
+                 :actual-output-sha256 actual-sha)
+          (let [invocation (into (vec command) [(.getCanonicalPath file)])
+                result (runner {:command invocation :directory directory :environment {}})]
+            (if (zero? (:exit result))
+              (assoc (base-entry entry) :status :verified)
+              (assoc (base-entry entry)
+                     :status :failed
+                     :exit (:exit result)
+                     :error (str/trim (or (:err result) ""))
+                     :command (:command result invocation)))))))))
 
 (defn- aggregate-environment [output-root]
-  (let [existing (System/getenv "LEAN_PATH")
+  (let [root (path-string (absolute-path output-root))
+        existing (System/getenv "LEAN_PATH")
         separator (System/getProperty "path.separator")]
     {"LEAN_PATH" (if (str/blank? existing)
-                   (str output-root)
-                   (str output-root separator existing))}))
+                   root
+                   (str root separator existing))}))
 
 (defn verify-manifest!
   [{:keys [manifest output aggregate runner command directory write-aggregate]
@@ -118,13 +142,23 @@
   (let [manifest-data (read-manifest! manifest)
         entries (mapv #(verify-entry {:runner runner :command command :directory directory} %)
                       (:entries manifest-data))
+        individual-ok (every? #(= :verified (:status %)) entries)
         aggregate-text (aggregate-source (:entries manifest-data))
         aggregate-path (path-string (absolute-path aggregate))
         _ (when write-aggregate (atomic-write! aggregate-path aggregate-text))
         output-root (:output-root manifest-data)
         aggregate-result
-        (if (or (not write-aggregate) (str/blank? aggregate-text))
-          {:path aggregate-path :status :skipped}
+        (cond
+          (not write-aggregate)
+          {:path aggregate-path :status :skipped :reason :disabled}
+
+          (str/blank? aggregate-text)
+          {:path aggregate-path :status :skipped :reason :no-imports}
+
+          (not individual-ok)
+          {:path aggregate-path :status :blocked :reason :module-verification-failed}
+
+          :else
           (let [invocation (into (vec command) [aggregate-path])
                 result (runner {:command invocation
                                 :directory directory
@@ -140,15 +174,15 @@
                :exit (:exit result)
                :error (str/trim (or (:err result) ""))
                :command (:command result invocation)})))
-        ok (and (every? #(= :verified (:status %)) entries)
+        ok (and individual-ok
                 (contains? #{:verified :skipped} (:status aggregate-result)))
         report (sorted-map
                 :schema "ZIL-LEAN-VERIFY/1"
                 :manifest (path-string (absolute-path manifest))
-                :output-root output-root
+                :output-root (path-string (absolute-path output-root))
                 :ok ok
                 :verified (count (filter #(= :verified (:status %)) entries))
-                :failed (count (remove #(= :verified (:status %)) entries))
+                :not-verified (count (remove #(= :verified (:status %)) entries))
                 :entries entries
                 :aggregate aggregate-result)]
     (atomic-write! output (str (pr-str report) "\n"))
@@ -156,6 +190,10 @@
 
 (def usage
   "zil-verify-generated [--manifest FILE] [--output FILE] [--aggregate FILE] [--no-aggregate]")
+
+(defn- option-value! [remaining flag]
+  (or (second remaining)
+      (throw (ex-info "Missing verifier option value" {:option flag}))))
 
 (defn- parse-cli [args]
   (loop [remaining (seq args)
@@ -166,9 +204,12 @@
     (if-not remaining
       options
       (case (first remaining)
-        "--manifest" (recur (nnext remaining) (assoc options :manifest (second remaining)))
-        "--output" (recur (nnext remaining) (assoc options :output (second remaining)))
-        "--aggregate" (recur (nnext remaining) (assoc options :aggregate (second remaining)))
+        "--manifest" (recur (nnext remaining)
+                            (assoc options :manifest (option-value! remaining "--manifest")))
+        "--output" (recur (nnext remaining)
+                          (assoc options :output (option-value! remaining "--output")))
+        "--aggregate" (recur (nnext remaining)
+                             (assoc options :aggregate (option-value! remaining "--aggregate")))
         "--no-aggregate" (recur (next remaining) (assoc options :write-aggregate false))
         "--help" (assoc options :help true)
         (throw (ex-info "Unknown verifier argument" {:argument (first remaining)}))))))
