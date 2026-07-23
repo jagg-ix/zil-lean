@@ -3,6 +3,9 @@ import Zil.Parser.DeclarationProgram
 
 open Zil.Formalization
 
+private def hasSubstring (text needle : String) : Bool :=
+  (text.splitOn needle).length > 1
+
 private def target
     (id : Name)
     (status : Status)
@@ -99,7 +102,7 @@ private def source : String :=
 #guard match renderPlan orderedTargets with
   | .ok report =>
       report.startsWith "ZIL-FORMALIZATION-PLAN\t1\n" &&
-      report.contains "target\thigher\tready\t50\tready"
+      hasSubstring report "target\thigher\tready\t50\tready"
   | .error _ => false
 
 run_cmd do
@@ -112,5 +115,5 @@ run_cmd do
           match renderNext targets with
           | .error error => throwError error
           | .ok report =>
-              unless report.contains "\tnext\tDemo\tNext.lean\tDemo.next\t40\t" do
+              unless hasSubstring report "\tnext\tDemo\tNext.lean\tDemo.next\t40\t" do
                 throwError "native formalization scheduler selected the wrong target"
