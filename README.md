@@ -1,6 +1,6 @@
 # ZIL Lean
 
-ZIL is a small relational language for describing named objects, the relationships between them, and rules that derive new relationships.
+ZIL is a small relational language for describing named objects, the relationships between them, and rules that derive additional relationships.
 
 A relation has three parts:
 
@@ -14,31 +14,33 @@ For example:
 lean.Parser.parse ── implements ──▶ requirement.parseInput
 ```
 
-ZIL Lean implements this model inside Lean 4. Lean checks definitions, executable programs, theorem statements, and proofs. ZIL adds a queryable project-knowledge layer around those checked declarations.
+ZIL Lean implements this model inside Lean 4. Lean checks definitions, executable programs, theorem statements, and proofs. ZIL records how those checked declarations relate to requirements, documents, tests, tasks, dependencies, and other parts of a project.
 
-That layer can record information such as:
+The same project map can answer questions such as:
 
 ```text
-this declaration implements this requirement
-this theorem validates this component
-this module depends on this declaration
-this task is blocked by this missing result
-this change affects these downstream modules
+which declaration implements this requirement?
+which theorem validates this component?
+which modules depend on this declaration?
+which task is waiting for this result?
+which declarations should be reviewed after this change?
 ```
 
-The result is repository context that people, tools, and AI agents can inspect directly instead of reconstructing it repeatedly from filenames, comments, issue descriptions, and conversation history.
+Developers, review tools, CI, documentation tools, and AI assistants can query the same stored relationships.
 
 ## Relation tuples: from Zanzibar to ZIL
 
-ZIL's tuple notation and relational model are influenced by Zanzibar-style authorization data and its Datalog-like treatment of relations.
+ZIL's relation model is influenced by the tuple-oriented model described in Google's Zanzibar paper:
 
-The Zanzibar paper represents an authorization tuple as:
+[Zanzibar: Google's Consistent, Global Authorization System (USENIX ATC '19)](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf)
+
+Section 2.1 represents an authorization tuple as:
 
 ```text
 object#relation@user
 ```
 
-Table 1 gives examples such as:
+Table 1 gives these examples:
 
 ```text
 doc:readme#owner@10
@@ -47,7 +49,7 @@ doc:readme#viewer@group:eng#member
 doc:readme#parent@folder:A#...
 ```
 
-Their meanings are:
+They describe four useful relation patterns:
 
 ```text
 user 10 is an owner of doc:readme
@@ -56,21 +58,15 @@ members of group:eng are viewers of doc:readme
 doc:readme is in folder:A
 ```
 
-The third example is especially important. Its subject is a **userset** rather than one user:
+The third tuple uses the userset:
 
 ```text
 group:eng#member
 ```
 
-It denotes the set of users related to `group:eng` by `member`. This lets one relation refer to another relation and supports nested groups, inherited permissions, and rule-based authorization.
+This userset names everyone related to `group:eng` through `member`. A tuple can therefore refer to another relation, supporting group membership and inherited access.
 
-ZIL retains the same compact relational shape:
-
-```text
-object#relation@subject
-```
-
-A Zanzibar-style policy fact can therefore be written in standalone ZIL syntax as:
+Standalone ZIL can express the same tuple-shaped facts:
 
 ```zc
 doc:readme#owner@user:10.
@@ -79,7 +75,7 @@ doc:readme#viewer@group:eng#member.
 doc:readme#parent@folder:A.
 ```
 
-Inside Lean, the same kind of relation is represented with native ZIL syntax:
+Native ZIL Lean syntax represents the relations with Lean names:
 
 ```lean
 import Zil
@@ -93,35 +89,37 @@ zil_fact
   node(group.engineering)
     ⟶[member]
   node(user.u11)
+
+zil_fact
+  node(doc.readme)
+    ⟶[viewer]
+  node(group.engineering)
 ```
 
-The notation is adapted to Lean, while the model remains a relation between named terms.
-
-### From authorization tuples to general project knowledge
-
-Zanzibar applies relation tuples to users, groups, objects, and permissions. ZIL applies the same relational pattern to a broader project graph:
+Zanzibar uses relation tuples to describe authorization data. ZIL uses the same compact relational building blocks for authorization models and for wider project relationships:
 
 ```text
-document ── viewer ─────▶ group
-module ───── dependsOn ──▶ module
-declaration ─ implements ▶ requirement
-theorem ───── validates ──▶ component
-task ──────── blockedBy ──▶ issue
+document ───── viewer ──────▶ group
+declaration ── implements ──▶ requirement
+theorem ────── validates ────▶ component
+module ─────── dependsOn ────▶ module
+task ───────── blockedBy ────▶ issue
+claim ──────── supportedBy ──▶ document
 ```
 
-This is a generalization of the data model, not a claim that ZIL reproduces Zanzibar's distributed authorization service. Zanzibar contributes the tuple-oriented authorization pattern; ZIL Lean uses relations and Horn rules to organize and query repository knowledge alongside Lean code.
+### Datalog-style rules
 
-### Datalog-style derivation
+Table 1 presents relation data. Rules describe how additional relations follow from that data. ZIL uses Horn rules, the rule form commonly used by Datalog systems.
 
-A relation database becomes more useful when rules derive new relations from existing ones. For authorization, a rule might express:
+For example:
 
 ```text
-if a user is a member of a group
-and that group can view a document,
-then the user can view the document
+when a group can view a document
+and a user belongs to that group,
+the user can view the document
 ```
 
-In ZIL Lean, a corresponding Horn-style rule can be written as:
+In ZIL Lean:
 
 ```lean
 zil_theorem_rule groupViewer
@@ -134,21 +132,21 @@ zil_theorem_rule groupViewer
 Given:
 
 ```text
-doc.readme ── viewer ──▶ group.engineering
-group.engineering ── member ──▶ user.u11
+doc.readme ─────────── viewer ──▶ group.engineering
+group.engineering ──── member ──▶ user.u11
 ```
 
-closure derives:
+repeated rule evaluation adds:
 
 ```text
 doc.readme ── viewer ──▶ user.u11
 ```
 
-The same rule structure can represent project reasoning rather than access control.
+The same rule structure can derive project relationships, such as requirement coverage and change impact.
 
 ## A project example
 
-Consider a project containing a parser, a normalization pass, and a theorem about normalized output.
+Consider a project containing a parser, a normalization pass, and a theorem about normalized output:
 
 ```lean
 import Zil
@@ -169,7 +167,7 @@ zil_fact
   node(lean.Normalize.normalize)
 ```
 
-These facts form a small knowledge graph:
+These facts form a relationship map:
 
 ```text
 requirement.parseInput
@@ -184,18 +182,18 @@ lean.Normalize.normalize
 lean.Normalize.normalized_sound
 ```
 
-Lean knows the types, definitions, and proofs of these declarations. ZIL records their project roles and relationships.
+Lean checks the parser, normalizer, theorem statement, and proof. ZIL stores their project roles and connections.
 
-A query can now ask:
+A query can ask:
 
 - which declaration implements `requirement.parseInput`;
 - which components depend on the parser;
 - which transformations have a validation theorem;
 - which downstream declarations should be reviewed after a change.
 
-## Rules derive project knowledge
+## Rules derive project relationships
 
-A rule can propagate direct change impact:
+A rule can derive direct change impact:
 
 ```lean
 zil_theorem_rule propagateImpact
@@ -204,7 +202,7 @@ zil_theorem_rule propagateImpact
   : changed ⟶[affects] dependent
 ```
 
-From the parser dependency, the engine derives:
+From the parser dependency, the engine adds:
 
 ```text
 lean.Parser.parse
@@ -212,7 +210,7 @@ lean.Parser.parse
 lean.Normalize.normalize
 ```
 
-A second rule can propagate impact through several levels:
+A second rule continues the relationship through several levels:
 
 ```lean
 zil_theorem_rule propagateTransitiveImpact
@@ -222,24 +220,26 @@ zil_theorem_rule propagateTransitiveImpact
   : source ⟶[affects] target
 ```
 
-Local dependency annotations can therefore support a repository-wide impact query.
+Local dependency facts can therefore support a repository-wide review query.
 
-## What ZIL adds beside Lean
+## Lean and ZIL in one project
 
-Lean answers questions about terms, types, definitions, theorem statements, computation, and proof correctness. ZIL represents relationships concerning the purpose and organization of the whole project.
+Lean verifies terms, types, definitions, computation, theorem statements, and proofs.
 
-Examples include:
+ZIL stores relationships concerning purpose, coverage, dependencies, evidence, tasks, and review work across the repository.
+
+Together they support questions such as:
 
 - Which declaration implements a requirement?
 - Which theorem validates a transformation?
-- Which modules are affected by a changed dependency?
-- Which claims have supporting evidence?
-- Which work items remain blocked?
-- Which file advertises a capability without an implementation link?
-- Which facts and rules produced a derived relationship?
-- Which project assumptions changed since an AI agent last worked on the repository?
+- Which modules depend on a changed declaration?
+- Which claims have supporting documents?
+- Which work items are waiting for a result?
+- Which advertised capabilities have implementation links?
+- Which facts and rules produced an inferred relationship?
+- Which project assumptions changed since the previous work session?
 
-These relationships may span many modules and may connect Lean declarations to requirements, documents, issues, tests, agents, or external evidence.
+These relationships can connect Lean declarations to requirements, documents, issues, tests, tools, and external sources across many modules.
 
 ## Core model
 
@@ -259,7 +259,7 @@ requirement.parseInput
 component.normalizer
 issue.missingTerminationProof
 document.design.section4
-agent.formalization
+assistant.formalization
 ```
 
 ## Quick start
@@ -290,7 +290,7 @@ lake env lean examples/lean/05_ImportedKnowledge.lean
 
 ## Facts, rules, and queries
 
-Register a ground fact:
+Register a fact:
 
 ```lean
 zil_fact
@@ -299,7 +299,7 @@ zil_fact
   node(requirement.parseInput)
 ```
 
-Declare a theorem-shaped graph rule:
+Declare a theorem-shaped rule:
 
 ```lean
 zil_theorem_rule implementationCoversRequirement
@@ -319,7 +319,7 @@ zil_rule implementationCoversRequirement where
     requirement ⟶[coveredBy] declaration
 ```
 
-Both forms lower to the canonical `Zil.Rule` representation used by the engine and tooling.
+Both forms produce the standard `Zil.Rule` value used by the engine and tools.
 
 A query can retrieve the implementation covering a requirement:
 
@@ -337,11 +337,11 @@ private def coverageQuery : Zil.Query := {
 }
 ```
 
-The engine performs variable binding, conjunctive matching, semantic deduplication, and bounded least-fixpoint evaluation.
+The engine binds variables, matches several premises, removes repeated results, and applies rules until the result set becomes stable within the configured bound.
 
-## Typed relation profiles
+## Relation schemas
 
-A relation profile records expected endpoint kinds:
+A relation schema records the expected source and target types:
 
 ```text
 implements  : declaration → requirement
@@ -353,7 +353,7 @@ member      : group → user
 viewer      : document → user-or-group
 ```
 
-A typed rule declares the kind of each variable:
+A typed rule declares the type of each variable:
 
 ```lean
 zil_typed_rule typedCoverage using Zil.Profile.research where
@@ -368,29 +368,29 @@ zil_typed_rule typedCoverage using Zil.Profile.research where
 #guard typedCoverage.valid
 ```
 
-Profiles make category errors visible while preserving the canonical rule for diagnostics and tooling.
+The schema reports category mistakes while keeping the underlying rule available for messages and tools.
 
-## How ZIL helps AI-assisted projects
+## Shared project maps for people and tools
 
-AI agents can lose project context between sessions, branches, or repositories. ZIL gives selected project facts a persistent machine-readable form that can be queried and checked.
+ZIL stores selected project facts with the source code. Developers, reviewers, build tools, documentation tools, issue trackers, and AI assistants can use the same map.
 
-### Preserve intent
+### Continue work from a previous session
 
 ```text
 file.Parser.lean ── responsibleFor ──▶ requirement.parseInput
 lean.Parser.parse ── implements ─────▶ requirement.parseInput
 ```
 
-An agent can inspect why a file exists and which requirement its declarations serve before editing it.
+A developer or assistant can inspect why a file exists and which requirement its declarations serve before editing it.
 
-### Expose missing work
+### Find work that is waiting
 
 ```text
 requirement.totalParser ── blockedBy ──▶ issue.missingTerminationProof
 issue.missingTerminationProof ── assignedTo ──▶ task.proveTermination
 ```
 
-Queries can find requirements with blockers, tasks without owners, or advertised capabilities without implementation links.
+Queries can find blocked requirements, tasks awaiting an owner, and capabilities awaiting an implementation link.
 
 ### Calculate change impact
 
@@ -399,47 +399,57 @@ lean.Normalize.normalize ── dependsOn ──▶ lean.Parser.parse
 lean.Codegen.emit ───────── dependsOn ──▶ lean.Normalize.normalize
 ```
 
-Impact rules derive the downstream components requiring review when `lean.Parser.parse` changes.
+Impact rules return the downstream components that require review when `lean.Parser.parse` changes.
 
-### Guard long-running work
+### Check long-running changes
 
 ```lean
 zil_checkpoint beforeParserRefactor
 #zil_check_mutation token
 ```
 
-Mutation checks can surface changed contracts, stale graph revisions, theorem-intent drift, and missing rollback checkpoints before an automated edit continues.
+Change checks compare graph revisions, contracts, stated goals, and rollback checkpoints before automated work continues.
 
-### Audit derived context
+### Explain inferred relationships
 
-The provenance engine records the rule, variable binding, trust class, and premise node identifiers behind each derived relation. An agent can inspect how a conclusion was obtained rather than receiving only the final edge.
-
-### Share context between agents
-
-Canonical snapshots and deltas allow separate agents to exchange the same project graph. One agent may inspect requirements, another implement code, another verify proofs, and another review impact while sharing stable relation names and revisions.
-
-Authorization-style relations can also control an agent workflow:
+Each inferred relation can record:
 
 ```text
-repo.zilLean ── editor ──▶ group.implementers
-group.implementers ── member ──▶ agent.codegen
-repo.zilLean ── reviewer ──▶ agent.verifier
+input project facts
+rule name
+variable bindings
+trust level
+input relation identifiers
 ```
 
-The same tuple model can describe both project context and role-based access to project operations.
+This gives developers and tools a step-by-step explanation of how the engine reached a result.
+
+### Share context between tools
+
+`ZILX/1` snapshots and `ZILD/1` deltas allow separate tools to exchange the same project map. One tool may inspect requirements, another implement code, another verify proofs, and another review impact while sharing stable relation names and revision numbers.
+
+Authorization-style relations can also describe roles in an automated workflow:
+
+```text
+repo.zilLean ── editor ─────▶ group.implementers
+group.implementers ─ member ▶ assistant.codegen
+repo.zilLean ── reviewer ───▶ assistant.verifier
+```
+
+The tuple model therefore supports project context and role-based access to project operations.
 
 ## Persistence, linting, and contracts
 
-Facts, rules, profiles, contracts, checkpoints, declaration links, and certified rules use Lean environment extensions. Compiled `.olean` imports reconstruct registered entries and semantically deduplicate diamond imports.
+Facts, rules, schemas, contracts, checkpoints, declaration links, and proof-backed rules use Lean environment extensions. Compiled `.olean` imports restore registered entries and collapse repeated diamond imports into one relation.
 
-The coverage linter evaluates relations across graph closure:
+The coverage linter evaluates the stored and inferred relations:
 
 ```lean
 #zil_lint
 #zil_lint!
 ```
 
-A formalization contract can record required declarations, required graph relations, advertised scope, completion state, and revision history:
+A formalization contract can record required declarations, required relations, advertised scope, completion state, and revision history:
 
 ```lean
 zil_register_contract contract
@@ -447,11 +457,11 @@ zil_register_contract contract
 #zil_contract_check!
 ```
 
-Contracts give maintainers and agents a shared machine-readable description of the expected result of a task or file.
+Contracts give maintainers and tools a shared description of the expected result of a task or file.
 
-## Trust and provenance
+## Trust levels and relationship explanations
 
-ZIL records three trust classes:
+ZIL records three trust levels:
 
 ```text
 asserted
@@ -459,9 +469,9 @@ graphDerived
 certified
 ```
 
-- `asserted` marks directly registered project knowledge;
-- `graphDerived` marks a relation produced by a graph rule;
-- `certified` associates a graph rule with a Lean proposition and proof term.
+- `asserted` marks a directly registered project fact;
+- `graphDerived` marks an inferred relation;
+- `certified` associates a rule with a Lean proposition and proof term.
 
 ```lean
 private theorem certificate : True := True.intro
@@ -472,25 +482,13 @@ private def certifiedRule : Zil.Trust.CertifiedRule :=
 zil_register_certified_rule certifiedRule
 ```
 
-Lean checks the proposition and proof term. ZIL records how the checked object participates in the surrounding graph.
+Lean checks the proposition and proof term. ZIL records how the checked declaration participates in the project map.
 
-The provenance engine builds an acyclic derivation graph whose nodes record the semantic fact, origin, rule name, variable binding, trust class, and premise identifiers:
+For inferred relationships, the explanation data records the project fact, source, rule name, variable binding, trust level, and input relation identifiers. Developers and tools can use that data to show how a result was reached.
 
-```lean
-let dag :=
-  Zil.Engine.Provenance.build facts rules
+## Native CLI and data exchange
 
-let some root :=
-  Zil.Engine.Provenance.rootFor? dag target
-  | failure
-
-let explanation :=
-  Zil.Engine.Provenance.explain dag root
-```
-
-## Native CLI and interchange
-
-The native `zil` executable reads canonical `ZILX/1` snapshots:
+The native `zil` executable reads standard `ZILX/1` snapshots:
 
 ```bash
 lake exe zil -- summary examples/native-cli/project.zilx
@@ -501,7 +499,7 @@ lake exe zil -- repl examples/native-cli/project.zilx
 
 Supported operations include `summary`, `closure`, `check`, `query`, `export souffle`, `export prolog`, `apply-delta`, and `repl`.
 
-Canonical relations and rules have deterministic codecs:
+Relations and rules have deterministic text codecs:
 
 ```lean
 Zil.Codec.encodeRelation
@@ -510,54 +508,53 @@ Zil.Codec.encodeRule
 Zil.Codec.decodeRule
 ```
 
-`ZILX/1` stores revisioned snapshots. `ZILD/1` stores incremental updates with base and target revisions, fact changes, rule changes, and profile changes.
+`ZILX/1` stores revisioned snapshots. `ZILD/1` stores incremental updates with base and target revisions, fact changes, rule changes, and schema changes.
 
-Canonical facts and rules can be exported to Soufflé Datalog or Prolog:
+Facts and rules can be exported to Soufflé Datalog or Prolog:
 
 ```lean
 #zil_export_souffle
 #zil_export_prolog
 ```
 
-These interfaces let external analysis tools and agents consume the same relational state used by the Lean implementation.
+These interfaces let external analysis tools and assistants consume the same relational state used by the Lean implementation.
 
 ## Use cases
 
 ZIL Lean can support:
 
 - Zanzibar-style authorization and group-membership models;
-- formalization maps connecting informal claims to Lean declarations;
-- requirement-to-implementation traceability;
+- maps connecting informal claims to Lean declarations;
+- requirement-to-implementation tracking;
 - theorem and component dependency analysis;
 - change-impact queries across modules;
 - evidence and source tracking;
 - repository coverage checks;
-- explicit task contracts for people and agents;
-- multi-session AI work with revision and checkpoint guards;
-- provenance explanations for derived project knowledge;
-- exchange of graph state with Datalog and Prolog tooling.
+- explicit task contracts for people and tools;
+- AI assistants continuing work across sessions with revision and checkpoint checks;
+- step-by-step explanations for inferred project relationships;
+- exchange of relation data with Datalog and Prolog tools.
 
 ## Existing `.zc` runtime
 
-The repository also contains the standalone ZIL syntax and Clojure/DataScript runtime. It supports `.zc` files, macros, import/export tooling, embedded annotations, and adapters.
+The repository also contains the standalone ZIL syntax and Clojure/DataScript runtime. It supports `.zc` files, macros, import/export tools, embedded annotations, and adapters.
 
 ```bash
 clojure -M -m zil.cli examples/it-infra-minimal.zc
 ```
 
-The canonical exchange layer connects that runtime with the native Lean representation.
+The standard exchange layer connects that runtime with the native Lean representation.
 
 ## Repository layout
 
 ```text
 Zil/                 native Lean library
-Zil/Engine/          Horn evaluation and provenance
-Zil/Trust/           certified graph rules
+Zil/Engine/          Horn-rule evaluation and relationship explanations
+Zil/Trust/           proof-backed rules
 Zil/Exchange/        snapshots and deltas
 examples/lean/       progressive native examples
-examples/provenance/ derivation DAG example
 examples/native-cli/ CLI snapshot example
-src/zil/             Clojure runtime and tooling
+src/zil/             Clojure runtime and tools
 spec/                language and runtime specifications
 ```
 
