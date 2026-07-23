@@ -24,3 +24,6 @@ lean_exe zilTheoremAudit where
 
 lean_exe zilActionToken where
   root := `Zil.CLI.ActionTokenMain
+
+lean_exe zilTokenLifecycle where
+  root := `Zil.CLI.TokenLifecycleMain

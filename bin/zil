@@ -24,6 +24,7 @@ Usage:
   bin/zil proof-obligations <input.zc> [tool|-] [output|-]
   bin/zil theorem-audit <input.zc> [output|-]
   bin/zil action-token <input.zc> <request-node> [output|-]
+  bin/zil token-lifecycle <input.zc> <request-node> [output|-]
   bin/zil formalization-plan <input.zc> [output.txt|-]
   bin/zil formalization-next <input.zc> [output.txt|-]
   bin/zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]
@@ -34,8 +35,9 @@ Usage:
 Comma-separated name lists are used by agent-context. The canonical report bytes
 are hashed as the durable context_bundle_id required by action-token issuance.
 
-Action-token validates the complete preflight evidence, current revision, durable
-lease snapshot, action intent, rollback plan, TTL, and exact SHA-256 context bundle ID.
+Action-token validates preflight evidence and token intent. Token-lifecycle replays
+checkpoint binding and single-use execution with revision, expiry, lease, store,
+and observed-output hash checks.
 
 Proof-obligations accepts all, -, z3, tlaps, lean4, acl2, or manual. Native
 governance audits evidence and status but does not pretend to execute external solvers.
@@ -103,6 +105,16 @@ run_action_token() {
   exec lake exe zilActionToken -- "$@"
 }
 
+run_token_lifecycle() {
+  shift
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for native token lifecycle auditing" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zilTokenLifecycle -- "$@"
+}
+
 run_macro() {
   local mode="$1"
   shift
@@ -135,6 +147,9 @@ case "$command_name" in
     ;;
   action-token)
     run_action_token "$@"
+    ;;
+  token-lifecycle)
+    run_token_lifecycle "$@"
     ;;
   macro-compile)
     shift
