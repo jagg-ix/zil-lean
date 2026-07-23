@@ -5,6 +5,8 @@ import Zil.Core.Rule
 import Zil.Core.Query
 import Zil.Core.Userset
 import Zil.Core.Macro
+import Zil.Core.Declaration
+import Zil.Core.DeclarationSet
 import Zil.Core.Program
 import Zil.Profile.Core
 import Zil.Environment.Knowledge
@@ -16,7 +18,10 @@ import Zil.Parser.Tuple
 import Zil.Parser.Macro
 import Zil.Parser.Program
 import Zil.Parser.MacroProgram
+import Zil.Parser.Declaration
+import Zil.Parser.DeclarationProgram
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
 import Zil.Syntax.TheoremRule
 import Zil.Syntax.Environment
+import Zil.Syntax.Declaration
