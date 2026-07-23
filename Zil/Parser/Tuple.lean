@@ -173,15 +173,19 @@ private def renderTupleDefinition (index : Nat) (tuple : TupleExpr) : Except Str
 def renderLeanModule (program : TupleProgram) (namespaceName : Name) : Except String String := do
   let mut tupleDefs : Array String := #[]
   let mut tupleNames : Array String := #[]
-  for index in [:program.tuples.size] do
-    tupleDefs := tupleDefs.push (← renderTupleDefinition index program.tuples[index]!)
+  for tuple in program.tuples do
+    let index := tupleDefs.size
+    tupleDefs := tupleDefs.push (← renderTupleDefinition index tuple)
     tupleNames := tupleNames.push s!"sourceTuple{index}"
   let lowered := program.lower
   let facts := lowered.facts.map fun fact => s!"zil_fact\n  {renderRelation fact}"
   let mut rules : Array String := #[]
   for rule in lowered.rules do
     let variables := String.intercalate " " (rule.variables.map fun name => toString name).toList
-    let premises := rule.premises.map fun premise => s!"  ({renderRelation premise})"
+    let mut premises : Array String := #[]
+    for premise in rule.premises do
+      let hypothesisIndex := premises.size
+      premises := premises.push s!"  (h{hypothesisIndex} : {renderRelation premise})"
     rules := rules.push <|
       s!"zil_theorem_rule generated_{rule.name.toString.replace "." "_"}\n" ++
       s!"  {{{variables} : Zil.Node}}\n" ++
