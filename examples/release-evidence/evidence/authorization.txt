@@ -1,0 +1,9 @@
+ZIL-AUTHORIZATION	1
+decision	allow
+source	derived
+object	repo.release
+relation	zil.publisher
+subject	agent.release
+base-facts	4
+closed-facts	7
+deriving-rules	zil.releasePublisher
