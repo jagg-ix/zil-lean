@@ -49,9 +49,9 @@
 (defn prepare-source
   "Return the exact source text that native and Clojure consumers should use.
 
-  Direct members of the selected `lib/` directory remain standalone so a
-  library file is never prepended to itself. Other files are composed with the
-  sorted, non-recursive library sources discovered by `preprocess-model`."
+  Sources with no library and direct members of the selected `lib/` directory
+  remain standalone. Other files are composed with sorted, non-recursive
+  library sources discovered by `preprocess-model`."
   [source-path {:keys [lib-dir] :as options}]
   (let [source-file (.getCanonicalFile (io/file source-path))
         resolved (preprocess/resolve-lib-dir source-path lib-dir)
@@ -59,11 +59,11 @@
         direct-library-member?
         (and resolved-file
              (= resolved-file (.getCanonicalFile (.getParentFile source-file))))]
-    (if direct-library-member?
+    (if (or (nil? resolved-file) direct-library-member?)
       (let [text (slurp source-file)]
         {:ok true
          :model (.getCanonicalPath source-file)
-         :lib_dir (.getCanonicalPath resolved-file)
+         :lib_dir (some-> resolved-file .getCanonicalPath)
          :lib_files []
          :composed false
          :text text
