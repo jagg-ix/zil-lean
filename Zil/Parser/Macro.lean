@@ -25,6 +25,41 @@ private def stackSuffix (stack : Array Name) : String :=
 private def containsText (value needle : String) : Bool :=
   (value.splitOn needle).length > 1
 
+private def startsWithCI (value prefix : String) : Bool :=
+  value.toLower.startsWith prefix.toLower
+
+private def equalsCI (left right : String) : Bool :=
+  left.toLower == right.toLower
+
+/-- Remove `//` comments outside quoted strings. Escaped quotes and `//` inside a
+string are preserved. This matches the lexical behavior of the Clojure parser. -/
+private def stripLineComment (value : String) : String :=
+  let rec loop
+      (remaining : List Char)
+      (inString escaped : Bool)
+      (out : String) : String :=
+    match remaining with
+    | [] => out
+    | char :: rest =>
+        if escaped then
+          loop rest inString false (out.push char)
+        else if inString then
+          if char == '\\' then
+            loop rest true true (out.push char)
+          else if char == '"' then
+            loop rest false false (out.push char)
+          else
+            loop rest true false (out.push char)
+        else if char == '"' then
+          loop rest true false (out.push char)
+        else
+          match rest with
+          | next :: _ =>
+              if char == '/' && next == '/' then out
+              else loop rest false false (out.push char)
+          | [] => loop rest false false (out.push char)
+  loop value.data false false ""
+
 private def failAt (line : ExpandedLine) (message : String) : Except ParseError α :=
   .error {
     line := line.number
@@ -91,9 +126,10 @@ private def sourceLines (text : String) : Array ExpandedLine := Id.run do
   let mut number := 0
   for raw in text.splitOn "\n" do
     number := number + 1
-    let trimmed := raw.trim
-    if trimmed.isEmpty || trimmed.startsWith "//" then continue
-    out := out.push { number, text := raw }
+    let withoutComment := stripLineComment raw
+    let trimmed := withoutComment.trim
+    if trimmed.isEmpty then continue
+    out := out.push { number, text := trimmed }
   out
 
 private def parseNameAt (line : ExpandedLine) (value : String) : Except ParseError Name :=
@@ -105,7 +141,7 @@ private def parseNameAt (line : ExpandedLine) (value : String) : Except ParseErr
 
 private def parseHeader (line : ExpandedLine) : Except ParseError (Name × Array Name) := do
   let text := line.text.trim
-  unless text.startsWith "MACRO " && text.endsWith ":" do
+  unless startsWithCI text "MACRO " && text.endsWith ":" do
     throw {
       line := line.number
       message := "invalid MACRO header" ++ stackSuffix line.stack
@@ -154,10 +190,10 @@ private partial def collectBody
     }
   let line := lines[index]!
   let text := line.text.trim
-  if text == "ENDMACRO." then
+  if equalsCI text "ENDMACRO." then
     if emitted.isEmpty then failAt header "macro definition must emit at least one statement"
     else pure (index + 1, emitted)
-  else if text.startsWith "EMIT " then
+  else if startsWithCI text "EMIT " then
     let statement := text.drop 5 |>.trim
     if statement.isEmpty then failAt line "EMIT requires a source statement"
     else collectBody lines (index + 1) header (emitted.push statement)
@@ -172,7 +208,7 @@ private partial def collectDefinitions
   if index >= lines.size then return (definitions, payload)
   let line := lines[index]!
   let text := line.text.trim
-  if text.startsWith "MACRO " then
+  if startsWithCI text "MACRO " then
     let (name, parameters) ← parseHeader line
     if definitions.any (fun definition => definition.name == name) then
       throw {
@@ -192,14 +228,14 @@ private partial def collectDefinitions
         sourceLine := line.text
       }
     collectDefinitions lines nextIndex (definitions.push definition) payload
-  else if text == "ENDMACRO." || text.startsWith "EMIT " then
+  else if equalsCI text "ENDMACRO." || startsWithCI text "EMIT " then
     failAt line "macro body statement appears outside a MACRO definition"
   else
     collectDefinitions lines (index + 1) definitions (payload.push line)
 
 private def parseUse? (line : ExpandedLine) : Except ParseError (Option (Name × Array String)) := do
   let text := line.text.trim
-  if !text.startsWith "USE " then return none
+  if !startsWithCI text "USE " then return none
   unless text.endsWith "." do
     throw {
       line := line.number
@@ -305,7 +341,8 @@ private def expandPayload
 
 /-- Collect all macro definitions, remove them from the parser payload, and
 recursively expand `USE` statements. The default limit matches the existing
-Clojure implementation. -/
+Clojure implementation. Macro control keywords are case-insensitive and inline
+`//` comments outside strings are removed for lexical parity. -/
 def preprocess (text : String) (limit : Nat := 10000) : Except ParseError Preprocessed := do
   let (macros, payload) ← collectDefinitions (sourceLines text) 0 #[] #[]
   let (lines, expansions) ← expandPayload macros payload limit
