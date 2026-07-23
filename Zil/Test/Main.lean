@@ -14,12 +14,10 @@ import Zil.Test.Authorization
 import Zil.Test.QueryGovernance
 import Zil.Test.Provenance
 import Zil.Test.Impact
-import Zil.Test.AgentContext
-import Zil.Test.ProofObligation
-import Zil.Test.TheoremAudit
 import Zil.Test.ActionToken
 import Zil.Test.TokenLifecycle
+import Zil.Test.AgentContext
 
-/-- Executable validation target for native mutation lifecycle contracts. -/
+/-- Executable validation target for native ZIL agent context bundles. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
