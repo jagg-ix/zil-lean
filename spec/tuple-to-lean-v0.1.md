@@ -30,6 +30,33 @@ tuple-fact*
 
 The v0.1 translator accepts facts without attributes. Rules, queries, standard-library declarations, and attributes produce an error with the unsupported construct reported.
 
+## Lossless tuple model
+
+Every source tuple is first represented as `Zil.TupleExpr`.
+
+```lean
+inductive TupleSubject where
+  | direct : Term → TupleSubject
+  | userset : UsersetRef → TupleSubject
+```
+
+This preserves the difference between:
+
+```zc
+doc:readme#viewer@group:eng.
+doc:readme#viewer@group:eng#member.
+```
+
+The first tuple names `group:eng` directly. The second names the subjects reached through the `member` relation on `group:eng`.
+
+Generated modules expose the source values in:
+
+```lean
+def sourceTuples : Array Zil.TupleExpr
+```
+
+The source values are then lowered into the existing `RelExpr` facts and Horn rules used by the native query engine.
+
 ## Lean name mapping
 
 Object and subject names use `:`, `/`, and `.` as namespace separators.
@@ -60,7 +87,16 @@ A direct tuple:
 doc:readme#owner@user:10.
 ```
 
-emits:
+is retained as:
+
+```lean
+Zil.TupleExpr.direct
+  (.ground `doc.readme)
+  `zil.owner
+  (.ground `user.u10)
+```
+
+and lowers to:
 
 ```lean
 zil_fact
@@ -77,7 +113,17 @@ A subject ending in `#relation` names a userset:
 doc:readme#viewer@group:eng#member.
 ```
 
-The translator emits the relation to the userset object:
+It is retained as:
+
+```lean
+Zil.TupleExpr.withUserset
+  (.ground `doc.readme)
+  `zil.viewer
+  ⟨`group.eng⟩
+  `zil.member
+```
+
+The lowering emits the stored relation to the userset object:
 
 ```lean
 zil_fact
@@ -96,9 +142,20 @@ zil_theorem_rule viewerViaMember
   : object ⟶[viewer] subject
 ```
 
-This rule preserves the meaning of `group:eng#member`: every subject connected to `group.eng` by `member` receives the outer `viewer` relation.
+The lossless tuple remains available even after lowering, so codecs and later Zanzibar-specific processing can distinguish a direct group relation from a userset relation.
 
 Repeated userset patterns share one generated rule.
+
+## Canonical encoding
+
+Direct and userset subjects have separate forms:
+
+```text
+tuple<TAB>node:doc.readme<TAB>zil.viewer<TAB>direct<TAB>node:group.eng
+tuple<TAB>node:doc.readme<TAB>zil.viewer<TAB>userset<TAB>group.eng<TAB>zil.member
+```
+
+`Zil.Codec.encodeTuple` and `decodeTuple` preserve this distinction. Source metadata is excluded from semantic equality.
 
 ## Namespace
 
