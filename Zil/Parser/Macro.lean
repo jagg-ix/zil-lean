@@ -22,6 +22,9 @@ private def stackSuffix (stack : Array Name) : String :=
   if stack.isEmpty then ""
   else " (macro stack: " ++ String.intercalate " -> " (stack.toList.map toString) ++ ")"
 
+private def containsText (value needle : String) : Bool :=
+  (value.splitOn needle).length > 1
+
 private def failAt (line : ExpandedLine) (message : String) : Except ParseError α :=
   .error {
     line := line.number
@@ -239,7 +242,7 @@ private def instantiate
     bindings.foldl (init := statement) fun current binding =>
       current.replace ("{{" ++ toString binding.1 ++ "}}") binding.2
   for statement in instantiated do
-    if statement.contains "{{" || statement.contains "}}" then
+    if containsText statement "{{" || containsText statement "}}" then
       throw {
         line := line.number
         message := s!"macro {definition.name} emitted an unresolved placeholder" ++ stackSuffix line.stack
