@@ -13,7 +13,8 @@ import Zil.Test.Formalization
 import Zil.Test.Authorization
 import Zil.Test.QueryGovernance
 import Zil.Test.Provenance
+import Zil.Test.Impact
 
-/-- Executable validation target for native ZIL derivation provenance. -/
+/-- Executable validation target for native ZIL change impact analysis. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
