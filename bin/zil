@@ -25,6 +25,7 @@ Usage:
   bin/zil theorem-audit <input.zc> [output|-]
   bin/zil action-token <input.zc> <request-node> [output|-]
   bin/zil token-lifecycle <input.zc> <request-node> [output|-]
+  bin/zil recovery-audit <input.zc> <request-node> [output|-]
   bin/zil formalization-plan <input.zc> [output.txt|-]
   bin/zil formalization-next <input.zc> [output.txt|-]
   bin/zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]
@@ -37,7 +38,8 @@ are hashed as the durable context_bundle_id required by action-token issuance.
 
 Action-token validates preflight evidence and token intent. Token-lifecycle replays
 checkpoint binding and single-use execution with revision, expiry, lease, store,
-and observed-output hash checks.
+and observed-output hash checks. Recovery-audit verifies required postconditions
+and audits the precommitted rollback or compensation when verification fails.
 
 Proof-obligations accepts all, -, z3, tlaps, lean4, acl2, or manual. Native
 governance audits evidence and status but does not pretend to execute external solvers.
@@ -115,6 +117,16 @@ run_token_lifecycle() {
   exec lake exe zilTokenLifecycle -- "$@"
 }
 
+run_recovery_audit() {
+  shift
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for native recovery auditing" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe zilRecoveryAudit -- "$@"
+}
+
 run_macro() {
   local mode="$1"
   shift
@@ -150,6 +162,9 @@ case "$command_name" in
     ;;
   token-lifecycle)
     run_token_lifecycle "$@"
+    ;;
+  recovery-audit)
+    run_recovery_audit "$@"
     ;;
   macro-compile)
     shift
