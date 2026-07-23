@@ -59,9 +59,16 @@
           (recur (next remaining) segment (conj out segment)))
         (str/join "." out)))))
 
+(defn- split-camel-token
+  [value]
+  (let [text (str value)
+        first-pass (str/replace text #"([A-Z]+)([A-Z][a-z])" "$1_$2")
+        second-pass (str/replace first-pass #"([a-z0-9])([A-Z])" "$1_$2")]
+    (str/split second-pass #"[^A-Za-z0-9]+")))
+
 (defn- identifier-parts
   [value]
-  (->> (str/split (token-text value :identifier) #"[^A-Za-z0-9]+")
+  (->> (split-camel-token (token-text value :identifier))
        (remove str/blank?)
        vec))
 
@@ -76,9 +83,8 @@
   (let [parts (identifier-parts relation)
         head (str/lower-case (or (first parts) "relation"))
         tail (map #(upper-first (str/lower-case %)) (rest parts))
-        candidate (apply str head tail)
-        safe (sanitize-segment candidate nil)]
-    safe))
+        candidate (apply str head tail)]
+    (sanitize-segment candidate nil)))
 
 (defn- namespace-segment
   [part]
