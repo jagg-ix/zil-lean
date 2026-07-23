@@ -8,6 +8,7 @@ import Zil.Environment.Knowledge
 import Zil.Engine.Query
 import Zil.Codec.Canonical
 import Zil.Codec.Userset
+import Zil.Parser.Tuple
 import Zil.Syntax.Relation
 import Zil.Syntax.Rule
 import Zil.Syntax.TheoremRule
