@@ -6,5 +6,6 @@
  :aliases {:test {:extra-paths ["test"]
                   :main-opts ["-m" "zil.test-runner"]}
            :tuple-lean {:main-opts ["-m" "zil.bridge.tuple-lean"]}
+           :library {:main-opts ["-m" "zil.port.library"]}
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
                    :ns-default build}}}
