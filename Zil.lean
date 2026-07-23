@@ -31,3 +31,4 @@ import Zil.Syntax.Declaration
 import Zil.Workflow
 import Zil.Formalization
 import Zil.Authorization
+import Zil.QueryGovernance

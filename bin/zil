@@ -13,6 +13,8 @@ Usage:
   bin/zil macro-expand <input.zc> [--output FILE|-] [--lib DIR]
   bin/zil macro-parity <input.zc> [--output FILE|-] [--lib DIR]
   bin/zil conformance <input.zc> [output.zilc|-]
+  bin/zil query-plan <input.zc> [output.txt|-]
+  bin/zil query-ci <input.zc> [profile|-] [output.txt|-]
   bin/zil formalization-plan <input.zc> [output.txt|-]
   bin/zil formalization-next <input.zc> [output.txt|-]
   bin/zil authorize <input.zc> <object> <relation> <subject> [output.txt|-]
@@ -58,7 +60,7 @@ run_macro() {
 command_name="${1:-}"
 
 case "$command_name" in
-  compile|expand|conformance|formalization-plan|formalization-next|authorize|revision-summary|snapshot|causal-check)
+  compile|expand|conformance|query-plan|query-ci|formalization-plan|formalization-next|authorize|revision-summary|snapshot|causal-check)
     run_native "$@"
     ;;
   macro-compile)
