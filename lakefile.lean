@@ -12,3 +12,6 @@ lean_exe zilLeanTests where
 
 lean_exe zil where
   root := `Zil.CLI.Main
+
+lean_exe zilAgentContext where
+  root := `Zil.CLI.AgentContextMain

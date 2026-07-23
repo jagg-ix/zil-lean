@@ -1,0 +1,15 @@
+MODULE agent.context.project.
+
+lean:Parser.parse#implements@requirement:parseInput.
+lean:Normalize.normalize#depends_on@lean:Parser.parse.
+lean:Proof.sound#validates@lean:Normalize.normalize.
+app:cli#uses@lean:Normalize.normalize.
+
+FORMALIZATION_TARGET parser_review [module=lean.Parser, file=Zil/Parser/Program.lean, declaration=lean.Parser.parse, status=ready, priority=90].
+FORMALIZATION_TARGET proof_review [module=lean.Proof, file=Zil/Proof.lean, declaration=lean.Proof.sound, status=blocked, priority=50, dependencies=[parser_review]].
+
+QUERY parserDependencies:
+FIND ?dependent WHERE ?dependent#depends_on@lean:Parser.parse.
+
+QUERY parserImpact:
+FIND ?dependent WHERE ?dependent#validates@lean:Normalize.normalize.
