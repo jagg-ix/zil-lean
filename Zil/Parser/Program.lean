@@ -1,11 +1,17 @@
 import Zil.Core.Program
 import Zil.Parser.Tuple
+import Zil.Engine.Query
 
 namespace Zil.Parser.Program
 
 private structure SourceLine where
   number : Nat
   text : String
+  deriving Repr, Inhabited
+
+private structure ParsedBody where
+  positive : Array RelExpr := #[]
+  negative : Array RelExpr := #[]
   deriving Repr, Inhabited
 
 private def failAt (line : SourceLine) (message : String) : Except ParseError α :=
@@ -86,39 +92,40 @@ def parseRelationText
     (lineNumber : Nat) (sourceLine text : String) : Except ParseError RelExpr :=
   parseRelationAtom { number := lineNumber, text := sourceLine } text
 
-private def parseConjunction (line : SourceLine) (text : String) : Except ParseError (Array RelExpr) := do
+private def parseBody (line : SourceLine) (text : String) : Except ParseError ParsedBody := do
   let pieces := text.trim.splitOn " AND "
   if pieces.isEmpty then
     throw { line := line.number, message := "empty relation conjunction", sourceLine := line.text }
-  let mut relations : Array RelExpr := #[]
+  let mut result : ParsedBody := {}
   for piece in pieces do
-    if piece.trim.isEmpty then
+    let literal := piece.trim
+    if literal.isEmpty then
       throw { line := line.number, message := "empty atom in relation conjunction",
         sourceLine := line.text }
-    relations := relations.push (← parseRelationAtom line piece)
-  pure relations
+    if literal.startsWith "NOT " then
+      let atomText := literal.drop 4 |>.trim
+      if atomText.isEmpty then
+        throw { line := line.number, message := "NOT requires a relation atom",
+          sourceLine := line.text }
+      result := { result with negative := result.negative.push (← parseRelationAtom line atomText) }
+    else
+      result := { result with positive := result.positive.push (← parseRelationAtom line literal) }
+  pure result
+
+private def parsePositiveConjunction
+    (line : SourceLine) (text : String) : Except ParseError (Array RelExpr) := do
+  let body ← parseBody line text
+  unless body.negative.isEmpty do
+    throw { line := line.number, message := "NOT is allowed in rule/query bodies only",
+      sourceLine := line.text }
+  pure body.positive
 
 private def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def valueVariables (value : AttrValue) : Array Name :=
-  match value with
-  | .term (.var name) => #[name]
-  | _ => #[]
-
-private def relationVariables (relation : RelExpr) : Array Name :=
-  let names := match relation.subject with
-    | .var name => #[name]
-    | .node _ => #[]
-  let names := match relation.object with
-    | .var name => pushName names name
-    | .node _ => names
-  relation.attrs.foldl (init := names) fun names attr =>
-    (valueVariables attr.value).foldl (init := names) pushName
-
 private def relationsVariables (relations : Array RelExpr) : Array Name :=
   relations.foldl (init := #[]) fun names relation =>
-    (relationVariables relation).foldl (init := names) pushName
+    relation.variables.foldl (init := names) pushName
 
 private def parseHeaderName
     (line : SourceLine) (prefix : String) : Except ParseError Name := do
@@ -143,25 +150,37 @@ private def parseRule
     throw { line := thenLine.number,
       message := "rule head must begin with THEN and end with '.'",
       sourceLine := thenLine.text }
-  let premises ← parseConjunction ifLine (ifText.drop 3)
-  let heads ← parseConjunction thenLine ((thenText.drop 5).dropRight 1)
-  let bodyVariables := relationsVariables premises
+  let body ← parseBody ifLine (ifText.drop 3)
+  if body.positive.isEmpty then
+    throw { line := ifLine.number, message := "rule requires at least one positive premise",
+      sourceLine := ifLine.text }
+  let heads ← parsePositiveConjunction thenLine ((thenText.drop 5).dropRight 1)
+  let positiveVariables := relationsVariables body.positive
+  let negativeVariables := relationsVariables body.negative
   let headVariables := relationsVariables heads
-  unless headVariables.all bodyVariables.contains do
+  unless negativeVariables.all positiveVariables.contains do
+    throw { line := ifLine.number,
+      message := "negative premise contains a variable not bound by a positive premise",
+      sourceLine := ifLine.text }
+  unless headVariables.all positiveVariables.contains do
     throw { line := thenLine.number,
-      message := "rule head contains a variable not bound by the IF body",
+      message := "rule head contains a variable not bound by the positive body",
       sourceLine := thenLine.text }
   let mut rules : Array Rule := #[]
   for head in heads do
     let index := rules.size
     let name := if heads.size == 1 then sourceName else Name.str sourceName s!"head_{index}"
-    rules := rules.push {
+    let rule : Rule := {
       name
-      variables := bodyVariables
-      premises
+      variables := positiveVariables
+      premises := body.positive
+      negativePremises := body.negative
       conclusion := head
       trust := .graphDerived
       source := sourceOf header }
+    unless rule.safe do
+      throw { line := ifLine.number, message := "unsafe rule body", sourceLine := ifLine.text }
+    rules := rules.push rule
   pure rules
 
 private def selectedVariable (line : SourceLine) (token : String) : Except ParseError Name := do
@@ -189,13 +208,28 @@ private def parseQuery (header findLine : SourceLine) : Except ParseError Query 
   if select.isEmpty then
     throw { line := findLine.number, message := "query FIND list is empty",
       sourceLine := findLine.text }
-  let premises ← parseConjunction findLine whereText
-  let variables := relationsVariables premises
+  let body ← parseBody findLine whereText
+  if body.positive.isEmpty then
+    throw { line := findLine.number, message := "query requires at least one positive premise",
+      sourceLine := findLine.text }
+  let variables := relationsVariables body.positive
+  let negativeVariables := relationsVariables body.negative
+  unless negativeVariables.all variables.contains do
+    throw { line := findLine.number,
+      message := "negative query premise contains an unbound variable",
+      sourceLine := findLine.text }
   unless select.all variables.contains do
     throw { line := findLine.number,
       message := "query selects a variable not bound by WHERE",
       sourceLine := findLine.text }
-  pure { name, variables, select, premises, source := sourceOf header }
+  let query : Query := {
+    name, variables, select
+    premises := body.positive
+    negativePremises := body.negative
+    source := sourceOf header }
+  unless query.safe do
+    throw { line := findLine.number, message := "unsafe query body", sourceLine := findLine.text }
+  pure query
 
 private def significantLines (text : String) : Array SourceLine := Id.run do
   let mut lines : Array SourceLine := #[]
@@ -248,9 +282,14 @@ private partial def parseLines
     let tuple ← Zil.Parser.parseTupleLine line.number line.text
     parseLines lines (index + 1) moduleName (tuples.push tuple) rules queries
 
-/-- Parse a complete source unit containing tuples, rules, and queries. -/
-def parseText (text : String) : Except ParseError Zil.Program :=
-  parseLines (significantLines text) 0 none #[] #[] #[]
+/-- Parse a complete, safe, stratifiable source unit. -/
+def parseText (text : String) : Except ParseError Zil.Program := do
+  let program ← parseLines (significantLines text) 0 none #[] #[] #[]
+  unless program.valid do
+    throw { line := 1, message := "program contains an unsafe rule or query" }
+  match Zil.Engine.stratify program.allRules with
+  | .ok _ => pure program
+  | .error message => throw { line := 1, message }
 
 /-- Read and parse one complete `.zc` source file. -/
 def parseFile (path : String) : IO (Except ParseError Zil.Program) := do
@@ -293,25 +332,26 @@ private def renderRelation (relation : RelExpr) : String :=
 private def renderNames (names : Array Name) : String :=
   "#[" ++ String.intercalate ", " (names.toList.map fun name => s!"`{name}") ++ "]"
 
+private def renderRelations (relations : Array RelExpr) : String :=
+  "#[" ++ String.intercalate ",\n      " (relations.toList.map renderRelation) ++ "]"
+
 private def renderRule (index : Nat) (rule : Rule) : String :=
-  let premises := "#[" ++ String.intercalate ",\n      "
-    (rule.premises.toList.map renderRelation) ++ "]"
   s!"private def sourceRule{index} : Zil.Rule := {{\n" ++
     s!"  name := `{rule.name}\n" ++
     s!"  variables := {renderNames rule.variables}\n" ++
-    s!"  premises := {premises}\n" ++
+    s!"  premises := {renderRelations rule.premises}\n" ++
+    s!"  negativePremises := {renderRelations rule.negativePremises}\n" ++
     s!"  conclusion := {renderRelation rule.conclusion}\n" ++
     "  trust := .graphDerived\n" ++
     s!"  source := {renderSource rule.source}\n}}"
 
 private def renderQuery (index : Nat) (query : Query) : String :=
-  let premises := "#[" ++ String.intercalate ",\n      "
-    (query.premises.toList.map renderRelation) ++ "]"
   s!"def sourceQuery{index} : Zil.Query := {{\n" ++
     s!"  name := `{query.name}\n" ++
     s!"  variables := {renderNames query.variables}\n" ++
     s!"  select := {renderNames query.select}\n" ++
-    s!"  premises := {premises}\n" ++
+    s!"  premises := {renderRelations query.premises}\n" ++
+    s!"  negativePremises := {renderRelations query.negativePremises}\n" ++
     s!"  source := {renderSource query.source}\n}}"
 
 /-- Render the complete source program as native Lean declarations. -/
