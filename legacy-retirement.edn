@@ -24,7 +24,7 @@
    :min-embedded-blocks 1
    :patterns
    [{:id :clojure-main
-     :pattern "(?:-m\\s+zil\\.cli|\\(ns\\s+zil\\.cli)"}
+     :pattern "(?:-m\\s+zil\\.cli|\\(ns\\s+zil\\.cli|\\[zil\\.cli(?:\\s|\\]))"}
     {:id :standalone-jar
      :pattern "zil-standalone\\.jar"}]
    :allow-paths
