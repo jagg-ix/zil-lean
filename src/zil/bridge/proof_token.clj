@@ -22,13 +22,18 @@
   (when-not condition
     (throw (ex-info message (assoc data :code :validation)))))
 
+(defn- canonical-key [key]
+  (if (keyword? key) (name key) (str key)))
+
 (defn- canonical-value [value]
   (cond
     (map? value) (into (sorted-map)
-                       (map (fn [[key item]] [(str key) (canonical-value item)]))
+                       (map (fn [[key item]]
+                              [(canonical-key key) (canonical-value item)]))
                        value)
     (vector? value) (mapv canonical-value value)
     (sequential? value) (mapv canonical-value value)
+    (keyword? value) (name value)
     :else value))
 
 (defn batch-fingerprint [batch]
@@ -36,8 +41,7 @@
 
 (defn validate-token-batch! [batch]
   (require-value! (= token-format (get batch "format"))
-                  "Unsupported proof token format"
-                  {:format (get batch "format")})
+                  "Unsupported proof token format" {:format (get batch "format")})
   (require-value! (true? (get batch "complete"))
                   "Partial proof token batches are rejected" {})
   (require-value! (and (string? (get batch "module"))
@@ -111,7 +115,8 @@
             event-module (get event "module")
             expected-kind (get token "expected_kind")
             acceptable-trust (token-trust token)
-            actual-trust (get event "trust")]
+            actual-trust (get event "trust")
+            fingerprint (get event "type_fingerprint")]
         (cond
           (not= module event-module)
           (assoc base :status :module_mismatch
@@ -133,6 +138,9 @@
                  :actual_trust actual-trust
                  :acceptable_trust (vec (sort acceptable-trust)))
 
+          (not (and (string? fingerprint) (not (str/blank? fingerprint))))
+          (assoc base :status :fingerprint_missing)
+
           :else
           (assoc base
                  :status :resolved
@@ -141,7 +149,7 @@
                  :trust actual-trust
                  :kernel_present true
                  :uses_sorry false
-                 :type_fingerprint (get event "type_fingerprint")
+                 :type_fingerprint fingerprint
                  :dependencies (vec (sort (or (get event "dependencies") [])))))))))
 
 (defn resolve-batches [token-batch event-batch]
