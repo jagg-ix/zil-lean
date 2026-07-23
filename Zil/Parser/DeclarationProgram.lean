@@ -10,18 +10,19 @@ private def parseModuleOnly
   let others := lines.filter fun line => !line.text.trim.startsWith "MODULE "
   unless others.isEmpty do
     throw { line := others[0]!.number, message := "source payload could not be parsed", sourceLine := others[0]!.text }
-  match modules with
-  | #[] => pure {}
-  | #[line] =>
-      let text := line.text.trim
-      unless text.endsWith "." do
-        throw { line := line.number, message := "MODULE declaration must end with '.'", sourceLine := line.text }
-      let nameText := (text.drop 7).dropRight 1 |>.trim
-      let name ← (Zil.Parser.nameFromToken nameText).mapError fun message => {
-        line := line.number, message, sourceLine := line.text }
-      pure { moduleName := some name }
-  | _ =>
-      throw { line := modules[1]!.number, message := "duplicate MODULE declaration", sourceLine := modules[1]!.text }
+  if modules.isEmpty then
+    pure {}
+  else if modules.size == 1 then
+    let line := modules[0]!
+    let text := line.text.trim
+    unless text.endsWith "." do
+      throw { line := line.number, message := "MODULE declaration must end with '.'", sourceLine := line.text }
+    let nameText := (text.drop 7).dropRight 1 |>.trim
+    let name ← (Zil.Parser.nameFromToken nameText).mapError fun message => {
+      line := line.number, message, sourceLine := line.text }
+    pure { moduleName := some name }
+  else
+    throw { line := modules[1]!.number, message := "duplicate MODULE declaration", sourceLine := modules[1]!.text }
 
 /-- Expand macros, collect typed declarations, and parse the remaining tuples,
 rules, and queries. -/
@@ -49,7 +50,8 @@ def parseFile (path : String) (limit : Nat := 10000) : IO (Except ParseError Zil
   pure (parseText text limit)
 
 private def leanString (value : String) : String :=
-  "\"" ++ value.replace "\\" "\\\\" |>.replace "\"" "\\\"" |>.replace "\n" "\\n" ++ "\""
+  let escaped := value.replace "\\" "\\\\" |>.replace "\"" "\\\"" |>.replace "\n" "\\n"
+  "\"" ++ escaped ++ "\""
 
 private def renderTerm : Term → String
   | .var name => s!".variable `{name}"
@@ -76,11 +78,31 @@ private def renderSource (source : Source) : String :=
   let line := source.line.map (fun value => s!"some {value}") |>.getD "none"
   s!"{{ frontend := {leanString source.frontend}, line := {line} }}"
 
+private def renderKind : DeclarationKind → String
+  | .service => "service"
+  | .host => "host"
+  | .datasource => "datasource"
+  | .metric => "metric"
+  | .policy => "policy"
+  | .event => "event"
+  | .provider => "provider"
+  | .tmAtom => "tmAtom"
+  | .ltsAtom => "ltsAtom"
+  | .refines => "refines"
+  | .corresponds => "corresponds"
+  | .proofObligation => "proofObligation"
+  | .formalizationTarget => "formalizationTarget"
+  | .languageProfile => "languageProfile"
+  | .grammarProfile => "grammarProfile"
+  | .parserAdapter => "parserAdapter"
+  | .dslProfile => "dslProfile"
+  | .queryPack => "queryPack"
+
 private def renderDeclaration (index : Nat) (declaration : Declaration) : String :=
   let attrs := "#[" ++ String.intercalate ", " (declaration.attrs.toList.map fun attr =>
     s!"{{ key := `{attr.key}, value := {renderValue attr.value} }}") ++ "]"
   s!"private def sourceDeclaration{index} : Zil.Declaration := {{\n" ++
-    s!"  kind := .{declaration.kind}\n" ++
+    s!"  kind := .{renderKind declaration.kind}\n" ++
     s!"  name := `{declaration.name}\n" ++
     s!"  attrs := {attrs}\n" ++
     s!"  source := {renderSource declaration.source}\n}}"
