@@ -59,6 +59,17 @@ def requiredArity? : String → Option Nat
   | "recovery-audit" => some 1
   | _ => none
 
+private def insertString (value : String) : List String → List String
+  | [] => [value]
+  | head :: tail =>
+      match compare value head with
+      | .lt => value :: head :: tail
+      | .eq => head :: tail
+      | .gt => head :: insertString value tail
+
+private def sortedUnique (values : Array String) : Array String :=
+  (values.foldl (init := []) fun out value => insertString value out).toArray
+
 private def validSha256Id (value : String) : Bool :=
   let isHex (char : Char) : Bool :=
     ('0' ≤ char && char ≤ '9') ||
@@ -78,6 +89,8 @@ def Request.validate (request : Request) : Except String Unit := do
   if request.baseRevision.isEmpty then throw "base_revision must be nonempty"
   unless validSha256Id request.inputSha256 do
     throw "input_sha256 must be sha256:<64 hex>"
+  unless sortedUnique request.capabilities == request.capabilities do
+    throw "capabilities must be sorted and unique"
   let capability ← match requiredCapability? request.operation with
     | some value => pure value
     | none => throw s!"unsupported operation {request.operation}"
