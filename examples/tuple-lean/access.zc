@@ -1,0 +1,4 @@
+doc:readme#owner@user:10.
+group:eng#member@user:11.
+doc:readme#viewer@group:eng#member.
+doc:readme#parent@folder:A.
