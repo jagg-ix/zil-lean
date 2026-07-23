@@ -1,7 +1,7 @@
 (ns zil.port-conformance-test
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]
+            [clojure.test :refer [deftest is]]
             [zil.port.conformance :as conformance]))
 
 (defn- temp-file [name content]
@@ -13,13 +13,13 @@
     file))
 
 (def simple-source
-  "MODULE demo.access.\n\
-   doc:a#parent@doc:b.\n\
-   RULE inherit:\n\
-   IF ?x#parent@?y\n\
-   THEN ?x#ancestor@?y.\n\
-   QUERY ancestors:\n\
-   FIND ?y WHERE doc:a#ancestor@?y.\n")
+  (str "MODULE demo.access.\n"
+       "doc:a#parent@doc:b.\n"
+       "RULE inherit:\n"
+       "IF ?x#parent@?y\n"
+       "THEN ?x#ancestor@?y.\n"
+       "QUERY ancestors:\n"
+       "FIND ?y WHERE doc:a#ancestor@?y.\n"))
 
 (defn- oracle-runner [source]
   (fn [command]
@@ -101,11 +101,11 @@
     (is (= :both-rejected (:status result)))))
 
 (deftest userset-lowering-enters-legacy-semantic-report-test
-  (let [source "MODULE usersets.\n\
-                group:eng#member@user:11.\n\
-                doc:readme#viewer@group:eng#member.\n\
-                QUERY viewers:\n\
-                FIND ?u WHERE doc:readme#viewer@?u.\n"
+  (let [source (str "MODULE usersets.\n"
+                    "group:eng#member@user:11.\n"
+                    "doc:readme#viewer@group:eng#member.\n"
+                    "QUERY viewers:\n"
+                    "FIND ?u WHERE doc:readme#viewer@?u.\n")
         report (conformance/legacy-report source)]
     (is (str/includes? report "node:group.eng"))
     (is (str/includes? report "node:user.u11"))
