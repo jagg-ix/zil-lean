@@ -13,6 +13,8 @@
            (java.util.concurrent TimeUnit)))
 
 (def default-command ["lake" "exe" "zilWorker" "--" "--stdio"])
+(def default-timeout-ms 30000)
+(def ^:private timeout-marker (Object.))
 
 (defn- digest-bytes [^bytes value]
   (let [digest (.digest (MessageDigest/getInstance "SHA-256") value)]
@@ -87,6 +89,10 @@
 (defn alive? [^Worker worker]
   (.isAlive ^Process (:process worker)))
 
+(defn- invalidate-worker! [^Worker worker]
+  (try (.destroy ^Process (:process worker)) (catch Exception _))
+  worker)
+
 (defn- pending-attestation-warning? [value]
   (= "result-sha256-pending-client-attestation" value))
 
@@ -100,44 +106,83 @@
                 (fn [values]
                   (vec (remove pending-attestation-warning? (or values []))))))))
 
-(defn invoke!
-  "Send one request to a persistent worker and return the verified, byte-attested response."
-  [^Worker worker request]
-  (protocol/validate-request! request)
-  (locking (:lock worker)
-    (when-not (alive? worker)
-      (throw (ex-info "Lean worker is not running"
-                      {:kind :transport-error
-                       :errors @(:error-lines worker)})))
-    (.write ^BufferedWriter (:writer worker) (protocol/write-line request))
-    (.newLine ^BufferedWriter (:writer worker))
-    (.flush ^BufferedWriter (:writer worker))
-    (let [line (.readLine ^BufferedReader (:reader worker))]
-      (when (nil? line)
-        (throw (ex-info "Lean worker closed without a response"
-                        {:kind :transport-error
-                         :errors @(:error-lines worker)})))
+(defn- transport-exception [^Worker worker message data cause]
+  (ex-info message
+           (merge {:kind :transport-error
+                   :errors @(:error-lines worker)}
+                  data)
+           cause))
+
+(defn- read-response! [^Worker worker request timeout-ms]
+  (let [response-future (future (.readLine ^BufferedReader (:reader worker)))
+        line (deref response-future (long timeout-ms) timeout-marker)]
+    (when (identical? timeout-marker line)
+      (future-cancel response-future)
+      (throw (transport-exception worker
+                                  "timed out waiting for a Lean worker response"
+                                  {:timeout-ms timeout-ms}
+                                  nil)))
+    (when (nil? line)
+      (throw (transport-exception worker
+                                  "Lean worker closed without a response"
+                                  {}
+                                  nil)))
+    (try
       (->> (protocol/read-line line)
            (protocol/validate-response! request)
-           attest-response))))
+           attest-response)
+      (catch Exception error
+        (if (= :transport-error (:kind (ex-data error)))
+          (throw error)
+          (throw (transport-exception worker
+                                      "Lean worker returned malformed JSON"
+                                      {:line line}
+                                      error)))))))
+
+(defn invoke!
+  "Send one request to a persistent worker and return the verified, byte-attested response."
+  ([worker request]
+   (invoke! worker request default-timeout-ms))
+  ([^Worker worker request timeout-ms]
+   (protocol/validate-request! request)
+   (locking (:lock worker)
+     (when-not (alive? worker)
+       (throw (transport-exception worker "Lean worker is not running" {} nil)))
+     (try
+       (.write ^BufferedWriter (:writer worker) (protocol/write-line request))
+       (.newLine ^BufferedWriter (:writer worker))
+       (.flush ^BufferedWriter (:writer worker))
+       (read-response! worker request timeout-ms)
+       (catch Exception error
+         (invalidate-worker! worker)
+         (if (= :transport-error (:kind (ex-data error)))
+           (throw error)
+           (throw (transport-exception worker
+                                       "Lean worker transport failed"
+                                       {}
+                                       error))))))))
 
 (defn stop-worker! [^Worker worker]
-  (try (.close ^BufferedWriter (:writer worker)) (catch Exception _))
-  (when-not (.waitFor ^Process (:process worker) 5 TimeUnit/SECONDS)
-    (.destroy ^Process (:process worker))
-    (when-not (.waitFor ^Process (:process worker) 2 TimeUnit/SECONDS)
-      (.destroyForcibly ^Process (:process worker))))
-  (try (.close ^BufferedReader (:reader worker)) (catch Exception _))
-  @(:error-drain worker)
-  {:exit (.exitValue ^Process (:process worker))
-   :errors @(:error-lines worker)})
+  (let [^Process process (:process worker)]
+    (try (.close ^BufferedWriter (:writer worker)) (catch Exception _))
+    (when (.isAlive process)
+      (when-not (.waitFor process 5 TimeUnit/SECONDS)
+        (.destroy process)
+        (when-not (.waitFor process 2 TimeUnit/SECONDS)
+          (.destroyForcibly process)
+          (.waitFor process))))
+    (try (.close ^BufferedReader (:reader worker)) (catch Exception _))
+    @(:error-drain worker)
+    {:exit (.exitValue process)
+     :errors @(:error-lines worker)}))
 
 (defn invoke-once!
   ([request] (invoke-once! {} request))
   ([options request]
-   (let [worker (start-worker! options)]
+   (let [worker (start-worker! options)
+         timeout-ms (get options :timeout-ms default-timeout-ms)]
      (try
-       (invoke! worker request)
+       (invoke! worker request timeout-ms)
        (finally
          (stop-worker! worker))))))
 
