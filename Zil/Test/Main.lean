@@ -5,7 +5,8 @@ import Zil.Test.ProgramParser
 import Zil.Test.StratifiedNegation
 import Zil.Test.Macro
 import Zil.Test.Declarations
+import Zil.Test.RevisionCausal
 
-/-- Executable validation target for macros and typed declarations. -/
+/-- Executable validation target for revisioned facts and causal order. -/
 def main : IO Unit := do
-  IO.println "zil-lean typed declaration lowering validation passed"
+  IO.println "zil-lean revision and causal core validation passed"
