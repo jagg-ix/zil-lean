@@ -37,14 +37,15 @@ private def parseAttributes (line : SourceLine) (text : String) : Except ParseEr
       | [key, value] => pure (key.trim, value.trim)
       | _ => failAt line s!"invalid attribute entry: {rawEntry.trim}"
     if keyText.isEmpty || valueText.isEmpty then
-      return ← failAt line "attribute key and value must be nonempty"
+      throw { line := line.number, message := "attribute key and value must be nonempty",
+        sourceLine := line.text }
     let key ← (nameFromToken keyText).mapError fun message =>
       { line := line.number, message, sourceLine := line.text }
     let value ← (parseAttrValue valueText).mapError fun message =>
       { line := line.number, message, sourceLine := line.text }
     attrs := attrs.push { key, value }
   unless Attribute.keysUnique attrs do
-    return ← failAt line "duplicate attribute key"
+    throw { line := line.number, message := "duplicate attribute key", sourceLine := line.text }
   pure attrs
 
 private def splitAtomAndAttributes
@@ -53,12 +54,12 @@ private def splitAtomAndAttributes
   | [atom] => pure (atom.trim, #[])
   | [atom, attrs] =>
       unless attrs.trim.endsWith "]" do
-        return ← failAt line "attribute list must end with ']'"
+        throw { line := line.number, message := "attribute list must end with ']'",
+          sourceLine := line.text }
       pure (atom.trim, ← parseAttributes line (attrs.trim.dropRight 1))
   | _ => failAt line "relation atom contains more than one attribute list"
 
-/-- Parse one direct relation atom used in a rule or query. -/
-def parseRelationAtom (line : SourceLine) (text : String) : Except ParseError RelExpr := do
+private def parseRelationAtom (line : SourceLine) (text : String) : Except ParseError RelExpr := do
   let raw := text.trim
   let body := if raw.endsWith "." then raw.dropRight 1 |>.trim else raw
   let (atomText, attrs) ← splitAtomAndAttributes line body
@@ -69,7 +70,9 @@ def parseRelationAtom (line : SourceLine) (text : String) : Except ParseError Re
     | [subject, relation] => pure (subject, relation)
     | _ => failAt line "relation atom requires one subject/relation '#' separator"
   if objectText.contains '#' then
-    return ← failAt line "userset selectors are accepted on stored tuples, not rule/query atoms"
+    throw { line := line.number,
+      message := "userset selectors are accepted on stored tuples, not rule/query atoms",
+      sourceLine := line.text }
   let subject ← (termFromToken subjectText).mapError fun message =>
     { line := line.number, message, sourceLine := line.text }
   let object ← (termFromToken objectText).mapError fun message =>
@@ -78,11 +81,20 @@ def parseRelationAtom (line : SourceLine) (text : String) : Except ParseError Re
     { line := line.number, message, sourceLine := line.text }
   pure { subject, relation, object, attrs, source := sourceOf line }
 
+/-- Parse one rule/query relation atom with source location information. -/
+def parseRelationText
+    (lineNumber : Nat) (sourceLine text : String) : Except ParseError RelExpr :=
+  parseRelationAtom { number := lineNumber, text := sourceLine } text
+
 private def parseConjunction (line : SourceLine) (text : String) : Except ParseError (Array RelExpr) := do
   let pieces := text.trim.splitOn " AND "
-  if pieces.isEmpty then return ← failAt line "empty relation conjunction"
+  if pieces.isEmpty then
+    throw { line := line.number, message := "empty relation conjunction", sourceLine := line.text }
   let mut relations : Array RelExpr := #[]
   for piece in pieces do
+    if piece.trim.isEmpty then
+      throw { line := line.number, message := "empty atom in relation conjunction",
+        sourceLine := line.text }
     relations := relations.push (← parseRelationAtom line piece)
   pure relations
 
@@ -112,9 +124,10 @@ private def parseHeaderName
     (line : SourceLine) (prefix : String) : Except ParseError Name := do
   let text := line.text.trim
   unless text.startsWith prefix && text.endsWith ":" do
-    return ← failAt line s!"expected {prefix}<name>:"
+    throw { line := line.number, message := s!"expected {prefix}<name>:", sourceLine := line.text }
   let nameText := (text.drop prefix.length).dropRight 1 |>.trim
-  if nameText.isEmpty then return ← failAt line "declaration name is empty"
+  if nameText.isEmpty then
+    throw { line := line.number, message := "declaration name is empty", sourceLine := line.text }
   (nameFromToken nameText).mapError fun message =>
     { line := line.number, message, sourceLine := line.text }
 
@@ -123,16 +136,21 @@ private def parseRule
   let sourceName ← parseHeaderName header "RULE "
   let ifText := ifLine.text.trim
   unless ifText.startsWith "IF " do
-    return ← failAt ifLine "rule body must begin with IF"
+    throw { line := ifLine.number, message := "rule body must begin with IF",
+      sourceLine := ifLine.text }
   let thenText := thenLine.text.trim
   unless thenText.startsWith "THEN " && thenText.endsWith "." do
-    return ← failAt thenLine "rule head must begin with THEN and end with '.'"
+    throw { line := thenLine.number,
+      message := "rule head must begin with THEN and end with '.'",
+      sourceLine := thenLine.text }
   let premises ← parseConjunction ifLine (ifText.drop 3)
   let heads ← parseConjunction thenLine ((thenText.drop 5).dropRight 1)
   let bodyVariables := relationsVariables premises
   let headVariables := relationsVariables heads
   unless headVariables.all bodyVariables.contains do
-    return ← failAt thenLine "rule head contains a variable not bound by the IF body"
+    throw { line := thenLine.number,
+      message := "rule head contains a variable not bound by the IF body",
+      sourceLine := thenLine.text }
   let mut rules : Array Rule := #[]
   for head in heads do
     let index := rules.size
@@ -149,7 +167,8 @@ private def parseRule
 private def selectedVariable (line : SourceLine) (token : String) : Except ParseError Name := do
   let value := token.trim
   unless value.startsWith "?" do
-    return ← failAt line s!"FIND entry must be a variable: {value}"
+    throw { line := line.number, message := s!"FIND entry must be a variable: {value}",
+      sourceLine := line.text }
   (nameFromToken (value.drop 1)).mapError fun message =>
     { line := line.number, message, sourceLine := line.text }
 
@@ -157,7 +176,8 @@ private def parseQuery (header findLine : SourceLine) : Except ParseError Query 
   let name ← parseHeaderName header "QUERY "
   let text := findLine.text.trim
   unless text.startsWith "FIND " && text.endsWith "." do
-    return ← failAt findLine "query must begin with FIND and end with '.'"
+    throw { line := findLine.number, message := "query must begin with FIND and end with '.'",
+      sourceLine := findLine.text }
   let payload := (text.drop 5).dropRight 1 |>.trim
   let (selectText, whereText) ← match payload.splitOn " WHERE " with
     | [select, where] => pure (select, where)
@@ -166,11 +186,15 @@ private def parseQuery (header findLine : SourceLine) : Except ParseError Query 
   for token in selectText.splitOn " " do
     if token.trim.isEmpty then continue
     select := pushName select (← selectedVariable findLine token)
-  if select.isEmpty then return ← failAt findLine "query FIND list is empty"
+  if select.isEmpty then
+    throw { line := findLine.number, message := "query FIND list is empty",
+      sourceLine := findLine.text }
   let premises ← parseConjunction findLine whereText
   let variables := relationsVariables premises
   unless select.all variables.contains do
-    return ← failAt findLine "query selects a variable not bound by WHERE"
+    throw { line := findLine.number,
+      message := "query selects a variable not bound by WHERE",
+      sourceLine := findLine.text }
   pure { name, variables, select, premises, source := sourceOf header }
 
 private def significantLines (text : String) : Array SourceLine := Id.run do
@@ -197,21 +221,26 @@ private partial def parseLines
   let line := lines[index]!
   let text := line.text.trim
   if text.startsWith "MODULE " then
-    if moduleName.isSome then return ← failAt line "duplicate MODULE declaration"
-    unless text.endsWith "." do return ← failAt line "MODULE declaration must end with '.'"
+    if moduleName.isSome then
+      throw { line := line.number, message := "duplicate MODULE declaration", sourceLine := line.text }
+    unless text.endsWith "." do
+      throw { line := line.number, message := "MODULE declaration must end with '.'",
+        sourceLine := line.text }
     let value := (text.drop 7).dropRight 1 |>.trim
+    if value.isEmpty then
+      throw { line := line.number, message := "MODULE name is empty", sourceLine := line.text }
     let name ← (nameFromToken value).mapError fun message =>
       { line := line.number, message, sourceLine := line.text }
     parseLines lines (index + 1) (some name) tuples rules queries
   else if text.startsWith "RULE " then
-    let ifLine ← lines[index + 1]?.toExcept {
+    let ifLine ← (lines.get? (index + 1)).toExcept {
       line := line.number, message := "RULE is missing its IF line", sourceLine := line.text }
-    let thenLine ← lines[index + 2]?.toExcept {
+    let thenLine ← (lines.get? (index + 2)).toExcept {
       line := line.number, message := "RULE is missing its THEN line", sourceLine := line.text }
     let parsed ← parseRule line ifLine thenLine
     parseLines lines (index + 3) moduleName tuples (rules ++ parsed) queries
   else if text.startsWith "QUERY " then
-    let findLine ← lines[index + 1]?.toExcept {
+    let findLine ← (lines.get? (index + 1)).toExcept {
       line := line.number, message := "QUERY is missing its FIND line", sourceLine := line.text }
     let query ← parseQuery line findLine
     parseLines lines (index + 2) moduleName tuples rules (queries.push query)
@@ -305,6 +334,8 @@ def renderLeanModule (program : Zil.Program) (namespaceName : Name) : Except Str
   let moduleName := match program.moduleName with
     | none => "none"
     | some name => s!"some `{name}"
+  let renderedRuleNames := String.intercalate ", " ruleNames.toList
+  let renderedQueryNames := String.intercalate ", " queryNames.toList
   let extension :=
     s!"\nnamespace {namespaceName}\n\n" ++
     String.intercalate "\n\n" ruleDefs.toList ++
@@ -316,8 +347,8 @@ def renderLeanModule (program : Zil.Program) (namespaceName : Name) : Except Str
     "def sourceProgram : Zil.Program := {\n" ++
     s!"  moduleName := {moduleName}\n" ++
     "  tuples := sourceTuples\n" ++
-    s!"  rules := #[{String.intercalate ", " ruleNames.toList}]\n" ++
-    s!"  queries := #[{String.intercalate ", " queryNames.toList}]\n" ++
+    s!"  rules := #[{renderedRuleNames}]\n" ++
+    s!"  queries := #[{renderedQueryNames}]\n" ++
     "}\n\n" ++
     s!"end {namespaceName}\n"
   pure (base ++ extension)
