@@ -12,7 +12,7 @@ doc:readme#parent@folder:A.
 Generate a Lean module:
 
 ```bash
-clojure -M -m zil.bridge.tuple-lean \
+clojure -M:tuple-lean \
   examples/tuple-lean/access.zc \
   examples/tuple-lean/Access.lean \
   Zil.Generated.Access
@@ -30,7 +30,7 @@ bash ./bin/zil-tuples-lean \
 Omit the output path, or pass `-`, to print the generated Lean source:
 
 ```bash
-clojure -M -m zil.bridge.tuple-lean examples/tuple-lean/access.zc -
+clojure -M:tuple-lean examples/tuple-lean/access.zc -
 ```
 
 ## Generated names
@@ -94,4 +94,4 @@ doc.readme ── viewer ──▶ user.u11
 
 ## Current input scope
 
-The exporter accepts an optional `MODULE` declaration followed by tuple facts. It reports rules, queries, standard-library declarations, and tuple attributes as unsupported so their meaning is not silently discarded.
+The exporter accepts an optional `MODULE` declaration followed by tuple facts. It reports rules, queries, standard-library declarations, and tuple attributes as unsupported so their meaning is preserved for later dedicated translations rather than being dropped.
