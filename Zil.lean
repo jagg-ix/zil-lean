@@ -1,4 +1,5 @@
 import Zil.Core.Term
+import Zil.Core.Attribute
 import Zil.Core.Relation
 import Zil.Core.Rule
 import Zil.Core.Query
@@ -6,6 +7,7 @@ import Zil.Core.Userset
 import Zil.Profile.Core
 import Zil.Environment.Knowledge
 import Zil.Engine.Query
+import Zil.Codec.Attribute
 import Zil.Codec.Canonical
 import Zil.Codec.Userset
 import Zil.Parser.Tuple

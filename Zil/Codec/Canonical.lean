@@ -1,4 +1,5 @@
 import Zil.Core.Rule
+import Zil.Codec.Attribute
 
 namespace Zil.Codec
 
@@ -22,13 +23,19 @@ private def decodeTerm (text : String) : Except String Zil.Term :=
 def encodeRelation (relation : Zil.RelExpr) : String :=
   String.intercalate "\t" #[
     "rel", encodeTerm relation.subject, encodeName relation.relation,
-    encodeTerm relation.object]
+    encodeTerm relation.object, encodeAttributes relation.attrs]
 
-/-- Parse one canonical relation encoding. -/
+/-- Parse one canonical relation encoding. Four-column rows remain accepted as attribute-free input. -/
 def decodeRelation (text : String) : Except String Zil.RelExpr := do
   match text.splitOn "\t" with
   | ["rel", subject, relation, object] =>
       pure <| .mk' (← decodeTerm subject) (nameFromString relation) (← decodeTerm object)
+  | ["rel", subject, relation, object, attrs] =>
+      pure <| .mkWithAttrs
+        (← decodeTerm subject)
+        (nameFromString relation)
+        (← decodeTerm object)
+        (← decodeAttributes attrs)
   | _ => throw s!"invalid canonical relation: {text}"
 
 private def encodeNames (names : Array Name) : String :=
