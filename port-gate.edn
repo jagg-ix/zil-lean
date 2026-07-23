@@ -60,6 +60,19 @@
     "docs/lean4/native-change-impact.md"
     "spec/change-impact-v1.md"]}
 
+  :native-agent-context
+  {:features #{:facts :rules :queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/AgentContext.lean"
+    "Zil/CLI/AgentContext.lean"
+    "Zil/CLI/AgentContextMain.lean"
+    "Zil/Test/AgentContext.lean"
+    "examples/agent-context/project.zc"
+    "docs/lean4/agent-context-bundles.md"
+    "spec/agent-context-v1.md"]}
+
   :negation-runtime
   {:features #{:negation}
    :min-feature-sources 1
