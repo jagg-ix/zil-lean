@@ -9,7 +9,8 @@ import Zil.Test.RevisionCausal
 import Zil.Test.Conformance
 import Zil.Test.Workflow
 import Zil.Test.Formalization
+import Zil.Test.Authorization
 
-/-- Executable validation target for native ZIL, workflow, and formalization scheduling. -/
+/-- Executable validation target for native ZIL scheduling and authorization. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
