@@ -1,7 +1,9 @@
 (ns zil.bridge-tuple-lean-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
-            [zil.bridge.tuple-lean :as tuple-lean]))
+            [zil.bridge.tuple-lean :as tuple-lean]
+            [zil.core :as core]
+            [zil.relational-ir :as rir]))
 
 (defn- tmp-dir
   []
@@ -23,10 +25,16 @@
     (let [report (tuple-lean/export-tuples->lean4 (.getAbsolutePath input))
           text (:text report)]
       (is (:ok report))
+      (is (= 4 (:tuple_count report)))
       (is (= 4 (:fact_count report)))
       (is (= 1 (:userset_rule_count report)))
       (is (= "Zil.Generated.Access" (:namespace report)))
       (is (str/includes? text "import Zil"))
+      (is (str/includes? text "def sourceTuples : Array Zil.TupleExpr"))
+      (is (str/includes? text "Zil.TupleExpr.direct"))
+      (is (str/includes? text "Zil.TupleExpr.withUserset"))
+      (is (str/includes? text "⟨`group.eng⟩"))
+      (is (str/includes? text "`zil.member"))
       (is (str/includes? text "node(doc.readme)"))
       (is (str/includes? text "node(user.u10)"))
       (is (str/includes? text "node(group.eng)"))
@@ -35,6 +43,16 @@
       (is (str/includes? text "zil_theorem_rule viewerViaMember"))
       (is (str/includes? text "hInner : userset ⟶[member] subject"))
       (is (str/includes? text ": object ⟶[viewer] subject")))))
+
+(deftest canonical-tuple-ir-distinguishes-direct-groups-and-usersets-test
+  (let [direct (rir/from-legacy-tuple
+                (core/parse-atom "doc:readme#viewer@group:eng."))
+        userset (rir/from-legacy-tuple
+                 (core/parse-atom "doc:readme#viewer@group:eng#member."))]
+    (is (= :direct (get-in direct [:tuple/subject :term/kind])))
+    (is (= :userset (get-in userset [:tuple/subject :term/kind])))
+    (is (= :zil/member (get-in userset [:tuple/subject :userset/relation])))
+    (is (not (rir/tuple-equivalent? direct userset)))))
 
 (deftest exports-to-file-with-requested-namespace-test
   (let [dir (tmp-dir)

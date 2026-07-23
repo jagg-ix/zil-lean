@@ -4,7 +4,8 @@
   (:require [clojure.java.io :as io]
             [clojure.pprint :as pp]
             [clojure.string :as str]
-            [zil.core :as core]))
+            [zil.core :as core]
+            [zil.relational-ir :as rir]))
 
 (def ^:private lean-reserved
   #{"abbrev" "axiom" "by" "class" "def" "deriving" "do" "else" "end"
@@ -39,10 +40,7 @@
     safe))
 
 (defn term->lean-name
-  "Convert a ZIL term such as `doc:readme` or `user:10` into a Lean name.
-
-  Colons, slashes, and existing dots become Lean name separators. Numeric user
-  identifiers receive a `u` prefix, so `user:10` becomes `user.u10`."
+  "Convert a ZIL term such as `doc:readme` or `user:10` into a Lean name."
   [value]
   (let [raw (token-text value :term)
         parts (->> (str/split raw #"[:./]+")
@@ -85,6 +83,10 @@
         tail (map #(upper-first (str/lower-case %)) (rest parts))
         candidate (apply str head tail)]
     (sanitize-segment candidate nil)))
+
+(defn- relation->lean-name
+  [relation]
+  (str "`zil." (relation->lean-ident relation)))
 
 (defn- namespace-segment
   [part]
@@ -152,6 +154,47 @@
                       {:fact fact :attrs attrs}))))
   true)
 
+(defn- canonical-node-value
+  [term]
+  (when-not (= :node (:term/kind term))
+    (throw (ex-info "Tuple-to-Lean currently emits ground tuple facts only"
+                    {:term term})))
+  (:term/value term))
+
+(defn- render-tuple-value
+  [index tuple]
+  (let [object-name (term->lean-name (canonical-node-value (:tuple/object tuple)))
+        outer-name (relation->lean-name (:relation tuple))
+        subject (:tuple/subject tuple)
+        body (case (:term/kind subject)
+               :direct
+               (str "  Zil.TupleExpr.direct\n"
+                    "    (.ground `" object-name ")\n"
+                    "    " outer-name "\n"
+                    "    (.ground `" (term->lean-name
+                                      (canonical-node-value (:term subject))) ")")
+
+               :userset
+               (str "  Zil.TupleExpr.withUserset\n"
+                    "    (.ground `" object-name ")\n"
+                    "    " outer-name "\n"
+                    "    ⟨`" (term->lean-name
+                              (canonical-node-value (:userset/object subject))) "⟩\n"
+                    "    " (relation->lean-name (:userset/relation subject)))
+
+               (throw (ex-info "Unknown canonical tuple subject"
+                               {:tuple tuple :subject subject})))]
+    (str "private def sourceTuple" index " : Zil.TupleExpr :=\n" body)))
+
+(defn- render-source-tuples
+  [tuples]
+  (let [definitions (map-indexed render-tuple-value tuples)
+        names (map-indexed (fn [idx _] (str "sourceTuple" idx)) tuples)]
+    (str (str/join "\n\n" definitions)
+         "\n\ndef sourceTuples : Array Zil.TupleExpr := #[\n  "
+         (str/join ",\n  " names)
+         "\n]")))
+
 (defn- render-fact
   [{:keys [object relation subject]}]
   (let [userset (split-userset subject)
@@ -192,8 +235,9 @@
 
 (defn render-lean4-module
   "Render a native ZIL Lean module from parsed tuple facts."
-  [{:keys [namespace source-path facts]}]
+  [{:keys [namespace source-path facts tuples]}]
   (let [pairs (userset-pairs facts)
+        source-text (render-source-tuples tuples)
         fact-text (str/join "\n\n" (map render-fact facts))
         rule-text (str/join "\n\n" (map render-userset-rule pairs))]
     (str "/-\n"
@@ -202,6 +246,9 @@
          "-/\n\n"
          "import Zil\n\n"
          "namespace " namespace "\n\n"
+         "/- Lossless original tuple values -/\n\n"
+         source-text
+         "\n\n/- Lowered facts for the current Horn engine -/\n\n"
          fact-text
          (when (seq pairs)
            (str "\n\n/- Userset expansion rules -/\n\n" rule-text))
@@ -218,12 +265,14 @@
   ([path {:keys [namespace output-path]}]
    (let [{:keys [module facts] :as parsed} (core/parse-program (slurp path))
          _ (validate-input! parsed)
+         tuples (mapv rir/from-legacy-tuple facts)
          namespace* (sanitize-namespace
                      (or namespace (default-namespace path module)))
          pairs (userset-pairs facts)
          text (render-lean4-module {:namespace namespace*
                                     :source-path path
-                                    :facts facts})]
+                                    :facts facts
+                                    :tuples tuples})]
      (when output-path
        (let [output-file (io/file output-path)
              parent (.getParentFile output-file)]
@@ -233,6 +282,7 @@
       :path path
       :module module
       :namespace namespace*
+      :tuple_count (count tuples)
       :fact_count (count facts)
       :userset_rule_count (count pairs)
       :usersets (mapv (fn [{:keys [outer inner]}]
