@@ -22,6 +22,12 @@
    "impact" 1
    "recovery-audit" 1})
 
+(def worker-statuses
+  #{"ok" "invalid" "unsupported" "error"})
+
+(def pending-attestation-warning
+  "result-sha256-pending-client-attestation")
+
 (def request-fields
   ["schema" "request_id" "protocol_version" "operation" "input_path"
    "base_revision" "input_sha256" "capabilities" "arguments"])
@@ -113,11 +119,24 @@
                             {:request request :response response})))
   (when-not (= "lean" (:authority response))
     (throw (transport-error "worker response lost Lean authority" {:response response})))
+  (when-not (contains? worker-statuses (:status response))
+    (throw (transport-error "worker returned an unsupported status" {:response response})))
   (when-not (str/blank? (:result_sha256 response))
     (throw (transport-error "Lean worker must leave result_sha256 for client attestation"
                             {:response response})))
-  (when (and (= "ok" (:status response))
-             (not= "validated" (:assurance response)))
-    (throw (transport-error "successful worker response lost validated assurance"
-                            {:response response})))
+  (if (= "ok" (:status response))
+    (do
+      (when-not (= "validated" (:assurance response))
+        (throw (transport-error "successful worker response lost validated assurance"
+                                {:response response})))
+      (when-not (some #{pending-attestation-warning} (:warnings response))
+        (throw (transport-error "successful worker response lost attestation boundary"
+                                {:response response}))))
+    (do
+      (when-not (str/blank? (:assurance response))
+        (throw (transport-error "failed worker response must not claim assurance"
+                                {:response response})))
+      (when (empty? (:errors response))
+        (throw (transport-error "failed worker response must include an error"
+                                {:response response}))))))
   response)
