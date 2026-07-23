@@ -92,6 +92,7 @@
         module-report (theorem-lock/check-locks locks report-drift)]
     (is (some #(= :module_changed (:status %)) (:results row-report)))
     (is (false? (:ok module-report)))
+    (is (= 1 (:changed module-report)))
     (is (= :resolution_module_changed
            (get-in module-report [:failures 0 :kind])))))
 
@@ -109,8 +110,7 @@
 (deftest strict-locks-reject-unexpected-tokens-test
   (let [locks (theorem-lock/create-locks
                (resolution [(resolved-row "proof:a" "Demo.a" "lean-hash:a-v1")]))
-        current base-resolution
-        report (theorem-lock/check-locks locks current)]
+        report (theorem-lock/check-locks locks base-resolution)]
     (is (false? (:ok report)))
     (is (some #(and (= "proof:b" (:token_id %))
                     (= :unexpected_token (:status %)))
@@ -124,14 +124,21 @@
     (is (:ok report))
     (is (some #(= :additional_allowed (:status %)) (:results report)))))
 
-(deftest rejects-unresolved-baseline-test
-  (let [bad (resolution
-             [(assoc (resolved-row "proof:a" "Demo.a" "lean-hash:a-v1")
-                     :status :uses_sorry)])]
+(deftest rejects-unresolved-or-duplicate-baseline-test
+  (let [unresolved (resolution
+                    [(assoc (resolved-row "proof:a" "Demo.a" "lean-hash:a-v1")
+                            :status :uses_sorry)])
+        duplicate (resolution
+                   [(resolved-row "proof:a" "Demo.a" "lean-hash:a-v1")
+                    (resolved-row "proof:b" "Demo.a" "lean-hash:a-v1")])]
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
          #"fully resolved"
-         (theorem-lock/create-locks bad)))))
+         (theorem-lock/create-locks unresolved)))
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"declarations must be unique"
+         (theorem-lock/create-locks duplicate)))))
 
 (deftest rejects-invalid-lock-documents-test
   (let [locks (theorem-lock/create-locks base-resolution)]
@@ -145,7 +152,27 @@
         (is (thrown-with-msg?
              clojure.lang.ExceptionInfo
              #"declarations must be unique"
-             (theorem-lock/validate-locks! duplicate)))))))
+             (theorem-lock/validate-locks! duplicate)))))
+    (testing "row module differs"
+      (let [wrong-module (assoc-in locks [:locks 0 :module] "Other")]
+        (is (thrown-with-msg?
+             clojure.lang.ExceptionInfo
+             #"row module differs"
+             (theorem-lock/validate-locks! wrong-module)))))
+    (testing "document was modified"
+      (let [tampered (assoc locks :strict false)]
+        (is (thrown-with-msg?
+             clojure.lang.ExceptionInfo
+             #"fingerprint mismatch"
+             (theorem-lock/validate-locks! tampered)))))))
+
+(deftest rejects-malformed-current-resolution-test
+  (let [locks (theorem-lock/create-locks base-resolution)
+        malformed (assoc-in base-resolution [:resolutions 0 :status] :invented)]
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"Unknown proof token resolution status"
+         (theorem-lock/check-locks locks malformed)))))
 
 (deftest file-round-trip-and-check-report-test
   (let [resolution-file (java.io.File/createTempFile "zil-lock-resolution-" ".json")
