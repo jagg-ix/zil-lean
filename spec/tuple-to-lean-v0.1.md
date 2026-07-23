@@ -5,7 +5,7 @@
 This translation accepts relation facts written with the original ZIL tuple syntax and emits native ZIL Lean declarations.
 
 ```text
-object#relation@subject.
+object#relation@subject [key=value, ...].
 ```
 
 Example input:
@@ -13,7 +13,7 @@ Example input:
 ```zc
 doc:readme#owner@user:10.
 group:eng#member@user:11.
-doc:readme#viewer@group:eng#member.
+doc:readme#viewer@group:eng#member [source="policy", inherited=true].
 doc:readme#parent@folder:A.
 ```
 
@@ -28,7 +28,9 @@ tuple-fact*
 
 `MODULE` is optional. Each tuple fact must end with `.`.
 
-The v0.1 translator accepts facts without attributes. Rules, queries, standard-library declarations, and attributes produce an error with the unsupported construct reported.
+Tuple attributes support strings, integers, decimal literals, booleans, named
+terms, and `?variable` terms. Top-level facts must remain ground. Rules, queries,
+macros, and higher-level declarations are handled by later parser stages.
 
 ## Lossless tuple model
 
@@ -38,6 +40,13 @@ Every source tuple is first represented as `Zil.TupleExpr`.
 inductive TupleSubject where
   | direct : Term → TupleSubject
   | userset : UsersetRef → TupleSubject
+
+structure TupleExpr where
+  object : Term
+  relation : Name
+  subject : TupleSubject
+  attrs : Array Attribute
+  source : Source
 ```
 
 This preserves the difference between:
@@ -47,7 +56,8 @@ doc:readme#viewer@group:eng.
 doc:readme#viewer@group:eng#member.
 ```
 
-The first tuple names `group:eng` directly. The second names the subjects reached through the `member` relation on `group:eng`.
+The first tuple names `group:eng` directly. The second names the subjects reached
+through the `member` relation on `group:eng`.
 
 Generated modules expose the source values in:
 
@@ -55,7 +65,38 @@ Generated modules expose the source values in:
 def sourceTuples : Array Zil.TupleExpr
 ```
 
-The source values are then lowered into the existing `RelExpr` facts and Horn rules used by the native query engine.
+Each value is registered with:
+
+```lean
+zil_register_tuple sourceTuple0
+```
+
+Registration lowers the tuple into the `RelExpr` facts and Horn rules used by the
+native query engine.
+
+## Attribute semantics
+
+Attributes are finite key/value maps. Keys must be unique. Source order does not
+affect semantic equality.
+
+```zc
+service:api#depends_on@service:db
+  [critical=true, retries=3, ratio=0.75, owner=team:platform].
+```
+
+becomes a `TupleExpr` whose `attrs` contain:
+
+```lean
+#[
+  { key := `critical, value := .boolean true },
+  { key := `retries, value := .integer 3 },
+  { key := `ratio, value := .decimal "0.75" },
+  { key := `owner, value := .term (.ground `team.platform) }
+]
+```
+
+The lowered `RelExpr` retains the same attribute map. A rule or query pattern may
+specify a subset of attributes; every specified key/value pair must match.
 
 ## Lean name mapping
 
@@ -69,14 +110,15 @@ folder:A          → folder.A
 lean.Parser.parse → lean.Parser.parse
 ```
 
-A numeric segment receives a prefix so it forms a valid Lean name. Numeric segments under `user` use `u`; other numeric segments use `n`.
+A numeric segment receives a prefix so it forms a valid Lean name. Numeric
+segments under `user` use `u`; other numeric segments use `n`.
 
-Relations become Lean identifiers. Separator-delimited and camel-case source names map to lower camel case:
+Relations become canonical names under `zil`:
 
 ```text
-requires-claim → requiresClaim
-requiresClaim  → requiresClaim
-supported_by   → supportedBy
+requires-claim → zil.requiresClaim
+requiresClaim  → zil.requiresclaim
+supported_by   → zil.supportedBy
 ```
 
 ## Direct facts
@@ -96,21 +138,14 @@ Zil.TupleExpr.direct
   (.ground `user.u10)
 ```
 
-and lowers to:
-
-```lean
-zil_fact
-  node(doc.readme)
-    ⟶[owner]
-  node(user.u10)
-```
+and lowers to one `RelExpr` fact.
 
 ## Userset subjects
 
 A subject ending in `#relation` names a userset:
 
 ```zc
-doc:readme#viewer@group:eng#member.
+doc:readme#viewer@group:eng#member [source="policy"].
 ```
 
 It is retained as:
@@ -121,65 +156,36 @@ Zil.TupleExpr.withUserset
   `zil.viewer
   ⟨`group.eng⟩
   `zil.member
+  #[{ key := `source, value := .text "policy" }]
 ```
 
-The lowering emits the stored relation to the userset object:
-
-```lean
-zil_fact
-  node(doc.readme)
-    ⟶[viewer]
-  node(group.eng)
-```
-
-It also emits one rule for each distinct outer/inner relation pair:
-
-```lean
-zil_theorem_rule viewerViaMember
-  {object userset subject : Zil.Node}
-  (hOuter : object ⟶[viewer] userset)
-  (hInner : userset ⟶[member] subject)
-  : object ⟶[viewer] subject
-```
-
-The lossless tuple remains available even after lowering, so codecs and later Zanzibar-specific processing can distinguish a direct group relation from a userset relation.
-
-Repeated userset patterns share one generated rule.
+Lowering emits the stored relation to `group.eng` and a traversal rule that
+follows `member`. The outer premise and derived relation retain the tuple's
+attributes.
 
 ## Canonical encoding
 
-Direct and userset subjects have separate forms:
+Direct and userset subjects have separate forms. Attribute data occupies the
+final codec column:
 
 ```text
-tuple<TAB>node:doc.readme<TAB>zil.viewer<TAB>direct<TAB>node:group.eng
-tuple<TAB>node:doc.readme<TAB>zil.viewer<TAB>userset<TAB>group.eng<TAB>zil.member
+tuple<TAB>node:doc.readme<TAB>zil.viewer<TAB>direct<TAB>node:group.eng<TAB><attrs>
+tuple<TAB>node:doc.readme<TAB>zil.viewer<TAB>userset<TAB>group.eng<TAB>zil.member<TAB><attrs>
 ```
 
-`Zil.Codec.encodeTuple` and `decodeTuple` preserve this distinction. Source metadata is excluded from semantic equality.
+`Zil.Codec.encodeTuple` and `decodeTuple` preserve direct/userset structure and
+attribute values. Older rows without the attribute column remain accepted.
 
-## Namespace
+## Native command
 
-The output namespace may be supplied explicitly. Otherwise it is derived from the `MODULE` declaration or the input filename under `Zil.Generated`.
-
-```text
-access.zc              → Zil.Generated.Access
-MODULE policy.access.  → Zil.Generated.Policy.Access
+```bash
+lake exe zil -- compile input.zc output.lean Project.AccessFacts
 ```
 
-## Command
+Passing `-` as the output path prints the generated module.
+
+The Clojure compatibility exporter remains available:
 
 ```bash
 clojure -M:tuple-lean input.zc output.lean Project.AccessFacts
-```
-
-Passing `-` as the output path prints the Lean module to standard output.
-
-```bash
-clojure -M:tuple-lean input.zc -
-```
-
-The convenience script provides the same translation:
-
-```bash
-bash ./bin/zil-tuples-lean input.zc output.lean Project.AccessFacts
 ```
