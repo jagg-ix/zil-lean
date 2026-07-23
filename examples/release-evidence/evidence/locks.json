@@ -1,0 +1,21 @@
+{
+  "format": "zil.theorem-lock-check.v0.1",
+  "ok": true,
+  "module": "Demo",
+  "strict": true,
+  "lock_document_fingerprint": "sha256:locks",
+  "current_event_batch_fingerprint": "sha256:events",
+  "current_token_batch_fingerprint": "sha256:tokens",
+  "lock_count": 1,
+  "current_token_count": 1,
+  "unchanged": 1,
+  "changed": 0,
+  "results": [
+    {
+      "token_id": "proof:demo",
+      "declaration": "Demo.answer",
+      "status": "unchanged",
+      "type_fingerprint": "lean-hash:demo-v1"
+    }
+  ]
+}
