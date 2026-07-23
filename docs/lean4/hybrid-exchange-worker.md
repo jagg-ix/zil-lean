@@ -5,6 +5,12 @@ The exchange worker gives the Clojure operational control plane a stable, allowl
 ## Start a persistent worker
 
 ```bash
+bin/zil worker --stdio
+```
+
+The direct Lake form is:
+
+```bash
 lake exe zilWorker -- --stdio
 ```
 
@@ -13,7 +19,7 @@ Each standard-input line is one `ZIL-EXCHANGE/1` request. Each standard-output l
 For one request:
 
 ```bash
-lake exe zilWorker -- --once < examples/exchange/parse-request.json
+bin/zil worker --once < examples/exchange/parse-request.json
 ```
 
 The checked-in example uses a placeholder digest for readability. The Clojure client computes the actual input SHA-256 before sending a request.
@@ -40,17 +46,52 @@ The client:
 
 - computes SHA-256 over exact input bytes;
 - starts or reuses a Lean worker;
-- validates response schema, request identity, operation, and Lean authority;
+- validates response schema, request identity, operation, input binding, and Lean authority;
+- refuses a response that is already transport-attested;
 - computes SHA-256 over exact payload bytes;
 - never changes Lean semantic assurance, payload, or errors.
 
-A command-line one-shot adapter is also available:
+A command-line one-shot adapter is available through either form:
+
+```bash
+bin/zil exchange authorize \
+  examples/authorization/access.zc \
+  doc:readme viewer user:11
+```
 
 ```bash
 clojure -M:exchange authorize \
   examples/authorization/access.zc \
   doc:readme viewer user:11
 ```
+
+## Bounded worker pool
+
+```clojure
+(require '[zil.worker.client :as worker]
+         '[zil.worker.pool :as pool])
+
+(def workers (pool/start-pool! {:size 4}))
+
+(def response
+  (pool/invoke!
+   workers
+   (worker/request
+    {:operation "impact"
+     :input-path "examples/impact/project.zc"
+     :arguments ["lean:Parser.parse"]})))
+
+(pool/stop-pool! workers)
+```
+
+The pool provides:
+
+- a fixed concurrency bound;
+- timeout-based acquisition;
+- cleanup when partial startup fails;
+- reuse of healthy workers;
+- replacement of dead workers;
+- deterministic shutdown of every supervised process.
 
 ## Initial operations
 
