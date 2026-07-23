@@ -34,7 +34,17 @@
   :macro-frontend
   {:features #{:macros}
    :min-feature-sources 1
-   :min-sources 1}
+   :min-sources 1
+   :evidence-files
+   ["Zil/Core/Macro.lean"
+    "Zil/Parser/Macro.lean"
+    "Zil/Parser/MacroProgram.lean"
+    "Zil/Parser/DeclarationProgram.lean"
+    "Zil/Test/Macro.lean"
+    "Zil/Test/MacroLibrary.lean"
+    "src/zil/port/native_macro.clj"
+    "test/zil/port_native_macro_test.clj"
+    "spec/macro-extension-parity-v1.md"]}
 
   :declaration-lowering
   {:features #{:declarations :tm-atoms :lts-atoms}
