@@ -37,6 +37,17 @@
     "docs/lean4/native-query-governance.md"
     "spec/query-governance-v1.md"]}
 
+  :native-derivation-provenance
+  {:features #{:facts :rules :queries :usersets :negation}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/Engine/Provenance.lean"
+    "Zil/Test/Provenance.lean"
+    "examples/provenance/access.zc"
+    "docs/lean4/derivation-provenance.md"
+    "spec/derivation-provenance-v1.md"]}
+
   :negation-runtime
   {:features #{:negation}
    :min-feature-sources 1
