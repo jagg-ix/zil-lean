@@ -11,7 +11,8 @@ import Zil.Test.Conformance
 import Zil.Test.Workflow
 import Zil.Test.Formalization
 import Zil.Test.Authorization
+import Zil.Test.QueryGovernance
 
-/-- Executable validation target for native ZIL extension parity. -/
+/-- Executable validation target for native ZIL query governance. -/
 def main : IO Unit := do
   IO.println "zil-lean native validation passed"
