@@ -1,7 +1,8 @@
 (ns zil.port-gate-test
   (:require [clojure.java.io :as io]
-            [clojure.test :refer [deftest is testing]]
-            [zil.port.gate :as gate]))
+            [clojure.test :refer [deftest is]]
+            [zil.port.gate :as gate]
+            [zil.port.gate-runner :as runner]))
 
 (defn- temp-dir []
   (.toFile (java.nio.file.Files/createTempDirectory
@@ -56,8 +57,8 @@
         root (io/file workspace "lib")
         source (write-source! root)
         [manifest conformance] (reports source root :compiled :pass)
-        result (gate/evaluate manifest conformance {}
-                              {:file-exists? (constantly true)})]
+        result (runner/evaluate manifest conformance {}
+                                {:file-exists? (constantly true)})]
     (is (:ok result))
     (is (= 1.0 (get-in result [:global :compile-ratio])))
     (is (= 1.0 (get-in result [:global :exact-ratio])))
@@ -70,8 +71,8 @@
         root (io/file workspace "lib")
         source (write-source! root)
         [manifest conformance] (reports source root :compiled :mismatch)
-        result (gate/evaluate manifest conformance {}
-                              {:file-exists? (constantly true)})]
+        result (runner/evaluate manifest conformance {}
+                                {:file-exists? (constantly true)})]
     (is (false? (:ok result)))
     (is (= 1 (get-in result [:global :mismatch])))
     (is (some #(= :mismatch (:kind %)) (:failures result)))
@@ -87,8 +88,8 @@
                   :entries [{:source path :root (.getCanonicalPath root)
                              :relative "complete.zc" :status :compiled}]}
         conformance {:schema "ZIL-CONFORMANCE/1" :entries []}
-        result (gate/evaluate manifest conformance {}
-                              {:file-exists? (constantly true)})]
+        result (runner/evaluate manifest conformance {}
+                                {:file-exists? (constantly true)})]
     (is (false? (:ok result)))
     (is (= 1 (get-in result [:global :missing-conformance])))
     (is (= :missing (get-in result [:records 0 :conformance-status])))))
@@ -98,8 +99,8 @@
         root (io/file workspace "lib")
         source (write-source! root)
         [manifest conformance] (reports source root :compiled :pass)
-        result (gate/evaluate manifest conformance {}
-                              {:file-exists? (constantly false)})]
+        result (runner/evaluate manifest conformance {}
+                                {:file-exists? (constantly false)})]
     (is (false? (:ok result)))
     (is (false? (get-in result [:components :revision-causal :retirable])))
     (is (seq (get-in result [:components :revision-causal :failures])))
@@ -111,9 +112,9 @@
         missing (io/file workspace "libsets")
         source (write-source! root)
         [manifest conformance] (reports source root :compiled :pass)
-        result (gate/evaluate manifest conformance
-                              {:required-roots [(.getPath missing)]}
-                              {:file-exists? (constantly true)})]
+        result (runner/evaluate manifest conformance
+                                {:required-roots [(.getPath missing)]}
+                                {:file-exists? (constantly true)})]
     (is (false? (:ok result)))
     (is (some #(= :missing-required-root (:kind %)) (:failures result)))))
 
@@ -122,7 +123,19 @@
         root (io/file workspace "examples")
         source (write-source! root)
         [manifest conformance] (reports source root :checked :pass)
-        result (gate/evaluate manifest conformance {}
-                              {:file-exists? (constantly true)})]
+        result (runner/evaluate manifest conformance {}
+                                {:file-exists? (constantly true)})]
     (is (:ok result))
     (is (= 1 (get-in result [:global :compiled])))))
+
+(deftest config-merge-replaces-vectors-and-deep-merges-components-test
+  (let [merged (runner/merge-config
+                {:required-roots ["custom"]
+                 :global {:max-mismatch 2}
+                 :components {:macro-frontend {:min-sources 3}}})]
+    (is (= ["custom"] (:required-roots merged)))
+    (is (= 2 (get-in merged [:global :max-mismatch])))
+    (is (= 1.0 (get-in merged [:global :min-compile-ratio])))
+    (is (= 3 (get-in merged [:components :macro-frontend :min-sources])))
+    (is (= #{:macros}
+           (get-in merged [:components :macro-frontend :features])))))
