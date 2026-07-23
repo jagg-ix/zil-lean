@@ -10,11 +10,17 @@
 
 (def lock-format "zil.theorem-locks.v0.1")
 (def check-format "zil.theorem-lock-check.v0.1")
+(def resolution-statuses
+  #{"resolved" "missing" "ambiguous" "module_mismatch" "kind_mismatch"
+    "kernel_missing" "uses_sorry" "trust_mismatch"})
 
 (defn- value [m key]
   (if (contains? m key)
     (get m key)
     (get m (keyword key))))
+
+(defn- without-key [m key]
+  (dissoc m key (keyword key)))
 
 (defn- require-value! [condition message data]
   (when-not condition
@@ -39,6 +45,9 @@
 (defn document-fingerprint [document]
   (sha256 (json/write-str (canonical-value document) :escape-slash false)))
 
+(defn- status-name [row]
+  (some-> (value row "status") name))
+
 (defn validate-resolution! [resolution]
   (require-value! (= proof-token/resolution-format (value resolution "format"))
                   "Unsupported proof token resolution format"
@@ -54,23 +63,34 @@
     (let [ids (mapv #(value % "token_id") rows)]
       (require-value! (= (count ids) (count (distinct ids)))
                       "Resolved proof token IDs must be unique"
-                      {:token_ids ids})))
+                      {:token_ids ids}))
+    (doseq [row rows]
+      (doseq [key ["token_id" "declaration"]]
+        (require-value! (and (string? (value row key))
+                             (not (str/blank? (value row key))))
+                        "Proof token resolution field must be non-empty"
+                        {:field key :resolution row}))
+      (require-value! (contains? resolution-statuses (status-name row))
+                      "Unknown proof token resolution status"
+                      {:status (value row "status") :resolution row})
+      (when (= "resolved" (status-name row))
+        (doseq [key ["module" "kind" "type_fingerprint"]]
+          (require-value! (and (string? (value row key))
+                               (not (str/blank? (value row key))))
+                          "Resolved proof token field must be non-empty"
+                          {:field key :resolution row})))))
   resolution)
 
 (defn- resolved? [row]
-  (= "resolved" (name (value row "status"))))
+  (= "resolved" (status-name row)))
 
 (defn- resolution-lock [row]
-  (let [fingerprint (value row "type_fingerprint")]
-    (require-value! (and (string? fingerprint) (not (str/blank? fingerprint)))
-                    "Resolved proof token lacks a type fingerprint"
-                    {:token_id (value row "token_id")})
-    (sorted-map
-     :token_id (value row "token_id")
-     :declaration (value row "declaration")
-     :module (value row "module")
-     :kind (value row "kind")
-     :type_fingerprint fingerprint)))
+  (sorted-map
+   :token_id (value row "token_id")
+   :declaration (value row "declaration")
+   :module (value row "module")
+   :kind (value row "kind")
+   :type_fingerprint (value row "type_fingerprint")))
 
 (defn create-locks
   ([resolution]
@@ -85,18 +105,22 @@
                                                          :token_id :status])
                                        unresolved)})
      (let [locks (->> rows (map resolution-lock) (sort-by :token_id) vec)
-           body (sorted-map
-                 :format lock-format
-                 :complete true
-                 :module (value resolution "module")
-                 :strict (boolean strict)
-                 :source_event_batch_fingerprint
-                 (value resolution "event_batch_fingerprint")
-                 :source_token_batch_fingerprint
-                 (value resolution "token_batch_fingerprint")
-                 :lock_count (count locks)
-                 :locks locks)]
-       (assoc body :document_fingerprint (document-fingerprint body))))))
+           declarations (mapv :declaration locks)]
+       (require-value! (= (count declarations) (count (distinct declarations)))
+                       "Theorem lock declarations must be unique"
+                       {:declarations declarations})
+       (let [body (sorted-map
+                   :format lock-format
+                   :complete true
+                   :module (value resolution "module")
+                   :strict (boolean strict)
+                   :source_event_batch_fingerprint
+                   (value resolution "event_batch_fingerprint")
+                   :source_token_batch_fingerprint
+                   (value resolution "token_batch_fingerprint")
+                   :lock_count (count locks)
+                   :locks locks)]
+         (assoc body :document_fingerprint (document-fingerprint body)))))))
 
 (defn validate-locks! [locks]
   (require-value! (= lock-format (value locks "format"))
@@ -104,29 +128,43 @@
                   {:format (value locks "format")})
   (require-value! (true? (value locks "complete"))
                   "Partial theorem lock files are rejected" {})
-  (require-value! (and (string? (value locks "module"))
-                       (not (str/blank? (value locks "module"))))
-                  "Theorem lock module must be non-empty" {})
-  (require-value! (boolean? (value locks "strict"))
-                  "Theorem lock strict flag must be boolean" {})
-  (let [rows (value locks "locks")]
-    (require-value! (vector? rows) "Theorem locks must be an array" {})
-    (require-value! (= (value locks "lock_count") (count rows))
-                    "Theorem lock count mismatch" {})
-    (let [ids (mapv #(value % "token_id") rows)
-          declarations (mapv #(value % "declaration") rows)]
-      (require-value! (= (count ids) (count (distinct ids)))
-                      "Theorem lock token IDs must be unique" {:token_ids ids})
-      (require-value! (= (count declarations) (count (distinct declarations)))
-                      "Theorem lock declarations must be unique"
-                      {:declarations declarations}))
-    (doseq [row rows]
-      (doseq [key ["token_id" "declaration" "module" "kind"
-                   "type_fingerprint"]]
-        (require-value! (and (string? (value row key))
-                             (not (str/blank? (value row key))))
-                        "Theorem lock field must be a non-empty string"
-                        {:field key :lock row}))))
+  (let [module (value locks "module")]
+    (require-value! (and (string? module) (not (str/blank? module)))
+                    "Theorem lock module must be non-empty" {})
+    (require-value! (boolean? (value locks "strict"))
+                    "Theorem lock strict flag must be boolean" {})
+    (let [rows (value locks "locks")]
+      (require-value! (vector? rows) "Theorem locks must be an array" {})
+      (require-value! (= (value locks "lock_count") (count rows))
+                      "Theorem lock count mismatch" {})
+      (let [ids (mapv #(value % "token_id") rows)
+            declarations (mapv #(value % "declaration") rows)]
+        (require-value! (= (count ids) (count (distinct ids)))
+                        "Theorem lock token IDs must be unique" {:token_ids ids})
+        (require-value! (= (count declarations) (count (distinct declarations)))
+                        "Theorem lock declarations must be unique"
+                        {:declarations declarations}))
+      (doseq [row rows]
+        (doseq [key ["token_id" "declaration" "module" "kind"
+                     "type_fingerprint"]]
+          (require-value! (and (string? (value row key))
+                               (not (str/blank? (value row key))))
+                          "Theorem lock field must be a non-empty string"
+                          {:field key :lock row}))
+        (require-value! (= module (value row "module"))
+                        "Theorem lock row module differs from document module"
+                        {:document_module module :lock row})))
+    (let [fingerprint (value locks "document_fingerprint")]
+      (require-value! (and (string? fingerprint)
+                           (not (str/blank? fingerprint)))
+                      "Theorem lock document fingerprint must be non-empty" {})
+      (require-value! (= fingerprint
+                         (document-fingerprint
+                          (without-key locks "document_fingerprint")))
+                      "Theorem lock document fingerprint mismatch"
+                      {:expected (document-fingerprint
+                                  (without-key locks "document_fingerprint"))
+                       :actual fingerprint})))
   locks)
 
 (defn- compare-lock [lock current]
@@ -139,7 +177,7 @@
 
       (not (resolved? current))
       (assoc base :status :current_unresolved
-             :current_status (keyword (name (value current "status"))))
+             :current_status (keyword (status-name current)))
 
       (not= (value lock "declaration") (value current "declaration"))
       (assoc base :status :declaration_changed
@@ -193,11 +231,11 @@
                           :locked_module lock-module
                           :current_module current-module})
         all-results (vec (concat comparisons extras))
-        failures (filterv #(not (contains? #{:unchanged :additional_allowed}
-                                           (:status %)))
-                          all-results)
+        row-failures (filterv #(not (contains? #{:unchanged :additional_allowed}
+                                               (:status %)))
+                              all-results)
         counts (frequencies (map :status all-results))
-        ok (and (nil? module-failure) (empty? failures))]
+        ok (and (nil? module-failure) (empty? row-failures))]
     (sorted-map
      :format check-format
      :ok ok
@@ -211,7 +249,7 @@
      :lock_count (count locked-rows)
      :current_token_count (count current-rows)
      :unchanged (get counts :unchanged 0)
-     :changed (count failures)
+     :changed (+ (count row-failures) (if module-failure 1 0))
      :status_counts (into (sorted-map) counts)
      :failures (cond-> [] module-failure (conj module-failure))
      :results all-results)))
