@@ -48,6 +48,18 @@
     "docs/lean4/derivation-provenance.md"
     "spec/derivation-provenance-v1.md"]}
 
+  :native-change-impact
+  {:features #{:facts :rules}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/Impact.lean"
+    "Zil/CLI/Impact.lean"
+    "Zil/Test/Impact.lean"
+    "examples/impact/project.zc"
+    "docs/lean4/native-change-impact.md"
+    "spec/change-impact-v1.md"]}
+
   :negation-runtime
   {:features #{:negation}
    :min-feature-sources 1
