@@ -20,6 +20,11 @@ private def namespaceFromArgument
       | .ok name => pure name
       | .error error => throw <| IO.userError error
 
+private def parseNatIO (value message : String) : IO Nat :=
+  match value.toNat? with
+  | some number => pure number
+  | none => throw <| IO.userError message
+
 /-- Parse one declaration-enabled `.zc` source file and emit a native ZIL Lean module. -/
 def compileFile
     (inputPath : String)
@@ -101,10 +106,10 @@ def main (args : List String) : IO UInt32 := do
     | ["expand", input, output] => Zil.CLI.expandFile input (some output); pure 0
     | ["revision-summary", input] => Zil.CLI.revisionSummary input; pure 0
     | ["snapshot", input, revision] =>
-        let frontier ← revision.toNat?.toExcept "invalid snapshot revision" |>.toIO
+        let frontier ← Zil.CLI.parseNatIO revision "invalid snapshot revision"
         Zil.CLI.snapshotFile input frontier; pure 0
     | ["snapshot", input, revision, output] =>
-        let frontier ← revision.toNat?.toExcept "invalid snapshot revision" |>.toIO
+        let frontier ← Zil.CLI.parseNatIO revision "invalid snapshot revision"
         Zil.CLI.snapshotFile input frontier (some output); pure 0
     | ["causal-check", input] => Zil.CLI.causalCheck input; pure 0
     | _ => IO.eprintln Zil.CLI.usage; pure 2
