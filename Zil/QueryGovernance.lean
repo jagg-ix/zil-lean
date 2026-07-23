@@ -220,7 +220,7 @@ private def removeIndexed
 private def addVariables (bound : Array Name) (relation : Zil.RelExpr) : Array Name :=
   relation.variables.foldl (init := bound) pushName
 
-private def planPositive
+private partial def planPositive
     (hint : PlannerHint)
     (facts : Array Zil.RelExpr)
     (remaining : List (Nat × Zil.RelExpr))
