@@ -1,0 +1,9 @@
+MACRO SERVICE_EXTENSION(service, team):
+  EMIT SERVICE {{service}} [env=prod, criticality=high].
+  EMIT USE grant({{service}}, owner, {{team}}).
+  EMIT RULE {{service}}_viewer_rule:
+  EMIT IF {{service}}#owner@?team
+  EMIT THEN {{service}}#viewer@?team.
+  EMIT QUERY {{service}}_viewers:
+  EMIT FIND ?team WHERE {{service}}#viewer@?team.
+ENDMACRO.

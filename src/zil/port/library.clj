@@ -3,7 +3,8 @@
   (:gen-class)
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [zil.port.native-macro :as native-macro])
   (:import (java.nio.charset StandardCharsets)
            (java.nio.file Files Path Paths StandardCopyOption)
            (java.security MessageDigest)))
@@ -166,26 +167,45 @@
                                 [StandardCopyOption/REPLACE_EXISTING]))))
     target))
 
+(defn- command-base [command]
+  (let [command (vec command)]
+    (if (= "compile" (last command)) (pop command) command)))
+
+(defn- runner-adapter [runner]
+  (fn [{:keys [command]}] (runner command)))
+
 (defn- compile-entry
   [{:keys [command runner check-only]
-    :or {command default-command runner run-command}}
+    :or {command default-command runner run-command}
+    :as options}
    entry]
-  (let [invocation (into (vec command)
+  (let [prepared (native-macro/prepare-source (:source entry) options)
+        invocation (into (vec command)
                          [(:source entry) "-" (:namespace entry)])
-        {:keys [exit out err] :as result} (runner invocation)]
-    (if (zero? exit)
-      (let [output-sha (text-sha256 out)
+        result (if (:composed prepared)
+                 (native-macro/invoke-native
+                  {:native-command (command-base command)
+                   :runner (runner-adapter runner)}
+                  "compile" (:text prepared) (:namespace entry))
+                 (runner invocation))
+        entry (assoc entry
+                     :compiled-source-sha256 (:source_sha256 prepared)
+                     :macro-composed (boolean (:composed prepared))
+                     :lib-dir (:lib_dir prepared)
+                     :lib-files (vec (:lib_files prepared)))]
+    (if (zero? (:exit result))
+      (let [output-sha (text-sha256 (:out result))
             status (if check-only :checked :compiled)]
         (when-not check-only
-          (atomic-write! (:output entry) out))
+          (atomic-write! (:output entry) (:out result)))
         (assoc entry
                :status status
                :output-sha256 output-sha
-               :bytes (count (.getBytes (str out) StandardCharsets/UTF_8))))
+               :bytes (count (.getBytes (str (:out result)) StandardCharsets/UTF_8))))
       (assoc entry
              :status :failed
-             :exit exit
-             :error (str/trim (or err ""))
+             :exit (:exit result)
+             :error (str/trim (or (:err result) ""))
              :command (:command result invocation)))))
 
 (defn- read-manifest [path]
@@ -223,6 +243,7 @@
                              (or (:roots options) default-roots))
                 :output-root (path-string (absolute-path output-root))
                 :namespace-prefix (or (:namespace-prefix options) default-namespace)
+                :lib-dir (some-> (:lib-dir options) absolute-path path-string)
                 :check-only (boolean (:check-only options))
                 :ok (every? #(not= :failed (:status %)) results)
                 :entries results)
@@ -249,6 +270,7 @@
           "--out" (recur rest (assoc options :output-root value))
           "--manifest" (recur rest (assoc options :manifest value))
           "--namespace" (recur rest (assoc options :namespace-prefix value))
+          "--lib" (recur rest (assoc options :lib-dir value))
           "--check" (recur (next args) (assoc options :check-only true))
           "--clean-stale" (recur (next args) (assoc options :clean-stale true))
           "--help" (assoc options :help true)
@@ -256,7 +278,7 @@
 
 (def usage
   (str "zil-library [--root DIR]* [--out DIR] [--manifest FILE] "
-       "[--namespace PREFIX] [--check] [--clean-stale]"))
+       "[--namespace PREFIX] [--lib DIR] [--check] [--clean-stale]"))
 
 (defn -main [& args]
   (try

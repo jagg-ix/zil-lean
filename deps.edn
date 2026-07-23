@@ -16,5 +16,6 @@
            :proof-tokens {:main-opts ["-m" "zil.bridge.proof-token"]}
            :theorem-locks {:main-opts ["-m" "zil.bridge.theorem-lock"]}
            :release-attest {:main-opts ["-m" "zil.release.attestation"]}
+           :macro-native {:main-opts ["-m" "zil.port.native-macro"]}
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
                    :ns-default build}}}

@@ -2,6 +2,9 @@ import Zil
 
 open Zil
 
+private def hasSubstring (text needle : String) : Bool :=
+  (text.splitOn needle).length > 1
+
 private def macroSource : String :=
   "MACRO grant(object, group):\n" ++
   "EMIT {{object}}#viewer@{{group}}#member.\n" ++
@@ -27,6 +30,44 @@ private def aritySource : String :=
   "EMIT {{left}}#related@{{right}}.\n" ++
   "ENDMACRO.\n" ++
   "USE pair(doc:readme).\n"
+
+private def caseInsensitiveCommentSource : String :=
+  "mAcRo annotate(object): // mixed-case header\n" ++
+  "eMiT {{object}}#meta@value:item [note=\"https://example.test/a//b\"]. // trailing comment\n" ++
+  "eNdMaCrO.\n" ++
+  "uSe annotate(doc:readme). // invocation comment\n"
+
+private def extensionSource : String :=
+  "MACRO SERVICE_EXTENSION(service, team):\n" ++
+  "EMIT SERVICE {{service}} [env=prod, criticality=high].\n" ++
+  "EMIT {{service}}#owner@{{team}}.\n" ++
+  "EMIT RULE extensionViewer:\n" ++
+  "EMIT IF {{service}}#owner@?team\n" ++
+  "EMIT THEN {{service}}#viewer@?team.\n" ++
+  "EMIT QUERY extensionViewers:\n" ++
+  "EMIT FIND ?team WHERE {{service}}#viewer@?team.\n" ++
+  "ENDMACRO.\n" ++
+  "USE SERVICE_EXTENSION(service:api, team:platform).\n"
+
+private def grantLibrary : Zil.Parser.MacroProgram.LibrarySource := {
+  label := "lib/10-grants.zc"
+  text :=
+    "mAcRo grant(object, subject):\n" ++
+    "eMiT {{object}}#viewer@{{subject}}.\n" ++
+    "eNdMaCrO.\n"
+}
+
+private def wrapperLibrary : Zil.Parser.MacroProgram.LibrarySource := {
+  label := "lib/20-wrapper.zc"
+  text :=
+    "MACRO grant_platform(object):\n" ++
+    "EMIT USE grant({{object}}, team:platform).\n" ++
+    "ENDMACRO.\n"
+}
+
+private def libraryModel : String :=
+  "MODULE macro.library.\n" ++
+  "USE grant_platform(doc:readme).\n"
 
 #guard match Zil.Parser.Macro.preprocess macroSource with
   | .ok result =>
@@ -55,6 +96,59 @@ private def aritySource : String :=
       | none => false
   | .error _ => false
 
+#guard match Zil.Parser.Macro.preprocess caseInsensitiveCommentSource with
+  | .ok result =>
+      result.macros.size == 1 &&
+      result.expansions.size == 1 &&
+      result.lines.size == 1 &&
+      match result.lines[0]? with
+      | some line =>
+          hasSubstring line.text "https://example.test/a//b" &&
+          !hasSubstring line.text "trailing comment"
+      | none => false
+  | .error _ => false
+
+#guard match Zil.Parser.DeclarationProgram.parseText caseInsensitiveCommentSource with
+  | .ok program =>
+      program.tuples.size == 1 &&
+      match program.tuples[0]? with
+      | some tuple =>
+          match tuple.attrs[0]? with
+          | some attr => attr.key == `note && attr.value == .text "https://example.test/a//b"
+          | none => false
+      | none => false
+  | .error _ => false
+
+#guard match Zil.Parser.DeclarationProgram.parseText extensionSource with
+  | .ok program =>
+      program.macros.size == 1 &&
+      program.expansions.size == 1 &&
+      program.declarations.size == 1 &&
+      program.tuples.size == 1 &&
+      program.rules.size == 1 &&
+      program.queries.size == 1 &&
+      match program.queries[0]? with
+      | some query =>
+          let closed := Zil.Engine.closure program.facts program.allRules
+          !(Zil.Engine.solve closed query).isEmpty
+      | none => false
+  | .error _ => false
+
+#guard match Zil.Parser.MacroProgram.expandTextWithLibraries
+    #[grantLibrary, wrapperLibrary] "model.zc" libraryModel with
+  | .ok text =>
+      hasSubstring text "doc:readme#viewer@team:platform." &&
+      !hasSubstring text "USE grant_platform"
+  | .error _ => false
+
+#guard match Zil.Parser.MacroProgram.parseTextWithLibraries
+    #[grantLibrary, wrapperLibrary] "model.zc" libraryModel with
+  | .ok program =>
+      program.macros.size == 2 &&
+      program.expansions.size == 2 &&
+      program.tuples.size == 1
+  | .error _ => false
+
 #guard match Zil.Parser.Macro.preprocess recursiveSource with
   | .error _ => true
   | .ok _ => false
@@ -81,3 +175,10 @@ run_cmd do
       | some query =>
           unless !(Zil.Engine.solve closed query).isEmpty do
             throwError "expanded userset fact did not participate in inference"
+
+  match Zil.Parser.DeclarationProgram.parseText extensionSource with
+  | .error error => throwError error.render
+  | .ok program =>
+      unless program.declarations.size == 1 && program.rules.size == 1 &&
+          program.queries.size == 1 do
+        throwError "macro-generated extension statements were not retained"
