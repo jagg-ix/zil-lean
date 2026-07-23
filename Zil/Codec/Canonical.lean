@@ -60,8 +60,10 @@ def encodeRule (rule : Zil.Rule) : String :=
   let header := String.intercalate "\t" #[
     "rule", encodeName rule.name, encodeNames rule.variables, trustName rule.trust]
   let premises := rule.premises.map fun premise => s!"premise\t{encodeRelation premise}"
+  let negatives := rule.negativePremises.map fun premise =>
+    s!"negative\t{encodeRelation premise}"
   let conclusion := s!"conclusion\t{encodeRelation rule.conclusion}"
-  String.intercalate "\n" (#[header] ++ premises ++ #[conclusion])
+  String.intercalate "\n" (#[header] ++ premises ++ negatives ++ #[conclusion])
 
 /-- Parse the deterministic canonical Horn-rule representation. -/
 def decodeRule (text : String) : Except String Zil.Rule := do
@@ -74,17 +76,21 @@ def decodeRule (text : String) : Except String Zil.Rule := do
         pure (nameFromString name, decodeNames variables, ← decodeTrust trust)
     | _ => throw "invalid canonical rule header"
   let mut premises : Array Zil.RelExpr := #[]
+  let mut negativePremises : Array Zil.RelExpr := #[]
   let mut conclusion : Option Zil.RelExpr := none
   for line in lines.extract 1 lines.size do
     match line.splitOn "\t" with
     | "premise" :: rest =>
         premises := premises.push (← decodeRelation (String.intercalate "\t" rest))
+    | "negative" :: rest =>
+        negativePremises := negativePremises.push
+          (← decodeRelation (String.intercalate "\t" rest))
     | "conclusion" :: rest =>
         if conclusion.isSome then throw "duplicate canonical rule conclusion"
         conclusion := some (← decodeRelation (String.intercalate "\t" rest))
     | _ => throw s!"invalid canonical rule line: {line}"
   let conclusion ← conclusion.toExcept "canonical rule has no conclusion"
-  pure { name := ruleName, variables, premises, conclusion, trust }
+  pure { name := ruleName, variables, premises, negativePremises, conclusion, trust }
 
 /-- Semantic round-trip check for relations. -/
 def relationRoundTrips (relation : Zil.RelExpr) : Bool :=
@@ -92,13 +98,19 @@ def relationRoundTrips (relation : Zil.RelExpr) : Bool :=
   | .ok decoded => relation.semanticallyEqual decoded
   | .error _ => false
 
+private def relationArraysEqual (left right : Array Zil.RelExpr) : Bool :=
+  left.size == right.size &&
+  ((left.zip right).all fun pair => pair.1.semanticallyEqual pair.2)
+
 /-- Semantic round-trip check for rules, ignoring source metadata. -/
 def ruleRoundTrips (rule : Zil.Rule) : Bool :=
   match decodeRule (encodeRule rule) with
   | .ok decoded =>
-      decoded.name == rule.name && decoded.variables == rule.variables &&
-      decoded.trust == rule.trust && decoded.premises.size == rule.premises.size &&
-      (Array.zip decoded.premises rule.premises).all fun pair => pair.1.semanticallyEqual pair.2 &&
+      decoded.name == rule.name &&
+      decoded.variables == rule.variables &&
+      decoded.trust == rule.trust &&
+      relationArraysEqual decoded.premises rule.premises &&
+      relationArraysEqual decoded.negativePremises rule.negativePremises &&
       decoded.conclusion.semanticallyEqual rule.conclusion
   | .error _ => false
 
