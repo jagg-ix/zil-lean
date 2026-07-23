@@ -28,3 +28,4 @@ import Zil.Syntax.Rule
 import Zil.Syntax.TheoremRule
 import Zil.Syntax.Environment
 import Zil.Syntax.Declaration
+import Zil.Workflow

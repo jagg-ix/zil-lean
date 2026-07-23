@@ -15,30 +15,73 @@
    "uses_sorry" false "proved_claim" false "type_fingerprint" "lean-hash:1"
    "dependencies" ["Nat"]})
 
-(deftest frozen-workflow-module-contains-verified-evidence-test
+(defn- prepared-workflow []
   (let [db (temp-path ".sqlite")
         batch {"format" "zil.lean-events.v0.1" "profile" "lean-declarations-v0.1"
                "complete" true "lean_version" "4.32.0" "module" "Demo"
                "event_count" 1 "events" [event]}
-        delta (delta/diff-batches nil batch) revision (get delta "revision")
-        delta-path (temp-path ".json") output (temp-path ".lean")]
+        delta (delta/diff-batches nil batch)
+        revision (get delta "revision")
+        delta-path (temp-path ".json")]
     (spit delta-path (json/write-str delta))
     (store/publish-delta! db delta-path)
     (safety/grant-scope! db "agent:a" "src/demo")
     (safety/acquire-lease! db {:lease-id "lease:1" :agent-id "agent:a" :module "Demo"
-                               :scope "src/demo" :base-revision revision :now 100 :ttl-seconds 100})
+                               :scope "src/demo" :base-revision revision
+                               :now 100 :ttl-seconds 100})
     (safety/create-checkpoint! db {:checkpoint-id "checkpoint:1" :module "Demo"
                                    :revision revision :agent-id "agent:a"})
     (safety/record-action! db {"action_id" "action:1" "agent_id" "agent:a"
-                               "module" "Demo" "base_revision" revision "scope" "src/demo"
-                               "lease_id" "lease:1" "checkpoint_id" "checkpoint:1" "now" 150
+                               "module" "Demo" "base_revision" revision
+                               "scope" "src/demo" "lease_id" "lease:1"
+                               "checkpoint_id" "checkpoint:1" "now" 150
                                "preconditions_pass" true
                                "rollback" {"kind" "rollback" "reference" "git:abc"}})
-    (let [report (workflow/export-workflow! db "Demo" output "Zil.Generated.WorkflowDemo" 150)
-          text (slurp output)]
-      (is (:ok report))
-      (is (= 1 (:action_count report)))
-      (is (re-find #"module\s+public import Zil.Workflow" text))
-      (is (re-find #"def snapshot : Snapshot" text))
-      (is (re-find #"contextFresh := true" text))
-      (is (re-find #"example : MayExecute" text)))))
+    {:db db :revision revision}))
+
+(deftest frozen-workflow-module-contains-verified-evidence-test
+  (let [{:keys [db]} (prepared-workflow)
+        output (temp-path ".lean")
+        report (workflow/export-workflow!
+                db "Demo" output "Zil.Generated.WorkflowDemo" 150)
+        text (slurp output)]
+    (is (:ok report))
+    (is (= 1 (:action_count report)))
+    (is (= :skipped (get-in report [:verification :status])))
+    (is (re-find #"module\s+public import Zil.Workflow" text))
+    (is (re-find #"def snapshot : Snapshot" text))
+    (is (re-find #"contextFresh := true" text))
+    (is (re-find #"example : MayExecute" text))))
+
+(deftest verified-workflow-export-runs-lean-test
+  (let [{:keys [db]} (prepared-workflow)
+        output (temp-path ".lean")
+        calls (atom [])
+        runner (fn [request]
+                 (swap! calls conj request)
+                 {:exit 0 :out "" :err "" :command (:command request)})
+        report (workflow/export-workflow!
+                db "Demo" output "Zil.Generated.WorkflowDemo" 150
+                {:verify-generated true
+                 :verify-command ["fake-lean"]
+                 :runner runner})]
+    (is (:ok report))
+    (is (= :verified (get-in report [:verification :status])))
+    (is (= 1 (count @calls)))
+    (is (= "fake-lean" (first (:command (first @calls)))))
+    (is (= (.getCanonicalPath (java.io.File. output))
+           (last (:command (first @calls)))))))
+
+(deftest workflow-elaboration-failure-is-reported-test
+  (let [{:keys [db]} (prepared-workflow)
+        output (temp-path ".lean")
+        report (workflow/export-workflow!
+                db "Demo" output "Zil.Generated.WorkflowDemo" 150
+                {:verify-generated true
+                 :runner (fn [request]
+                           {:exit 1 :out "" :err "unknown module Zil.Workflow"
+                            :command (:command request)})})]
+    (is (false? (:ok report)))
+    (is (= :failed (get-in report [:verification :status])))
+    (is (= "unknown module Zil.Workflow"
+           (get-in report [:verification :error])))))
