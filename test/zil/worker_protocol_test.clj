@@ -1,5 +1,5 @@
 (ns zil.worker-protocol-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is]]
             [zil.worker.client :as client]
             [zil.worker.protocol :as protocol])
   (:import (java.nio.charset StandardCharsets)
@@ -13,11 +13,13 @@
                          (into-array java.nio.file.OpenOption []))
       (let [request (client/request {:request-id "request:test"
                                      :operation "parse"
-                                     :input-path (str path)})]
+                                     :input-path (str path)})
+            encoded (protocol/write-line request)]
         (is (= protocol/schema (get request "schema")))
         (is (= ["parse-v1"] (get request "capabilities")))
         (is (re-matches #"sha256:[0-9a-f]{64}" (get request "input_sha256")))
-        (is (= request (protocol/validate-request! request))))
+        (is (= request (protocol/validate-request! request)))
+        (is (.startsWith encoded "{\"schema\":\"ZIL-EXCHANGE/1\",\"request_id\":")))
       (finally
         (Files/deleteIfExists path)))))
 
