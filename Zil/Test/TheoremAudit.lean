@@ -103,7 +103,7 @@ private def parsed : Except String Zil.Program :=
       | .ok report =>
           match report.claims.find? (fun claim => claim.claim == `claim.supported) with
           | some claim =>
-              claim.ok && claim.supports.map (·.class) ==
+              claim.ok && claim.supports.map (·.evidenceClass) ==
                 #[.documentary, .empirical, .kernel]
           | none => false
       | .error _ => false
