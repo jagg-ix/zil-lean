@@ -1,9 +1,11 @@
 (ns zil.bridge.workflow-lean
-  "Generate frozen Lean workflow evidence from the SQLite operational store."
+  "Generate and verify frozen Lean workflow evidence from the SQLite operational store."
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [zil.store.sqlite :as store])
-  (:import [java.nio.file Files StandardCopyOption]))
+  (:import [java.nio.file AtomicMoveNotSupportedException Files StandardCopyOption]))
+
+(def default-verify-command ["lake" "env" "lean"])
 
 (defn- q [value] (pr-str (str value)))
 (defn- bool-token [value] (if value "true" "false"))
@@ -83,18 +85,68 @@
          (when (seq actions) "\n") "\nend " namespace "\n")))
 
 (defn- atomic-spit! [path text]
-  (let [target (.toPath (io/file path)) parent (.getParent target)]
+  (let [target (.toPath (io/file path))
+        parent (.getParent target)]
     (when parent (Files/createDirectories parent (make-array java.nio.file.attribute.FileAttribute 0)))
-    (let [tmp (Files/createTempFile parent ".zil-workflow-" ".tmp"
-                                    (make-array java.nio.file.attribute.FileAttribute 0))]
-      (spit (.toFile tmp) text)
-      (Files/move tmp target (into-array StandardCopyOption
-                                         [StandardCopyOption/ATOMIC_MOVE StandardCopyOption/REPLACE_EXISTING])))))
+    (let [temporary (Files/createTempFile parent ".zil-workflow-" ".tmp"
+                                          (make-array java.nio.file.attribute.FileAttribute 0))]
+      (spit (.toFile temporary) text)
+      (try
+        (Files/move temporary target
+                    (into-array StandardCopyOption
+                                [StandardCopyOption/ATOMIC_MOVE
+                                 StandardCopyOption/REPLACE_EXISTING]))
+        (catch AtomicMoveNotSupportedException _
+          (Files/move temporary target
+                      (into-array StandardCopyOption
+                                  [StandardCopyOption/REPLACE_EXISTING])))))))
 
-(defn export-workflow! [db-path module output namespace as-of]
-  (let [snapshot (collect-snapshot db-path module as-of)]
-    (when-not (:revision snapshot)
-      (throw (ex-info "Cannot export workflow without a current snapshot" {:code :context-incomplete})))
-    (atomic-spit! output (render-lean snapshot namespace))
-    {:ok true :module module :revision (:revision snapshot) :complete (:complete snapshot)
-     :action_count (count (:actions snapshot)) :as_of as-of :output output :namespace namespace}))
+(defn run-command
+  [{:keys [command directory environment]}]
+  (let [builder (ProcessBuilder. ^java.util.List (vec command))
+        _ (when directory (.directory builder (io/file directory)))
+        process-environment (.environment builder)
+        _ (doseq [[key value] environment]
+            (.put process-environment (str key) (str value)))
+        process (.start builder)
+        out-future (future (slurp (.getInputStream process)))
+        err-future (future (slurp (.getErrorStream process)))
+        exit (.waitFor process)]
+    {:exit exit :out @out-future :err @err-future :command (vec command)}))
+
+(defn verify-generated!
+  [output {:keys [runner verify-command directory]
+           :or {runner run-command verify-command default-verify-command}}]
+  (let [invocation (into (vec verify-command) [(.getCanonicalPath (io/file output))])
+        result (runner {:command invocation :directory directory :environment {}})]
+    (if (zero? (:exit result))
+      {:status :verified :command (:command result invocation)}
+      {:status :failed
+       :exit (:exit result)
+       :error (str/trim (or (:err result) ""))
+       :command (:command result invocation)})))
+
+(defn export-workflow!
+  ([db-path module output namespace as-of]
+   (export-workflow! db-path module output namespace as-of {}))
+  ([db-path module output namespace as-of
+    {:keys [verify-generated] :or {verify-generated false} :as options}]
+   (let [snapshot (collect-snapshot db-path module as-of)]
+     (when-not (:revision snapshot)
+       (throw (ex-info "Cannot export workflow without a current snapshot"
+                       {:code :context-incomplete})))
+     (atomic-spit! output (render-lean snapshot namespace))
+     (let [verification (if verify-generated
+                          (verify-generated! output options)
+                          {:status :skipped :reason :verification-disabled})
+           ok (and (:complete snapshot)
+                   (contains? #{:verified :skipped} (:status verification)))]
+       {:ok ok
+        :module module
+        :revision (:revision snapshot)
+        :complete (:complete snapshot)
+        :action_count (count (:actions snapshot))
+        :as_of as-of
+        :output output
+        :namespace namespace
+        :verification verification}))))
