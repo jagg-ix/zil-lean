@@ -105,12 +105,16 @@ private def execute (request : Request) : IO String :=
 
 /-- Dispatch one validated request without accepting arbitrary executable names. -/
 def dispatch (request : Request) : IO Response := do
-  try
-    request.validate
-    let payload ← execute request
-    pure (Response.success request payload)
-  catch error =>
-    pure <| Response.failure request.requestId request.operation request.inputSha256
-      "error" error.toString
+  match request.validate with
+  | .error error =>
+      pure <| Response.failure request.requestId request.operation request.inputSha256
+        "invalid" error
+  | .ok _ =>
+      try
+        let payload ← execute request
+        pure (Response.success request payload)
+      catch error =>
+        pure <| Response.failure request.requestId request.operation request.inputSha256
+          "error" error.toString
 
 end Zil.Exchange
