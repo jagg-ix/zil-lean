@@ -22,21 +22,49 @@ private def unifyTerm (pattern value : Zil.Term) (binding : Binding) : Option Bi
   | .var name => binding.bind name value
   | .node node => if value == .node node then some binding else none
 
+private def unifyAttrValue
+    (pattern value : Zil.AttrValue) (binding : Binding) : Option Binding :=
+  match pattern, value with
+  | .term patternTerm, .term valueTerm => unifyTerm patternTerm valueTerm binding
+  | _, _ => if pattern == value then some binding else none
+
+private def unifyAttributes
+    (patterns facts : Array Zil.Attribute) (binding : Binding) : Option Binding :=
+  patterns.foldl (init := some binding) fun state pattern =>
+    match state with
+    | none => none
+    | some current =>
+        match Zil.Attribute.find? facts pattern.key with
+        | none => none
+        | some fact => unifyAttrValue pattern.value fact.value current
+
 private def unifyRelation (pattern fact : Zil.RelExpr) (binding : Binding) : Option Binding :=
   if pattern.relation != fact.relation then none
   else
     match unifyTerm pattern.subject fact.subject binding with
     | none => none
-    | some next => unifyTerm pattern.object fact.object next
+    | some next =>
+        match unifyTerm pattern.object fact.object next with
+        | none => none
+        | some endpoints => unifyAttributes pattern.attrs fact.attrs endpoints
 
 private def instantiateTerm (binding : Binding) : Zil.Term → Option Zil.Term
   | .node node => some (.node node)
   | .var name => binding.lookup name
 
+private def instantiateAttrValue
+    (binding : Binding) : Zil.AttrValue → Option Zil.AttrValue
+  | .term term => (instantiateTerm binding term).map .term
+  | value => some value
+
 private def instantiateRelation (binding : Binding) (relation : Zil.RelExpr) : Option Zil.RelExpr := do
   let subject ← instantiateTerm binding relation.subject
   let object ← instantiateTerm binding relation.object
-  pure { relation with subject, object }
+  let mut attrs : Array Zil.Attribute := #[]
+  for entry in relation.attrs do
+    let value ← instantiateAttrValue binding entry.value
+    attrs := attrs.push { entry with value }
+  pure { relation with subject, object, attrs }
 
 private def extendBindings (facts : Array Zil.RelExpr)
     (patterns : Array Zil.RelExpr) (seed : Binding := #[]) : Array Binding :=
