@@ -66,7 +66,7 @@
     request))
 
 (defn write-line [value]
-  (json/write-str value :escape-slash false))
+  (json/write-str value))
 
 (defn read-line [text]
   (json/read-str text :key-fn keyword))
