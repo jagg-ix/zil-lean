@@ -27,17 +27,21 @@ private def once (stdin stdout : IO.FS.Stream) : IO UInt32 := do
   else
     let response ← responseForLine line
     writeResponse stdout response
-    pure 0
+    pure (if response.status == "ok" then 0 else 1)
 
 private def usage : String :=
   "zilWorker [--stdio|--once]"
 
 /-- Native JSON Lines worker for the Clojure operational control plane. -/
 def main (args : List String) : IO UInt32 := do
-  let stdin ← IO.getStdin
-  let stdout ← IO.getStdout
-  match args with
-  | [] => serve stdin stdout
-  | ["--stdio"] => serve stdin stdout
-  | ["--once"] => once stdin stdout
-  | _ => IO.eprintln usage; pure 2
+  try
+    let stdin ← IO.getStdin
+    let stdout ← IO.getStdout
+    match args with
+    | [] => serve stdin stdout
+    | ["--stdio"] => serve stdin stdout
+    | ["--once"] => once stdin stdout
+    | _ => IO.eprintln usage; pure 2
+  catch error =>
+    IO.eprintln error.toString
+    pure 1
