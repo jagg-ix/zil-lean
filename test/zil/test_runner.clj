@@ -33,7 +33,8 @@
             [zil.port-library-test]
             [zil.port-conformance-test]
             [zil.port-gate-test]
-            [zil.port-verify-test]))
+            [zil.port-verify-test]
+            [zil.port-embedded-native-test]))
 
 (defn -main
   [& _]
@@ -70,5 +71,6 @@
                                           'zil.port-library-test
                                           'zil.port-conformance-test
                                           'zil.port-gate-test
-                                          'zil.port-verify-test)]
+                                          'zil.port-verify-test
+                                          'zil.port-embedded-native-test)]
     (System/exit (if (pos? (+ fail error)) 1 0))))
