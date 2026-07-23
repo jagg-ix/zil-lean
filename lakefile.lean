@@ -21,3 +21,6 @@ lean_exe zilProofObligations where
 
 lean_exe zilTheoremAudit where
   root := `Zil.CLI.TheoremAuditMain
+
+lean_exe zilActionToken where
+  root := `Zil.CLI.ActionTokenMain

@@ -99,6 +99,19 @@
     "docs/lean4/theorem-and-claim-audits.md"
     "spec/theorem-audit-v1.md"]}
 
+  :native-action-token
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/ActionToken.lean"
+    "Zil/CLI/ActionToken.lean"
+    "Zil/CLI/ActionTokenMain.lean"
+    "Zil/Test/ActionToken.lean"
+    "examples/action-token/request.zc"
+    "docs/lean4/native-action-token.md"
+    "spec/action-token-v1.md"]}
+
   :negation-runtime
   {:features #{:negation}
    :min-feature-sources 1
