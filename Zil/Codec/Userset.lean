@@ -1,4 +1,5 @@
 import Zil.Core.Userset
+import Zil.Codec.Attribute
 
 namespace Zil.Codec
 
@@ -16,19 +17,20 @@ private def decodeTupleTerm (text : String) : Except String Zil.Term :=
   | ["node", name] => .ok (.ground (tupleNameFromString name))
   | _ => .error s!"invalid tuple term: {text}"
 
-/-- Stable encoding that preserves direct and userset subjects. -/
+/-- Stable encoding that preserves direct/userset subjects and attributes. -/
 def encodeTuple (tuple : Zil.TupleExpr) : String :=
   match tuple.subject with
   | .direct subject =>
       String.intercalate "\t" #[
         "tuple", encodeTupleTerm tuple.object, toString tuple.relation,
-        "direct", encodeTupleTerm subject]
+        "direct", encodeTupleTerm subject, encodeAttributes tuple.attrs]
   | .userset userset =>
       String.intercalate "\t" #[
         "tuple", encodeTupleTerm tuple.object, toString tuple.relation,
-        "userset", toString userset.object.name, toString userset.relation]
+        "userset", toString userset.object.name, toString userset.relation,
+        encodeAttributes tuple.attrs]
 
-/-- Decode the lossless tuple representation. -/
+/-- Decode the lossless tuple representation. Older attribute-free rows remain accepted. -/
 def decodeTuple (text : String) : Except String Zil.TupleExpr := do
   match text.splitOn "\t" with
   | ["tuple", object, relation, "direct", subject] =>
@@ -36,12 +38,25 @@ def decodeTuple (text : String) : Except String Zil.TupleExpr := do
         (← decodeTupleTerm object)
         (tupleNameFromString relation)
         (← decodeTupleTerm subject)
+  | ["tuple", object, relation, "direct", subject, attrs] =>
+      pure <| .direct
+        (← decodeTupleTerm object)
+        (tupleNameFromString relation)
+        (← decodeTupleTerm subject)
+        (← decodeAttributes attrs)
   | ["tuple", object, relation, "userset", usersetObject, usersetRelation] =>
       pure <| .withUserset
         (← decodeTupleTerm object)
         (tupleNameFromString relation)
         ⟨tupleNameFromString usersetObject⟩
         (tupleNameFromString usersetRelation)
+  | ["tuple", object, relation, "userset", usersetObject, usersetRelation, attrs] =>
+      pure <| .withUserset
+        (← decodeTupleTerm object)
+        (tupleNameFromString relation)
+        ⟨tupleNameFromString usersetObject⟩
+        (tupleNameFromString usersetRelation)
+        (← decodeAttributes attrs)
   | _ => throw s!"invalid canonical tuple: {text}"
 
 /-- Semantic round-trip check for original tuple data. -/
@@ -50,11 +65,16 @@ def tupleRoundTrips (tuple : Zil.TupleExpr) : Bool :=
   | .ok decoded => tuple.semanticallyEqual decoded
   | .error _ => false
 
+private def codecAttrs : Array Zil.Attribute := #[
+  { key := `critical, value := .boolean true },
+  { key := `retries, value := .integer 3 }
+]
+
 private def codecDirectGroup : Zil.TupleExpr :=
-  .direct (.ground `doc.readme) `zil.viewer (.ground `group.eng)
+  .direct (.ground `doc.readme) `zil.viewer (.ground `group.eng) codecAttrs
 
 private def codecMemberUserset : Zil.TupleExpr :=
-  .withUserset (.ground `doc.readme) `zil.viewer ⟨`group.eng⟩ `zil.member
+  .withUserset (.ground `doc.readme) `zil.viewer ⟨`group.eng⟩ `zil.member codecAttrs
 
 #guard !codecDirectGroup.semanticallyEqual codecMemberUserset
 #guard tupleRoundTrips codecDirectGroup
