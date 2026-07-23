@@ -55,7 +55,7 @@
 (defn relation-expr
   "Construct a canonical relation expression.
 
-  `source` is optional provenance and must not affect semantic equality."
+  `source` is optional source data and must not affect semantic equality."
   ([subject relation object]
    (relation-expr subject relation object nil))
   ([subject relation object source]
@@ -97,7 +97,7 @@
   (relation-expr subject relation object source))
 
 (defn semantic-view
-  "Remove provenance and frontend-only annotations for equivalence checks."
+  "Remove source and frontend-only annotations for equivalence checks."
   [expression]
   (select-keys expression [:ir/kind :subject :relation :object :neg? :attrs]))
 
@@ -119,3 +119,56 @@
    :rule/conclusion (semantic-view conclusion)
    :rule/trust (or trust :graph-derived)
    :source source})
+
+(defn split-userset-subject
+  "Return `{base relation}` when a tuple subject has the form `object#relation`."
+  [subject]
+  (when (string? subject)
+    (let [idx (.lastIndexOf ^String subject "#")]
+      (when (and (pos? idx) (< idx (dec (count subject))))
+        (let [base (subs subject 0 idx)
+              relation (subs subject (inc idx))]
+          (when (re-matches #"[A-Za-z0-9_.:-]+" relation)
+            {:base base
+             :relation (canonical-relation relation)}))))))
+
+(defn canonical-tuple-subject
+  "Preserve whether an original tuple subject is direct or a userset."
+  [subject]
+  (if-let [{:keys [base relation]} (split-userset-subject subject)]
+    {:term/kind :userset
+     :userset/object (canonical-term base)
+     :userset/relation relation}
+    {:term/kind :direct
+     :term (canonical-term subject)}))
+
+(defn tuple-expr
+  "Construct a lossless canonical value for `object#relation@subject`."
+  ([object relation subject]
+   (tuple-expr object relation subject nil))
+  ([object relation subject source]
+   (cond-> {:ir/kind :tuple
+            :tuple/object (canonical-term object)
+            :relation (canonical-relation relation)
+            :tuple/subject (canonical-tuple-subject subject)}
+     source (assoc :source source))))
+
+(defn from-legacy-tuple
+  "Convert one `zil.core/parse-atom` result without collapsing usersets."
+  [{:keys [object relation subject attrs] :as atom}]
+  (when-not (and (contains? atom :object)
+                 (contains? atom :relation)
+                 (contains? atom :subject))
+    (throw (ex-info "Legacy tuple is missing object, relation, or subject"
+                    {:atom atom})))
+  (cond-> (tuple-expr object relation subject)
+    (seq attrs) (assoc :attrs attrs)))
+
+(defn tuple-semantic-view
+  "Semantic tuple data, retaining the direct/userset distinction."
+  [tuple]
+  (select-keys tuple [:ir/kind :tuple/object :relation :tuple/subject :attrs]))
+
+(defn tuple-equivalent?
+  [left right]
+  (= (tuple-semantic-view left) (tuple-semantic-view right)))
