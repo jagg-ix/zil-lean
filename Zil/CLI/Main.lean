@@ -1,6 +1,7 @@
 import Zil.Parser.DeclarationProgram
 import Zil.Codec.Revision
 import Zil.Codec.Conformance
+import Zil.Formalization
 
 namespace Zil.CLI
 
@@ -9,6 +10,8 @@ def usage : String :=
   "zil compile <input.zc> [output.lean|-] [namespace]\n" ++
   "zil expand <input.zc> [output.zc|-]\n" ++
   "zil conformance <input.zc> [output.zilc|-]\n" ++
+  "zil formalization-plan <input.zc> [output.txt|-]\n" ++
+  "zil formalization-next <input.zc> [output.txt|-]\n" ++
   "zil revision-summary <input.zilr>\n" ++
   "zil snapshot <input.zilr> <revision> [output.txt|-]\n" ++
   "zil causal-check <input.zilr>\n"
@@ -27,23 +30,29 @@ private def parseNatIO (value message : String) : IO Nat :=
   | some number => pure number
   | none => throw <| IO.userError message
 
+private def loadProgram (inputPath : String) : IO Zil.Program := do
+  let parsed ← Zil.Parser.DeclarationProgram.parseFile inputPath
+  match parsed with
+  | .ok value => pure value
+  | .error error => throw <| IO.userError error.render
+
+private def writeOutput (text : String) (outputPath : Option String) : IO Unit :=
+  match outputPath with
+  | none => IO.print text
+  | some "-" => IO.print text
+  | some path => IO.FS.writeFile path text
+
 /-- Parse one declaration-enabled `.zc` source file and emit a native ZIL Lean module. -/
 def compileFile
     (inputPath : String)
     (outputPath : Option String := none)
     (namespaceText : Option String := none) : IO Unit := do
-  let parsed ← Zil.Parser.DeclarationProgram.parseFile inputPath
-  let program ← match parsed with
-    | .ok value => pure value
-    | .error error => throw <| IO.userError error.render
+  let program ← loadProgram inputPath
   let namespaceName ← namespaceFromArgument program namespaceText
   let source ← match Zil.Parser.DeclarationProgram.renderLeanModule program namespaceName with
     | .ok value => pure value
     | .error error => throw <| IO.userError error
-  match outputPath with
-  | none => IO.print source
-  | some "-" => IO.print source
-  | some path => IO.FS.writeFile path source
+  writeOutput source outputPath
 
 /-- Expand source macros without compiling the resulting statements. -/
 def expandFile
@@ -53,10 +62,7 @@ def expandFile
   let source ← match expanded with
     | .ok value => pure value
     | .error error => throw <| IO.userError error.render
-  match outputPath with
-  | none => IO.print source
-  | some "-" => IO.print source
-  | some path => IO.FS.writeFile path source
+  writeOutput source outputPath
 
 /-- Emit the deterministic semantic report consumed by the differential harness. -/
 def conformanceFile
@@ -66,10 +72,33 @@ def conformanceFile
   let report ← match Zil.Codec.Conformance.renderSource text with
     | .ok value => pure value
     | .error error => throw <| IO.userError error
-  match outputPath with
-  | none => IO.print report
-  | some "-" => IO.print report
-  | some path => IO.FS.writeFile path report
+  writeOutput report outputPath
+
+/-- Emit all formalization scheduling decisions. -/
+def formalizationPlanFile
+    (inputPath : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let program ← loadProgram inputPath
+  let targets ← match Zil.Formalization.fromProgram program with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  let report ← match Zil.Formalization.renderPlan targets with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  writeOutput report outputPath
+
+/-- Emit the highest-priority ready formalization target. -/
+def formalizationNextFile
+    (inputPath : String)
+    (outputPath : Option String := none) : IO Unit := do
+  let program ← loadProgram inputPath
+  let targets ← match Zil.Formalization.fromProgram program with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  let report ← match Zil.Formalization.renderNext targets with
+    | .ok value => pure value
+    | .error error => throw <| IO.userError error
+  writeOutput report outputPath
 
 private def loadRevisionStore (path : String) : IO Zil.RevisionStore := do
   let text ← IO.FS.readFile path
@@ -97,10 +126,7 @@ def snapshotFile
     | .error error => throw <| IO.userError error
   let text := String.intercalate "\n" (facts.toList.map Zil.Codec.encodeRelation) ++
     (if facts.isEmpty then "" else "\n")
-  match outputPath with
-  | none => IO.print text
-  | some "-" => IO.print text
-  | some output => IO.FS.writeFile output text
+  writeOutput text outputPath
 
 /-- Validate the strict causal graph contained in a revision envelope. -/
 def causalCheck (path : String) : IO Unit := do
@@ -121,6 +147,12 @@ def main (args : List String) : IO UInt32 := do
     | ["expand", input, output] => Zil.CLI.expandFile input (some output); pure 0
     | ["conformance", input] => Zil.CLI.conformanceFile input; pure 0
     | ["conformance", input, output] => Zil.CLI.conformanceFile input (some output); pure 0
+    | ["formalization-plan", input] => Zil.CLI.formalizationPlanFile input; pure 0
+    | ["formalization-plan", input, output] =>
+        Zil.CLI.formalizationPlanFile input (some output); pure 0
+    | ["formalization-next", input] => Zil.CLI.formalizationNextFile input; pure 0
+    | ["formalization-next", input, output] =>
+        Zil.CLI.formalizationNextFile input (some output); pure 0
     | ["revision-summary", input] => Zil.CLI.revisionSummary input; pure 0
     | ["snapshot", input, revision] =>
         let frontier ← Zil.CLI.parseNatIO revision "invalid snapshot revision"
