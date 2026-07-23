@@ -46,12 +46,22 @@
    (cond-> {}
      lib-dir (assoc :lib-dir lib-dir))))
 
+(defn- raw-source [source-file resolved-file]
+  (let [text (slurp source-file)]
+    {:ok true
+     :model (.getCanonicalPath source-file)
+     :lib_dir (some-> resolved-file .getCanonicalPath)
+     :lib_files []
+     :composed false
+     :text text
+     :source_sha256 (sha256 text)}))
+
 (defn prepare-source
   "Return the exact source text that native and Clojure consumers should use.
 
-  Sources with no library and direct members of the selected `lib/` directory
-  remain standalone. Other files are composed with sorted, non-recursive
-  library sources discovered by `preprocess-model`."
+  Sources with no extension files and direct members of the selected `lib/`
+  directory remain standalone. Other files are composed with sorted,
+  non-recursive library sources discovered by `preprocess-model`."
   [source-path {:keys [lib-dir] :as options}]
   (let [source-file (.getCanonicalFile (io/file source-path))
         resolved (preprocess/resolve-lib-dir source-path lib-dir)
@@ -60,18 +70,13 @@
         (and resolved-file
              (= resolved-file (.getCanonicalFile (.getParentFile source-file))))]
     (if (or (nil? resolved-file) direct-library-member?)
-      (let [text (slurp source-file)]
-        {:ok true
-         :model (.getCanonicalPath source-file)
-         :lib_dir (some-> resolved-file .getCanonicalPath)
-         :lib_files []
-         :composed false
-         :text text
-         :source_sha256 (sha256 text)})
+      (raw-source source-file resolved-file)
       (let [composition (compose-model source-path options)]
-        (assoc composition
-               :composed (boolean (seq (:lib_files composition)))
-               :source_sha256 (sha256 (:text composition)))))))
+        (if (seq (:lib_files composition))
+          (assoc composition
+                 :composed true
+                 :source_sha256 (sha256 (:text composition)))
+          (raw-source source-file resolved-file))))))
 
 (defn- write-atomic! [path text]
   (let [target (absolute-path path)
