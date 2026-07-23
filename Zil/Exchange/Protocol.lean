@@ -102,6 +102,16 @@ def Request.validate (request : Request) : Except String Unit := do
   unless request.arguments.size == arity do
     throw s!"operation {request.operation} requires {arity} arguments"
 
+/-- Classify a decoded validation failure without losing request identity. -/
+def Request.validationStatus (request : Request) : String :=
+  if request.schema != Zil.Exchange.schema ||
+     request.protocolVersion != Zil.Exchange.protocolVersion then
+    "unsupported"
+  else
+    match requiredCapability? request.operation with
+    | none => "unsupported"
+    | some _ => "invalid"
+
 /-- Decode a request from one JSON value. -/
 def Request.fromJson (json : Json) : Except String Request := do
   pure {
@@ -116,10 +126,14 @@ def Request.fromJson (json : Json) : Except String Request := do
     arguments := ← json.getObjValAs? (Array String) "arguments"
   }
 
+/-- Decode one JSON-line request while preserving fields for error responses. -/
+def Request.decode (line : String) : Except String Request := do
+  let json ← Json.parse line
+  Request.fromJson json
+
 /-- Parse and validate one JSON-line request. -/
 def Request.parse (line : String) : Except String Request := do
-  let json ← Json.parse line
-  let request ← Request.fromJson json
+  let request ← Request.decode line
   request.validate
   pure request
 
