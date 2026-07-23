@@ -112,6 +112,19 @@
     "docs/lean4/native-action-token.md"
     "spec/action-token-v1.md"]}
 
+  :native-token-lifecycle
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/TokenLifecycle.lean"
+    "Zil/CLI/TokenLifecycle.lean"
+    "Zil/CLI/TokenLifecycleMain.lean"
+    "Zil/Test/TokenLifecycle.lean"
+    "examples/token-lifecycle/lifecycle.zc"
+    "docs/lean4/native-token-lifecycle.md"
+    "spec/token-lifecycle-v1.md"]}
+
   :negation-runtime
   {:features #{:negation}
    :min-feature-sources 1
