@@ -9,7 +9,7 @@ The guard consumes:
 3. `ZIL-EMBEDDED-MANIFEST/1`;
 4. an EDN component policy.
 
-All report schemas are checked before repository scanning begins.
+All report schemas are checked before repository scanning begins. The policy must exist and define at least one component with at least one consumer pattern.
 
 ## Consumer scan
 
@@ -28,6 +28,8 @@ The policy selects repository roots and text patterns. Every match records:
 
 Exact allowed paths and allowed prefixes identify files owned by the component. Configured documentation, test, and example prefixes remain visible in the inventory but do not block retirement.
 
+Extensionless wrappers are scanned regardless of executable-mode metadata. A configured scan root that does not exist is an error.
+
 ## Evidence checks
 
 A component may require:
@@ -39,6 +41,23 @@ generated-module verification success
 aggregate import status :verified
 embedded compilation success
 minimum embedded block count
+all embedded generated modules verified
+```
+
+When `:require-embedded-verification true`, the embedded report must satisfy:
+
+```text
+:verify-generated true
+:verified == :block-count
+```
+
+Otherwise the component receives:
+
+```clojure
+{:kind :embedded-modules-not-verified
+ :verify-generated false
+ :verified 0
+ :blocks 12}
 ```
 
 ## States
@@ -94,4 +113,4 @@ bin/zil-legacy ...
 ZIL_LEGACY_MODE=allow bin/zil ...
 ```
 
-The native-first wrapper does not remove the legacy executable or jar build.
+The native-first wrapper retains the legacy executable and jar build behind the explicit compatibility path.
