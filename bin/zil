@@ -38,6 +38,10 @@ Usage:
   bin/zil worker [--stdio|--once]
   bin/zil exchange <operation> <input.zc> [operation-arguments...]
   bin/zil control <operation> <input.zc> [operation-arguments...]
+  bin/zil control-store status|verify|project <database> <stream>
+  bin/zil control-store invoke <database> <stream> <expected-revision> <actor> <operation> <input.zc> [arguments...]
+  bin/zil control-store record <database> <stream> <expected-revision> <actor> <event-type> <decision-sha256> <payload.edn>
+  bin/zil evaluate-runtime [--model FILE] [--measurements FILE] [--output FILE|-]
   bin/zil plugin list [ROOT...]
   bin/zil plugin inspect <extension.json>
   bin/zil plugin run <extension.json> <command> [arguments...] [--config FILE]
@@ -47,6 +51,11 @@ Worker exposes the allowlisted ZIL-EXCHANGE/1 JSON Lines protocol. Exchange and
 control use Clojure for supervision, capability ownership, and SHA-256 transport
 attestation while Lean remains authoritative for parse, compile, expand,
 conformance, query, authorize, impact, and recovery-audit.
+
+Control-store appends hash-chained ZIL-CONTROL-EVENT/1 observations under an
+expected-revision CAS and emits ZIL-CONTROL-RECEIPT/1 transaction receipts.
+Evaluate-runtime scores Lean, Clojure, and hybrid candidates from supplied
+measurements; it never changes component ownership automatically.
 
 Library, macro, embedded, and conformance-suite preserve Clojure workspace and
 corpus orchestration while routing native semantic work through the formal control
@@ -125,6 +134,26 @@ run_control() {
   fi
   cd "$ZIL_ROOT"
   exec clojure -M:control "$@"
+}
+
+run_control_store() {
+  shift
+  if ! command -v clojure >/dev/null 2>&1; then
+    echo "[zil] clojure is required for durable control-plane storage" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec clojure -M:control-store "$@"
+}
+
+run_evaluation() {
+  shift
+  if ! command -v clojure >/dev/null 2>&1; then
+    echo "[zil] clojure is required for runtime architecture evaluation" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec clojure -M:evaluate-runtime "$@"
 }
 
 run_plugins() {
@@ -241,6 +270,12 @@ case "$command_name" in
     ;;
   control)
     run_control "$@"
+    ;;
+  control-store)
+    run_control_store "$@"
+    ;;
+  evaluate-runtime)
+    run_evaluation "$@"
     ;;
   plugin)
     run_plugins "$@"
