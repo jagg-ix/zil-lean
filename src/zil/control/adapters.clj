@@ -44,12 +44,10 @@
     (when-not (semantic-command? command)
       (throw (ex-info "control-plane request runner received a nonsemantic command"
                       {:kind :adapter-error :command command})))
-    (response-result
-     command
-     (command/execute! control-plane
-                       (second command)
-                       (:input-path (operation-request command))
-                       (:arguments (operation-request command))))))
+    (let [{:keys [operation input-path arguments]} (operation-request command)]
+      (response-result
+       command
+       (command/execute! control-plane operation input-path arguments)))))
 
 (defn vector-runner
   "Runner compatible with `zil.port.library/run-command`."
@@ -191,22 +189,32 @@
 
 (defn -main [& args]
   (try
-    (let [[surface & tail] args
-          result
-          (case surface
-            "macro" (let [options (parse-macro tail)]
-                      (case (:mode options)
-                        "compile" (compile-macro! options)
-                        "expand" (expand-macro! options)
-                        "parity" (parity-macro! options)))
-            "library" (compile-library! (parse-library tail))
-            "embedded" (compile-embedded! (parse-embedded tail))
-            (throw (ex-info usage {:kind :invalid-command :surface surface})))]
-      (when (map? result)
-        (println (pr-str (select-keys result
-                                     [:schema :ok :mode :model :output :check-only
-                                      :output-root :block-count :file-count]))))
-      (System/exit (if (false? (:ok result)) 1 0)))
+    (let [[surface & tail] args]
+      (when (or (nil? surface) (= surface "--help") (= surface "-h"))
+        (println usage)
+        (System/exit 0))
+      (case surface
+        "macro"
+        (let [options (parse-macro tail)]
+          (case (:mode options)
+            "compile" (compile-macro! options)
+            "expand" (expand-macro! options)
+            "parity" (parity-macro! options)))
+
+        "library"
+        (let [result (compile-library! (parse-library tail))]
+          (println (pr-str (select-keys result
+                                       [:schema :ok :check-only :output-root])))
+          (System/exit (if (:ok result) 0 1)))
+
+        "embedded"
+        (let [result (compile-embedded! (parse-embedded tail))]
+          (println (pr-str (select-keys result
+                                       [:schema :ok :check-only :output-root
+                                        :block-count :verified :compiled :failed])))
+          (System/exit (if (:ok result) 0 1)))
+
+        (throw (ex-info usage {:kind :invalid-command :surface surface}))))
     (catch Exception error
       (binding [*out* *err*]
         (println (.getMessage error))
