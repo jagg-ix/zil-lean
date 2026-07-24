@@ -27,6 +27,9 @@
 (defn- inventory-capabilities [^Registry registry]
   (or (some-> registry :control-plane :inventory :capabilities) []))
 
+(defn- worker-available? [^Registry registry]
+  (boolean (some-> registry :control-plane :pool)))
+
 (defn- built-in-command-ids [^Registry registry]
   (let [inventory (some-> registry :control-plane :inventory)
         exchange-commands (if inventory
@@ -39,16 +42,25 @@
 (defn- built-in-capability-ids [^Registry registry]
   (set (map (comp name :id) (inventory-capabilities registry))))
 
+(defn- runtime-capability-ids [^Registry registry]
+  (set
+   (for [{:keys [id operation]} (inventory-capabilities registry)
+         :when (or (nil? operation) (worker-available? registry))]
+     (name id))))
+
 (defn- registered-output-schemas [^Registry registry]
   (set
    (mapcat (fn [[_ entry]]
-             (or (get-in entry [:manifest :outputs]) []))
+             (if (= :active (:status entry))
+               (or (get-in entry [:manifest :outputs]) [])
+               []))
            @(:extensions registry))))
 
 (defn- available-requirements [^Registry registry]
   (set/union
-   #{manifest/schema evidence/schema worker-protocol/schema ownership/schema}
-   (built-in-capability-ids registry)
+   #{manifest/schema evidence/schema ownership/schema}
+   (if (worker-available? registry) #{worker-protocol/schema} #{})
+   (runtime-capability-ids registry)
    (set (keys @(:capabilities registry)))
    (registered-output-schemas registry)))
 
