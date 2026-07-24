@@ -42,11 +42,11 @@
 
 (defn request
   "Create a canonical request and bind it to the exact current input bytes."
-  [{:keys [request-id operation input-path base-revision arguments capabilities]
-    :or {request-id (str "request:" (UUID/randomUUID))
-         base-revision "-"
-         arguments []}}]
-  (let [operation (str operation)
+  [{:keys [request-id operation input-path base-revision arguments capabilities]}]
+  (let [request-id (or request-id (str "request:" (UUID/randomUUID)))
+        operation (str operation)
+        base-revision (or base-revision "-")
+        arguments (vec (or arguments []))
         capability (get protocol/operation-capabilities operation)
         capabilities (or capabilities (when capability [capability]))]
     (protocol/canonical-request
