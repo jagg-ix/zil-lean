@@ -54,11 +54,15 @@
      :event-sha256 event-sha
      :event prepared}))
 
-(defn append-events!
-  "Append a nonempty event batch under an expected-revision compare-and-swap.
+(defn- batch-sha256 [stored-events]
+  (worker-client/sha256-text
+   (json/write-str
+    (mapv (fn [{:keys [revision event-sha256]}]
+            (array-map :revision revision :event_sha256 event-sha256))
+          stored-events))))
 
-  The returned receipt binds the exact event sequence and final revision. No event
-  is committed when the stream head changed or any event is invalid."
+(defn append-events!
+  "Append a nonempty event batch under an expected-revision compare-and-swap."
   [db-path stream expected-revision events]
   (when-not (seq events)
     (throw (ex-info "control event batch must be nonempty" {:kind :event-store-error})))
@@ -87,11 +91,7 @@
                                        :event-stream (get-in value [:event :stream])})))
                     (recur (next remaining) (inc revision)
                            (:event-sha256 value) (conj out value)))))
-              batch-sha (worker-client/sha256-text
-                         (json/write-str
-                          (mapv (fn [{:keys [revision event-sha256]}]
-                                  {:revision revision :event_sha256 event-sha256})
-                                stored)))
+              batch-sha (batch-sha256 stored)
               committed-at (System/currentTimeMillis)
               receipt (event/prepare-receipt
                        {:stream stream
@@ -113,10 +113,9 @@
                        (:decision_sha256 event) (:plugin_id event)
                        (json/write-str (:payload event)) (:payload_sha256 event)
                        previous-event-sha256 event-sha256 (:receipt_id receipt)]))
-          (let [final-event-sha (:event-sha256 (last stored))]
-            (execute! conn
-                      "INSERT INTO control_stream_heads(stream,current_revision,current_event_sha256) VALUES(?,?,?) ON CONFLICT(stream) DO UPDATE SET current_revision=excluded.current_revision,current_event_sha256=excluded.current_event_sha256"
-                      [stream (:final_revision receipt) final-event-sha]))
+          (execute! conn
+                    "INSERT INTO control_stream_heads(stream,current_revision,current_event_sha256) VALUES(?,?,?) ON CONFLICT(stream) DO UPDATE SET current_revision=excluded.current_revision,current_event_sha256=excluded.current_event_sha256"
+                    [stream (:final_revision receipt) (:event-sha256 (last stored))])
           (.commit conn)
           {:ok true
            :receipt receipt
@@ -158,6 +157,26 @@
                    :receipt-id (.getString rows 14)}))
            out))))))
 
+(defn read-batches [db-path stream]
+  (with-open [conn (connect db-path)
+              statement (.prepareStatement conn
+                "SELECT receipt_id,base_revision,final_revision,event_count,batch_sha256,committed_at_epoch_ms,receipt_sha256 FROM control_batches WHERE stream=? ORDER BY final_revision")]
+    (.setString statement 1 stream)
+    (with-open [rows (.executeQuery statement)]
+      (loop [out []]
+        (if (.next rows)
+          (recur
+           (conj out
+                 {:receipt-id (.getString rows 1)
+                  :stream stream
+                  :base-revision (.getLong rows 2)
+                  :final-revision (.getLong rows 3)
+                  :event-count (.getLong rows 4)
+                  :batch-sha256 (.getString rows 5)
+                  :committed-at-epoch-ms (.getLong rows 6)
+                  :receipt-sha256 (.getString rows 7)}))
+          out)))))
+
 (defn verify-stream [db-path stream]
   (let [events (read-events db-path stream)]
     (loop [remaining events
@@ -187,6 +206,48 @@
              :computed-event-sha256 computed
              :stored-event-sha256 event-sha256}))))))
 
+(defn verify-receipts [db-path stream]
+  (let [events-by-receipt (group-by :receipt-id (read-events db-path stream))
+        batches (read-batches db-path stream)]
+    (loop [remaining batches]
+      (if-not (seq remaining)
+        {:ok true :stream stream :batch-count (count batches)}
+        (let [{:keys [receipt-id base-revision final-revision event-count
+                      batch-sha256 committed-at-epoch-ms receipt-sha256] :as batch}
+              (first remaining)
+              stored-events (get events-by-receipt receipt-id [])
+              computed-batch-sha (batch-sha256 stored-events)
+              prepared (event/prepare-receipt
+                        {:receipt-id receipt-id
+                         :stream stream
+                         :base-revision base-revision
+                         :final-revision final-revision
+                         :event-count event-count
+                         :batch-sha256 batch-sha256
+                         :committed-at-epoch-ms committed-at-epoch-ms})
+              computed-receipt-sha (event/receipt-sha256 prepared)]
+          (if (and (= event-count (count stored-events))
+                   (= batch-sha256 computed-batch-sha)
+                   (= receipt-sha256 computed-receipt-sha))
+            (recur (next remaining))
+            {:ok false
+             :stream stream
+             :receipt-id receipt-id
+             :stored-event-count event-count
+             :computed-event-count (count stored-events)
+             :stored-batch-sha256 batch-sha256
+             :computed-batch-sha256 computed-batch-sha
+             :stored-receipt-sha256 receipt-sha256
+             :computed-receipt-sha256 computed-receipt-sha}))))))
+
+(defn verify-store [db-path stream]
+  (let [chain (verify-stream db-path stream)
+        receipts (verify-receipts db-path stream)]
+    {:ok (and (:ok chain) (:ok receipts))
+     :stream stream
+     :chain chain
+     :receipts receipts}))
+
 (defn write-snapshot!
   [db-path stream revision reducer-id state]
   (with-open [conn (connect db-path)]
@@ -199,15 +260,35 @@
                                  "SELECT event_sha256 FROM control_events WHERE stream=? AND revision=?"
                                  [stream revision] [:event-sha256])
             state-json (json/write-str state)
-            state-sha (worker-client/sha256-text state-json)]
+            state-sha (worker-client/sha256-text state-json)
+            existing (query-row conn
+                                "SELECT state_sha256,event_sha256 FROM control_snapshots WHERE stream=? AND revision=? AND reducer_id=?"
+                                [stream revision reducer-id]
+                                [:state-sha256 :event-sha256])]
         (when-not event-row
           (throw (ex-info "snapshot revision has no event"
                           {:kind :snapshot-error :stream stream :revision revision})))
-        (execute! conn
-                  "INSERT INTO control_snapshots(stream,revision,reducer_id,state_json,state_sha256,event_sha256) VALUES(?,?,?,?,?,?)"
-                  [stream revision reducer-id state-json state-sha (:event-sha256 event-row)])
-        {:ok true :stream stream :revision revision :reducer-id reducer-id
-         :state-sha256 state-sha :event-sha256 (:event-sha256 event-row)}))))
+        (cond
+          (and existing
+               (= state-sha (:state-sha256 existing))
+               (= (:event-sha256 event-row) (:event-sha256 existing)))
+          {:ok true :existing true :stream stream :revision revision
+           :reducer-id reducer-id :state-sha256 state-sha
+           :event-sha256 (:event-sha256 event-row)}
+
+          existing
+          (throw (ex-info "snapshot is immutable and already exists with different bytes"
+                          {:kind :snapshot-conflict :stream stream
+                           :revision revision :reducer-id reducer-id}))
+
+          :else
+          (do
+            (execute! conn
+                      "INSERT INTO control_snapshots(stream,revision,reducer_id,state_json,state_sha256,event_sha256) VALUES(?,?,?,?,?,?)"
+                      [stream revision reducer-id state-json state-sha (:event-sha256 event-row)])
+            {:ok true :existing false :stream stream :revision revision
+             :reducer-id reducer-id :state-sha256 state-sha
+             :event-sha256 (:event-sha256 event-row)}))))))
 
 (defn read-snapshot [db-path stream revision reducer-id]
   (with-open [conn (connect db-path)]
