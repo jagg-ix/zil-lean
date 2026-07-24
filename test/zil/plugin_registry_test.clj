@@ -99,6 +99,36 @@
         (registry/close! offline)
         (registry/close! online)))))
 
+(deftest shared-extension-capabilities-support-multiple-providers
+  (let [first-extension
+        (->TestExtension
+         (test-manifest "extension:provider-one"
+                        ["evidence-producer" "provider-one"])
+         ["evidence-producer" "provider-one"]
+         {"provider-one-run" {:authority :clojure}}
+         (fn [_ _] :one))
+        second-extension
+        (->TestExtension
+         (test-manifest "extension:provider-two"
+                        ["evidence-producer" "provider-two"])
+         ["evidence-producer" "provider-two"]
+         {"provider-two-run" {:authority :clojure}}
+         (fn [_ _] :two))
+        extension-registry (registry/create-registry {:control-plane (control-plane)})]
+    (try
+      (registry/register! extension-registry first-extension)
+      (registry/register! extension-registry second-extension)
+      (is (= ["extension:provider-one" "extension:provider-two"]
+             (registry/capability-providers extension-registry "evidence-producer")))
+      (is (= ["extension:provider-one"]
+             (registry/capability-providers extension-registry "provider-one")))
+      (registry/unregister! extension-registry "extension:provider-one")
+      (is (= ["extension:provider-two"]
+             (registry/capability-providers extension-registry "evidence-producer")))
+      (is (empty? (registry/capability-providers extension-registry "provider-one")))
+      (finally
+        (registry/close! extension-registry)))))
+
 (deftest invocation-failure-quarantines-extension
   (let [extension
         (->TestExtension
