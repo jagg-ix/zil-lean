@@ -22,11 +22,7 @@
    :warnings (vec (:warnings response))))
 
 (defn invoke-and-record!
-  "Invoke one Lean-authoritative command and append its exact decision envelope.
-
-  Transport failures append nothing because no valid Lean response exists. Semantic
-  denial and unsafe outcomes are appended as successful observations of a valid Lean
-  decision, preserving their status and payload digest."
+  "Invoke one Lean-authoritative command and append its exact decision envelope."
   [control-plane db-path
    {:keys [stream expected-revision actor command input-path arguments base-revision
            context-bundle-id plugin-id workflow-id request-id timeout-ms]
@@ -58,11 +54,7 @@
      :receipt-sha256 (:receipt_sha256 persisted)}))
 
 (defn record-workflow-event!
-  "Append an operational observation already bound to an authoritative decision hash.
-
-  This function does not decide whether the represented transition is valid. The
-  caller must supply the exact Lean decision or evidence digest that authorized or
-  classified the observation."
+  "Append an observation already bound to an authoritative decision or evidence hash."
   [db-path
    {:keys [stream expected-revision event-type actor request-id base-revision
            context-bundle-id decision-sha256 plugin-id payload]}]
@@ -99,5 +91,5 @@
   (let [events (store/read-events db-path stream)
         projection (workflow/reduce-events events)]
     {:stream stream
-     :integrity (store/verify-stream db-path stream)
+     :integrity (store/verify-store db-path stream)
      :projection (workflow/workflow-summary projection)}))
