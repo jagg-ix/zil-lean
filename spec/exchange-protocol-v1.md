@@ -39,11 +39,17 @@ All fields are required in version 1.
 | Operation | Required capability | Arguments | Semantic payload |
 |---|---|---|---|
 | `parse` | `parse-v1` | none | `ZIL-PARSE-SUMMARY/1` |
+| `compile` | `compile-v1` | namespace or `-` | generated Lean module |
 | `expand` | `expand-v1` | none | expanded ZIL source |
+| `conformance` | `conformance-v1` | none | `ZILC/1` semantic report |
 | `query` | `query-v1` | query name | query witness report |
 | `authorize` | `authorization-v1` | object, relation, subject | `ZIL-AUTHORIZATION/1` |
 | `impact` | `impact-v1` | changed node | `ZIL-CHANGE-IMPACT/1` |
 | `recovery-audit` | `recovery-audit-v1` | request node | `ZIL-RECOVERY-AUDIT/1` |
+
+`compile` accepts exactly one namespace argument. `-` selects the source-derived default namespace. This permits the control plane to prepare temporary composed source and still retain Lean authority over parsing and generated module bytes.
+
+`conformance` emits the same deterministic report used by the differential Clojure/Lean harness. The Clojure side may compare reports, but it does not reinterpret the native report as a different semantic result.
 
 Unknown operations, wrong arity, missing capabilities, noncanonical capability lists, and unsupported protocol versions fail closed.
 
@@ -106,6 +112,19 @@ lake exe zilWorker -- --once
 `--stdio` processes lines until EOF. `--once` reads one line, writes one response, and exits zero only for `status=ok`.
 
 The Clojure worker pool has a configurable fixed size. It reuses healthy workers, cleans up partial startup, applies acquisition and response deadlines, and replaces workers after transport failure.
+
+## Control-plane adapters
+
+Workspace and corpus tooling may preserve Clojure discovery, source composition, manifests, atomic writes, and external Lean elaboration while routing semantic operations through `ZIL-EXCHANGE/1`.
+
+The default adapters cover:
+
+- macro compile, expand, and parity;
+- recursive library compilation;
+- differential conformance;
+- embedded block compilation.
+
+Injected runner hooks remain supported for isolated tests and explicit external verification. They are not an alternative semantic authority.
 
 ## Trust boundary
 
