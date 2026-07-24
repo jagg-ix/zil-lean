@@ -16,6 +16,7 @@
             [zil.bridge-vstack-ci-test]
             [zil.bridge-vstack-test]
             [zil.bridge-tla-test]
+            [zil.control-event-store-test]
             [zil.control-plane-test]
             [zil.core-test]
             [zil.embedded-test]
@@ -28,6 +29,7 @@
             [zil.profile-z3-test]
             [zil.relational-ir-test]
             [zil.runtime-datascript-vector-clock-test]
+            [zil.runtime-evaluation-test]
             [zil.runtime-ingest-test]
             [zil.recovery-drift-test]
             [zil.formalization-target-test]
@@ -47,46 +49,48 @@
 (defn -main
   [& _]
   (let [{:keys [fail error]} (run-tests 'zil.bridge-lean4-test
-                                           'zil.bridge-tuple-lean-test
-                                           'zil.bridge-lean-events-test
-                                           'zil.bridge-lean-delta-test
-                                           'zil.bridge-snapshot-test
-                                           'zil.bridge-workflow-lean-test
-                                           'zil.bridge-proof-token-test
-                                           'zil.bridge-theorem-lock-test
-                                           'zil.bridge-souffle-test
-                                           'zil.bridge-theorem-ci-test
-                                           'zil.bridge-theorem-dsl-ci-test
-                                           'zil.bridge-theorem-test
-                                           'zil.bridge-proof-obligation-test
-                                           'zil.bridge-vstack-ci-test
-                                           'zil.bridge-vstack-test
-                                           'zil.bridge-tla-test
-                                           'zil.control-plane-test
-                                           'zil.core-test
-                                           'zil.embedded-test
-                                           'zil.import-hcl-test
-                                           'zil.interop-test
-                                           'zil.lower-test
-                                           'zil.model-exchange-test
-                                           'zil.plugin-registry-test
-                                           'zil.preprocess-test
-                                           'zil.profile-z3-test
-                                           'zil.relational-ir-test
-                                           'zil.runtime-datascript-vector-clock-test
-                                           'zil.runtime-ingest-test
-                                           'zil.recovery-drift-test
-                                           'zil.formalization-target-test
-                                           'zil.safety-action-test
-                                           'zil.safety-token-action-test
-                                           'zil.store-sqlite-test
-                                           'zil.port-library-test
-                                           'zil.port-conformance-test
-                                           'zil.port-gate-test
-                                           'zil.port-verify-test
-                                           'zil.port-embedded-native-test
-                                           'zil.port-retirement-test
-                                           'zil.port-native-macro-test
-                                           'zil.worker-protocol-test
-                                           'zil.release-attestation-test)]
+                                         'zil.bridge-tuple-lean-test
+                                         'zil.bridge-lean-events-test
+                                         'zil.bridge-lean-delta-test
+                                         'zil.bridge-snapshot-test
+                                         'zil.bridge-workflow-lean-test
+                                         'zil.bridge-proof-token-test
+                                         'zil.bridge-theorem-lock-test
+                                         'zil.bridge-souffle-test
+                                         'zil.bridge-theorem-ci-test
+                                         'zil.bridge-theorem-dsl-ci-test
+                                         'zil.bridge-theorem-test
+                                         'zil.bridge-proof-obligation-test
+                                         'zil.bridge-vstack-ci-test
+                                         'zil.bridge-vstack-test
+                                         'zil.bridge-tla-test
+                                         'zil.control-event-store-test
+                                         'zil.control-plane-test
+                                         'zil.core-test
+                                         'zil.embedded-test
+                                         'zil.import-hcl-test
+                                         'zil.interop-test
+                                         'zil.lower-test
+                                         'zil.model-exchange-test
+                                         'zil.plugin-registry-test
+                                         'zil.preprocess-test
+                                         'zil.profile-z3-test
+                                         'zil.relational-ir-test
+                                         'zil.runtime-datascript-vector-clock-test
+                                         'zil.runtime-evaluation-test
+                                         'zil.runtime-ingest-test
+                                         'zil.recovery-drift-test
+                                         'zil.formalization-target-test
+                                         'zil.safety-action-test
+                                         'zil.safety-token-action-test
+                                         'zil.store-sqlite-test
+                                         'zil.port-library-test
+                                         'zil.port-conformance-test
+                                         'zil.port-gate-test
+                                         'zil.port-verify-test
+                                         'zil.port-embedded-native-test
+                                         'zil.port-retirement-test
+                                         'zil.port-native-macro-test
+                                         'zil.worker-protocol-test
+                                         'zil.release-attestation-test)]
     (System/exit (if (pos? (+ fail error)) 1 0))))

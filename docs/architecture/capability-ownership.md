@@ -28,10 +28,16 @@ This document assigns authority rather than implementation exclusivity. A capabi
 | Checkpoint and consumption | `token-lifecycle` | Lean | Clojure owns compare-and-swap | validated |
 | Recovery audit | `recovery-audit`, worker/control `recovery-audit` | Lean | Clojure persists terminal event | validated |
 | Formal control-plane routing | `control` | Clojure operational authority | JVM and Lean worker pool | byte-attested transport around Lean result |
+| Durable decision recording | `control-store invoke` | Lean decision; Clojure commit | JVM, Lean worker and SQLite | validated decision plus byte-attested receipt |
+| Operational workflow recording | `control-store record` | Clojure ordering; supplied Lean or evidence binding | JVM and SQLite | byte-attested observation |
+| Event-chain verification | `control-store verify` | Clojure | SQLite replay | byte-attested |
+| Workflow projection | `control-store project`, `event-store-project` | Clojure | SQLite reducer | exploratory |
+| Runtime placement evaluation | `evaluate-runtime` | Human final decision; Clojure evaluator | JVM | exploratory recommendation |
 | Revision storage | bridge and store APIs | Clojure | SQLite | operational |
 | File watching | control-plane service | Clojure | JVM | exploratory |
 | Extension discovery and loading | `plugin` | Clojure | JVM | manifest-fingerprinted |
 | Extension command dispatch | extension registry | Clojure | JVM | bounded by manifest authority |
+| SQLite event StoreBackend | `extension:sqlite-event-store` | Clojure | JVM and SQLite | byte-attested |
 | External solver execution | `solver-run` reference extension | External through Clojure | JVM/process | externally-attested |
 | Repository scanning | `repository-scan` reference extension | Clojure | JVM | byte-attested |
 | Report export | `report-export` reference extension | Clojure | JVM | byte-attested |
@@ -68,12 +74,13 @@ zil.store.*
 zil.runtime.*
 zil.port.*
 zil.release.*
+zil.evaluation.*
 zil.bridge.* when coordinating an external runtime or durable store
 zil.plugin.*
 zil.extensions.*
 ```
 
-A bridge or extension may translate data into Lean, but translated output is not authoritative until a compiled Lean capability accepts it.
+A bridge, store, evaluator, or extension may translate and organize Lean results, but it may not reinterpret them as a different authoritative semantic result.
 
 ## Formal control-plane boundary
 
@@ -86,6 +93,37 @@ The control plane validates `architecture/capability-ownership.edn` before start
 - dispatch after the control plane has closed.
 
 The command table is derived from that validated inventory. Built-in commands are marked nonreplaceable.
+
+## Durable control-event boundary
+
+`ZIL-CONTROL-EVENT/1` joins Lean decisions and operational workflow observations without replacing the existing revision, lease, checkpoint, action, token, or output tables.
+
+Clojure owns:
+
+- expected-revision compare-and-swap;
+- transaction ordering and rollback;
+- event and receipt byte identities;
+- hash-chain integrity;
+- immutable snapshots.
+
+Lean owns the semantic meaning of any decision referenced by `decision_sha256`.
+
+A transport failure creates no decision event. A valid Lean denial or unsafe result is recorded exactly as returned. `ZIL-WORKFLOW-PROJECTION/1` remains exploratory: it summarizes observed order and bindings but does not infer authorization, verification, recovery, or safety independently.
+
+## Runtime evaluation boundary
+
+`ZIL-RUNTIME-EVALUATION/1` compares Lean, Clojure, and hybrid candidates using versioned measurements for correctness, latency, throughput, maintenance, extensibility, proof coverage, reliability, and deployment simplicity.
+
+The evaluator:
+
+- applies confidence and sample thresholds;
+- enforces kernel, plugin, and Lean-only profile constraints;
+- reports insufficient evidence instead of guessing;
+- marks close scores for review;
+- requires human approval for a candidate change;
+- never changes code, manifests, routing, or ownership automatically.
+
+Current language placement is therefore an input to evaluation, not a predetermined migration target.
 
 ## Extension registry boundary
 
@@ -116,6 +154,11 @@ It must:
 | `ZIL-RECOVERY-AUDIT/1` | Lean |
 | `ZIL-EXCHANGE/1` semantic payload | Lean |
 | `ZIL-EXCHANGE/1` transport SHA-256 | Clojure client |
+| `ZIL-CONTROL-EVENT/1` semantic binding | Lean decision or external evidence identity |
+| `ZIL-CONTROL-EVENT/1` ordering and hash chain | Clojure store |
+| `ZIL-CONTROL-RECEIPT/1` | Clojure store |
+| `ZIL-WORKFLOW-PROJECTION/1` | Clojure, exploratory only |
+| `ZIL-ARCHITECTURE-EVALUATION/1` | Clojure evaluator, human decision required |
 | `ZIL-EVIDENCE/1` envelope and byte hashes | Clojure registry/producer |
 | external solver result | external producer, represented by Clojure and audited by Lean |
 | SQLite transaction receipt | Clojure store |
@@ -128,14 +171,17 @@ It must:
 3. Clojure may return `exploratory` or `byte-attested` without Lean, but it must not issue mutation permission.
 4. External tool success is evidence, not automatic kernel proof.
 5. The Clojure store may reject a valid Lean transition because of concurrent revision change.
-6. The store may never commit a transition Lean rejected.
+6. The store may never convert a Lean rejection into an accepted transition.
 7. Every exchange request declares the capability it expects.
 8. Unknown operations and undeclared capabilities fail closed.
-9. Transport failure, request invalidity, semantic denial, and successful evaluation are distinct states.
-10. One canonical payload is hashed; timestamps and process-local metadata are excluded from semantic fingerprints.
+9. Transport failure, request invalidity, semantic denial, revision conflict, transaction rollback, and successful evaluation are distinct states.
+10. One canonical payload is hashed; process-local metadata is excluded from semantic fingerprints.
 11. Extension command shadowing is forbidden.
 12. Extension evidence is rejected if its extension identity, authority, schema, or payload hash is inconsistent.
 13. Direct process runners remain test or external-verification injection points, not an alternative semantic authority.
+14. Control-event streams use expected-revision CAS and a verifiable hash chain.
+15. Workflow projections cannot manufacture semantic safety or authorization.
+16. Runtime placement changes require evidence and explicit human approval.
 
 ## Change procedure
 
@@ -161,4 +207,13 @@ A new extension must additionally declare:
 - lifecycle and failure isolation behavior;
 - evidence authority and assurance ceiling.
 
-No plugin may replace an existing authoritative capability unless a new protocol version and explicit migration policy are approved.
+A runtime-placement recommendation must additionally provide:
+
+- the evaluation model version;
+- normalized source measurements;
+- confidence and sample counts;
+- hard constraint review;
+- recommendation margin;
+- explicit human approval before implementation.
+
+No plugin or evaluation report may replace an existing authoritative capability without a new protocol version and explicit migration policy.

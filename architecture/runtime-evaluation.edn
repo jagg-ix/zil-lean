@@ -1,0 +1,61 @@
+{:schema "ZIL-RUNTIME-EVALUATION/1"
+ :weights {:correctness 0.20
+           :latency 0.10
+           :throughput 0.10
+           :maintenance 0.15
+           :extensibility 0.15
+           :proof-coverage 0.15
+           :reliability 0.10
+           :deployment-simplicity 0.05}
+ :policy {:minimum-metrics 6
+          :minimum-confidence 0.60
+          :minimum-samples 1
+          :decision-margin 0.05}
+ :components
+ [{:id :semantic-kernel
+   :description "Parsing, expansion, rule safety, checked closure, authorization, impact, and safety decisions"
+   :current :lean
+   :candidates [:lean :hybrid :clojure]
+   :constraints {:requires-kernel-evidence true
+                 :requires-lean-only-profile true}}
+  {:id :workspace-and-corpus
+   :description "Filesystem discovery, macro library composition, recursive corpora, manifests, and generated output placement"
+   :current :clojure
+   :candidates [:clojure :hybrid :lean]
+   :constraints {:requires-dynamic-plugins true}}
+  {:id :exchange-supervision
+   :description "Worker lifecycle, bounded pools, deadlines, restart policy, and byte attestation"
+   :current :clojure
+   :candidates [:clojure :hybrid :lean]
+   :constraints {}}
+  {:id :durable-event-store
+   :description "Expected-revision append, receipts, snapshots, and stream verification"
+   :current :clojure
+   :candidates [:clojure :hybrid :lean]
+   :constraints {}}
+  {:id :extension-registry
+   :description "Manifest loading, capability providers, command dispatch, quarantine, and external adapters"
+   :current :clojure
+   :candidates [:clojure :hybrid :lean]
+   :constraints {:requires-dynamic-plugins true}}
+  {:id :macro-workflow
+   :description "Workspace preparation in Clojure with Lean-authoritative macro semantics"
+   :current :hybrid
+   :candidates [:hybrid :lean :clojure]
+   :constraints {:requires-kernel-evidence true}}
+  {:id :agent-mutation-workflow
+   :description "Operational transactions bound to Lean action-token, lifecycle, and recovery decisions"
+   :current :hybrid
+   :candidates [:hybrid :lean :clojure]
+   :constraints {:requires-kernel-evidence true
+                 :requires-dynamic-plugins true}}
+  {:id :external-tooling
+   :description "Z3, TLAPS, ACL2, Git, compiler, editor, and service adapters"
+   :current :clojure
+   :candidates [:clojure :hybrid :lean]
+   :constraints {:requires-dynamic-plugins true}}
+  {:id :release-evidence
+   :description "Join operational artifacts with Lean theorem and audit evidence"
+   :current :hybrid
+   :candidates [:hybrid :lean :clojure]
+   :constraints {:requires-kernel-evidence true}}]}

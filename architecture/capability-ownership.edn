@@ -91,16 +91,40 @@
    :assurance :exploratory}
   {:id :event-store-v1
    :authority :clojure
-   :namespaces ["zil.store.sqlite" "zil.runtime.ingest"]
+   :namespaces ["zil.store.sqlite" "zil.store.control-event" "zil.runtime.ingest"]
+   :commands ["control-store"]
    :assurance :byte-attested}
+  {:id :control-event-v1
+   :authority :shared
+   :schema "ZIL-CONTROL-EVENT/1"
+   :producer-authority :clojure
+   :semantic-binding-authority :lean}
+  {:id :control-receipt-v1
+   :authority :clojure
+   :schema "ZIL-CONTROL-RECEIPT/1"
+   :namespaces ["zil.control.event" "zil.store.control-event"]
+   :assurance :byte-attested}
+  {:id :workflow-projection-v1
+   :authority :clojure
+   :schema "ZIL-WORKFLOW-PROJECTION/1"
+   :namespaces ["zil.control.workflow" "zil.control.durable"]
+   :assurance :exploratory}
   {:id :worker-supervision-v1
    :authority :clojure
    :namespaces ["zil.worker.client" "zil.worker.pool" "zil.worker.protocol"]
    :assurance :byte-attested}
   {:id :control-plane-v1
    :authority :clojure
-   :namespaces ["zil.control.capability" "zil.control.command" "zil.control.runtime"]
+   :namespaces ["zil.control.capability" "zil.control.command" "zil.control.runtime" "zil.control.durable"]
    :assurance :byte-attested}
+  {:id :runtime-evaluation-v1
+   :authority :clojure
+   :schema "ZIL-RUNTIME-EVALUATION/1"
+   :report-schema "ZIL-ARCHITECTURE-EVALUATION/1"
+   :namespaces ["zil.evaluation.architecture" "zil.evaluation.cli"]
+   :commands ["evaluate-runtime"]
+   :assurance :exploratory
+   :automatic-mutation false}
   {:id :extension-registry-v1
    :authority :clojure
    :namespaces ["zil.plugin.api" "zil.plugin.manifest" "zil.plugin.registry"]
@@ -123,6 +147,9 @@
  :invariants
  [{:id :semantic-authority :owner :lean}
   {:id :durable-transaction :owner :clojure}
+  {:id :event-stream-cas :owner :clojure}
+  {:id :event-semantic-binding :owner :lean :recorder :clojure}
+  {:id :runtime-placement-decision :owner :human :evaluator :clojure}
   {:id :transport-sha256 :owner :clojure}
   {:id :kernel-evidence :owner :lean}
   {:id :external-result :owner :external :auditor :lean}
