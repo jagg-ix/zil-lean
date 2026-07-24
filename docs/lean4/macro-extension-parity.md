@@ -67,14 +67,14 @@ Callers provide an ordered array of library sources. The model is appended last.
 
 ## Filesystem workflow
 
-The repository command layer matches `zil.preprocess/preprocess-model`:
+The Clojure control plane matches `zil.preprocess/preprocess-model`:
 
 1. use `--lib DIR` when supplied;
 2. otherwise find the nearest ancestor containing `lib/`;
 3. collect only direct `.zc` children;
 4. sort them by filename;
 5. concatenate them before the model;
-6. invoke the native Lean frontend.
+6. submit the exact prepared bytes to the Lean `compile` or `expand` exchange capability.
 
 Compile with macro libraries:
 
@@ -98,6 +98,27 @@ bin/zil macro-compile model.zc --lib path/to/lib
 
 Direct files inside the selected `lib/` directory remain standalone. They are never prepended to themselves.
 
+## Formal control-plane boundary
+
+The public macro aliases route through `zil.control.adapters`.
+
+Clojure remains authoritative for:
+
+- library discovery;
+- source composition;
+- temporary-file lifecycle;
+- output placement;
+- differential comparison.
+
+Lean remains authoritative for:
+
+- macro expansion semantics;
+- declaration parsing;
+- generated module bytes;
+- native conformance rows.
+
+The low-level `zil.port.native-macro` runner hook remains injectable for unit tests and explicit external verification. It is not the default public semantic path.
+
 ## Differential parity check
 
 ```bash
@@ -106,10 +127,10 @@ bin/zil macro-parity model.zc --output macro-parity.edn
 
 The command composes the source once, then expands it through:
 
-- `zil.core/expand-macros`;
-- `lake exe zil -- expand`.
+- `zil.core/expand-macros` as the compatibility oracle;
+- the Lean `expand-v1` operation over `ZIL-EXCHANGE/1`.
 
-The check passes only when both ordered expanded statement vectors are exactly equal. The report also includes source SHA-256, library paths, statement counts, frontend-only statements, native exit status, and diagnostics.
+The check passes only when both ordered expanded statement vectors are exactly equal. The report also includes source SHA-256, library paths, statement counts, frontend-only statements, native status, and diagnostics.
 
 ## Corpus compilation and conformance
 
@@ -127,9 +148,9 @@ lib-files
 
 The raw source hash identifies the model file. The compiled-source hash identifies the exact concatenated library-plus-model input supplied to both frontends.
 
-The conformance harness compiles and expands the same prepared text on both sides. A valid library-backed model can no longer appear as a misleading shared rejection caused by an unresolved macro invocation.
+The conformance harness compiles and expands the same prepared text on both sides. Native semantic rows come from the Lean `conformance-v1` capability. A valid library-backed model can no longer appear as a misleading shared rejection caused by an unresolved macro invocation.
 
-The port retirement gate requires exact parity for macro-bearing corpus sources and checks that the native parser, library API, tests, command adapter, and parity specification remain present.
+The port gate requires exact parity for macro-bearing corpus sources and checks that the native parser, library API, formal control-plane adapter, tests, and parity specification remain present.
 
 ## Comments and strings
 
@@ -152,10 +173,10 @@ lake build
 lake exe zilLeanTests
 clojure -M:test
 
-clojure -M:library --check \
+bin/zil library --check \
   --root lib --root libsets --root examples
 
-clojure -M:conformance \
+bin/zil conformance-suite \
   --root lib --root libsets --root examples
 
 bin/zil macro-parity \
