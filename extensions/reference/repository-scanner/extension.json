@@ -1,0 +1,1 @@
+{"schema":"ZIL-EXTENSION/1","id":"extension:repository-scanner","version":"1.0.0","runtime":"clojure","entrypoint":"zil.extensions.repository-scanner/create","capabilities":["evidence-producer","repository-scanner"],"requires":["ZIL-EVIDENCE/1","ZIL-EXTENSION/1"],"inputs":[],"outputs":["ZIL-EVIDENCE/1","ZIL-REPOSITORY-SCAN/1"],"authority":"clojure","trusted":false}
