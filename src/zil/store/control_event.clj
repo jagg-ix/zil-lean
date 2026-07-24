@@ -177,6 +177,10 @@
                   :receipt-sha256 (.getString rows 7)}))
           out)))))
 
+(defn- payload-sha256 [payload]
+  (worker-client/sha256-text
+   (json/write-str (event/canonical-value payload))))
+
 (defn verify-stream [db-path stream]
   (let [events (read-events db-path stream)]
     (loop [remaining events
@@ -192,10 +196,13 @@
              :event-count (count events)
              :event-sha256 (:event-sha256 head)}))
         (let [{:keys [revision event previous-event-sha256 event-sha256]} (first remaining)
-              computed (event/event-sha256 event previous-sha revision)]
+              computed-payload-sha (payload-sha256 (:payload event))
+              stored-payload-sha (:payload_sha256 event)
+              computed-event-sha (event/event-sha256 event previous-sha revision)]
           (if (and (= expected-revision revision)
                    (= previous-sha previous-event-sha256)
-                   (= computed event-sha256))
+                   (= computed-payload-sha stored-payload-sha)
+                   (= computed-event-sha event-sha256))
             (recur (next remaining) (inc expected-revision) event-sha256)
             {:ok false
              :stream stream
@@ -203,7 +210,9 @@
              :expected-revision expected-revision
              :expected-previous-sha256 previous-sha
              :stored-previous-sha256 previous-event-sha256
-             :computed-event-sha256 computed
+             :computed-payload-sha256 computed-payload-sha
+             :stored-payload-sha256 stored-payload-sha
+             :computed-event-sha256 computed-event-sha
              :stored-event-sha256 event-sha256}))))))
 
 (defn verify-receipts [db-path stream]
