@@ -16,10 +16,21 @@
   [:schema :receipt_id :stream :base_revision :final_revision :event_count
    :batch_sha256 :committed_at_epoch_ms])
 
+(declare canonical-value)
+
+(defn- canonical-key [key]
+  (cond
+    (string? key) key
+    (keyword? key) (name key)
+    (symbol? key) (str key)
+    :else
+    (throw (ex-info "canonical map keys must be strings, keywords, or symbols"
+                    {:kind :canonicalization-error :key key}))))
+
 (defn- canonical-map [value]
   (reduce
    (fn [out [key item]]
-     (let [normalized-key (name key)]
+     (let [normalized-key (canonical-key key)]
        (when (contains? out normalized-key)
          (throw (ex-info "canonical map keys collide after normalization"
                          {:kind :canonicalization-error
