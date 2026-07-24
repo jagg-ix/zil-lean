@@ -21,7 +21,11 @@ private def request : Request := {
   | .ok _ => true
   | .error _ => false
 
+#guard requiredCapability? "compile" == some "compile-v1"
+#guard requiredCapability? "conformance" == some "conformance-v1"
 #guard requiredCapability? "authorize" == some "authorization-v1"
+#guard requiredArity? "compile" == some 1
+#guard requiredArity? "conformance" == some 0
 #guard requiredArity? "authorize" == some 3
 
 #guard match Request.validate { request with capabilities := #[] } with
@@ -45,6 +49,21 @@ private def request : Request := {
 #guard ({ request with capabilities := #[] } : Request).validationStatus == "invalid"
 
 #guard match Request.validate { request with inputSha256 := "sha256:bad" } with
+  | .error _ => true
+  | .ok _ => false
+
+private def compileRequest : Request := {
+  request with
+  operation := "compile"
+  capabilities := #["compile-v1"]
+  arguments := #["Project.Generated.Access"]
+}
+
+#guard match compileRequest.validate with
+  | .ok _ => true
+  | .error _ => false
+
+#guard match Request.validate { compileRequest with arguments := #[] } with
   | .error _ => true
   | .ok _ => false
 
