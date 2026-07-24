@@ -133,6 +133,20 @@
                            :authority declared})))))
     commands))
 
+(defn- add-capability-providers [current extension-id provided]
+  (reduce (fn [out capability]
+            (update out capability (fnil conj (sorted-set)) extension-id))
+          current
+          provided))
+
+(defn- remove-capability-provider [current extension-id]
+  (into
+   (sorted-map)
+   (keep (fn [[capability providers]]
+           (let [remaining (disj providers extension-id)]
+             (when (seq remaining) [capability remaining]))))
+   current))
+
 (defn register!
   "Validate, start, and register one extension atomically.
 
@@ -184,12 +198,6 @@
                          {:kind :capability-shadowing
                           :extension-id extension-id
                           :capability collision})))
-       (when-let [collision (first (sort (set/intersection capability-ids
-                                                           (set (keys @(:capabilities registry))))))]
-         (throw (ex-info "extension capability is already registered"
-                         {:kind :capability-shadowing
-                          :extension-id extension-id
-                          :capability collision})))
        (swap! (:extensions registry)
               assoc extension-id
               {:manifest extension-manifest
@@ -232,9 +240,7 @@
                     [command {:extension-id extension-id
                               :descriptor descriptor}]))
            (swap! (:capabilities registry)
-                  into
-                  (for [provided capabilities]
-                    [provided extension-id]))
+                  add-capability-providers extension-id capabilities)
            extension-manifest)
          (catch Exception error
            (quarantine! registry extension-id error)
@@ -248,6 +254,9 @@
 
 (defn extension-status [registry extension-id]
   (:status (extension-entry registry extension-id)))
+
+(defn capability-providers [registry capability]
+  (vec (get @(:capabilities registry) (str capability) (sorted-set))))
 
 (defn registered-extensions [registry]
   (mapv (fn [[extension-id entry]]
@@ -355,10 +364,7 @@
                                   (= extension-id (:extension-id value))))
                         commands)))
          (swap! (:capabilities registry)
-                (fn [capabilities]
-                  (into (sorted-map)
-                        (remove (fn [[_ owner]] (= extension-id owner)))
-                        capabilities)))
+                remove-capability-provider extension-id)
          (swap! (:extensions registry) dissoc extension-id))
        {:removed (boolean entry) :extension-id extension-id}))))
 
