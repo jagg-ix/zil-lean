@@ -2,10 +2,12 @@
   "Manifest-driven extension registry with collision prevention and failure isolation."
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
+            [zil.control.capability :as ownership]
             [zil.control.command :as control-command]
             [zil.plugin.api :as api]
             [zil.plugin.evidence :as evidence]
-            [zil.plugin.manifest :as manifest]))
+            [zil.plugin.manifest :as manifest]
+            [zil.worker.protocol :as worker-protocol]))
 
 (defrecord Registry
   [control-plane extensions commands capabilities closed? lock])
@@ -31,6 +33,12 @@
   (if-let [control-plane (:control-plane registry)]
     (set (map (comp name :id) (:capabilities (:inventory control-plane))))
     #{}))
+
+(defn- available-requirements [^Registry registry]
+  (set/union
+   #{manifest/schema evidence/schema worker-protocol/schema ownership/schema}
+   (built-in-capability-ids registry)
+   (set (keys @(:capabilities registry)))))
 
 (defn- normalize-command-map [commands]
   (into
@@ -70,6 +78,37 @@
                        :cause-data (ex-data error)}
                       error)))))
 
+(defn- validate-requirements! [registry extension-manifest]
+  (let [declared (set (:requires extension-manifest))
+        available (available-requirements registry)
+        missing (vec (sort (set/difference declared available)))]
+    (when (seq missing)
+      (throw (ex-info "extension requirements are unavailable"
+                      {:kind :extension-requirement-error
+                       :extension-id (:id extension-manifest)
+                       :missing missing
+                       :available (vec (sort available))}))))
+  extension-manifest)
+
+(defn- validate-command-authority! [extension-manifest commands]
+  (let [manifest-authority (keyword (:authority extension-manifest))]
+    (doseq [[command descriptor] commands]
+      (let [declared (or (:authority descriptor) manifest-authority)]
+        (when-not (= manifest-authority declared)
+          (throw (ex-info "extension command authority disagrees with manifest"
+                          {:kind :extension-contract-error
+                           :extension-id (:id extension-manifest)
+                           :command command
+                           :manifest-authority manifest-authority
+                           :command-authority declared})))
+        (when (contains? #{:lean :shared} declared)
+          (throw (ex-info "dynamic Clojure commands cannot claim Lean or shared authority"
+                          {:kind :extension-contract-error
+                           :extension-id (:id extension-manifest)
+                           :command command
+                           :authority declared}))))))
+  commands)
+
 (defn register!
   "Validate, start, and register one extension atomically.
 
@@ -82,12 +121,14 @@
      (throw (ex-info "extension does not implement zil.plugin.api/Extension"
                      {:kind :extension-contract-error})))
    (locking (:lock registry)
-     (let [extension-manifest (manifest/with-fingerprint
-                               (api/extension-manifest extension))
+     (let [extension-manifest (-> (api/extension-manifest extension)
+                                  manifest/with-fingerprint
+                                  (validate-requirements! registry))
            extension-id (:id extension-manifest)
            declared-capabilities (:capabilities extension-manifest)
            capabilities (extension-capabilities extension)
-           commands (extension-commands extension)
+           commands (->> (extension-commands extension)
+                         (validate-command-authority! extension-manifest))
            command-ids (set (keys commands))
            capability-ids (set capabilities)
            built-in-commands (built-in-command-ids registry)
@@ -135,7 +176,25 @@
                                                   (assoc context
                                                          :registry registry
                                                          :control-plane (:control-plane registry)))
-                           extension)]
+                           extension)
+               started-capabilities (extension-capabilities started)
+               started-commands (extension-commands started)]
+           (when-not (satisfies? api/Extension started)
+             (throw (ex-info "started extension lost the Extension contract"
+                             {:kind :extension-contract-error
+                              :extension-id extension-id})))
+           (when-not (= capabilities started-capabilities)
+             (throw (ex-info "extension capabilities changed during startup"
+                             {:kind :extension-contract-error
+                              :extension-id extension-id
+                              :before capabilities
+                              :after started-capabilities})))
+           (when-not (= commands started-commands)
+             (throw (ex-info "extension commands changed during startup"
+                             {:kind :extension-contract-error
+                              :extension-id extension-id
+                              :before commands
+                              :after started-commands})))
            (swap! (:extensions registry)
                   assoc extension-id
                   {:manifest extension-manifest
@@ -207,7 +266,8 @@
   [^Registry registry extension-id context request]
   (ensure-open! registry)
   (let [extension-id (str extension-id)
-        entry (extension-entry registry extension-id)]
+        entry (extension-entry registry extension-id)
+        registered-manifest (:manifest entry)]
     (when-not (= :active (:status entry))
       (throw (ex-info "extension evidence producer is unavailable"
                       {:kind :extension-unavailable
@@ -223,7 +283,7 @@
                     (assoc context
                            :registry registry
                            :control-plane (:control-plane registry)
-                           :extension-manifest (:manifest entry))
+                           :extension-manifest registered-manifest)
                     request)
             values (if (sequential? values) values [values])]
         (mapv
@@ -234,6 +294,18 @@
                                {:kind :evidence-error
                                 :extension-id extension-id
                                 :evidence value})))
+             (when-not (= (:authority registered-manifest) (:authority value))
+               (throw (ex-info "extension evidence authority disagrees with manifest"
+                               {:kind :evidence-error
+                                :extension-id extension-id
+                                :manifest-authority (:authority registered-manifest)
+                                :evidence-authority (:authority value)})))
+             (when (and (= "clojure" (:runtime registered-manifest))
+                        (contains? #{"validated" "kernel-backed"} (:assurance value)))
+               (throw (ex-info "Clojure extension exceeded its assurance ceiling"
+                               {:kind :evidence-error
+                                :extension-id extension-id
+                                :assurance (:assurance value)})))
              value))
          values)))))
 
@@ -288,15 +360,20 @@
 
 (defn load-extension
   [manifest-path config]
-  (let [extension-manifest (manifest/read-manifest manifest-path)
-        entrypoint (symbol (:entrypoint extension-manifest))
-        factory (requiring-resolve entrypoint)]
-    (when-not factory
-      (throw (ex-info "extension entrypoint could not be resolved"
+  (let [extension-manifest (manifest/read-manifest manifest-path)]
+    (when-not (= "clojure" (:runtime extension-manifest))
+      (throw (ex-info "dynamic registry loading supports Clojure runtime extensions only"
                       {:kind :extension-load-error
-                       :entrypoint entrypoint
+                       :runtime (:runtime extension-manifest)
                        :manifest manifest-path})))
-    (factory extension-manifest config)))
+    (let [entrypoint (symbol (:entrypoint extension-manifest))
+          factory (requiring-resolve entrypoint)]
+      (when-not factory
+        (throw (ex-info "extension entrypoint could not be resolved"
+                        {:kind :extension-load-error
+                         :entrypoint entrypoint
+                         :manifest manifest-path})))
+      (factory extension-manifest config))))
 
 (defn load-and-register!
   ([registry manifest-path] (load-and-register! registry manifest-path {} {}))
