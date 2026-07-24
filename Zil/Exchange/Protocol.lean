@@ -42,7 +42,9 @@ structure Response where
 /-- Capability required by each compiled worker operation. -/
 def requiredCapability? : String → Option String
   | "parse" => some "parse-v1"
+  | "compile" => some "compile-v1"
   | "expand" => some "expand-v1"
+  | "conformance" => some "conformance-v1"
   | "query" => some "query-v1"
   | "authorize" => some "authorization-v1"
   | "impact" => some "impact-v1"
@@ -52,7 +54,9 @@ def requiredCapability? : String → Option String
 /-- Required positional argument count for each version-1 operation. -/
 def requiredArity? : String → Option Nat
   | "parse" => some 0
+  | "compile" => some 1
   | "expand" => some 0
+  | "conformance" => some 0
   | "query" => some 1
   | "authorize" => some 3
   | "impact" => some 1
