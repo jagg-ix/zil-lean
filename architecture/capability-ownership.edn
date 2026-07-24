@@ -6,13 +6,25 @@
    :operation "parse"
    :authority :lean
    :modules ["Zil.Parser.DeclarationProgram" "Zil.Core.Program"]
-   :commands ["compile"]
+   :commands ["parse"]
+   :assurance :validated}
+  {:id :compile-v1
+   :operation "compile"
+   :authority :lean
+   :modules ["Zil.Parser.DeclarationProgram"]
+   :commands ["compile" "macro-compile" "library" "embedded-native"]
    :assurance :validated}
   {:id :expand-v1
    :operation "expand"
    :authority :lean
    :modules ["Zil.Parser.Macro" "Zil.Parser.MacroProgram"]
-   :commands ["expand" "macro-expand"]
+   :commands ["expand" "macro-expand" "macro-parity"]
+   :assurance :validated}
+  {:id :conformance-v1
+   :operation "conformance"
+   :authority :lean
+   :modules ["Zil.Codec.Conformance"]
+   :commands ["conformance" "port-gate"]
    :assurance :validated}
   {:id :query-v1
    :operation "query"
@@ -75,7 +87,7 @@
    :durable-commit-authority :clojure}
   {:id :workspace-v1
    :authority :clojure
-   :namespaces ["zil.port.library" "zil.port.native-macro"]
+   :namespaces ["zil.port.library" "zil.port.native-macro" "zil.port.embedded-native"]
    :assurance :exploratory}
   {:id :event-store-v1
    :authority :clojure
@@ -85,6 +97,20 @@
    :authority :clojure
    :namespaces ["zil.worker.client" "zil.worker.pool" "zil.worker.protocol"]
    :assurance :byte-attested}
+  {:id :control-plane-v1
+   :authority :clojure
+   :namespaces ["zil.control.capability" "zil.control.command" "zil.control.runtime"]
+   :assurance :byte-attested}
+  {:id :extension-registry-v1
+   :authority :clojure
+   :namespaces ["zil.plugin.api" "zil.plugin.manifest" "zil.plugin.registry"]
+   :schema "ZIL-EXTENSION/1"
+   :assurance :exploratory}
+  {:id :evidence-envelope-v1
+   :authority :shared
+   :schema "ZIL-EVIDENCE/1"
+   :producer-authority :clojure
+   :semantic-auditor :lean}
   {:id :external-tool-v1
    :authority :external
    :control-plane :clojure
@@ -100,4 +126,6 @@
   {:id :transport-sha256 :owner :clojure}
   {:id :kernel-evidence :owner :lean}
   {:id :external-result :owner :external :auditor :lean}
+  {:id :plugin-loading :owner :clojure}
+  {:id :command-shadowing :owner :clojure :policy :forbidden}
   {:id :protocol-schema :owner :shared}]}
