@@ -70,3 +70,37 @@
         component (first (filter #(= :extension-registry (:id %))
                                  (:components report)))]
     (is (= :insufficient-evidence (get-in component [:decision :status])))))
+
+(deftest undeclared-measurement-candidates-fail-closed
+  (let [model (-> (architecture/load-edn "architecture/runtime-evaluation.edn")
+                  (update :components
+                          (fn [components]
+                            (mapv (fn [component]
+                                    (if (= :exchange-supervision (:id component))
+                                      (assoc component :candidates [:clojure :hybrid])
+                                      component))
+                                  components))))
+        measurement {:component :exchange-supervision
+                     :candidate :lean
+                     :metric :correctness
+                     :value 0.9
+                     :confidence 0.9
+                     :samples 3
+                     :source "fixture:undeclared"}]
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"not declared"
+                          (architecture/evaluate model [measurement])))))
+
+(deftest malformed-component-candidate-lists-fail-closed
+  (let [model (architecture/load-edn "architecture/runtime-evaluation.edn")
+        duplicate-model
+        (update model :components
+                (fn [components]
+                  (mapv (fn [component]
+                          (if (= :semantic-kernel (:id component))
+                            (assoc component :candidates [:lean :lean :hybrid])
+                            component))
+                        components)))]
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"candidates must be unique"
+                          (architecture/evaluate duplicate-model [])))))
