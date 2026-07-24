@@ -2,7 +2,6 @@
   (:require [clojure.test :refer [deftest is]]
             [zil.control.command :as command]
             [zil.control.durable :as durable]
-            [zil.control.event :as event]
             [zil.store.control-event :as store]
             [zil.worker.client :as worker-client])
   (:import (java.nio.file Files)
@@ -15,7 +14,7 @@
 (defn- decision [text]
   (worker-client/sha256-text text))
 
-(deftest append-is-cas-bound-and-hash-chained
+(deftest append-is-cas-bound-hash-chained-and-receipted
   (let [database (temp-db)
         stream "workflow:test"
         first-event {:stream stream
@@ -37,6 +36,8 @@
     (is (= 2 (get-in result [:receipt :final_revision])))
     (is (= [1 2] (mapv :revision (store/read-events database stream))))
     (is (:ok (store/verify-stream database stream)))
+    (is (:ok (store/verify-receipts database stream)))
+    (is (:ok (store/verify-store database stream)))
     (is (thrown-with-msg? clojure.lang.ExceptionInfo
                           #"expected revision conflict"
                           (store/append-events! database stream 0 [first-event])))))
@@ -69,7 +70,7 @@
         (is (= "semantic-decision"
                (get-in result [:event :event :event_type])))
         (is (= 1 (:revision (:event result))))
-        (is (:ok (store/verify-stream database stream)))))
+        (is (:ok (store/verify-store database stream)))))
     (with-redefs [command/execute!
                   (fn [& _]
                     (throw (ex-info "worker unavailable" {:kind :transport-error})))]
@@ -84,7 +85,7 @@
                      :arguments []})))
       (is (= 1 (count (store/read-events database stream)))))))
 
-(deftest workflow-projection-is-operational-not-semantic
+(deftest workflow-projection-snapshot-is-idempotent-and-immutable
   (let [database (temp-db)
         stream "workflow:projection"
         values
@@ -97,10 +98,19 @@
           :payload {:workflow_id "workflow:1" :action_id "action:1"
                     :lean_status "recovered" :safe true}}]]
     (store/append-events! database stream 0 values)
-    (let [result (durable/project-workflows! database stream)
+    (let [first-result (durable/project-workflows! database stream)
+          second-result (durable/project-workflows! database stream)
           summary (durable/workflow-status database stream)]
-      (is (:ok result))
+      (is (:ok first-result))
+      (is (false? (get-in first-result [:snapshot :existing])))
+      (is (true? (get-in second-result [:snapshot :existing])))
       (is (= 2 (get-in summary [:projection :event-count])))
       (is (= "recovery-completed"
              (get-in summary [:projection :workflows 0 :last-event-type])))
-      (is (:ok (:integrity summary))))))
+      (is (:ok (:integrity summary)))
+      (is (thrown-with-msg?
+           clojure.lang.ExceptionInfo
+           #"snapshot is immutable"
+           (store/write-snapshot! database stream 2
+                                  "zil.control.workflow/v1"
+                                  {:different true}))))))
