@@ -153,6 +153,7 @@
                        (assoc options :lib-dir (value! remaining "--lib")))
         "--check" (recur (next remaining) (assoc options :check-only true))
         "--clean-stale" (recur (next remaining) (assoc options :clean-stale true))
+        "--help" (assoc options :help true)
         (throw (ex-info "unknown library option"
                         {:kind :invalid-command :option (first remaining)}))))))
 
@@ -179,6 +180,7 @@
         "--check" (recur (next remaining) (assoc options :check-only true))
         "--no-verify" (recur (next remaining) (assoc options :verify-generated false))
         "--require-blocks" (recur (next remaining) (assoc options :require-blocks true))
+        "--help" (assoc options :help true)
         (throw (ex-info "unknown embedded option"
                         {:kind :invalid-command :option (first remaining)}))))))
 
@@ -202,17 +204,23 @@
             "parity" (parity-macro! options)))
 
         "library"
-        (let [result (compile-library! (parse-library tail))]
-          (println (pr-str (select-keys result
-                                       [:schema :ok :check-only :output-root])))
-          (System/exit (if (:ok result) 0 1)))
+        (let [options (parse-library tail)]
+          (if (:help options)
+            (println library/usage)
+            (let [result (compile-library! options)]
+              (println (pr-str (select-keys result
+                                           [:schema :ok :check-only :output-root])))
+              (System/exit (if (:ok result) 0 1)))))
 
         "embedded"
-        (let [result (compile-embedded! (parse-embedded tail))]
-          (println (pr-str (select-keys result
-                                       [:schema :ok :check-only :output-root
-                                        :block-count :verified :compiled :failed])))
-          (System/exit (if (:ok result) 0 1)))
+        (let [options (parse-embedded tail)]
+          (if (:help options)
+            (println embedded/usage)
+            (let [result (compile-embedded! options)]
+              (println (if (:ok result)
+                         "embedded ZIL compilation passed"
+                         "embedded ZIL compilation failed"))
+              (System/exit (if (:ok result) 0 1)))))
 
         (throw (ex-info usage {:kind :invalid-command :surface surface}))))
     (catch Exception error
