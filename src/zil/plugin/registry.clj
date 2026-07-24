@@ -1,7 +1,7 @@
 (ns zil.plugin.registry
   "Manifest-driven extension registry with collision prevention and failure isolation."
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+            [clojure.set :as set]
             [zil.control.command :as control-command]
             [zil.plugin.api :as api]
             [zil.plugin.evidence :as evidence]
@@ -101,25 +101,25 @@
                           :extension-id extension-id
                           :manifest-capabilities declared-capabilities
                           :runtime-capabilities capabilities})))
-       (when-let [collision (first (sort (clojure.set/intersection command-ids built-in-commands)))]
+       (when-let [collision (first (sort (set/intersection command-ids built-in-commands)))]
          (throw (ex-info "extension command shadows a built-in command"
                          {:kind :command-shadowing
                           :extension-id extension-id
                           :command collision})))
-       (when-let [collision (first (sort (clojure.set/intersection command-ids
-                                                                   (set (keys @(:commands registry))))))]
+       (when-let [collision (first (sort (set/intersection command-ids
+                                                           (set (keys @(:commands registry))))))]
          (throw (ex-info "extension command is already registered"
                          {:kind :command-shadowing
                           :extension-id extension-id
                           :command collision})))
-       (when-let [collision (first (sort (clojure.set/intersection capability-ids
-                                                                   built-in-capabilities)))]
+       (when-let [collision (first (sort (set/intersection capability-ids
+                                                           built-in-capabilities)))]
          (throw (ex-info "extension capability shadows an authoritative capability"
                          {:kind :capability-shadowing
                           :extension-id extension-id
                           :capability collision})))
-       (when-let [collision (first (sort (clojure.set/intersection capability-ids
-                                                                   (set (keys @(:capabilities registry))))))]
+       (when-let [collision (first (sort (set/intersection capability-ids
+                                                           (set (keys @(:capabilities registry))))))]
          (throw (ex-info "extension capability is already registered"
                          {:kind :capability-shadowing
                           :extension-id extension-id
@@ -149,8 +149,8 @@
                               :descriptor descriptor}]))
            (swap! (:capabilities registry)
                   into
-                  (for [capability capabilities]
-                    [capability extension-id]))
+                  (for [provided capabilities]
+                    [provided extension-id]))
            extension-manifest)
          (catch Exception error
            (quarantine! registry extension-id error)
@@ -228,17 +228,13 @@
             values (if (sequential? values) values [values])]
         (mapv
          (fn [value]
-           (when-not (= evidence/schema (:schema value))
-             (throw (ex-info "extension returned an invalid evidence schema"
-                             {:kind :evidence-error
-                              :extension-id extension-id
-                              :evidence value})))
-           (when-not (= extension-id (:extension_id value))
-             (throw (ex-info "extension returned evidence for another extension"
-                             {:kind :evidence-error
-                              :extension-id extension-id
-                              :evidence value})))
-           value)
+           (let [value (evidence/validate! value)]
+             (when-not (= extension-id (:extension_id value))
+               (throw (ex-info "extension returned evidence for another extension"
+                               {:kind :evidence-error
+                                :extension-id extension-id
+                                :evidence value})))
+             value))
          values)))))
 
 (defn unregister!
