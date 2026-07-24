@@ -16,9 +16,10 @@
   ([{:keys [pool-size inventory inventory-path worker-options]
      :or {pool-size default-pool-size worker-options {}}
      :as options}]
-   (let [inventory (or inventory
-                       (capability/load-valid-inventory
-                        (or inventory-path capability/default-inventory-path)))
+   (let [inventory (if inventory
+                     (capability/validate-inventory! inventory)
+                     (capability/load-valid-inventory
+                      (or inventory-path capability/default-inventory-path)))
          pool (worker-pool/start-pool!
                {:size pool-size
                 :worker-options worker-options})]
@@ -29,7 +30,8 @@
 
 (defn stop! [^ControlPlane control-plane]
   (when (compare-and-set! (:closed? control-plane) false true)
-    (worker-pool/stop-pool! (:pool control-plane)))
+    (when-let [pool (:pool control-plane)]
+      (worker-pool/stop-pool! pool)))
   {:closed true})
 
 (defn invoke!
