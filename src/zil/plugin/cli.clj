@@ -3,11 +3,13 @@
   (:gen-class)
   (:require [clojure.data.json :as json]
             [clojure.edn :as edn]
-            [clojure.java.io :as io]
+            [clojure.set :as set]
             [clojure.string :as str]
+            [zil.control.capability :as capability]
             [zil.control.runtime :as control]
             [zil.plugin.manifest :as manifest]
-            [zil.plugin.registry :as registry]))
+            [zil.plugin.registry :as registry]
+            [zil.worker.protocol :as worker-protocol]))
 
 (def default-root "extensions")
 
@@ -33,11 +35,26 @@
                  (edn/read-string (slurp path))))
         (recur (next remaining) (conj positional (first remaining)) config)))))
 
-(defn- with-registry [function]
-  (let [control-plane (control/start! {:pool-size 1})
+(defn- requires-lean-worker? [extension-manifest]
+  (let [requirements (set (:requires extension-manifest))
+        worker-requirements
+        (conj (set (vals worker-protocol/operation-capabilities))
+              worker-protocol/schema)]
+    (boolean (seq (set/intersection requirements worker-requirements)))))
+
+(defn- control-plane-for [extension-manifest]
+  (let [inventory (capability/load-valid-inventory)]
+    (if (requires-lean-worker? extension-manifest)
+      (control/start! {:pool-size 1 :inventory inventory})
+      (control/->ControlPlane nil inventory (atom false)
+                              {:profile :exploratory-extension})))))
+
+(defn- with-registry [manifest-path function]
+  (let [extension-manifest (manifest/read-manifest manifest-path)
+        control-plane (control-plane-for extension-manifest)
         extension-registry (registry/create-registry {:control-plane control-plane})]
     (try
-      (function control-plane extension-registry)
+      (function extension-manifest control-plane extension-registry)
       (finally
         (registry/close! extension-registry)
         (control/stop! control-plane)))))
@@ -75,7 +92,8 @@
           (when (or (str/blank? manifest-path) (str/blank? extension-command))
             (throw (ex-info usage {:kind :invalid-command})))
           (with-registry
-            (fn [_ extension-registry]
+            manifest-path
+            (fn [_ _ extension-registry]
               (registry/load-and-register! extension-registry manifest-path config {})
               (println
                (json/write-str
@@ -93,7 +111,8 @@
             (throw (ex-info usage {:kind :invalid-command})))
           (let [request (edn/read-string (slurp request-path))]
             (with-registry
-              (fn [_ extension-registry]
+              manifest-path
+              (fn [_ _ extension-registry]
                 (let [registered
                       (registry/load-and-register! extension-registry
                                                    manifest-path config {})]
