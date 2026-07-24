@@ -24,21 +24,33 @@
   (when (closed? registry)
     (throw (ex-info "extension registry is closed" {:kind :registry-closed}))))
 
+(defn- inventory-capabilities [^Registry registry]
+  (or (some-> registry :control-plane :inventory :capabilities) []))
+
 (defn- built-in-command-ids [^Registry registry]
-  (if-let [control-plane (:control-plane registry)]
-    (set (keys (control-command/command-table (:inventory control-plane))))
-    #{}))
+  (let [inventory (some-> registry :control-plane :inventory)
+        exchange-commands (if inventory
+                            (set (keys (control-command/command-table inventory)))
+                            #{})
+        declared-commands (set (mapcat #(or (:commands %) [])
+                                       (or (:capabilities inventory) [])))]
+    (set/union exchange-commands declared-commands)))
 
 (defn- built-in-capability-ids [^Registry registry]
-  (if-let [control-plane (:control-plane registry)]
-    (set (map (comp name :id) (:capabilities (:inventory control-plane))))
-    #{}))
+  (set (map (comp name :id) (inventory-capabilities registry))))
+
+(defn- registered-output-schemas [^Registry registry]
+  (set
+   (mapcat (fn [[_ entry]]
+             (or (get-in entry [:manifest :outputs]) []))
+           @(:extensions registry))))
 
 (defn- available-requirements [^Registry registry]
   (set/union
    #{manifest/schema evidence/schema worker-protocol/schema ownership/schema}
    (built-in-capability-ids registry)
-   (set (keys @(:capabilities registry)))))
+   (set (keys @(:capabilities registry)))
+   (registered-output-schemas registry)))
 
 (defn- normalize-command-map [commands]
   (into
@@ -106,8 +118,8 @@
                           {:kind :extension-contract-error
                            :extension-id (:id extension-manifest)
                            :command command
-                           :authority declared}))))))
-  commands)
+                           :authority declared})))))
+    commands))
 
 (defn register!
   "Validate, start, and register one extension atomically.
@@ -121,14 +133,15 @@
      (throw (ex-info "extension does not implement zil.plugin.api/Extension"
                      {:kind :extension-contract-error})))
    (locking (:lock registry)
-     (let [extension-manifest (-> (api/extension-manifest extension)
-                                  manifest/with-fingerprint
-                                  (validate-requirements! registry))
+     (let [extension-manifest (manifest/with-fingerprint
+                               (api/extension-manifest extension))
+           _ (validate-requirements! registry extension-manifest)
            extension-id (:id extension-manifest)
            declared-capabilities (:capabilities extension-manifest)
            capabilities (extension-capabilities extension)
-           commands (->> (extension-commands extension)
-                         (validate-command-authority! extension-manifest))
+           commands (validate-command-authority!
+                     extension-manifest
+                     (extension-commands extension))
            command-ids (set (keys commands))
            capability-ids (set capabilities)
            built-in-commands (built-in-command-ids registry)
