@@ -10,6 +10,19 @@
 (def assurance-levels
   #{"exploratory" "externally-attested" "byte-attested" "validated" "kernel-backed"})
 
+(def canonical-fields
+  ["schema" "evidence_id" "extension_id" "extension_version" "authority"
+   "assurance" "role" "subject" "input_sha256" "output_sha256" "payload" "metadata"])
+
+(def ^:private field-rank (zipmap canonical-fields (range)))
+
+(defn- compare-fields [left right]
+  (let [left-rank (get field-rank left Integer/MAX_VALUE)
+        right-rank (get field-rank right Integer/MAX_VALUE)]
+    (if (= left-rank right-rank)
+      (compare left right)
+      (compare left-rank right-rank))))
+
 (defn sha256-text [text]
   (let [digest (.digest (MessageDigest/getInstance "SHA-256")
                         (.getBytes (str text) StandardCharsets/UTF_8))]
@@ -27,10 +40,19 @@
     "shared" "byte-attested"
     "exploratory"))
 
+(defn- canonical-value [value]
+  (cond
+    (map? value)
+    (into (sorted-map-by #(compare (str %1) (str %2)))
+          (map (fn [[key item]] [(name key) (canonical-value item)]))
+          value)
+
+    (set? value) (mapv canonical-value (sort-by str value))
+    (sequential? value) (mapv canonical-value value)
+    :else value))
+
 (defn- canonical-metadata [metadata]
-  (into (sorted-map)
-        (map (fn [[key value]] [(name key) value]))
-        (or metadata {})))
+  (canonical-value (or metadata {})))
 
 (defn make-envelope
   [{:keys [extension role subject input-sha256 payload metadata assurance authority]}]
@@ -58,8 +80,7 @@
           (str (:id extension) "\n" (:version extension) "\n" role "\n" subject "\n"
                input-sha256 "\n" output-sha256)
           evidence-id (str "evidence:" (subs (sha256-text identity-source) 7))]
-      (array-map
-       :schema schema
+      {:schema schema
        :evidence_id evidence-id
        :extension_id (:id extension)
        :extension_version (:version extension)
@@ -70,22 +91,43 @@
        :input_sha256 input-sha256
        :output_sha256 output-sha256
        :payload payload
-       :metadata (canonical-metadata metadata)))))
+       :metadata (canonical-metadata metadata)})))
+
+(defn validate! [envelope]
+  (when-not (= schema (:schema envelope))
+    (throw (ex-info "unsupported evidence schema"
+                    {:kind :evidence-error :evidence envelope})))
+  (when-not (and (str/starts-with? (str (:evidence_id envelope)) "evidence:")
+                 (= 73 (count (str (:evidence_id envelope)))))
+    (throw (ex-info "evidence_id is invalid"
+                    {:kind :evidence-error :evidence envelope})))
+  (when-not (valid-sha256? (:input_sha256 envelope))
+    (throw (ex-info "evidence input_sha256 is invalid"
+                    {:kind :evidence-error :evidence envelope})))
+  (when-not (= (sha256-text (:payload envelope)) (:output_sha256 envelope))
+    (throw (ex-info "evidence output_sha256 does not match payload bytes"
+                    {:kind :evidence-error :evidence envelope})))
+  (when-not (contains? assurance-levels (:assurance envelope))
+    (throw (ex-info "evidence assurance is invalid"
+                    {:kind :evidence-error :evidence envelope})))
+  envelope)
 
 (defn canonical-map [envelope]
-  (array-map
-   "schema" (:schema envelope)
-   "evidence_id" (:evidence_id envelope)
-   "extension_id" (:extension_id envelope)
-   "extension_version" (:extension_version envelope)
-   "authority" (:authority envelope)
-   "assurance" (:assurance envelope)
-   "role" (:role envelope)
-   "subject" (:subject envelope)
-   "input_sha256" (:input_sha256 envelope)
-   "output_sha256" (:output_sha256 envelope)
-   "payload" (:payload envelope)
-   "metadata" (:metadata envelope)))
+  (let [envelope (validate! envelope)]
+    (into
+     (sorted-map-by compare-fields)
+     [["schema" (:schema envelope)]
+      ["evidence_id" (:evidence_id envelope)]
+      ["extension_id" (:extension_id envelope)]
+      ["extension_version" (:extension_version envelope)]
+      ["authority" (:authority envelope)]
+      ["assurance" (:assurance envelope)]
+      ["role" (:role envelope)]
+      ["subject" (:subject envelope)]
+      ["input_sha256" (:input_sha256 envelope)]
+      ["output_sha256" (:output_sha256 envelope)]
+      ["payload" (:payload envelope)]
+      ["metadata" (canonical-metadata (:metadata envelope))]])))
 
 (defn canonical-json [envelope]
   (json/write-str (canonical-map envelope)))
