@@ -16,12 +16,14 @@
 
   api/StoreBackend
   (open-store! [_ _ options]
-    (let [path (or (:path options) (:path config))]
+    (let [path (or (:path options) (:path config))
+          stream (or (:stream options) (:stream config))]
       (when-not path
         (throw (ex-info "SQLite event store requires :path"
                         {:kind :extension-configuration-error})))
       (with-open [conn (store/connect path)]
         {:path path
+         :stream stream
          :initialized true})))
   (close-store! [_ _ _] nil)
   (append-events! [_ _ handle expected-revision events]
