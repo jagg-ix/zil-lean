@@ -38,6 +38,10 @@
 (defn valid-sha256? [value]
   (boolean (re-matches #"sha256:[0-9a-f]{64}" (str value))))
 
+(defn- field
+  [value kebab snake]
+  (if (contains? value kebab) (get value kebab) (get value snake)))
+
 (defn- optional-binding [value]
   (let [value (str (or value "-"))]
     (if (str/blank? value) "-" value)))
@@ -45,23 +49,30 @@
 (defn prepare-event
   "Normalize one event and derive its stable identity from exact canonical bytes.
 
-  `decision-sha256` binds the event to a Lean response or other authoritative
-  decision. Operational-only events use the SHA-256 of their exact evidence
-  payload rather than an invented semantic decision."
-  [{:keys [event-id stream event-type actor request-id base-revision
-           context-bundle-id decision-sha256 plugin-id payload]}]
-  (let [payload (canonicalize (or payload {}))
+  Callers may use Clojure-style keys such as `:event-type` or protocol keys such
+  as `:event_type`. Revalidating a prepared event preserves the same identity."
+  [input]
+  (let [event-id (field input :event-id :event_id)
+        stream (field input :stream :stream)
+        event-type (field input :event-type :event_type)
+        actor (field input :actor :actor)
+        request-id (field input :request-id :request_id)
+        base-revision (field input :base-revision :base_revision)
+        context-bundle-id (field input :context-bundle-id :context_bundle_id)
+        decision-sha256 (field input :decision-sha256 :decision_sha256)
+        plugin-id (field input :plugin-id :plugin_id)
+        payload (canonicalize (or (:payload input) {}))
         payload-sha256 (worker-client/sha256-text (json/write-str payload))
         value (array-map
                :schema event-schema
                :event_id ""
-               :stream (str stream)
-               :event_type (str event-type)
-               :actor (str actor)
+               :stream (str (or stream ""))
+               :event_type (str (or event-type ""))
+               :actor (str (or actor ""))
                :request_id (optional-binding request-id)
                :base_revision (optional-binding base-revision)
                :context_bundle_id (optional-binding context-bundle-id)
-               :decision_sha256 (str decision-sha256)
+               :decision_sha256 (str (or decision-sha256 ""))
                :plugin_id (optional-binding plugin-id)
                :payload_sha256 payload-sha256
                :payload payload)
@@ -90,21 +101,28 @@
   (worker-client/sha256-text
    (str previous-event-sha256 "\n" revision "\n" (event-json event))))
 
-(defn prepare-receipt
-  [{:keys [receipt-id stream base-revision final-revision event-count
-           batch-sha256 committed-at-epoch-ms]}]
-  (let [value (array-map
+(defn prepare-receipt [input]
+  (let [receipt-id (field input :receipt-id :receipt_id)
+        stream (field input :stream :stream)
+        base-revision (field input :base-revision :base_revision)
+        final-revision (field input :final-revision :final_revision)
+        event-count (field input :event-count :event_count)
+        batch-sha256 (field input :batch-sha256 :batch_sha256)
+        committed-at (field input :committed-at-epoch-ms :committed_at_epoch_ms)
+        value (array-map
                :schema receipt-schema
                :receipt_id ""
-               :stream (str stream)
+               :stream (str (or stream ""))
                :base_revision (long base-revision)
                :final_revision (long final-revision)
                :event_count (long event-count)
                :batch_sha256 (str batch-sha256)
-               :committed_at_epoch_ms (long committed-at-epoch-ms))
+               :committed_at_epoch_ms (long committed-at))
         derived-id (str "receipt:"
                         (subs (worker-client/sha256-text
                                (canonical-json receipt-fields value)) 7))]
+    (when (str/blank? (:stream value))
+      (throw (ex-info "control receipt stream must be nonempty" {:kind :receipt-error})))
     (when-not (valid-sha256? (:batch_sha256 value))
       (throw (ex-info "control receipt batch_sha256 is invalid"
                       {:kind :receipt-error :batch-sha256 (:batch_sha256 value)})))
