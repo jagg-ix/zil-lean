@@ -42,6 +42,28 @@
                           #"expected revision conflict"
                           (store/append-events! database stream 0 [first-event])))))
 
+(deftest payload-digest-tampering-is-detected
+  (let [database (temp-db)
+        stream "workflow:tamper"
+        value {:stream stream
+               :event-type "context-generated"
+               :actor "agent:a"
+               :request-id "request:tamper"
+               :decision-sha256 (decision "context")
+               :payload {:workflow_id "workflow:tamper"}}]
+    (store/append-events! database stream 0 [value])
+    (with-open [conn (store/connect database)
+                statement (.prepareStatement conn
+                  "UPDATE control_events SET payload_sha256=? WHERE stream=? AND revision=1")]
+      (.setString statement 1 (decision "tampered"))
+      (.setString statement 2 stream)
+      (.executeUpdate statement))
+    (let [verification (store/verify-store database stream)]
+      (is (false? (:ok verification)))
+      (is (false? (get-in verification [:chain :ok])))
+      (is (not= (get-in verification [:chain :stored-payload-sha256])
+                (get-in verification [:chain :computed-payload-sha256]))))))
+
 (deftest durable-invocation-records-valid-response-only
   (let [database (temp-db)
         stream "decisions:test"
