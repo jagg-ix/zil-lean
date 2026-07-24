@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest is]]
             [zil.control.command :as command]
             [zil.control.durable :as durable]
+            [zil.control.event :as event]
             [zil.store.control-event :as store]
             [zil.worker.client :as worker-client])
   (:import (java.nio.file Files)
@@ -41,6 +42,19 @@
     (is (thrown-with-msg? clojure.lang.ExceptionInfo
                           #"expected revision conflict"
                           (store/append-events! database stream 0 [first-event])))))
+
+(deftest ambiguous-canonical-payloads-fail-closed
+  (is (thrown-with-msg?
+       clojure.lang.ExceptionInfo
+       #"keys collide"
+       (event/prepare-event
+        {:stream "workflow:collision"
+         :event-type "context-generated"
+         :actor "agent:a"
+         :request-id "request:collision"
+         :decision-sha256 (decision "collision")
+         :payload {:workflow_id "keyword-value"
+                   "workflow_id" "string-value"}}))))
 
 (deftest payload-digest-tampering-is-detected
   (let [database (temp-db)
