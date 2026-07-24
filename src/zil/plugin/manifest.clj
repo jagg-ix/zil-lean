@@ -16,6 +16,16 @@
   [:schema :id :version :runtime :entrypoint :capabilities :requires
    :inputs :outputs :authority :trusted])
 
+(def ^:private canonical-field-rank
+  (zipmap (map name canonical-fields) (range)))
+
+(defn- compare-canonical-fields [left right]
+  (let [left-rank (get canonical-field-rank left Integer/MAX_VALUE)
+        right-rank (get canonical-field-rank right Integer/MAX_VALUE)]
+    (if (= left-rank right-rank)
+      (compare left right)
+      (compare left-rank right-rank))))
+
 (defn- sha256 [text]
   (let [digest (.digest (MessageDigest/getInstance "SHA-256")
                         (.getBytes (str text) StandardCharsets/UTF_8))]
@@ -29,9 +39,8 @@
   [manifest]
   (let [manifest (if (every? keyword? (keys manifest))
                    manifest
-                   (into {} (map (fn [[key value]] [(keyword key) value]) manifest))]
-    (array-map
-     :schema (str (:schema manifest))
+                   (into {} (map (fn [[key value]] [(keyword key) value]) manifest)))]
+    {:schema (str (:schema manifest))
      :id (str (:id manifest))
      :version (str (:version manifest))
      :runtime (str (:runtime manifest))
@@ -41,7 +50,7 @@
      :inputs (sorted-unique (:inputs manifest))
      :outputs (sorted-unique (:outputs manifest))
      :authority (str (:authority manifest))
-     :trusted (boolean (:trusted manifest)))))
+     :trusted (boolean (:trusted manifest))}))
 
 (defn validate!
   [manifest]
@@ -81,7 +90,7 @@
 
 (defn canonical-map [manifest]
   (let [manifest (validate! manifest)]
-    (into (array-map)
+    (into (sorted-map-by compare-canonical-fields)
           (map (fn [field] [(name field) (get manifest field)]))
           canonical-fields)))
 
