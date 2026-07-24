@@ -54,7 +54,7 @@
      :event-sha256 event-sha
      :event prepared}))
 
-(defn- batch-sha256 [stored-events]
+(defn- compute-batch-sha256 [stored-events]
   (worker-client/sha256-text
    (json/write-str
     (mapv (fn [{:keys [revision event-sha256]}]
@@ -91,7 +91,7 @@
                                        :event-stream (get-in value [:event :stream])})))
                     (recur (next remaining) (inc revision)
                            (:event-sha256 value) (conj out value)))))
-              batch-sha (batch-sha256 stored)
+              batch-sha (compute-batch-sha256 stored)
               committed-at (System/currentTimeMillis)
               receipt (event/prepare-receipt
                        {:stream stream
@@ -212,32 +212,36 @@
     (loop [remaining batches]
       (if-not (seq remaining)
         {:ok true :stream stream :batch-count (count batches)}
-        (let [{:keys [receipt-id base-revision final-revision event-count
-                      batch-sha256 committed-at-epoch-ms receipt-sha256] :as batch}
-              (first remaining)
+        (let [{receipt-id :receipt-id
+               base-revision :base-revision
+               final-revision :final-revision
+               event-count :event-count
+               stored-batch-sha :batch-sha256
+               committed-at :committed-at-epoch-ms
+               stored-receipt-sha :receipt-sha256} (first remaining)
               stored-events (get events-by-receipt receipt-id [])
-              computed-batch-sha (batch-sha256 stored-events)
+              computed-batch-sha (compute-batch-sha256 stored-events)
               prepared (event/prepare-receipt
                         {:receipt-id receipt-id
                          :stream stream
                          :base-revision base-revision
                          :final-revision final-revision
                          :event-count event-count
-                         :batch-sha256 batch-sha256
-                         :committed-at-epoch-ms committed-at-epoch-ms})
+                         :batch-sha256 stored-batch-sha
+                         :committed-at-epoch-ms committed-at})
               computed-receipt-sha (event/receipt-sha256 prepared)]
           (if (and (= event-count (count stored-events))
-                   (= batch-sha256 computed-batch-sha)
-                   (= receipt-sha256 computed-receipt-sha))
+                   (= stored-batch-sha computed-batch-sha)
+                   (= stored-receipt-sha computed-receipt-sha))
             (recur (next remaining))
             {:ok false
              :stream stream
              :receipt-id receipt-id
              :stored-event-count event-count
              :computed-event-count (count stored-events)
-             :stored-batch-sha256 batch-sha256
+             :stored-batch-sha256 stored-batch-sha
              :computed-batch-sha256 computed-batch-sha
-             :stored-receipt-sha256 receipt-sha256
+             :stored-receipt-sha256 stored-receipt-sha
              :computed-receipt-sha256 computed-receipt-sha}))))))
 
 (defn verify-store [db-path stream]
@@ -259,7 +263,7 @@
       (let [event-row (query-row conn
                                  "SELECT event_sha256 FROM control_events WHERE stream=? AND revision=?"
                                  [stream revision] [:event-sha256])
-            state-json (json/write-str state)
+            state-json (json/write-str (event/canonical-value state))
             state-sha (worker-client/sha256-text state-json)
             existing (query-row conn
                                 "SELECT state_sha256,event_sha256 FROM control_snapshots WHERE stream=? AND revision=? AND reducer_id=?"
