@@ -66,7 +66,7 @@
                    (print-json (durable/workflow-status database stream)))
         "verify" (do
                    (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
-                   (print-json (store/verify-stream database stream)))
+                   (print-json (store/verify-store database stream)))
         "project" (do
                     (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
                     (print-json (durable/project-workflows! database stream)))
