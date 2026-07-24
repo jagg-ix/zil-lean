@@ -3,7 +3,8 @@
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [zil.plugin.api :as api]
-            [zil.plugin.evidence :as evidence])
+            [zil.plugin.evidence :as evidence]
+            [zil.worker.client :as worker-client])
   (:import (java.nio.file Files LinkOption Path Paths)))
 
 (def scan-schema "ZIL-REPOSITORY-SCAN/1")
@@ -40,9 +41,7 @@
                  (mapv (fn [[relative path]]
                          {:path (path-string relative)
                           :bytes (Files/size ^Path path)
-                          :sha256 (str "sha256:"
-                                       (subs (zil.worker.client/sha256-file
-                                              (path-string path)) 7))}))))
+                          :sha256 (worker-client/sha256-file (path-string path))}))))
           aggregate (str/join "\n" (map (juxt :path :bytes :sha256) entries))]
       (array-map
        :schema scan-schema
