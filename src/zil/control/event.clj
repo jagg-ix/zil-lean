@@ -16,15 +16,15 @@
   [:schema :receipt_id :stream :base_revision :final_revision :event_count
    :batch_sha256 :committed_at_epoch_ms])
 
-(defn- canonicalize [value]
+(defn canonical-value [value]
   (cond
     (map? value)
     (into (sorted-map-by #(compare (str %1) (str %2)))
-          (map (fn [[key item]] [(name key) (canonicalize item)]))
+          (map (fn [[key item]] [(name key) (canonical-value item)]))
           value)
 
-    (set? value) (mapv canonicalize (sort-by str value))
-    (sequential? value) (mapv canonicalize value)
+    (set? value) (mapv canonical-value (sort-by str value))
+    (sequential? value) (mapv canonical-value value)
     (keyword? value) (name value)
     (symbol? value) (str value)
     :else value))
@@ -38,8 +38,7 @@
 (defn valid-sha256? [value]
   (boolean (re-matches #"sha256:[0-9a-f]{64}" (str value))))
 
-(defn- field
-  [value kebab snake]
+(defn- field [value kebab snake]
   (if (contains? value kebab) (get value kebab) (get value snake)))
 
 (defn- optional-binding [value]
@@ -47,10 +46,7 @@
     (if (str/blank? value) "-" value)))
 
 (defn prepare-event
-  "Normalize one event and derive its stable identity from exact canonical bytes.
-
-  Callers may use Clojure-style keys such as `:event-type` or protocol keys such
-  as `:event_type`. Revalidating a prepared event preserves the same identity."
+  "Normalize one event and derive its stable identity from exact canonical bytes."
   [input]
   (let [event-id (field input :event-id :event_id)
         stream (field input :stream :stream)
@@ -61,7 +57,7 @@
         context-bundle-id (field input :context-bundle-id :context_bundle_id)
         decision-sha256 (field input :decision-sha256 :decision_sha256)
         plugin-id (field input :plugin-id :plugin_id)
-        payload (canonicalize (or (:payload input) {}))
+        payload (canonical-value (or (:payload input) {}))
         payload-sha256 (worker-client/sha256-text (json/write-str payload))
         value (array-map
                :schema event-schema
