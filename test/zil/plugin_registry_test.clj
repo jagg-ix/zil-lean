@@ -24,8 +24,10 @@
     (spit file content)
     file))
 
-(defn- control-plane []
-  (runtime/->ControlPlane nil (capability/load-valid-inventory) (atom false) {}))
+(defn- control-plane
+  ([] (control-plane nil))
+  ([pool]
+   (runtime/->ControlPlane pool (capability/load-valid-inventory) (atom false) {})))
 
 (defrecord TestExtension [manifest-value runtime-capabilities commands invoke-fn]
   api/Extension
@@ -62,12 +64,12 @@
     (is (.startsWith (manifest/canonical-json left)
                      "{\"schema\":\"ZIL-EXTENSION/1\",\"id\":"))))
 
-(deftest registry-forbids-authoritative-command-shadowing
+(deftest registry-forbids-all-declared-built-in-command-shadowing
   (let [extension
         (->TestExtension
          (test-manifest "extension:shadow" ["shadow-test"])
          ["shadow-test"]
-         {"compile" {:authority :clojure}}
+         {"action-token" {:authority :clojure}}
          (fn [_ _] :never))
         extension-registry (registry/create-registry {:control-plane (control-plane)})]
     (try
@@ -76,6 +78,26 @@
                             (registry/register! extension-registry extension)))
       (finally
         (registry/close! extension-registry)))))
+
+(deftest worker-requirements-need-a-live-control-plane-profile
+  (let [extension
+        (->TestExtension
+         (assoc (test-manifest "extension:worker-dependent" ["worker-dependent"])
+                :requires ["compile-v1"])
+         ["worker-dependent"]
+         {}
+         (fn [_ _] :unused))
+        offline (registry/create-registry {:control-plane (control-plane)})
+        online (registry/create-registry {:control-plane (control-plane :fake-worker-pool)})]
+    (try
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                            #"requirements are unavailable"
+                            (registry/register! offline extension)))
+      (is (= "extension:worker-dependent"
+             (:id (registry/register! online extension))))
+      (finally
+        (registry/close! offline)
+        (registry/close! online)))))
 
 (deftest invocation-failure-quarantines-extension
   (let [extension
