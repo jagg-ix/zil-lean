@@ -55,34 +55,54 @@
       :plugin-id (or (:plugin_id payload) (:plugin-id payload) "-")
       :payload payload})))
 
+(defn- command-result [command database stream tail]
+  (case command
+    "status"
+    (do
+      (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
+      (let [value (durable/workflow-status database stream)]
+        {:value value :ok (get-in value [:integrity :ok])}))
+
+    "verify"
+    (do
+      (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
+      (let [value (store/verify-store database stream)]
+        {:value value :ok (:ok value)}))
+
+    "project"
+    (do
+      (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
+      (let [value (durable/project-workflows! database stream)]
+        {:value value :ok (:ok value)}))
+
+    "invoke"
+    (let [[expected actor operation input-path & arguments] tail]
+      (when (some str/blank? [expected actor operation input-path])
+        (throw (ex-info usage {:kind :invalid-command})))
+      (let [value (invoke! database stream (revision! expected)
+                           actor operation input-path arguments)]
+        {:value value :ok (:ok value)}))
+
+    "record"
+    (let [[expected actor event-type decision-sha payload-path & extra] tail]
+      (when (or (some str/blank?
+                      [expected actor event-type decision-sha payload-path])
+                (seq extra))
+        (throw (ex-info usage {:kind :invalid-command})))
+      (let [value (record! database stream (revision! expected)
+                           actor event-type decision-sha payload-path)]
+        {:value value :ok (:ok value)}))
+
+    (throw (ex-info usage {:kind :invalid-command :command command}))))
+
 (defn -main [& args]
   (try
     (let [[command database stream & tail] args]
       (when (or (str/blank? command) (str/blank? database) (str/blank? stream))
         (throw (ex-info usage {:kind :invalid-command})))
-      (case command
-        "status" (do
-                   (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
-                   (print-json (durable/workflow-status database stream)))
-        "verify" (do
-                   (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
-                   (print-json (store/verify-store database stream)))
-        "project" (do
-                    (when (seq tail) (throw (ex-info usage {:kind :invalid-command})))
-                    (print-json (durable/project-workflows! database stream)))
-        "invoke" (let [[expected actor operation input-path & arguments] tail]
-                   (when (some str/blank? [expected actor operation input-path])
-                     (throw (ex-info usage {:kind :invalid-command})))
-                   (print-json (invoke! database stream (revision! expected)
-                                       actor operation input-path arguments)))
-        "record" (let [[expected actor event-type decision-sha payload-path & extra] tail]
-                   (when (or (some str/blank?
-                                   [expected actor event-type decision-sha payload-path])
-                             (seq extra))
-                     (throw (ex-info usage {:kind :invalid-command})))
-                   (print-json (record! database stream (revision! expected)
-                                       actor event-type decision-sha payload-path)))
-        (throw (ex-info usage {:kind :invalid-command :command command}))))
+      (let [{:keys [value ok]} (command-result command database stream tail)]
+        (print-json value)
+        (System/exit (if ok 0 1))))
     (catch Exception error
       (binding [*out* *err*]
         (println (.getMessage error))
