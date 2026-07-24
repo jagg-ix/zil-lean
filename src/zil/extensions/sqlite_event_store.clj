@@ -61,7 +61,7 @@
         {:stream stream
          :revision (with-open [conn (store/connect database)]
                      (store/current-revision conn stream))
-         :integrity (store/verify-stream database stream)}
+         :integrity (store/verify-store database stream)}
 
         "event-store-project"
         (let [durable (requiring-resolve 'zil.control.durable/workflow-status)]
