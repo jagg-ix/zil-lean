@@ -1,10 +1,13 @@
 (ns zil.control-plane-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is]]
             [zil.control.adapters :as adapters]
             [zil.control.capability :as capability]
             [zil.control.command :as command]
             [zil.control.runtime :as runtime]
-            [zil.worker.pool :as worker-pool]))
+            [zil.worker.pool :as worker-pool])
+  (:import (java.nio.charset StandardCharsets)
+           (java.nio.file Files)
+           (java.nio.file.attribute FileAttribute)))
 
 (deftest repository-capability-inventory-is-complete
   (let [inventory (capability/load-valid-inventory)]
@@ -24,25 +27,32 @@
     (is (false? (get-in commands ["compile" :replaceable])))))
 
 (deftest runtime-keeps-semantic-failure-distinct-from-transport
-  (let [inventory (capability/load-valid-inventory)
-        control-plane (runtime/->ControlPlane :fake-pool inventory (atom false) {})
-        response {:schema "ZIL-EXCHANGE/1"
-                  :request_id "request:test"
-                  :operation "authorize"
-                  :status "invalid"
-                  :authority "lean"
-                  :assurance ""
-                  :errors ["invalid authorization request"]}]
-    (with-redefs [worker-pool/invoke! (fn [_ _ _] response)]
-      (is (= response
-             (runtime/invoke! control-plane
-                              {:operation "authorize"
-                               :input-path "model.zc"
-                               :arguments ["doc:x" "viewer" "user:y"]}
-                              10)))
-      (is (thrown-with-msg? clojure.lang.ExceptionInfo
-                            #"Lean-authoritative operation failed"
-                            (runtime/payload! response))))))
+  (let [path (Files/createTempFile "zil-control-" ".zc"
+                                   (make-array FileAttribute 0))]
+    (try
+      (Files/writeString path "MODULE control.test.\n" StandardCharsets/UTF_8
+                         (into-array java.nio.file.OpenOption []))
+      (let [inventory (capability/load-valid-inventory)
+            control-plane (runtime/->ControlPlane :fake-pool inventory (atom false) {})
+            response {:schema "ZIL-EXCHANGE/1"
+                      :request_id "request:test"
+                      :operation "authorize"
+                      :status "invalid"
+                      :authority "lean"
+                      :assurance ""
+                      :errors ["invalid authorization request"]}]
+        (with-redefs [worker-pool/invoke! (fn [_ _ _] response)]
+          (is (= response
+                 (runtime/invoke! control-plane
+                                  {:operation "authorize"
+                                   :input-path (str path)
+                                   :arguments ["doc:x" "viewer" "user:y"]}
+                                  10)))
+          (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                                #"Lean-authoritative operation failed"
+                                (runtime/payload! response)))))
+      (finally
+        (Files/deleteIfExists path)))))
 
 (deftest adapter-runner-preserves-operation-and-namespace
   (let [inventory (capability/load-valid-inventory)
