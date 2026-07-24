@@ -16,14 +16,29 @@
   [:schema :receipt_id :stream :base_revision :final_revision :event_count
    :batch_sha256 :committed_at_epoch_ms])
 
+(defn- canonical-map [value]
+  (reduce
+   (fn [out [key item]]
+     (let [normalized-key (name key)]
+       (when (contains? out normalized-key)
+         (throw (ex-info "canonical map keys collide after normalization"
+                         {:kind :canonicalization-error
+                          :key normalized-key})))
+       (assoc out normalized-key (canonical-value item))))
+   (sorted-map)
+   value))
+
+(defn- canonical-set [value]
+  (let [items (mapv canonical-value (sort-by str value))]
+    (when-not (= (count items) (count (distinct items)))
+      (throw (ex-info "canonical set values collide after normalization"
+                      {:kind :canonicalization-error})))
+    items))
+
 (defn canonical-value [value]
   (cond
-    (map? value)
-    (into (sorted-map-by #(compare (str %1) (str %2)))
-          (map (fn [[key item]] [(name key) (canonical-value item)]))
-          value)
-
-    (set? value) (mapv canonical-value (sort-by str value))
+    (map? value) (canonical-map value)
+    (set? value) (canonical-set value)
     (sequential? value) (mapv canonical-value value)
     (keyword? value) (name value)
     (symbol? value) (str value)
