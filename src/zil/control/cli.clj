@@ -15,13 +15,14 @@
     (let [[operation input-path & arguments] args]
       (when (or (str/blank? operation) (str/blank? input-path))
         (throw (ex-info usage {:kind :invalid-command})))
-      (let [control-plane (runtime/start! {:pool-size 1})]
-        (try
-          (let [response (command/execute! control-plane operation input-path arguments)]
-            (println (json/write-str response))
-            (System/exit (if (= "ok" (:status response)) 0 1)))
-          (finally
-            (runtime/stop! control-plane)))))
+      (let [control-plane (runtime/start! {:pool-size 1})
+            response
+            (try
+              (command/execute! control-plane operation input-path arguments)
+              (finally
+                (runtime/stop! control-plane)))]
+        (println (json/write-str response))
+        (System/exit (if (= "ok" (:status response)) 0 1))))
     (catch Exception error
       (binding [*out* *err*]
         (println (.getMessage error))
