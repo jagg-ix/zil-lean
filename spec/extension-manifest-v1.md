@@ -99,18 +99,30 @@ The registry verifies:
 
 1. manifest schema, ID, semantic version, runtime, entrypoint, authority, and trust rules;
 2. manifest fingerprint determinism;
-3. every `requires` entry is currently available;
+3. every `requires` entry is available in the active runtime profile;
 4. runtime-provided capabilities equal manifest capabilities exactly;
 5. command authority equals manifest authority;
-6. no command shadows a built-in Lean operation;
-7. no capability shadows an authoritative or previously registered capability;
+6. no command shadows any built-in or previously registered command;
+7. no extension capability shadows an authoritative capability;
 8. startup preserves the declared capabilities and command descriptors.
 
 Commands and capabilities are published only after startup succeeds.
 
-## Capability replacement
+A requirement for `ZIL-EXCHANGE/1` or an exchange operation capability is available only when the registry has an active Lean worker pool. Ownership declarations alone do not imply runtime availability.
 
-An extension may add a new capability. Replacing an existing authoritative capability requires:
+## Capability providers and replacement
+
+Extension capabilities are provider interfaces, not necessarily singletons. Several active extensions MAY provide the same non-authoritative capability, such as:
+
+```text
+evidence-producer
+repository-connector
+report-exporter
+```
+
+The registry records a deterministic provider set for each such capability. Removing one extension removes only that provider and leaves the capability available while another active provider remains.
+
+An extension capability MUST NOT reuse an authoritative capability ID from the ownership inventory. Replacing an existing authoritative capability requires:
 
 1. a new capability identifier or protocol version;
 2. an explicit migration policy;
@@ -118,7 +130,7 @@ An extension may add a new capability. Replacing an existing authoritative capab
 4. authority review;
 5. deterministic failure semantics.
 
-Silent command or capability shadowing is forbidden.
+Command names remain unique because command dispatch must resolve to exactly one implementation. Silent command shadowing is forbidden.
 
 ## Isolation
 
@@ -133,7 +145,7 @@ quarantined
 removed
 ```
 
-Startup, command, or evidence failure quarantines the extension. A quarantined extension may not serve additional commands or evidence.
+Startup, command, or evidence failure quarantines the extension. A quarantined extension may not serve additional commands, capabilities, output schemas, or evidence.
 
 The Lean worker accepts only protocol operations compiled into its allowlist; it does not dynamically execute extension-supplied shell commands.
 
