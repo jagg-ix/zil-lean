@@ -2,7 +2,6 @@
   "Allowlisted external proof-tool adapter producing externally attested evidence."
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
-            [clojure.string :as str]
             [zil.plugin.api :as api]
             [zil.plugin.evidence :as evidence]
             [zil.worker.client :as worker-client])
@@ -13,6 +12,17 @@
 
 (defn- command-for [template input-path]
   (mapv #(if (= "{input}" %) (str input-path) (str %)) template))
+
+(defn- normalize-result! [tool invocation result]
+  (when-not (integer? (:exit result))
+    (throw (ex-info "external tool runner must return an integer exit code"
+                    {:kind :extension-contract-error
+                     :tool tool
+                     :result result})))
+  {:exit (:exit result)
+   :out (str (or (:out result) ""))
+   :err (str (or (:err result) ""))
+   :command (vec (:command result invocation))})
 
 (defn run-tool!
   [{:keys [tools runner directory environment]
@@ -27,8 +37,13 @@
     (when-not (and (vector? command) (seq command))
       (throw (ex-info "external tool command must be a nonempty vector"
                       {:kind :extension-configuration-error :tool tool})))
+    (when-not (pos-int? timeout-ms)
+      (throw (ex-info "external tool timeout must be positive"
+                      {:kind :extension-configuration-error
+                       :tool tool
+                       :timeout-ms timeout-ms})))
     (let [invocation (command-for command input-path)
-          result
+          raw-result
           (if runner
             (runner {:tool (str tool)
                      :command invocation
@@ -48,6 +63,8 @@
               (when-not completed
                 (.destroyForcibly process)
                 (.waitFor process)
+                (future-cancel out-future)
+                (future-cancel err-future)
                 (throw (ex-info "external tool timed out"
                                 {:kind :external-tool-timeout
                                  :tool tool
@@ -55,19 +72,22 @@
               {:exit (.exitValue process)
                :out @out-future
                :err @err-future
-               :command invocation}))]
-      (array-map
-       :schema report-schema
-       :tool (str tool)
-       :command (vec (:command result invocation))
+               :command invocation}))
+          result (normalize-result! tool invocation raw-result)
+          stdout (:out result)
+          stderr (:err result)]
+      (sorted-map
+       :command (:command result)
+       :exit (:exit result)
        :input (str input-path)
        :input-sha256 (worker-client/sha256-file input-path)
-       :exit (:exit result)
-       :stdout (str (or (:out result) ""))
-       :stdout-sha256 (evidence/sha256-text (or (:out result) ""))
-       :stderr (str (or (:err result) ""))
-       :stderr-sha256 (evidence/sha256-text (or (:err result) ""))
-       :ok (zero? (long (:exit result)))))))
+       :ok (zero? (:exit result))
+       :schema report-schema
+       :stderr stderr
+       :stderr-sha256 (evidence/sha256-text stderr)
+       :stdout stdout
+       :stdout-sha256 (evidence/sha256-text stdout)
+       :tool (str tool)))))
 
 (defrecord ExternalSolver [extension-manifest config]
   api/Extension
