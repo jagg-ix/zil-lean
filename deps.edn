@@ -19,6 +19,8 @@
            :macro-native {:main-opts ["-m" "zil.control.adapters" "macro"]}
            :exchange {:main-opts ["-m" "zil.worker.client"]}
            :control {:main-opts ["-m" "zil.control.cli"]}
+           :control-store {:main-opts ["-m" "zil.control.store-cli"]}
+           :evaluate-runtime {:main-opts ["-m" "zil.evaluation.cli"]}
            :plugins {:main-opts ["-m" "zil.plugin.cli"]}
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
                    :ns-default build}}}
