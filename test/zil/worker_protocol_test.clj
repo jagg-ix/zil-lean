@@ -15,12 +15,23 @@
       (let [request (client/request {:request-id "request:test"
                                      :operation "parse"
                                      :input-path (str path)})
+            generated-id (client/request {:request-id nil
+                                          :operation "conformance"
+                                          :input-path (str path)})
+            compile-request (client/request {:operation "compile"
+                                             :input-path (str path)
+                                             :arguments ["Project.Exchange.Test"]})
             encoded (protocol/write-line request)]
         (is (= protocol/schema (get request "schema")))
         (is (= ["parse-v1"] (get request "capabilities")))
         (is (re-matches #"sha256:[0-9a-f]{64}" (get request "input_sha256")))
         (is (= request (protocol/validate-request! request)))
-        (is (.startsWith encoded "{\"schema\":\"ZIL-EXCHANGE/1\",\"request_id\":")))
+        (is (.startsWith encoded "{\"schema\":\"ZIL-EXCHANGE/1\",\"request_id\":"))
+        (is (re-matches #"request:[0-9a-f-]{36}" (get generated-id "request_id")))
+        (is (= ["conformance-v1"] (get generated-id "capabilities")))
+        (is (= ["compile-v1"] (get compile-request "capabilities")))
+        (is (= ["Project.Exchange.Test"] (get compile-request "arguments")))
+        (is (= compile-request (protocol/validate-request! compile-request))))
       (finally
         (Files/deleteIfExists path)))))
 

@@ -121,6 +121,47 @@
     "examples/exchange/parse-request.json"
     "docs/lean4/hybrid-exchange-worker.md"]}
 
+  :formal-control-plane
+  {:features #{:attributes :facts :rules :queries :declarations :macros}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["architecture/capability-ownership.edn"
+    "docs/architecture/capability-ownership.md"
+    "docs/architecture/control-plane-and-extensions.md"
+    "spec/exchange-protocol-v1.md"
+    "src/zil/control/capability.clj"
+    "src/zil/control/runtime.clj"
+    "src/zil/control/command.clj"
+    "src/zil/control/cli.clj"
+    "src/zil/control/adapters.clj"
+    "src/zil/control/conformance.clj"
+    "test/zil/control_plane_test.clj"
+    "deps.edn"
+    "bin/zil"]}
+
+  :extension-sdk
+  {:features #{:attributes :facts :rules :queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["spec/extension-manifest-v1.md"
+    "spec/evidence-envelope-v1.md"
+    "docs/architecture/control-plane-and-extensions.md"
+    "src/zil/plugin/api.clj"
+    "src/zil/plugin/manifest.clj"
+    "src/zil/plugin/evidence.clj"
+    "src/zil/plugin/registry.clj"
+    "src/zil/plugin/cli.clj"
+    "src/zil/extensions/repository_scanner.clj"
+    "src/zil/extensions/external_solver.clj"
+    "src/zil/extensions/report_exporter.clj"
+    "extensions/reference/repository-scanner/extension.json"
+    "extensions/reference/external-solver/extension.json"
+    "extensions/reference/report-exporter/extension.json"
+    "test/zil/plugin_registry_test.clj"
+    "test/zil/test_runner.clj"]}
+
   :native-agent-context
   {:features #{:facts :rules :queries :declarations}
    :min-feature-sources 1
@@ -177,6 +218,7 @@
     "Zil/Test/Macro.lean"
     "Zil/Test/MacroLibrary.lean"
     "src/zil/port/native_macro.clj"
+    "src/zil/control/adapters.clj"
     "test/zil/port_native_macro_test.clj"
     "spec/macro-extension-parity-v1.md"]}
 

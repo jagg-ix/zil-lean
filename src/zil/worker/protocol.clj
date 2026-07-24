@@ -8,7 +8,9 @@
 
 (def operation-capabilities
   {"parse" "parse-v1"
+   "compile" "compile-v1"
    "expand" "expand-v1"
+   "conformance" "conformance-v1"
    "query" "query-v1"
    "authorize" "authorization-v1"
    "impact" "impact-v1"
@@ -16,7 +18,9 @@
 
 (def operation-arities
   {"parse" 0
+   "compile" 1
    "expand" 0
+   "conformance" 0
    "query" 1
    "authorize" 3
    "impact" 1
@@ -138,5 +142,5 @@
                                 {:response response})))
       (when (empty? (:errors response))
         (throw (transport-error "failed worker response must include an error"
-                                {:response response}))))))
+                                {:response response})))))
   response)

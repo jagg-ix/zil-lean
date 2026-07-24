@@ -1,5 +1,6 @@
 import Zil.Exchange.Protocol
 import Zil.Parser.DeclarationProgram
+import Zil.Codec.Conformance
 import Zil.Engine.Provenance
 import Zil.Authorization
 import Zil.Impact
@@ -50,11 +51,28 @@ private def runParse (request : Request) : IO String := do
   let program ← loadProgram request.inputPath
   pure (parseSummary program)
 
+private def runCompile (request : Request) : IO String := do
+  let program ← loadProgram request.inputPath
+  let namespaceName ←
+    if request.arguments[0]! == "-" then
+      pure (Zil.Parser.DeclarationProgram.defaultNamespace program)
+    else
+      parseName request.arguments[0]!
+  match Zil.Parser.DeclarationProgram.renderLeanModule program namespaceName with
+  | .ok value => pure value
+  | .error error => throw <| IO.userError error
+
 private def runExpand (request : Request) : IO String := do
   let expanded ← Zil.Parser.MacroProgram.expandFile request.inputPath
   match expanded with
   | .ok value => pure value
   | .error error => throw <| IO.userError error.render
+
+private def runConformance (request : Request) : IO String := do
+  let text ← IO.FS.readFile request.inputPath
+  match Zil.Codec.Conformance.renderSource text with
+  | .ok value => pure value
+  | .error error => throw <| IO.userError error
 
 private def runQuery (request : Request) : IO String := do
   let program ← loadProgram request.inputPath
@@ -96,7 +114,9 @@ private def runRecoveryAudit (request : Request) : IO String := do
 private def execute (request : Request) : IO String :=
   match request.operation with
   | "parse" => runParse request
+  | "compile" => runCompile request
   | "expand" => runExpand request
+  | "conformance" => runConformance request
   | "query" => runQuery request
   | "authorize" => runAuthorize request
   | "impact" => runImpact request
@@ -108,7 +128,7 @@ def dispatch (request : Request) : IO Response := do
   match request.validate with
   | .error error =>
       pure <| Response.failure request.requestId request.operation request.inputSha256
-        "invalid" error
+        (request.validationStatus) error
   | .ok _ =>
       try
         let payload ← execute request
