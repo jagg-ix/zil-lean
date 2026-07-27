@@ -1,0 +1,95 @@
+name: Publish release assets
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing v<version> tag to publish
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Validate tag and package version
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$RELEASE_TAG"
+          case "$tag" in
+            v*) ;;
+            *)
+              echo "release tag must use v<version>: $tag" >&2
+              exit 2
+              ;;
+          esac
+
+          git rev-parse --verify "${tag}^{commit}" >/dev/null
+          version="$(git show "${tag}:lakefile.lean" | sed -n 's/.*version := v!"\([^"]*\)".*/\1/p' | sed -n '1p')"
+          if [[ -z "$version" ]]; then
+            echo "unable to derive version from lakefile.lean at $tag" >&2
+            exit 2
+          fi
+          if [[ "$tag" != "v$version" ]]; then
+            echo "tag $tag does not match lakefile.lean version $version" >&2
+            exit 2
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          make release-assets \
+            RELEASE_REF="$RELEASE_TAG" \
+            RELEASE_VERSION="${{ steps.release.outputs.version }}" \
+            RELEASE_OUTPUT=dist
+          (cd dist && sha256sum --check SHA256SUMS)
+
+      - name: Create or update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          artifact="dist/zil-lean-${VERSION}.tar.gz"
+          manifest="dist/zil-lean-${VERSION}.release.tsv"
+          checksums="dist/SHA256SUMS"
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              "$artifact" "$checksums" "$manifest" \
+              --clobber \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE_TAG" \
+              "$artifact" "$checksums" "$manifest" \
+              --verify-tag \
+              --generate-notes \
+              --title "ZIL Lean ${VERSION}" \
+              --repo "$GITHUB_REPOSITORY"
+          fi
