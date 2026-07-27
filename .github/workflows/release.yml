@@ -22,12 +22,13 @@ jobs:
   publish:
     name: Build and publish
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
       - name: Check out release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ inputs.tag || github.ref }}
@@ -38,13 +39,10 @@ jobs:
         run: |
           set -euo pipefail
           tag="$RELEASE_TAG"
-          case "$tag" in
-            v*) ;;
-            *)
-              echo "release tag must use v<version>: $tag" >&2
-              exit 2
-              ;;
-          esac
+          if [[ ! "$tag" =~ ^v[0-9A-Za-z][0-9A-Za-z._+-]*$ ]]; then
+            echo "release tag must use v<version>: $tag" >&2
+            exit 2
+          fi
 
           git rev-parse --verify "${tag}^{commit}" >/dev/null
           version="$(git show "${tag}:lakefile.lean" | sed -n 's/.*version := v!"\([^"]*\)".*/\1/p' | sed -n '1p')"
@@ -54,6 +52,10 @@ jobs:
           fi
           if [[ "$tag" != "v$version" ]]; then
             echo "tag $tag does not match lakefile.lean version $version" >&2
+            exit 2
+          fi
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse "${tag}^{commit}")" ]]; then
+            echo "checked-out commit does not match $tag" >&2
             exit 2
           fi
 
@@ -76,6 +78,8 @@ jobs:
           VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
+          command -v gh >/dev/null
+
           artifact="dist/zil-lean-${VERSION}.tar.gz"
           manifest="dist/zil-lean-${VERSION}.release.tsv"
           checksums="dist/SHA256SUMS"
