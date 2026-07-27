@@ -1,0 +1,70 @@
+name: Validate release assets
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Construct and verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check release scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/package.sh scripts/release-assets.sh scripts/lib/common.sh
+
+      - name: Construct release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          make release-assets RELEASE_REF=HEAD RELEASE_OUTPUT=dist
+          (cd dist && sha256sum --check SHA256SUMS)
+
+      - name: Verify manifest and version guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/.*version := v!"\([^"]*\)".*/\1/p' lakefile.lean | sed -n '1p')"
+          test -n "$version"
+          test -f "dist/zil-lean-${version}.tar.gz"
+          test -f "dist/zil-lean-${version}.release.tsv"
+          test -f dist/SHA256SUMS
+          grep -Fx $'ZIL-RELEASE-ASSETS/1' "dist/zil-lean-${version}.release.tsv"
+          grep -Fx $'version\t'"$version" "dist/zil-lean-${version}.release.tsv"
+          grep -Fx $'source_commit\t'"$(git rev-parse HEAD)" "dist/zil-lean-${version}.release.tsv"
+
+          if make release-assets \
+            RELEASE_REF=HEAD \
+            RELEASE_VERSION="${version}-mismatch" \
+            RELEASE_OUTPUT=dist-mismatch; then
+            echo 'release builder accepted a mismatched version' >&2
+            exit 1
+          fi
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: zil-lean-release-candidate-${{ github.sha }}
+          path: |
+            dist/zil-lean-*.tar.gz
+            dist/zil-lean-*.release.tsv
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
