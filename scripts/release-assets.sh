@@ -93,9 +93,7 @@ checksum_file="$output/SHA256SUMS"
 manifest_name="zil-lean-$version.release.tsv"
 manifest="$output/$manifest_name"
 
-checksum_tmp="$checksum_file.tmp.$$"
 manifest_tmp="$manifest.tmp.$$"
-printf '%s  %s\n' "${artifact_digest#sha256:}" "$artifact_name" > "$checksum_tmp"
 {
   printf 'ZIL-RELEASE-ASSETS/1\n'
   printf 'name\tzil-lean\n'
@@ -107,8 +105,15 @@ printf '%s  %s\n' "${artifact_digest#sha256:}" "$artifact_name" > "$checksum_tmp
   printf 'artifact_sha256\t%s\n' "$artifact_digest"
   printf 'checksum_file\tSHA256SUMS\n'
 } > "$manifest_tmp"
-mv "$checksum_tmp" "$checksum_file"
 mv "$manifest_tmp" "$manifest"
+
+manifest_digest="$(zil_sha256_file "$manifest")"
+checksum_tmp="$checksum_file.tmp.$$"
+{
+  printf '%s  %s\n' "${artifact_digest#sha256:}" "$artifact_name"
+  printf '%s  %s\n' "${manifest_digest#sha256:}" "$manifest_name"
+} > "$checksum_tmp"
+mv "$checksum_tmp" "$checksum_file"
 
 zil_mkdir_parent "$report"
 {
@@ -118,12 +123,13 @@ zil_mkdir_parent "$report"
   printf 'source_commit\t%s\n' "$commit"
   printf 'artifact\t%s\n' "$(zil_tsv_escape "$artifact")"
   printf 'artifact_sha256\t%s\n' "$artifact_digest"
-  printf 'checksums\t%s\n' "$(zil_tsv_escape "$checksum_file")"
   printf 'manifest\t%s\n' "$(zil_tsv_escape "$manifest")"
+  printf 'manifest_sha256\t%s\n' "$manifest_digest"
+  printf 'checksums\t%s\n' "$(zil_tsv_escape "$checksum_file")"
   printf 'result\tpass\n'
 } > "$report"
 
 zil_log "release artifact: $artifact"
-zil_log "release checksums: $checksum_file"
 zil_log "release manifest: $manifest"
+zil_log "release checksums: $checksum_file"
 zil_log "release-assets report: $report"
