@@ -59,6 +59,21 @@ shasum -a 256 --check SHA256SUMS
 The release builder refuses an explicit version that does not match the version
 stored in `lakefile.lean` at the selected Git ref.
 
+## Pull-request validation
+
+The `Validate release assets` workflow runs for every pull request and every push
+to `main`. It performs a dependency-light release check without publishing:
+
+1. checks the Bash syntax of the packaging scripts;
+2. constructs the release candidate from the tested commit;
+3. verifies every entry in the release-level `SHA256SUMS`;
+4. checks the manifest version and source commit;
+5. confirms that a mismatched version is rejected;
+6. uploads the candidate files as a seven-day workflow artifact.
+
+This validation does not require Lean or Clojure dependencies because a release
+contains the committed source bundle rather than a prebuilt runtime.
+
 ## Publish a release
 
 1. Update `lakefile.lean` to the intended version and merge that change.
@@ -76,9 +91,10 @@ The `Publish release assets` workflow then:
 
 1. checks out the exact tag;
 2. verifies that the tag matches `lakefile.lean`;
-3. builds the release files;
-4. verifies `SHA256SUMS`;
-5. creates the GitHub Release with generated notes, or replaces the assets when
+3. verifies that the checked-out commit is the tagged commit;
+4. builds the release files;
+5. verifies `SHA256SUMS`;
+6. creates the GitHub Release with generated notes, or replaces the assets when
    the release already exists.
 
 A failed or interrupted publication can be retried from the Actions page with
@@ -89,6 +105,7 @@ not allow an arbitrary branch or untagged commit.
 
 - The tag must use the form `v<version>`.
 - The tag version must exactly match `lakefile.lean`.
+- The workflow checkout must resolve to the tagged commit.
 - Packaging always uses committed files from the selected tag.
 - Uncommitted working-tree content is never included.
 - Existing release assets are replaced only for the same validated tag.
