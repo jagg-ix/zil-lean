@@ -6,11 +6,14 @@ GROUP ?= all
 REPORT ?=
 PREFIX ?= $(HOME)/.local
 INSTALL_MODE ?= copy
+RELEASE_REF ?= HEAD
+RELEASE_VERSION ?=
+RELEASE_OUTPUT ?= dist
 CLOJURE_TOOLS_VERSION ?= 1.12.5.1654
 
 .PHONY: help self-check setup bootstrap doctor test test-smoke test-lean test-clojure \
         test-hybrid test-durable test-all examples examples-lean examples-native \
-        examples-integration examples-legacy package package-dir install install-link \
+        examples-integration examples-legacy package package-dir release-assets install install-link \
         verify-install uninstall test-install container-build container-test clean-test
 
 help:
@@ -25,6 +28,7 @@ help:
 	  '  make test-all                       run all host profiles' \
 	  '  make examples GROUP=all             run the documented example groups' \
 	  '  make package                        build a versioned source tarball' \
+	  '  make release-assets                 build GitHub Release upload files' \
 	  '  make install PREFIX=~/.local        copy and activate the current checkout' \
 	  '  make install-link PREFIX=~/.local   link the current development checkout' \
 	  '  make verify-install PREFIX=~/.local verify installed state' \
@@ -88,6 +92,12 @@ package:
 package-dir:
 	bash scripts/package.sh --format dir --output dist
 
+release-assets:
+	bash scripts/release-assets.sh \
+	  --output "$(RELEASE_OUTPUT)" \
+	  --ref "$(RELEASE_REF)" \
+	  $(if $(RELEASE_VERSION),--version "$(RELEASE_VERSION)",)
+
 install:
 	bash scripts/install.sh --prefix "$(PREFIX)" --mode "$(INSTALL_MODE)" \
 	  --profile "$(SETUP_PROFILE)"
@@ -121,4 +131,5 @@ clean-test:
 	rm -rf .zil/test-reports .zil/examples-reports .zil/container-reports .zil/setup-report*.tsv \
 	  .zil/doctor-*.tsv .zil/install-self-check.tsv \
 	  .zil/install-lifecycle-test.tsv .zil/install-lifecycle-test.tsv.logs \
-	  .zil/package-report.tsv .zil/setup.env .zil/setup.env.ps1
+	  .zil/package-report.tsv .zil/release-package-report.tsv .zil/release-assets-report.tsv \
+	  .zil/setup.env .zil/setup.env.ps1
