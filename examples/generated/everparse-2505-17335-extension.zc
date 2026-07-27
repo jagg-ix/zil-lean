@@ -1,0 +1,146 @@
+MODULE everparse.paper.p2505_17335.extension.
+
+// Generated automatically from arXiv:2505.17335v2.
+// Coverage model for PulseParse / EverCBOR / EverCDDL / COSE / DPE claims.
+// Run with:
+//   ./bin/zil preprocess examples/generated/everparse-2505-17335-extension.zc /tmp/everparse_2505_17335.pre.zc libsets/everparse-interop
+//   ./bin/zil /tmp/everparse_2505_17335.pre.zc
+
+paper:2505_17335v2#kind@entity:research_paper.
+paper:2505_17335v2#title@value:secure_parsing_serializing_separation_logic_cbor_cddl_cose.
+paper:2505_17335v2#arxiv@value:n_2505_17335_v2.
+paper:2505_17335v2#source_pdf@value:n_2505_17335v2_pdf.
+
+USE EP_SPEC(p2505_17335_suite, secure_parsing_serializing_sl, paper_contract, arxiv_2505_17335v2).
+USE EP_PROFILE(c_rust_verified, c_rust, everparse_karamel, no_ub).
+USE EP_RUN(run_p2505_17335v2_ci_001, p2505_17335_suite, c_rust_verified, succeeded).
+
+USE EP_ARTIFACT(run_p2505_17335v2_ci_001, a_fstar, fstar_specs, pulseparse_fstar_specs).
+USE EP_ARTIFACT(run_p2505_17335v2_ci_001, a_pulse, pulse_impl, pulseparse_impl).
+USE EP_ARTIFACT(run_p2505_17335v2_ci_001, a_c_lib, c_library, evercbor_c_library).
+USE EP_ARTIFACT(run_p2505_17335v2_ci_001, a_rust_lib, rust_library, evercbor_safe_rust_library).
+USE EP_ARTIFACT(run_p2505_17335v2_ci_001, a_codegen, code_generator, evercddl_codegen).
+
+USE EP_TEST_SUITE(run_p2505_17335v2_ci_001, batch, true, true, true, n_3).
+
+USE EP_GUARANTEE(run_p2505_17335v2_ci_001, g_memory_safety, memory_safety, proved).
+USE EP_GUARANTEE(run_p2505_17335v2_ci_001, g_arithmetic_safety, arithmetic_safety, proved).
+USE EP_GUARANTEE(run_p2505_17335v2_ci_001, g_double_fetch_freedom, double_fetch_freedom, pending).
+
+USE EP_EVIDENCE(run_p2505_17335v2_ci_001, e_primary, everparse_2505_17335v2_contract, paper_pdf, arxiv_2505_17335v2).
+
+paper:contrib:first#kind@entity:paper_contribution.
+paper:contrib:first#paper@paper:2505_17335v2.
+paper:contrib:first#section@value:n_2.
+paper:contrib:first#statement@value:pulseparse_a_new_verified_library_for_secure_parsing_and_serialization.
+paper:contrib:second#kind@entity:paper_contribution.
+paper:contrib:second#paper@paper:2505_17335v2.
+paper:contrib:second#section@value:n_3.
+paper:contrib:second#statement@value:evercbor_a_formalization_of_cbor_including_a_proof_that_its_deterministic_encoding_is_indeed_non_malleable_the_first_suc.
+paper:contrib:third#kind@entity:paper_contribution.
+paper:contrib:third#paper@paper:2505_17335v2.
+paper:contrib:third#section@value:n_4.
+paper:contrib:third#statement@value:a_formalization_of_cddl_including_inferring_well_formedness_conditions_on_cddl_definitions_in_the_form_of_a_new_elaborat.
+paper:contrib:fourth#kind@entity:paper_contribution.
+paper:contrib:fourth#paper@paper:2505_17335v2.
+paper:contrib:fourth#section@value:n_5.
+paper:contrib:fourth#statement@value:to_evaluate_our_libraries_on_two_applications_cose_and_dpe.
+
+paper:claim:pulseparse_verified_library#kind@entity:paper_claim.
+paper:claim:pulseparse_verified_library#paper@paper:2505_17335v2.
+paper:claim:pulseparse_verified_library#summary@value:pulseparse_verified_parser_serializer_library.
+paper:claim:pulseparse_verified_library#detected@value:true.
+paper:claim:pulseparse_verified_library#status@value:covered.
+paper:claim:recursive_constant_stack_space#kind@entity:paper_claim.
+paper:claim:recursive_constant_stack_space#paper@paper:2505_17335v2.
+paper:claim:recursive_constant_stack_space#summary@value:recursive_formats_constant_stack_space_validation.
+paper:claim:recursive_constant_stack_space#detected@value:true.
+paper:claim:recursive_constant_stack_space#status@value:covered.
+paper:claim:evercbor_deterministic_non_malleable#kind@entity:paper_claim.
+paper:claim:evercbor_deterministic_non_malleable#paper@paper:2505_17335v2.
+paper:claim:evercbor_deterministic_non_malleable#summary@value:evercbor_deterministic_fragment_non_malleable.
+paper:claim:evercbor_deterministic_non_malleable#detected@value:true.
+paper:claim:evercbor_deterministic_non_malleable#status@value:covered.
+paper:claim:evercddl_well_formedness_sound#kind@entity:paper_claim.
+paper:claim:evercddl_well_formedness_sound#paper@paper:2505_17335v2.
+paper:claim:evercddl_well_formedness_sound#summary@value:evercddl_well_formedness_elaboration_sound.
+paper:claim:evercddl_well_formedness_sound#detected@value:true.
+paper:claim:evercddl_well_formedness_sound#status@value:covered.
+paper:claim:cose_verified_signing#kind@entity:paper_claim.
+paper:claim:cose_verified_signing#paper@paper:2505_17335v2.
+paper:claim:cose_verified_signing#summary@value:verified_cose_signing_implementation.
+paper:claim:cose_verified_signing#detected@value:true.
+paper:claim:cose_verified_signing#status@value:covered.
+paper:claim:dpe_generated_verified_code#kind@entity:paper_claim.
+paper:claim:dpe_generated_verified_code#paper@paper:2505_17335v2.
+paper:claim:dpe_generated_verified_code#summary@value:dpe_generated_verified_parsers_serializers.
+paper:claim:dpe_generated_verified_code#detected@value:true.
+paper:claim:dpe_generated_verified_code#status@value:covered.
+paper:claim:memory_safety_guarantee#kind@entity:paper_claim.
+paper:claim:memory_safety_guarantee#paper@paper:2505_17335v2.
+paper:claim:memory_safety_guarantee#summary@value:memory_safety_guarantee.
+paper:claim:memory_safety_guarantee#detected@value:true.
+paper:claim:memory_safety_guarantee#status@value:covered.
+paper:claim:arithmetic_safety_guarantee#kind@entity:paper_claim.
+paper:claim:arithmetic_safety_guarantee#paper@paper:2505_17335v2.
+paper:claim:arithmetic_safety_guarantee#summary@value:arithmetic_safety_guarantee.
+paper:claim:arithmetic_safety_guarantee#detected@value:true.
+paper:claim:arithmetic_safety_guarantee#status@value:covered.
+paper:claim:functional_correctness_guarantee#kind@entity:paper_claim.
+paper:claim:functional_correctness_guarantee#paper@paper:2505_17335v2.
+paper:claim:functional_correctness_guarantee#summary@value:functional_correctness_guarantee.
+paper:claim:functional_correctness_guarantee#detected@value:true.
+paper:claim:functional_correctness_guarantee#status@value:covered.
+paper:claim:non_malleability_guarantee#kind@entity:paper_claim.
+paper:claim:non_malleability_guarantee#paper@paper:2505_17335v2.
+paper:claim:non_malleability_guarantee#summary@value:non_malleability_guarantee.
+paper:claim:non_malleability_guarantee#detected@value:true.
+paper:claim:non_malleability_guarantee#status@value:covered.
+paper:claim:non_ambiguity_guarantee#kind@entity:paper_claim.
+paper:claim:non_ambiguity_guarantee#paper@paper:2505_17335v2.
+paper:claim:non_ambiguity_guarantee#summary@value:non_ambiguity_guarantee.
+paper:claim:non_ambiguity_guarantee#detected@value:true.
+paper:claim:non_ambiguity_guarantee#status@value:covered.
+paper:claim:c_and_rust_extraction#kind@entity:paper_claim.
+paper:claim:c_and_rust_extraction#paper@paper:2505_17335v2.
+paper:claim:c_and_rust_extraction#summary@value:karamel_extraction_to_c_and_safe_rust.
+paper:claim:c_and_rust_extraction#detected@value:true.
+paper:claim:c_and_rust_extraction#status@value:covered.
+paper:claim:performance_evaluation#kind@entity:paper_claim.
+paper:claim:performance_evaluation#paper@paper:2505_17335v2.
+paper:claim:performance_evaluation#summary@value:performance_comparison_with_common_cbor_libraries.
+paper:claim:performance_evaluation#detected@value:true.
+paper:claim:performance_evaluation#status@value:covered.
+paper:claim:adversarial_input_focus#kind@entity:paper_claim.
+paper:claim:adversarial_input_focus#paper@paper:2505_17335v2.
+paper:claim:adversarial_input_focus#summary@value:security_focus_under_adversarial_inputs.
+paper:claim:adversarial_input_focus#detected@value:true.
+paper:claim:adversarial_input_focus#status@value:covered.
+paper:claim:double_fetch_freedom#kind@entity:paper_claim.
+paper:claim:double_fetch_freedom#paper@paper:2505_17335v2.
+paper:claim:double_fetch_freedom#summary@value:double_fetch_freedom_explicit_claim.
+paper:claim:double_fetch_freedom#detected@value:false.
+paper:claim:double_fetch_freedom#status@value:gap.
+
+paper:2505_17335v2#claims_total@value:n_15.
+paper:2505_17335v2#claims_covered@value:n_14.
+paper:2505_17335v2#claims_gap@value:n_1.
+
+RULE paper_full_coverage:
+IF paper:claim:pulseparse_verified_library#status@value:covered AND paper:claim:recursive_constant_stack_space#status@value:covered AND paper:claim:evercbor_deterministic_non_malleable#status@value:covered AND paper:claim:evercddl_well_formedness_sound#status@value:covered AND paper:claim:cose_verified_signing#status@value:covered AND paper:claim:dpe_generated_verified_code#status@value:covered AND paper:claim:memory_safety_guarantee#status@value:covered AND paper:claim:arithmetic_safety_guarantee#status@value:covered AND paper:claim:functional_correctness_guarantee#status@value:covered AND paper:claim:non_malleability_guarantee#status@value:covered AND paper:claim:non_ambiguity_guarantee#status@value:covered AND paper:claim:c_and_rust_extraction#status@value:covered AND paper:claim:performance_evaluation#status@value:covered AND paper:claim:adversarial_input_focus#status@value:covered AND paper:claim:double_fetch_freedom#status@value:covered
+THEN paper:2505_17335v2#coverage@value:full.
+
+QUERY paper_claim_status:
+FIND ?claim ?status WHERE ?claim#kind@entity:paper_claim AND ?claim#status@?status.
+
+QUERY paper_claim_gaps:
+FIND ?claim WHERE ?claim#kind@entity:paper_claim AND ?claim#status@value:gap.
+
+QUERY paper_full_coverage:
+FIND ?coverage WHERE paper:2505_17335v2#coverage@?coverage.
+
+QUERY ep_contract_gaps:
+FIND ?run ?gap WHERE ?run#contract_gap@?gap.
+
+QUERY ep_contract_verified_runs:
+FIND ?run WHERE ?run#contract_verified@value:true.

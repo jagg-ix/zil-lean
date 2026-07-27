@@ -1,0 +1,16 @@
+{
+  "suite": "lean-native-formalization-quality-v0.1",
+  "purpose": "Establish executable expectations that distinguish Lean compilation from honest formalization scope.",
+  "required_test_classes": [
+    "positive",
+    "negative",
+    "round_trip",
+    "cross_boundary_parity"
+  ],
+  "current_phase": "negative-fixture-baseline",
+  "fixtures": [
+    "AdS3ConformalBoundaryBad.lean",
+    "RyuTakayanagiBad.lean",
+    "GNSVonNeumannHadamardBad.lean"
+  ]
+}

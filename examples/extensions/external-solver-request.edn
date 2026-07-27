@@ -1,0 +1,4 @@
+{:tool "z3"
+ :input-path "examples/extensions/sample-goal.smt2"
+ :subject "obligation:sample-goal"
+ :role "external-proof-tool"}

@@ -1,0 +1,9 @@
+MODULE proof.governance.
+
+service:api#ready@value:true.
+service:api#safe@value:true.
+
+PROOF_OBLIGATION lean_readiness [relation=ready, statement="Lean theorem establishes readiness", tool=lean4, status=proved, proof_token=proof:apiReady, criticality=high].
+PROOF_OBLIGATION z3_safety [relation=safe, statement="Z3 artifact establishes safety constraints", tool=z3, status=proved, artifact_in=artifacts/z3-safety.log, logic=qf_lia, expectation=sat, criticality=high].
+PROOF_OBLIGATION pending_external [relation=safe, statement="External review remains pending", tool=acl2, status=pending, criticality=medium].
+PROOF_OBLIGATION waived_low [relation=ready, statement="Low-risk documentation exception", tool=manual, status=waived, waiver_reason="tracked documentation debt", criticality=low].

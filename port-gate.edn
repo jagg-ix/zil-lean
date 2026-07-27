@@ -1,0 +1,306 @@
+{:global
+ {:min-compile-ratio 1.0
+  :min-parity-ratio 1.0
+  :min-exact-ratio 1.0
+  :min-native-acceptance-ratio 1.0
+  :max-mismatch 0
+  :max-native-rejected 0
+  :max-legacy-rejected 0
+  :max-missing-conformance 0}
+
+ :required-roots ["lib" "libsets" "examples"]
+
+ :components
+ {:tuple-frontend
+  {:features #{:facts :usersets}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :attribute-frontend
+  {:features #{:attributes}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :rule-query-runtime
+  {:features #{:rules :queries}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :native-query-governance
+  {:features #{:queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/QueryGovernance.lean"
+    "Zil/Test/QueryGovernance.lean"
+    "examples/query-governance/operations.zc"
+    "spec/query-governance-v1.md"]}
+
+  :native-derivation-provenance
+  {:features #{:facts :rules :queries :usersets :negation}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/Engine/Provenance.lean"
+    "Zil/Test/Provenance.lean"
+    "examples/provenance/access.zc"
+    "spec/derivation-provenance-v1.md"]}
+
+  :native-change-impact
+  {:features #{:facts :rules}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/Impact.lean"
+    "Zil/CLI/Impact.lean"
+    "Zil/Test/Impact.lean"
+    "examples/impact/project.zc"
+    "spec/change-impact-v1.md"]}
+
+  :native-action-token
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/ActionToken.lean"
+    "Zil/CLI/ActionToken.lean"
+    "Zil/CLI/ActionTokenMain.lean"
+    "Zil/Test/ActionToken.lean"
+    "examples/action-token/request.zc"
+    "spec/action-token-v1.md"]}
+
+  :native-token-lifecycle
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/TokenLifecycle.lean"
+    "Zil/CLI/TokenLifecycle.lean"
+    "Zil/CLI/TokenLifecycleMain.lean"
+    "Zil/Test/TokenLifecycle.lean"
+    "examples/token-lifecycle/lifecycle.zc"
+    "spec/token-lifecycle-v1.md"]}
+
+  :native-recovery-audit
+  {:features #{:attributes :facts}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/RecoveryAudit.lean"
+    "Zil/CLI/RecoveryAudit.lean"
+    "Zil/CLI/RecoveryAuditMain.lean"
+    "Zil/Test/RecoveryAudit.lean"
+    "examples/recovery-audit/recovered.zc"
+    "spec/recovery-audit-v1.md"]}
+
+  :hybrid-exchange
+  {:features #{:attributes :facts :rules :queries :declarations :macros}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   [
+    "architecture/capability-ownership.edn"
+    "spec/exchange-protocol-v1.md"
+    "spec/extension-manifest-v1.md"
+    "spec/assurance-levels-v1.md"
+    "Zil/Exchange/Protocol.lean"
+    "Zil/Exchange/Dispatch.lean"
+    "Zil/CLI/WorkerMain.lean"
+    "Zil/Test/Exchange.lean"
+    "src/zil/worker/protocol.clj"
+    "src/zil/worker/client.clj"
+    "src/zil/worker/pool.clj"
+    "test/zil/worker_protocol_test.clj"
+    "examples/exchange/parse-request.json"
+    ]}
+
+  :formal-control-plane
+  {:features #{:attributes :facts :rules :queries :declarations :macros}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["architecture/capability-ownership.edn"
+    "spec/exchange-protocol-v1.md"
+    "src/zil/control/capability.clj"
+    "src/zil/control/runtime.clj"
+    "src/zil/control/command.clj"
+    "src/zil/control/cli.clj"
+    "src/zil/control/adapters.clj"
+    "src/zil/control/conformance.clj"
+    "test/zil/control_plane_test.clj"
+    "deps.edn"
+    "bin/zil"]}
+
+  :extension-sdk
+  {:features #{:attributes :facts :rules :queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["spec/extension-manifest-v1.md"
+    "spec/evidence-envelope-v1.md"
+    "src/zil/plugin/api.clj"
+    "src/zil/plugin/manifest.clj"
+    "src/zil/plugin/evidence.clj"
+    "src/zil/plugin/registry.clj"
+    "src/zil/plugin/cli.clj"
+    "src/zil/extensions/repository_scanner.clj"
+    "src/zil/extensions/external_solver.clj"
+    "src/zil/extensions/report_exporter.clj"
+    "extensions/reference/repository-scanner/extension.json"
+    "extensions/reference/external-solver/extension.json"
+    "extensions/reference/report-exporter/extension.json"
+    "test/zil/plugin_registry_test.clj"
+    "test/zil/test_runner.clj"]}
+
+  :durable-control-events
+  {:features #{:attributes :facts :rules :queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["architecture/capability-ownership.edn"
+    "spec/control-event-store-v1.md"
+    "src/zil/control/event.clj"
+    "src/zil/control/workflow.clj"
+    "src/zil/control/durable.clj"
+    "src/zil/control/store_cli.clj"
+    "src/zil/store/control_event.clj"
+    "src/zil/extensions/sqlite_event_store.clj"
+    "extensions/reference/sqlite-event-store/extension.json"
+    "examples/control-store/action-consumed.edn"
+    "test/zil/control_event_store_test.clj"
+    "test/zil/test_runner.clj"
+    "deps.edn"
+    "bin/zil"]}
+
+  :runtime-architecture-evaluation
+  {:features #{}
+   :source-scope :none
+   :min-sources 0
+   :evidence-files
+   ["architecture/runtime-evaluation.edn"
+    "architecture/capability-ownership.edn"
+    "spec/runtime-evaluation-v1.md"
+    "src/zil/evaluation/architecture.clj"
+    "src/zil/evaluation/cli.clj"
+    "examples/evaluation/runtime-measurements.edn"
+    "test/zil/runtime_evaluation_test.clj"
+    "test/zil/test_runner.clj"
+    "deps.edn"
+    "bin/zil"]}
+
+  :installation-test-infrastructure
+  {:features #{}
+   :source-scope :none
+   :min-sources 0
+   :evidence-files
+   ["config/test-profiles.edn"
+    "scripts/lib/common.sh"
+    "scripts/doctor.sh"
+    "scripts/setup.sh"
+    "scripts/test.sh"
+    "scripts/self-check.sh"
+    "scripts/setup.ps1"
+    "scripts/test.ps1"
+    "Dockerfile.test"
+    "compose.test.yml"
+    ".dockerignore"
+    "Makefile"
+    "spec/install-test-infrastructure-v1.md"
+    "test/zil/install_infrastructure_test.clj"
+    "test/zil/test_runner.clj"
+    ".gitignore"
+    "bin/zil"]}
+
+  :install-bundle-lifecycle
+  {:features #{}
+   :source-scope :none
+   :min-sources 0
+   :evidence-files
+   ["scripts/lib/common.sh"
+    "scripts/package.sh"
+    "scripts/install.sh"
+    "scripts/verify-install.sh"
+    "scripts/uninstall.sh"
+    "scripts/install-lifecycle-test.sh"
+    "spec/install-bundle-lifecycle-v1.md"
+    "test/zil/install_bundle_lifecycle_test.clj"
+    "test/zil/test_runner.clj"
+    "Makefile"
+    "port-gate.edn"]}
+
+  :native-agent-context
+  {:features #{:facts :rules :queries :declarations}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/AgentContext.lean"
+    "Zil/CLI/AgentContext.lean"
+    "Zil/CLI/AgentContextMain.lean"
+    "Zil/Test/AgentContext.lean"
+    "examples/agent-context/project.zc"
+    "spec/agent-context-v1.md"]}
+
+  :native-proof-obligations
+  {:features #{:declarations :facts :rules}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/ProofObligation.lean"
+    "Zil/CLI/ProofObligation.lean"
+    "Zil/CLI/ProofObligationMain.lean"
+    "Zil/Test/ProofObligation.lean"
+    "examples/proof-obligations/governance.zc"
+    "spec/proof-obligation-governance-v1.md"]}
+
+  :native-theorem-audit
+  {:features #{:facts :rules}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/TheoremAudit.lean"
+    "Zil/CLI/TheoremAudit.lean"
+    "Zil/CLI/TheoremAuditMain.lean"
+    "Zil/Test/TheoremAudit.lean"
+    "examples/theorem-audit/contracts.zc"
+    "spec/theorem-audit-v1.md"]}
+
+  :negation-runtime
+  {:features #{:negation}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :macro-frontend
+  {:features #{:macros}
+   :min-feature-sources 1
+   :min-sources 1
+   :evidence-files
+   ["Zil/Core/Macro.lean"
+    "Zil/Parser/Macro.lean"
+    "Zil/Parser/MacroProgram.lean"
+    "Zil/Parser/DeclarationProgram.lean"
+    "Zil/Test/Macro.lean"
+    "Zil/Test/MacroLibrary.lean"
+    "src/zil/port/native_macro.clj"
+    "src/zil/control/adapters.clj"
+    "test/zil/port_native_macro_test.clj"
+    "spec/macro-extension-parity-v1.md"]}
+
+  :declaration-lowering
+  {:features #{:declarations :tm-atoms :lts-atoms}
+   :min-feature-sources 1
+   :min-sources 1}
+
+  :library-corpus
+  {:features #{}
+   :source-scope :all
+   :min-sources 1}
+
+  :revision-causal
+  {:features #{}
+   :source-scope :none
+   :min-sources 0
+   :evidence-files
+   ["Zil/Core/Revision.lean"
+    "Zil/Codec/Revision.lean"
+    "Zil/Test/RevisionCausal.lean"
+    "spec/revision-causal-v0.1.md"]}}}

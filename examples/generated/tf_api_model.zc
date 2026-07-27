@@ -1,0 +1,1247 @@
+MODULE aws.transfer.family.api.model.
+
+// Generated from tf_api_schema.json by tf-api-emit-zil.py.
+// Do not edit by hand — re-run the extractor + emitter instead.
+
+// Source: transferfamily-api.pdf
+// Stats:  {'actions': 71, 'data_types': 78, 'total_request_fields': 258, 'total_response_fields': 96, 'total_data_type_fields': 319}
+
+// ====================================================================
+// API Operations
+// ====================================================================
+
+// --- CreateAccess ---
+USE TF_OPERATION(createaccess, access, create).
+USE TF_FIELD(createaccess, externalid, string, yes).
+USE TF_FIELD(createaccess, homedirectory, string, no).
+USE TF_FIELD(createaccess, homedirectorymappings, array_of_homedirectorymapentry_objects, no).
+USE TF_FIELD(createaccess, homedirectorytype, string, no).
+USE TF_VALID_VALUE(createaccess, homedirectorytype, path).
+USE TF_VALID_VALUE(createaccess, homedirectorytype, logical).
+USE TF_FIELD(createaccess, policy, string, no).
+USE TF_FIELD(createaccess, posixprofile, posixprofile_object, no).
+USE TF_FIELD(createaccess, role, string, yes).
+USE TF_FIELD(createaccess, serverid, string, yes).
+
+// --- CreateAgreement ---
+USE TF_OPERATION(createagreement, agreement, create).
+USE TF_FIELD(createagreement, accessrole, string, yes).
+USE TF_FIELD(createagreement, basedirectory, string, no).
+USE TF_FIELD(createagreement, customdirectories, customdirectoriestype_object, no).
+USE TF_FIELD(createagreement, description, string, no).
+USE TF_FIELD(createagreement, enforcemessagesigning, string, no).
+USE TF_VALID_VALUE(createagreement, enforcemessagesigning, enabled).
+USE TF_VALID_VALUE(createagreement, enforcemessagesigning, disabled).
+USE TF_FIELD(createagreement, localprofileid, string, yes).
+USE TF_FIELD(createagreement, partnerprofileid, string, yes).
+USE TF_FIELD(createagreement, preservefilename, string, no).
+USE TF_VALID_VALUE(createagreement, preservefilename, enabled).
+USE TF_VALID_VALUE(createagreement, preservefilename, disabled).
+USE TF_FIELD(createagreement, serverid, string, yes).
+USE TF_FIELD(createagreement, status, string, no).
+USE TF_VALID_VALUE(createagreement, status, active).
+USE TF_VALID_VALUE(createagreement, status, inactive).
+USE TF_FIELD(createagreement, tags, array_of_tag_objects, no).
+
+// --- CreateConnector ---
+USE TF_OPERATION(createconnector, connector, create).
+USE TF_FIELD(createconnector, accessrole, string, yes).
+USE TF_FIELD(createconnector, as2config, as2connectorconfig_object, no).
+USE TF_FIELD(createconnector, egressconfig, connectoregressconfig_object, no).
+USE TF_FIELD(createconnector, loggingrole, string, no).
+USE TF_FIELD(createconnector, securitypolicyname, string, no).
+USE TF_FIELD(createconnector, sftpconfig, sftpconnectorconfig_object, no).
+USE TF_FIELD(createconnector, tags, array_of_tag_objects, no).
+USE TF_FIELD(createconnector, url, string, no).
+
+// --- CreateProfile ---
+USE TF_OPERATION(createprofile, profile, create).
+USE TF_FIELD(createprofile, as2id, string, yes).
+USE TF_FIELD(createprofile, certificateids, array_of_strings, no).
+USE TF_FIELD(createprofile, profiletype, string, yes).
+USE TF_VALID_VALUE(createprofile, profiletype, local).
+USE TF_VALID_VALUE(createprofile, profiletype, partner).
+USE TF_FIELD(createprofile, tags, array_of_tag_objects, no).
+
+// --- CreateServer ---
+USE TF_OPERATION(createserver, server, create).
+USE TF_FIELD(createserver, certificate, string, no).
+USE TF_FIELD(createserver, domain, string, no).
+USE TF_VALID_VALUE(createserver, domain, s3).
+USE TF_VALID_VALUE(createserver, domain, efs).
+USE TF_FIELD(createserver, endpointdetails, endpointdetails_object, no).
+USE TF_FIELD(createserver, endpointtype, string, no).
+USE TF_VALID_VALUE(createserver, endpointtype, public).
+USE TF_VALID_VALUE(createserver, endpointtype, vpc).
+USE TF_VALID_VALUE(createserver, endpointtype, vpc_endpoint).
+USE TF_FIELD(createserver, hostkey, string, no).
+USE TF_FIELD(createserver, identityproviderdetails, identityproviderdetails_object, no).
+USE TF_FIELD(createserver, identityprovidertype, string, no).
+USE TF_VALID_VALUE(createserver, identityprovidertype, service_managed).
+USE TF_VALID_VALUE(createserver, identityprovidertype, api_gateway).
+USE TF_VALID_VALUE(createserver, identityprovidertype, aws_directory_service).
+USE TF_FIELD(createserver, ipaddresstype, string, no).
+USE TF_VALID_VALUE(createserver, ipaddresstype, ipv4).
+USE TF_VALID_VALUE(createserver, ipaddresstype, dualstack).
+USE TF_FIELD(createserver, loggingrole, string, no).
+USE TF_FIELD(createserver, postauthenticationloginbanner, string, no).
+USE TF_FIELD(createserver, preauthenticationloginbanner, string, no).
+USE TF_FIELD(createserver, protocoldetails, protocoldetails_object, no).
+USE TF_FIELD(createserver, protocols, array_of_strings, no).
+USE TF_VALID_VALUE(createserver, protocols, sftp).
+USE TF_VALID_VALUE(createserver, protocols, ftp).
+USE TF_VALID_VALUE(createserver, protocols, ftps).
+USE TF_VALID_VALUE(createserver, protocols, as2).
+USE TF_FIELD(createserver, s3storageoptions, s3storageoptions_object, no).
+USE TF_FIELD(createserver, securitypolicyname, string, no).
+USE TF_FIELD(createserver, structuredlogdestinations, array_of_strings, no).
+USE TF_FIELD(createserver, tags, array_of_tag_objects, no).
+USE TF_FIELD(createserver, workflowdetails, workflowdetails_object, no).
+
+// --- CreateUser ---
+USE TF_OPERATION(createuser, user, create).
+USE TF_FIELD(createuser, homedirectory, string, no).
+USE TF_FIELD(createuser, homedirectorymappings, array_of_homedirectorymapentry_objects, no).
+USE TF_FIELD(createuser, homedirectorytype, string, no).
+USE TF_VALID_VALUE(createuser, homedirectorytype, path).
+USE TF_VALID_VALUE(createuser, homedirectorytype, logical).
+USE TF_FIELD(createuser, policy, string, no).
+USE TF_FIELD(createuser, posixprofile, posixprofile_object, no).
+USE TF_FIELD(createuser, role, string, yes).
+USE TF_FIELD(createuser, serverid, string, yes).
+USE TF_FIELD(createuser, sshpublickeybody, string, no).
+USE TF_FIELD(createuser, tags, array_of_tag_objects, no).
+USE TF_FIELD(createuser, username, string, yes).
+
+// --- CreateWebApp ---
+USE TF_OPERATION(createwebapp, webapp, create).
+USE TF_FIELD(createwebapp, accessendpoint, string, no).
+USE TF_FIELD(createwebapp, endpointdetails, webappendpointdetails_object, no).
+USE TF_FIELD(createwebapp, identityproviderdetails, webappidentityproviderdetails_object, yes).
+USE TF_FIELD(createwebapp, tags, array_of_tag_objects, no).
+USE TF_FIELD(createwebapp, webappendpointpolicy, string, no).
+USE TF_VALID_VALUE(createwebapp, webappendpointpolicy, fips).
+USE TF_VALID_VALUE(createwebapp, webappendpointpolicy, standard).
+USE TF_FIELD(createwebapp, webappunits, webappunits_object, no).
+
+// --- CreateWorkflow ---
+USE TF_OPERATION(createworkflow, workflow, create).
+USE TF_FIELD(createworkflow, description, string, no).
+USE TF_FIELD(createworkflow, onexceptionsteps, array_of_workflowstep_objects, no).
+USE TF_FIELD(createworkflow, steps, array_of_workflowstep_objects, yes).
+USE TF_FIELD(createworkflow, tags, array_of_tag_objects, no).
+
+// --- DeleteAccess ---
+USE TF_OPERATION(deleteaccess, access, delete).
+USE TF_FIELD(deleteaccess, externalid, string, yes).
+USE TF_FIELD(deleteaccess, serverid, string, yes).
+
+// --- DeleteAgreement ---
+USE TF_OPERATION(deleteagreement, agreement, delete).
+USE TF_FIELD(deleteagreement, agreementid, string, yes).
+USE TF_FIELD(deleteagreement, serverid, string, yes).
+
+// --- DeleteCertificate ---
+USE TF_OPERATION(deletecertificate, certificate, delete).
+USE TF_FIELD(deletecertificate, certificateid, string, yes).
+
+// --- DeleteConnector ---
+USE TF_OPERATION(deleteconnector, connector, delete).
+USE TF_FIELD(deleteconnector, connectorid, string, yes).
+
+// --- DeleteHostKey ---
+USE TF_OPERATION(deletehostkey, hostkey, delete).
+USE TF_FIELD(deletehostkey, hostkeyid, string, yes).
+USE TF_FIELD(deletehostkey, serverid, string, yes).
+
+// --- DeleteProfile ---
+USE TF_OPERATION(deleteprofile, profile, delete).
+USE TF_FIELD(deleteprofile, profileid, string, yes).
+
+// --- DeleteServer ---
+USE TF_OPERATION(deleteserver, server, delete).
+USE TF_FIELD(deleteserver, serverid, string, yes).
+
+// --- DeleteSshPublicKey ---
+USE TF_OPERATION(deletesshpublickey, sshpublickey, delete).
+USE TF_FIELD(deletesshpublickey, serverid, string, yes).
+USE TF_FIELD(deletesshpublickey, sshpublickeyid, string, yes).
+USE TF_FIELD(deletesshpublickey, username, string, yes).
+
+// --- DeleteUser ---
+USE TF_OPERATION(deleteuser, user, delete).
+USE TF_FIELD(deleteuser, serverid, string, yes).
+USE TF_FIELD(deleteuser, username, string, yes).
+
+// --- DeleteWebApp ---
+USE TF_OPERATION(deletewebapp, webapp, delete).
+USE TF_FIELD(deletewebapp, webappid, string, yes).
+
+// --- DeleteWebAppCustomization ---
+USE TF_OPERATION(deletewebappcustomization, webappcustomization, delete).
+USE TF_FIELD(deletewebappcustomization, webappid, string, yes).
+
+// --- DeleteWorkflow ---
+USE TF_OPERATION(deleteworkflow, workflow, delete).
+USE TF_FIELD(deleteworkflow, workflowid, string, yes).
+
+// --- DescribeAccess ---
+USE TF_OPERATION(describeaccess, access, describe).
+USE TF_FIELD(describeaccess, externalid, string, yes).
+USE TF_FIELD(describeaccess, serverid, string, yes).
+
+// --- DescribeAgreement ---
+USE TF_OPERATION(describeagreement, agreement, describe).
+USE TF_FIELD(describeagreement, agreementid, string, yes).
+USE TF_FIELD(describeagreement, serverid, string, yes).
+
+// --- DescribeCertificate ---
+USE TF_OPERATION(describecertificate, certificate, describe).
+USE TF_FIELD(describecertificate, certificateid, string, yes).
+
+// --- DescribeConnector ---
+USE TF_OPERATION(describeconnector, connector, describe).
+USE TF_FIELD(describeconnector, connectorid, string, yes).
+
+// --- DescribeExecution ---
+USE TF_OPERATION(describeexecution, execution, describe).
+USE TF_FIELD(describeexecution, executionid, string, yes).
+USE TF_FIELD(describeexecution, workflowid, string, yes).
+
+// --- DescribeHostKey ---
+USE TF_OPERATION(describehostkey, hostkey, describe).
+USE TF_FIELD(describehostkey, hostkeyid, string, yes).
+USE TF_FIELD(describehostkey, serverid, string, yes).
+
+// --- DescribeProfile ---
+USE TF_OPERATION(describeprofile, profile, describe).
+USE TF_FIELD(describeprofile, profileid, string, yes).
+
+// --- DescribeSecurityPolicy ---
+USE TF_OPERATION(describesecuritypolicy, securitypolicy, describe).
+USE TF_FIELD(describesecuritypolicy, securitypolicyname, string, yes).
+
+// --- DescribeServer ---
+USE TF_OPERATION(describeserver, server, describe).
+USE TF_FIELD(describeserver, serverid, string, yes).
+
+// --- DescribeUser ---
+USE TF_OPERATION(describeuser, user, describe).
+USE TF_FIELD(describeuser, serverid, string, yes).
+USE TF_FIELD(describeuser, username, string, yes).
+
+// --- DescribeWebApp ---
+USE TF_OPERATION(describewebapp, webapp, describe).
+USE TF_FIELD(describewebapp, webappid, string, yes).
+
+// --- DescribeWebAppCustomization ---
+USE TF_OPERATION(describewebappcustomization, webappcustomization, describe).
+USE TF_FIELD(describewebappcustomization, webappid, string, yes).
+
+// --- DescribeWorkflow ---
+USE TF_OPERATION(describeworkflow, workflow, describe).
+USE TF_FIELD(describeworkflow, workflowid, string, yes).
+
+// --- ImportCertificate ---
+USE TF_OPERATION(importcertificate, certificate, import).
+USE TF_FIELD(importcertificate, activedate, timestamp, no).
+USE TF_FIELD(importcertificate, certificate, string, yes).
+USE TF_FIELD(importcertificate, certificatechain, string, no).
+USE TF_FIELD(importcertificate, description, string, no).
+USE TF_FIELD(importcertificate, inactivedate, timestamp, no).
+USE TF_FIELD(importcertificate, privatekey, string, no).
+USE TF_FIELD(importcertificate, tags, array_of_tag_objects, no).
+USE TF_FIELD(importcertificate, usage, string, yes).
+USE TF_VALID_VALUE(importcertificate, usage, signing).
+USE TF_VALID_VALUE(importcertificate, usage, encryption).
+USE TF_VALID_VALUE(importcertificate, usage, tls).
+
+// --- ImportHostKey ---
+USE TF_OPERATION(importhostkey, hostkey, import).
+USE TF_FIELD(importhostkey, description, string, no).
+USE TF_FIELD(importhostkey, hostkeybody, string, yes).
+USE TF_FIELD(importhostkey, serverid, string, yes).
+USE TF_FIELD(importhostkey, tags, array_of_tag_objects, no).
+
+// --- ImportSshPublicKey ---
+USE TF_OPERATION(importsshpublickey, sshpublickey, import).
+USE TF_FIELD(importsshpublickey, serverid, string, yes).
+USE TF_FIELD(importsshpublickey, sshpublickeybody, string, yes).
+USE TF_FIELD(importsshpublickey, username, string, yes).
+
+// --- ListAccesses ---
+USE TF_OPERATION(listaccesses, accesses, list).
+USE TF_FIELD(listaccesses, maxresults, integer, no).
+USE TF_FIELD(listaccesses, nexttoken, string, no).
+USE TF_FIELD(listaccesses, serverid, string, yes).
+
+// --- ListAgreements ---
+USE TF_OPERATION(listagreements, agreements, list).
+USE TF_FIELD(listagreements, maxresults, integer, no).
+USE TF_FIELD(listagreements, nexttoken, string, no).
+USE TF_FIELD(listagreements, serverid, string, yes).
+
+// --- ListCertificates ---
+USE TF_OPERATION(listcertificates, certificates, list).
+USE TF_FIELD(listcertificates, maxresults, integer, no).
+USE TF_FIELD(listcertificates, nexttoken, string, no).
+
+// --- ListConnectors ---
+USE TF_OPERATION(listconnectors, connectors, list).
+USE TF_FIELD(listconnectors, maxresults, integer, no).
+USE TF_FIELD(listconnectors, nexttoken, string, no).
+
+// --- ListExecutions ---
+USE TF_OPERATION(listexecutions, executions, list).
+USE TF_FIELD(listexecutions, maxresults, integer, no).
+USE TF_FIELD(listexecutions, nexttoken, string, no).
+USE TF_FIELD(listexecutions, workflowid, string, yes).
+
+// --- ListFileTransferResults ---
+USE TF_OPERATION(listfiletransferresults, filetransferresults, list).
+USE TF_FIELD(listfiletransferresults, connectorid, string, yes).
+USE TF_FIELD(listfiletransferresults, maxresults, integer, no).
+USE TF_FIELD(listfiletransferresults, nexttoken, string, no).
+USE TF_FIELD(listfiletransferresults, transferid, string, yes).
+
+// --- ListHostKeys ---
+USE TF_OPERATION(listhostkeys, hostkeys, list).
+USE TF_FIELD(listhostkeys, maxresults, integer, no).
+USE TF_FIELD(listhostkeys, nexttoken, string, no).
+USE TF_FIELD(listhostkeys, serverid, string, yes).
+
+// --- ListProfiles ---
+USE TF_OPERATION(listprofiles, profiles, list).
+USE TF_FIELD(listprofiles, maxresults, integer, no).
+USE TF_FIELD(listprofiles, nexttoken, string, no).
+USE TF_FIELD(listprofiles, profiletype, string, no).
+USE TF_VALID_VALUE(listprofiles, profiletype, local).
+USE TF_VALID_VALUE(listprofiles, profiletype, partner).
+
+// --- ListSecurityPolicies ---
+USE TF_OPERATION(listsecuritypolicies, securitypolicies, list).
+USE TF_FIELD(listsecuritypolicies, maxresults, integer, no).
+USE TF_FIELD(listsecuritypolicies, nexttoken, string, no).
+
+// --- ListServers ---
+USE TF_OPERATION(listservers, servers, list).
+USE TF_FIELD(listservers, maxresults, integer, no).
+USE TF_FIELD(listservers, nexttoken, string, no).
+
+// --- ListTagsForResource ---
+USE TF_OPERATION(listtagsforresource, tagsforresource, list).
+USE TF_FIELD(listtagsforresource, arn, string, yes).
+USE TF_FIELD(listtagsforresource, maxresults, integer, no).
+USE TF_FIELD(listtagsforresource, nexttoken, string, no).
+
+// --- ListUsers ---
+USE TF_OPERATION(listusers, users, list).
+USE TF_FIELD(listusers, maxresults, integer, no).
+USE TF_FIELD(listusers, nexttoken, string, no).
+USE TF_FIELD(listusers, serverid, string, yes).
+
+// --- ListWebApps ---
+USE TF_OPERATION(listwebapps, webapps, list).
+USE TF_FIELD(listwebapps, maxresults, integer, no).
+USE TF_FIELD(listwebapps, nexttoken, string, no).
+
+// --- ListWorkflows ---
+USE TF_OPERATION(listworkflows, workflows, list).
+USE TF_FIELD(listworkflows, maxresults, integer, no).
+USE TF_FIELD(listworkflows, nexttoken, string, no).
+
+// --- SendWorkflowStepState ---
+USE TF_OPERATION(sendworkflowstepstate, workflowstepstate, send).
+USE TF_FIELD(sendworkflowstepstate, executionid, string, yes).
+USE TF_FIELD(sendworkflowstepstate, status, string, yes).
+USE TF_VALID_VALUE(sendworkflowstepstate, status, success).
+USE TF_VALID_VALUE(sendworkflowstepstate, status, failure).
+USE TF_FIELD(sendworkflowstepstate, token, string, yes).
+USE TF_FIELD(sendworkflowstepstate, workflowid, string, yes).
+
+// --- StartDirectoryListing ---
+USE TF_OPERATION(startdirectorylisting, directorylisting, start).
+USE TF_FIELD(startdirectorylisting, connectorid, string, yes).
+USE TF_FIELD(startdirectorylisting, maxitems, integer, no).
+USE TF_FIELD(startdirectorylisting, outputdirectorypath, string, yes).
+USE TF_FIELD(startdirectorylisting, remotedirectorypath, string, yes).
+
+// --- StartFileTransfer ---
+USE TF_OPERATION(startfiletransfer, filetransfer, start).
+USE TF_FIELD(startfiletransfer, connectorid, string, yes).
+USE TF_FIELD(startfiletransfer, customhttpheaders, array_of_customhttpheader_objects, no).
+USE TF_FIELD(startfiletransfer, localdirectorypath, string, no).
+USE TF_FIELD(startfiletransfer, remotedirectorypath, string, no).
+USE TF_FIELD(startfiletransfer, retrievefilepaths, array_of_strings, no).
+USE TF_FIELD(startfiletransfer, sendfilepaths, array_of_strings, no).
+
+// --- StartRemoteDelete ---
+USE TF_OPERATION(startremotedelete, remotedelete, start).
+USE TF_FIELD(startremotedelete, connectorid, string, yes).
+USE TF_FIELD(startremotedelete, deletepath, string, yes).
+
+// --- StartRemoteMove ---
+USE TF_OPERATION(startremotemove, remotemove, start).
+USE TF_FIELD(startremotemove, connectorid, string, yes).
+USE TF_FIELD(startremotemove, sourcepath, string, yes).
+USE TF_FIELD(startremotemove, targetpath, string, yes).
+
+// --- StartServer ---
+USE TF_OPERATION(startserver, server, start).
+USE TF_FIELD(startserver, serverid, string, yes).
+
+// --- StopServer ---
+USE TF_OPERATION(stopserver, server, stop).
+USE TF_FIELD(stopserver, serverid, string, yes).
+
+// --- TagResource ---
+USE TF_OPERATION(tagresource, resource, tag).
+USE TF_FIELD(tagresource, arn, string, yes).
+USE TF_FIELD(tagresource, tags, array_of_tag_objects, yes).
+
+// --- TestConnection ---
+USE TF_OPERATION(testconnection, connection, test).
+USE TF_FIELD(testconnection, connectorid, string, yes).
+
+// --- TestIdentityProvider ---
+USE TF_OPERATION(testidentityprovider, identityprovider, test).
+USE TF_FIELD(testidentityprovider, serverid, string, yes).
+USE TF_FIELD(testidentityprovider, serverprotocol, string, no).
+USE TF_VALID_VALUE(testidentityprovider, serverprotocol, sftp).
+USE TF_VALID_VALUE(testidentityprovider, serverprotocol, ftp).
+USE TF_VALID_VALUE(testidentityprovider, serverprotocol, ftps).
+USE TF_VALID_VALUE(testidentityprovider, serverprotocol, as2).
+USE TF_FIELD(testidentityprovider, sourceip, string, no).
+USE TF_FIELD(testidentityprovider, username, string, yes).
+USE TF_FIELD(testidentityprovider, userpassword, string, no).
+
+// --- UntagResource ---
+USE TF_OPERATION(untagresource, resource, untag).
+USE TF_FIELD(untagresource, arn, string, yes).
+USE TF_FIELD(untagresource, tagkeys, array_of_strings, yes).
+
+// --- UpdateAccess ---
+USE TF_OPERATION(updateaccess, access, update).
+USE TF_FIELD(updateaccess, externalid, string, yes).
+USE TF_FIELD(updateaccess, homedirectory, string, no).
+USE TF_FIELD(updateaccess, homedirectorymappings, array_of_homedirectorymapentry_objects, no).
+USE TF_FIELD(updateaccess, homedirectorytype, string, no).
+USE TF_VALID_VALUE(updateaccess, homedirectorytype, path).
+USE TF_VALID_VALUE(updateaccess, homedirectorytype, logical).
+USE TF_FIELD(updateaccess, policy, string, no).
+USE TF_FIELD(updateaccess, posixprofile, posixprofile_object, no).
+USE TF_FIELD(updateaccess, role, string, no).
+USE TF_FIELD(updateaccess, serverid, string, yes).
+
+// --- UpdateAgreement ---
+USE TF_OPERATION(updateagreement, agreement, update).
+USE TF_FIELD(updateagreement, accessrole, string, no).
+USE TF_FIELD(updateagreement, agreementid, string, yes).
+USE TF_FIELD(updateagreement, basedirectory, string, no).
+USE TF_FIELD(updateagreement, customdirectories, customdirectoriestype_object, no).
+USE TF_FIELD(updateagreement, description, string, no).
+USE TF_FIELD(updateagreement, enforcemessagesigning, string, no).
+USE TF_VALID_VALUE(updateagreement, enforcemessagesigning, enabled).
+USE TF_VALID_VALUE(updateagreement, enforcemessagesigning, disabled).
+USE TF_FIELD(updateagreement, localprofileid, string, no).
+USE TF_FIELD(updateagreement, partnerprofileid, string, no).
+USE TF_FIELD(updateagreement, preservefilename, string, no).
+USE TF_VALID_VALUE(updateagreement, preservefilename, enabled).
+USE TF_VALID_VALUE(updateagreement, preservefilename, disabled).
+USE TF_FIELD(updateagreement, serverid, string, yes).
+USE TF_FIELD(updateagreement, status, string, no).
+USE TF_VALID_VALUE(updateagreement, status, active).
+USE TF_VALID_VALUE(updateagreement, status, inactive).
+
+// --- UpdateCertificate ---
+USE TF_OPERATION(updatecertificate, certificate, update).
+USE TF_FIELD(updatecertificate, activedate, timestamp, no).
+USE TF_FIELD(updatecertificate, certificateid, string, yes).
+USE TF_FIELD(updatecertificate, description, string, no).
+USE TF_FIELD(updatecertificate, inactivedate, timestamp, no).
+
+// --- UpdateConnector ---
+USE TF_OPERATION(updateconnector, connector, update).
+USE TF_FIELD(updateconnector, accessrole, string, no).
+USE TF_FIELD(updateconnector, as2config, as2connectorconfig_object, no).
+USE TF_FIELD(updateconnector, connectorid, string, yes).
+USE TF_FIELD(updateconnector, egressconfig, updateconnectoregressconfig_object, no).
+USE TF_FIELD(updateconnector, loggingrole, string, no).
+USE TF_FIELD(updateconnector, securitypolicyname, string, no).
+USE TF_FIELD(updateconnector, sftpconfig, sftpconnectorconfig_object, no).
+USE TF_FIELD(updateconnector, url, string, no).
+
+// --- UpdateHostKey ---
+USE TF_OPERATION(updatehostkey, hostkey, update).
+USE TF_FIELD(updatehostkey, description, string, yes).
+USE TF_FIELD(updatehostkey, hostkeyid, string, yes).
+USE TF_FIELD(updatehostkey, serverid, string, yes).
+
+// --- UpdateProfile ---
+USE TF_OPERATION(updateprofile, profile, update).
+USE TF_FIELD(updateprofile, certificateids, array_of_strings, no).
+USE TF_FIELD(updateprofile, profileid, string, yes).
+
+// --- UpdateServer ---
+USE TF_OPERATION(updateserver, server, update).
+USE TF_FIELD(updateserver, certificate, string, no).
+USE TF_FIELD(updateserver, endpointdetails, endpointdetails_object, no).
+USE TF_FIELD(updateserver, endpointtype, string, no).
+USE TF_VALID_VALUE(updateserver, endpointtype, public).
+USE TF_VALID_VALUE(updateserver, endpointtype, vpc).
+USE TF_VALID_VALUE(updateserver, endpointtype, vpc_endpoint).
+USE TF_FIELD(updateserver, hostkey, string, no).
+USE TF_FIELD(updateserver, identityproviderdetails, identityproviderdetails_object, no).
+USE TF_FIELD(updateserver, identityprovidertype, string, no).
+USE TF_VALID_VALUE(updateserver, identityprovidertype, service_managed).
+USE TF_VALID_VALUE(updateserver, identityprovidertype, api_gateway).
+USE TF_VALID_VALUE(updateserver, identityprovidertype, aws_directory_service).
+USE TF_FIELD(updateserver, ipaddresstype, string, no).
+USE TF_VALID_VALUE(updateserver, ipaddresstype, ipv4).
+USE TF_VALID_VALUE(updateserver, ipaddresstype, dualstack).
+USE TF_FIELD(updateserver, loggingrole, string, no).
+USE TF_FIELD(updateserver, postauthenticationloginbanner, string, no).
+USE TF_FIELD(updateserver, preauthenticationloginbanner, string, no).
+USE TF_FIELD(updateserver, protocoldetails, protocoldetails_object, no).
+USE TF_FIELD(updateserver, protocols, array_of_strings, no).
+USE TF_VALID_VALUE(updateserver, protocols, sftp).
+USE TF_VALID_VALUE(updateserver, protocols, ftp).
+USE TF_VALID_VALUE(updateserver, protocols, ftps).
+USE TF_VALID_VALUE(updateserver, protocols, as2).
+USE TF_FIELD(updateserver, s3storageoptions, s3storageoptions_object, no).
+USE TF_FIELD(updateserver, securitypolicyname, string, no).
+USE TF_FIELD(updateserver, serverid, string, yes).
+USE TF_FIELD(updateserver, structuredlogdestinations, array_of_strings, no).
+USE TF_FIELD(updateserver, workflowdetails, workflowdetails_object, no).
+
+// --- UpdateUser ---
+USE TF_OPERATION(updateuser, user, update).
+USE TF_FIELD(updateuser, homedirectory, string, no).
+USE TF_FIELD(updateuser, homedirectorymappings, array_of_homedirectorymapentry_objects, no).
+USE TF_FIELD(updateuser, homedirectorytype, string, no).
+USE TF_VALID_VALUE(updateuser, homedirectorytype, path).
+USE TF_VALID_VALUE(updateuser, homedirectorytype, logical).
+USE TF_FIELD(updateuser, policy, string, no).
+USE TF_FIELD(updateuser, posixprofile, posixprofile_object, no).
+USE TF_FIELD(updateuser, role, string, no).
+USE TF_FIELD(updateuser, serverid, string, yes).
+USE TF_FIELD(updateuser, username, string, yes).
+
+// --- UpdateWebApp ---
+USE TF_OPERATION(updatewebapp, webapp, update).
+USE TF_FIELD(updatewebapp, accessendpoint, string, no).
+USE TF_FIELD(updatewebapp, endpointdetails, updatewebappendpointdetails_object, no).
+USE TF_FIELD(updatewebapp, identityproviderdetails, updatewebappidentityproviderdetails_object, no).
+USE TF_FIELD(updatewebapp, webappid, string, yes).
+USE TF_FIELD(updatewebapp, webappunits, webappunits_object, no).
+
+// --- UpdateWebAppCustomization ---
+USE TF_OPERATION(updatewebappcustomization, webappcustomization, update).
+USE TF_FIELD(updatewebappcustomization, faviconfile, base64_encoded_binary_data_object, no).
+USE TF_FIELD(updatewebappcustomization, logofile, base64_encoded_binary_data_object, no).
+USE TF_FIELD(updatewebappcustomization, title, string, no).
+USE TF_FIELD(updatewebappcustomization, webappid, string, yes).
+
+// ====================================================================
+// Data Types
+// ====================================================================
+
+// --- As2AsyncMdnConnectorConfig ---
+USE TF_DATA_TYPE(as2asyncmdnconnectorconfig, contains_the_configuration_details_for_asynchronous).
+USE TF_DATA_TYPE_FIELD(as2asyncmdnconnectorconfig, serverids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(as2asyncmdnconnectorconfig, url, string, no).
+
+// --- As2ConnectorConfig ---
+USE TF_DATA_TYPE(as2connectorconfig, contains_the_details_for_an_as2).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, asyncmdnconfig, as2asyncmdnconnectorconfig_object, no).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, basicauthsecretid, string, no).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, compression, string, no).
+USE TF_VALID_VALUE(as2connectorconfig, compression, zlib).
+USE TF_VALID_VALUE(as2connectorconfig, compression, disabled).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, encryptionalgorithm, string, no).
+USE TF_VALID_VALUE(as2connectorconfig, encryptionalgorithm, aes128_cbc).
+USE TF_VALID_VALUE(as2connectorconfig, encryptionalgorithm, aes192_cbc).
+USE TF_VALID_VALUE(as2connectorconfig, encryptionalgorithm, aes256_cbc).
+USE TF_VALID_VALUE(as2connectorconfig, encryptionalgorithm, des_ede3_cbc).
+USE TF_VALID_VALUE(as2connectorconfig, encryptionalgorithm, none).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, localprofileid, string, no).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, mdnresponse, string, no).
+USE TF_VALID_VALUE(as2connectorconfig, mdnresponse, sync).
+USE TF_VALID_VALUE(as2connectorconfig, mdnresponse, none).
+USE TF_VALID_VALUE(as2connectorconfig, mdnresponse, async).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, mdnsigningalgorithm, string, no).
+USE TF_VALID_VALUE(as2connectorconfig, mdnsigningalgorithm, sha256).
+USE TF_VALID_VALUE(as2connectorconfig, mdnsigningalgorithm, sha384).
+USE TF_VALID_VALUE(as2connectorconfig, mdnsigningalgorithm, sha512).
+USE TF_VALID_VALUE(as2connectorconfig, mdnsigningalgorithm, sha1).
+USE TF_VALID_VALUE(as2connectorconfig, mdnsigningalgorithm, none).
+USE TF_VALID_VALUE(as2connectorconfig, mdnsigningalgorithm, default).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, messagesubject, string, no).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, partnerprofileid, string, no).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, preservecontenttype, string, no).
+USE TF_VALID_VALUE(as2connectorconfig, preservecontenttype, enabled).
+USE TF_VALID_VALUE(as2connectorconfig, preservecontenttype, disabled).
+USE TF_DATA_TYPE_FIELD(as2connectorconfig, signingalgorithm, string, no).
+USE TF_VALID_VALUE(as2connectorconfig, signingalgorithm, sha256).
+USE TF_VALID_VALUE(as2connectorconfig, signingalgorithm, sha384).
+USE TF_VALID_VALUE(as2connectorconfig, signingalgorithm, sha512).
+USE TF_VALID_VALUE(as2connectorconfig, signingalgorithm, sha1).
+USE TF_VALID_VALUE(as2connectorconfig, signingalgorithm, none).
+
+// --- ConnectorEgressConfig ---
+USE TF_DATA_TYPE(connectoregressconfig, configuration_structure_that_defines_how_traffic).
+USE TF_DATA_TYPE_FIELD(connectoregressconfig, vpclattice, connectorvpclatticeegressconfig_object, no).
+
+// --- ConnectorFileTransferResult ---
+USE TF_DATA_TYPE(connectorfiletransferresult, a_structure_that_contains_the_details).
+USE TF_DATA_TYPE_FIELD(connectorfiletransferresult, filepath, string, yes).
+USE TF_DATA_TYPE_FIELD(connectorfiletransferresult, statuscode, string, yes).
+USE TF_VALID_VALUE(connectorfiletransferresult, statuscode, queued).
+USE TF_VALID_VALUE(connectorfiletransferresult, statuscode, in_progress).
+USE TF_VALID_VALUE(connectorfiletransferresult, statuscode, completed).
+USE TF_VALID_VALUE(connectorfiletransferresult, statuscode, failed).
+USE TF_DATA_TYPE_FIELD(connectorfiletransferresult, failurecode, string, no).
+USE TF_DATA_TYPE_FIELD(connectorfiletransferresult, failuremessage, string, no).
+
+// --- ConnectorVpcLatticeEgressConfig ---
+USE TF_DATA_TYPE(connectorvpclatticeegressconfig, vpc_lattice_egress_configuration_that_specifies_the).
+USE TF_DATA_TYPE_FIELD(connectorvpclatticeegressconfig, resourceconfigurationarn, string, yes).
+USE TF_DATA_TYPE_FIELD(connectorvpclatticeegressconfig, portnumber, integer, no).
+
+// --- CopyStepDetails ---
+USE TF_DATA_TYPE(copystepdetails, each_step_type_has_its_own).
+USE TF_DATA_TYPE_FIELD(copystepdetails, destinationfilelocation, inputfilelocation_object, no).
+USE TF_DATA_TYPE_FIELD(copystepdetails, name, string, no).
+USE TF_DATA_TYPE_FIELD(copystepdetails, overwriteexisting, string, no).
+USE TF_VALID_VALUE(copystepdetails, overwriteexisting, true).
+USE TF_VALID_VALUE(copystepdetails, overwriteexisting, false).
+USE TF_DATA_TYPE_FIELD(copystepdetails, sourcefilelocation, string, no).
+
+// --- CustomDirectoriesType ---
+USE TF_DATA_TYPE(customdirectoriestype, contains_amazon_s3_locations_for_storing).
+USE TF_DATA_TYPE_FIELD(customdirectoriestype, failedfilesdirectory, string, yes).
+USE TF_DATA_TYPE_FIELD(customdirectoriestype, mdnfilesdirectory, string, yes).
+USE TF_DATA_TYPE_FIELD(customdirectoriestype, payloadfilesdirectory, string, yes).
+USE TF_DATA_TYPE_FIELD(customdirectoriestype, statusfilesdirectory, string, yes).
+USE TF_DATA_TYPE_FIELD(customdirectoriestype, temporaryfilesdirectory, string, yes).
+
+// --- CustomHttpHeader ---
+USE TF_DATA_TYPE(customhttpheader, represents_a_custom_http_header_that).
+USE TF_DATA_TYPE_FIELD(customhttpheader, key, string, no).
+USE TF_DATA_TYPE_FIELD(customhttpheader, value, string, no).
+
+// --- CustomStepDetails ---
+USE TF_DATA_TYPE(customstepdetails, each_step_type_has_its_own).
+USE TF_DATA_TYPE_FIELD(customstepdetails, name, string, no).
+USE TF_DATA_TYPE_FIELD(customstepdetails, sourcefilelocation, string, no).
+USE TF_DATA_TYPE_FIELD(customstepdetails, target, string, no).
+USE TF_DATA_TYPE_FIELD(customstepdetails, timeoutseconds, integer, no).
+
+// --- DecryptStepDetails ---
+USE TF_DATA_TYPE(decryptstepdetails, each_step_type_has_its_own).
+USE TF_DATA_TYPE_FIELD(decryptstepdetails, destinationfilelocation, string, yes).
+USE TF_VALID_VALUE(decryptstepdetails, destinationfilelocation, pgp).
+USE TF_DATA_TYPE_FIELD(decryptstepdetails, name, string, no).
+USE TF_DATA_TYPE_FIELD(decryptstepdetails, overwriteexisting, string, no).
+USE TF_VALID_VALUE(decryptstepdetails, overwriteexisting, true).
+USE TF_VALID_VALUE(decryptstepdetails, overwriteexisting, false).
+USE TF_DATA_TYPE_FIELD(decryptstepdetails, sourcefilelocation, string, no).
+
+// --- DeleteStepDetails ---
+USE TF_DATA_TYPE(deletestepdetails, the_name_of_the_step_used).
+USE TF_DATA_TYPE_FIELD(deletestepdetails, name, string, no).
+USE TF_DATA_TYPE_FIELD(deletestepdetails, sourcefilelocation, string, no).
+
+// --- DescribedAccess ---
+USE TF_DATA_TYPE(describedaccess, describes_the_properties_of_the_access).
+USE TF_DATA_TYPE_FIELD(describedaccess, externalid, string, no).
+USE TF_DATA_TYPE_FIELD(describedaccess, homedirectory, string, no).
+USE TF_DATA_TYPE_FIELD(describedaccess, homedirectorymappings, array_of_homedirectorymapentry_objects, no).
+USE TF_DATA_TYPE_FIELD(describedaccess, homedirectorytype, string, no).
+USE TF_VALID_VALUE(describedaccess, homedirectorytype, path).
+USE TF_VALID_VALUE(describedaccess, homedirectorytype, logical).
+USE TF_DATA_TYPE_FIELD(describedaccess, policy, string, no).
+USE TF_DATA_TYPE_FIELD(describedaccess, posixprofile, posixprofile_object, no).
+USE TF_DATA_TYPE_FIELD(describedaccess, role, string, no).
+
+// --- DescribedAgreement ---
+USE TF_DATA_TYPE(describedagreement, describes_the_properties_of_an_agreement).
+USE TF_DATA_TYPE_FIELD(describedagreement, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedagreement, accessrole, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, agreementid, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, basedirectory, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, customdirectories, customdirectoriestype_object, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, description, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, enforcemessagesigning, string, no).
+USE TF_VALID_VALUE(describedagreement, enforcemessagesigning, enabled).
+USE TF_VALID_VALUE(describedagreement, enforcemessagesigning, disabled).
+USE TF_DATA_TYPE_FIELD(describedagreement, localprofileid, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, partnerprofileid, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, preservefilename, string, no).
+USE TF_VALID_VALUE(describedagreement, preservefilename, enabled).
+USE TF_VALID_VALUE(describedagreement, preservefilename, disabled).
+USE TF_DATA_TYPE_FIELD(describedagreement, serverid, string, no).
+USE TF_DATA_TYPE_FIELD(describedagreement, status, string, no).
+USE TF_VALID_VALUE(describedagreement, status, active).
+USE TF_VALID_VALUE(describedagreement, status, inactive).
+USE TF_DATA_TYPE_FIELD(describedagreement, tags, array_of_tag_objects, no).
+
+// --- DescribedCertificate ---
+USE TF_DATA_TYPE(describedcertificate, describes_the_properties_of_a_certificate).
+USE TF_DATA_TYPE_FIELD(describedcertificate, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedcertificate, activedate, timestamp, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, certificate, string, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, certificatechain, string, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, certificateid, string, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, description, string, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, inactivedate, timestamp, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, notafterdate, timestamp, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, notbeforedate, timestamp, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, serial, string, no).
+USE TF_DATA_TYPE_FIELD(describedcertificate, status, string, no).
+USE TF_VALID_VALUE(describedcertificate, status, active).
+USE TF_VALID_VALUE(describedcertificate, status, pending_rotation).
+USE TF_VALID_VALUE(describedcertificate, status, inactive).
+USE TF_DATA_TYPE_FIELD(describedcertificate, tags, string, no).
+USE TF_VALID_VALUE(describedcertificate, tags, certificate).
+USE TF_VALID_VALUE(describedcertificate, tags, certificate_with_private_key).
+USE TF_DATA_TYPE_FIELD(describedcertificate, usage, string, no).
+USE TF_VALID_VALUE(describedcertificate, usage, signing).
+USE TF_VALID_VALUE(describedcertificate, usage, encryption).
+USE TF_VALID_VALUE(describedcertificate, usage, tls).
+
+// --- DescribedConnector ---
+USE TF_DATA_TYPE(describedconnector, describes_the_parameters_for_the_connector).
+USE TF_DATA_TYPE_FIELD(describedconnector, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedconnector, egresstype, string, yes).
+USE TF_VALID_VALUE(describedconnector, egresstype, service_managed).
+USE TF_VALID_VALUE(describedconnector, egresstype, vpc_lattice).
+USE TF_DATA_TYPE_FIELD(describedconnector, status, string, yes).
+USE TF_VALID_VALUE(describedconnector, status, active).
+USE TF_VALID_VALUE(describedconnector, status, errored).
+USE TF_VALID_VALUE(describedconnector, status, pending).
+USE TF_DATA_TYPE_FIELD(describedconnector, accessrole, string, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, as2config, as2connectorconfig_object, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, connectorid, string, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, egressconfig, describedconnectoregressconfig_object, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, errormessage, string, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, loggingrole, string, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, securitypolicyname, string, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, servicemanagedegressipaddresses, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, sftpconfig, sftpconnectorconfig_object, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, tags, array_of_tag_objects, no).
+USE TF_DATA_TYPE_FIELD(describedconnector, url, string, no).
+
+// --- DescribedConnectorEgressConfig ---
+USE TF_DATA_TYPE(describedconnectoregressconfig, response_structure_containing_the_current_egress).
+USE TF_DATA_TYPE_FIELD(describedconnectoregressconfig, vpclattice, describedconnectorvpclatticeegressconfig_object, no).
+
+// --- DescribedConnectorVpcLatticeEgressConfig ---
+USE TF_DATA_TYPE(describedconnectorvpclatticeegressconfig, vpc_lattice_egress_configuration_details_in_the).
+USE TF_DATA_TYPE_FIELD(describedconnectorvpclatticeegressconfig, resourceconfigurationarn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedconnectorvpclatticeegressconfig, portnumber, integer, no).
+
+// --- DescribedExecution ---
+USE TF_DATA_TYPE(describedexecution, the_details_for_an_execution_object).
+USE TF_DATA_TYPE_FIELD(describedexecution, executionid, string, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, executionrole, string, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, initialfilelocation, filelocation_object, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, loggingconfiguration, loggingconfiguration_object, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, posixprofile, posixprofile_object, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, results, executionresults_object, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, servicemetadata, servicemetadata_object, no).
+USE TF_DATA_TYPE_FIELD(describedexecution, status, string, no).
+USE TF_VALID_VALUE(describedexecution, status, in_progress).
+USE TF_VALID_VALUE(describedexecution, status, completed).
+USE TF_VALID_VALUE(describedexecution, status, exception).
+USE TF_VALID_VALUE(describedexecution, status, handling_exception).
+
+// --- DescribedHostKey ---
+USE TF_DATA_TYPE(describedhostkey, the_details_for_a_server_host).
+USE TF_DATA_TYPE_FIELD(describedhostkey, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedhostkey, dateimported, timestamp, no).
+USE TF_DATA_TYPE_FIELD(describedhostkey, description, string, no).
+USE TF_DATA_TYPE_FIELD(describedhostkey, hostkeyfingerprint, string, no).
+USE TF_DATA_TYPE_FIELD(describedhostkey, hostkeyid, string, no).
+USE TF_DATA_TYPE_FIELD(describedhostkey, tags, string, no).
+
+// --- DescribedIdentityCenterConfig ---
+USE TF_DATA_TYPE(describedidentitycenterconfig, a_structure_that_contains_the_details).
+USE TF_DATA_TYPE_FIELD(describedidentitycenterconfig, applicationarn, string, no).
+USE TF_DATA_TYPE_FIELD(describedidentitycenterconfig, instancearn, string, no).
+USE TF_DATA_TYPE_FIELD(describedidentitycenterconfig, role, string, no).
+
+// --- DescribedProfile ---
+USE TF_DATA_TYPE(describedprofile, the_details_for_a_local_or).
+USE TF_DATA_TYPE_FIELD(describedprofile, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedprofile, as2id, string, no).
+USE TF_DATA_TYPE_FIELD(describedprofile, certificateids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedprofile, profileid, string, no).
+USE TF_DATA_TYPE_FIELD(describedprofile, profiletype, string, no).
+USE TF_VALID_VALUE(describedprofile, profiletype, local).
+USE TF_VALID_VALUE(describedprofile, profiletype, partner).
+USE TF_DATA_TYPE_FIELD(describedprofile, tags, array_of_tag_objects, no).
+
+// --- DescribedSecurityPolicy ---
+USE TF_DATA_TYPE(describedsecuritypolicy, describes_the_properties_of_a_security).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, securitypolicyname, string, yes).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, fips, boolean, no).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, protocols, array_of_strings, no).
+USE TF_VALID_VALUE(describedsecuritypolicy, protocols, sftp).
+USE TF_VALID_VALUE(describedsecuritypolicy, protocols, ftps).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, sshciphers, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, sshhostkeyalgorithms, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, sshkexs, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, sshmacs, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedsecuritypolicy, tlsciphers, string, no).
+USE TF_VALID_VALUE(describedsecuritypolicy, tlsciphers, server).
+USE TF_VALID_VALUE(describedsecuritypolicy, tlsciphers, connector).
+
+// --- DescribedServer ---
+USE TF_DATA_TYPE(describedserver, describes_the_properties_of_a_file).
+USE TF_DATA_TYPE_FIELD(describedserver, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedserver, as2servicemanagedegressipaddresses, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedserver, certificate, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, domain, string, no).
+USE TF_VALID_VALUE(describedserver, domain, s3).
+USE TF_VALID_VALUE(describedserver, domain, efs).
+USE TF_DATA_TYPE_FIELD(describedserver, endpointdetails, endpointdetails_object, no).
+USE TF_DATA_TYPE_FIELD(describedserver, endpointtype, string, no).
+USE TF_VALID_VALUE(describedserver, endpointtype, public).
+USE TF_VALID_VALUE(describedserver, endpointtype, vpc).
+USE TF_VALID_VALUE(describedserver, endpointtype, vpc_endpoint).
+USE TF_DATA_TYPE_FIELD(describedserver, hostkeyfingerprint, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, identityproviderdetails, identityproviderdetails_object, no).
+USE TF_DATA_TYPE_FIELD(describedserver, identityprovidertype, string, no).
+USE TF_VALID_VALUE(describedserver, identityprovidertype, service_managed).
+USE TF_VALID_VALUE(describedserver, identityprovidertype, api_gateway).
+USE TF_VALID_VALUE(describedserver, identityprovidertype, aws_directory_service).
+USE TF_DATA_TYPE_FIELD(describedserver, ipaddresstype, string, no).
+USE TF_VALID_VALUE(describedserver, ipaddresstype, ipv4).
+USE TF_VALID_VALUE(describedserver, ipaddresstype, dualstack).
+USE TF_DATA_TYPE_FIELD(describedserver, loggingrole, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, postauthenticationloginbanner, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, preauthenticationloginbanner, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, protocoldetails, protocoldetails_object, no).
+USE TF_DATA_TYPE_FIELD(describedserver, protocols, array_of_strings, no).
+USE TF_VALID_VALUE(describedserver, protocols, sftp).
+USE TF_VALID_VALUE(describedserver, protocols, ftp).
+USE TF_VALID_VALUE(describedserver, protocols, ftps).
+USE TF_VALID_VALUE(describedserver, protocols, as2).
+USE TF_DATA_TYPE_FIELD(describedserver, s3storageoptions, s3storageoptions_object, no).
+USE TF_DATA_TYPE_FIELD(describedserver, securitypolicyname, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, serverid, string, no).
+USE TF_DATA_TYPE_FIELD(describedserver, state, string, no).
+USE TF_VALID_VALUE(describedserver, state, offline).
+USE TF_VALID_VALUE(describedserver, state, online).
+USE TF_VALID_VALUE(describedserver, state, starting).
+USE TF_VALID_VALUE(describedserver, state, stopping).
+USE TF_VALID_VALUE(describedserver, state, start_failed).
+USE TF_DATA_TYPE_FIELD(describedserver, structuredlogdestinations, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedserver, tags, array_of_tag_objects, no).
+USE TF_DATA_TYPE_FIELD(describedserver, usercount, integer, no).
+USE TF_DATA_TYPE_FIELD(describedserver, workflowdetails, workflowdetails_object, no).
+
+// --- DescribedUser ---
+USE TF_DATA_TYPE(describeduser, describes_the_properties_of_a_user).
+USE TF_DATA_TYPE_FIELD(describeduser, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describeduser, homedirectory, string, no).
+USE TF_DATA_TYPE_FIELD(describeduser, homedirectorymappings, array_of_homedirectorymapentry_objects, no).
+USE TF_DATA_TYPE_FIELD(describeduser, homedirectorytype, string, no).
+USE TF_VALID_VALUE(describeduser, homedirectorytype, path).
+USE TF_VALID_VALUE(describeduser, homedirectorytype, logical).
+USE TF_DATA_TYPE_FIELD(describeduser, policy, string, no).
+USE TF_DATA_TYPE_FIELD(describeduser, posixprofile, posixprofile_object, no).
+USE TF_DATA_TYPE_FIELD(describeduser, role, string, no).
+USE TF_DATA_TYPE_FIELD(describeduser, sshpublickeys, array_of_sshpublickey_objects, no).
+USE TF_DATA_TYPE_FIELD(describeduser, tags, array_of_tag_objects, no).
+USE TF_DATA_TYPE_FIELD(describeduser, username, string, no).
+
+// --- DescribedWebApp ---
+USE TF_DATA_TYPE(describedwebapp, a_structure_that_describes_the_parameters).
+USE TF_DATA_TYPE_FIELD(describedwebapp, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedwebapp, webappid, string, yes).
+USE TF_DATA_TYPE_FIELD(describedwebapp, accessendpoint, string, no).
+USE TF_DATA_TYPE_FIELD(describedwebapp, describedendpointdetails, describedwebappendpointdetails_object, no).
+USE TF_DATA_TYPE_FIELD(describedwebapp, describedidentityproviderdetails, describedwebappidentityproviderdetails_object, no).
+USE TF_DATA_TYPE_FIELD(describedwebapp, endpointtype, string, no).
+USE TF_VALID_VALUE(describedwebapp, endpointtype, public).
+USE TF_VALID_VALUE(describedwebapp, endpointtype, vpc).
+USE TF_DATA_TYPE_FIELD(describedwebapp, tags, array_of_tag_objects, no).
+USE TF_DATA_TYPE_FIELD(describedwebapp, webappendpoint, string, no).
+USE TF_DATA_TYPE_FIELD(describedwebapp, webappendpointpolicy, string, no).
+USE TF_VALID_VALUE(describedwebapp, webappendpointpolicy, fips).
+USE TF_VALID_VALUE(describedwebapp, webappendpointpolicy, standard).
+USE TF_DATA_TYPE_FIELD(describedwebapp, webappunits, webappunits_object, no).
+
+// --- DescribedWebAppCustomization ---
+USE TF_DATA_TYPE(describedwebappcustomization, a_structure_that_contains_the_customization).
+USE TF_DATA_TYPE_FIELD(describedwebappcustomization, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedwebappcustomization, webappid, string, yes).
+USE TF_DATA_TYPE_FIELD(describedwebappcustomization, faviconfile, base64_encoded_binary_data_object, no).
+USE TF_DATA_TYPE_FIELD(describedwebappcustomization, logofile, base64_encoded_binary_data_object, no).
+USE TF_DATA_TYPE_FIELD(describedwebappcustomization, title, string, no).
+
+// --- DescribedWebAppEndpointDetails ---
+USE TF_DATA_TYPE(describedwebappendpointdetails, contains_the_endpoint_configuration_details_for).
+USE TF_DATA_TYPE_FIELD(describedwebappendpointdetails, vpc, describedwebappvpcconfig_object, no).
+
+// --- DescribedWebAppIdentityProviderDetails ---
+USE TF_DATA_TYPE(describedwebappidentityproviderdetails, returns_a_structure_that_contains_the).
+USE TF_DATA_TYPE_FIELD(describedwebappidentityproviderdetails, identitycenterconfig, describedidentitycenterconfig_object, no).
+
+// --- DescribedWebAppVpcConfig ---
+USE TF_DATA_TYPE(describedwebappvpcconfig, contains_the_vpc_configuration_details_for).
+USE TF_DATA_TYPE_FIELD(describedwebappvpcconfig, subnetids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(describedwebappvpcconfig, vpcendpointid, string, no).
+USE TF_DATA_TYPE_FIELD(describedwebappvpcconfig, vpcid, string, no).
+
+// --- DescribedWorkflow ---
+USE TF_DATA_TYPE(describedworkflow, describes_the_properties_of_the_specified).
+USE TF_DATA_TYPE_FIELD(describedworkflow, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(describedworkflow, description, string, no).
+USE TF_DATA_TYPE_FIELD(describedworkflow, onexceptionsteps, array_of_workflowstep_objects, no).
+USE TF_DATA_TYPE_FIELD(describedworkflow, steps, array_of_workflowstep_objects, no).
+USE TF_DATA_TYPE_FIELD(describedworkflow, tags, array_of_tag_objects, no).
+USE TF_DATA_TYPE_FIELD(describedworkflow, workflowid, string, no).
+
+// --- EfsFileLocation ---
+USE TF_DATA_TYPE(efsfilelocation, specifies_the_details_for_the_file).
+USE TF_DATA_TYPE_FIELD(efsfilelocation, filesystemid, string, no).
+USE TF_DATA_TYPE_FIELD(efsfilelocation, path, string, no).
+
+// --- EndpointDetails ---
+USE TF_DATA_TYPE(endpointdetails, the_virtual_private_cloud_vpc_endpoint).
+USE TF_DATA_TYPE_FIELD(endpointdetails, addressallocationids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(endpointdetails, securitygroupids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(endpointdetails, subnetids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(endpointdetails, vpcendpointid, string, no).
+USE TF_DATA_TYPE_FIELD(endpointdetails, vpcid, string, no).
+
+// --- ExecutionError ---
+USE TF_DATA_TYPE(executionerror, specifies_the_error_message_and_type).
+USE TF_DATA_TYPE_FIELD(executionerror, message, string, yes).
+USE TF_VALID_VALUE(executionerror, message, permission_denied).
+USE TF_VALID_VALUE(executionerror, message, custom_step_failed).
+USE TF_VALID_VALUE(executionerror, message, throttled).
+
+// --- ExecutionResults ---
+USE TF_DATA_TYPE(executionresults, specifies_the_steps_in_the_workflow).
+USE TF_DATA_TYPE_FIELD(executionresults, onexceptionsteps, array_of_executionstepresult_objects, no).
+USE TF_DATA_TYPE_FIELD(executionresults, steps, array_of_executionstepresult_objects, no).
+
+// --- ExecutionStepResult ---
+USE TF_DATA_TYPE(executionstepresult, specifies_the_following_details_for_the).
+USE TF_DATA_TYPE_FIELD(executionstepresult, error, executionerror_object, no).
+USE TF_DATA_TYPE_FIELD(executionstepresult, outputs, string, no).
+USE TF_DATA_TYPE_FIELD(executionstepresult, steptype, string, no).
+USE TF_VALID_VALUE(executionstepresult, steptype, copy).
+USE TF_VALID_VALUE(executionstepresult, steptype, custom).
+USE TF_VALID_VALUE(executionstepresult, steptype, tag).
+USE TF_VALID_VALUE(executionstepresult, steptype, delete).
+USE TF_VALID_VALUE(executionstepresult, steptype, decrypt).
+
+// --- FileLocation ---
+USE TF_DATA_TYPE(filelocation, specifies_the_amazon_s3_or_efs).
+USE TF_DATA_TYPE_FIELD(filelocation, efsfilelocation, efsfilelocation_object, no).
+USE TF_DATA_TYPE_FIELD(filelocation, s3filelocation, s3filelocation_object, no).
+
+// --- HomeDirectoryMapEntry ---
+USE TF_DATA_TYPE(homedirectorymapentry, represents_an_object_that_contains_entries).
+USE TF_DATA_TYPE_FIELD(homedirectorymapentry, entry, string, yes).
+USE TF_DATA_TYPE_FIELD(homedirectorymapentry, target, string, no).
+USE TF_VALID_VALUE(homedirectorymapentry, target, file).
+USE TF_VALID_VALUE(homedirectorymapentry, target, directory).
+
+// --- IdentityCenterConfig ---
+USE TF_DATA_TYPE(identitycenterconfig, a_structure_that_describes_the_values).
+USE TF_DATA_TYPE_FIELD(identitycenterconfig, instancearn, string, no).
+USE TF_DATA_TYPE_FIELD(identitycenterconfig, role, string, no).
+
+// --- IdentityProviderDetails ---
+USE TF_DATA_TYPE(identityproviderdetails, returns_information_related_to_the_type).
+USE TF_DATA_TYPE_FIELD(identityproviderdetails, directoryid, string, no).
+USE TF_DATA_TYPE_FIELD(identityproviderdetails, function, string, no).
+USE TF_DATA_TYPE_FIELD(identityproviderdetails, invocationrole, string, no).
+USE TF_DATA_TYPE_FIELD(identityproviderdetails, sftpauthenticationmethods, string, no).
+USE TF_VALID_VALUE(identityproviderdetails, sftpauthenticationmethods, password).
+USE TF_VALID_VALUE(identityproviderdetails, sftpauthenticationmethods, public_key).
+USE TF_VALID_VALUE(identityproviderdetails, sftpauthenticationmethods, public_key_or_password).
+USE TF_DATA_TYPE_FIELD(identityproviderdetails, url, string, no).
+
+// --- InputFileLocation ---
+USE TF_DATA_TYPE(inputfilelocation, specifies_the_location_for_the_file).
+USE TF_DATA_TYPE_FIELD(inputfilelocation, efsfilelocation, efsfilelocation_object, no).
+USE TF_DATA_TYPE_FIELD(inputfilelocation, s3filelocation, s3inputfilelocation_object, no).
+
+// --- ListedAccess ---
+USE TF_DATA_TYPE(listedaccess, lists_the_properties_for_one_or).
+USE TF_DATA_TYPE_FIELD(listedaccess, externalid, string, no).
+USE TF_DATA_TYPE_FIELD(listedaccess, homedirectory, string, no).
+USE TF_DATA_TYPE_FIELD(listedaccess, homedirectorytype, string, no).
+USE TF_VALID_VALUE(listedaccess, homedirectorytype, path).
+USE TF_VALID_VALUE(listedaccess, homedirectorytype, logical).
+USE TF_DATA_TYPE_FIELD(listedaccess, role, string, no).
+
+// --- ListedAgreement ---
+USE TF_DATA_TYPE(listedagreement, describes_the_properties_of_an_agreement).
+USE TF_DATA_TYPE_FIELD(listedagreement, agreementid, string, no).
+USE TF_DATA_TYPE_FIELD(listedagreement, arn, string, no).
+USE TF_DATA_TYPE_FIELD(listedagreement, description, string, no).
+USE TF_DATA_TYPE_FIELD(listedagreement, localprofileid, string, no).
+USE TF_DATA_TYPE_FIELD(listedagreement, partnerprofileid, string, no).
+USE TF_DATA_TYPE_FIELD(listedagreement, serverid, string, no).
+USE TF_DATA_TYPE_FIELD(listedagreement, status, string, no).
+USE TF_VALID_VALUE(listedagreement, status, active).
+USE TF_VALID_VALUE(listedagreement, status, inactive).
+
+// --- ListedCertificate ---
+USE TF_DATA_TYPE(listedcertificate, describes_the_properties_of_a_certificate).
+USE TF_DATA_TYPE_FIELD(listedcertificate, activedate, timestamp, no).
+USE TF_DATA_TYPE_FIELD(listedcertificate, arn, string, no).
+USE TF_DATA_TYPE_FIELD(listedcertificate, certificateid, string, no).
+USE TF_DATA_TYPE_FIELD(listedcertificate, description, string, no).
+USE TF_DATA_TYPE_FIELD(listedcertificate, inactivedate, timestamp, no).
+USE TF_DATA_TYPE_FIELD(listedcertificate, status, string, no).
+USE TF_VALID_VALUE(listedcertificate, status, certificate).
+USE TF_VALID_VALUE(listedcertificate, status, certificate_with_private_key).
+USE TF_DATA_TYPE_FIELD(listedcertificate, usage, string, no).
+USE TF_VALID_VALUE(listedcertificate, usage, signing).
+USE TF_VALID_VALUE(listedcertificate, usage, encryption).
+USE TF_VALID_VALUE(listedcertificate, usage, tls).
+
+// --- ListedConnector ---
+USE TF_DATA_TYPE(listedconnector, returns_details_of_the_connector_that).
+USE TF_DATA_TYPE_FIELD(listedconnector, arn, string, no).
+USE TF_DATA_TYPE_FIELD(listedconnector, connectorid, string, no).
+USE TF_DATA_TYPE_FIELD(listedconnector, url, string, no).
+
+// --- ListedExecution ---
+USE TF_DATA_TYPE(listedexecution, returns_properties_of_the_execution_that).
+USE TF_DATA_TYPE_FIELD(listedexecution, executionid, string, no).
+USE TF_DATA_TYPE_FIELD(listedexecution, initialfilelocation, filelocation_object, no).
+USE TF_DATA_TYPE_FIELD(listedexecution, servicemetadata, servicemetadata_object, no).
+USE TF_DATA_TYPE_FIELD(listedexecution, status, string, no).
+USE TF_VALID_VALUE(listedexecution, status, in_progress).
+USE TF_VALID_VALUE(listedexecution, status, completed).
+USE TF_VALID_VALUE(listedexecution, status, exception).
+USE TF_VALID_VALUE(listedexecution, status, handling_exception).
+
+// --- ListedHostKey ---
+USE TF_DATA_TYPE(listedhostkey, returns_properties_of_the_host_key).
+USE TF_DATA_TYPE_FIELD(listedhostkey, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(listedhostkey, dateimported, timestamp, no).
+USE TF_DATA_TYPE_FIELD(listedhostkey, description, string, no).
+USE TF_DATA_TYPE_FIELD(listedhostkey, fingerprint, string, no).
+USE TF_DATA_TYPE_FIELD(listedhostkey, hostkeyid, string, no).
+
+// --- ListedProfile ---
+USE TF_DATA_TYPE(listedprofile, returns_the_properties_of_the_profile).
+USE TF_DATA_TYPE_FIELD(listedprofile, arn, string, no).
+USE TF_DATA_TYPE_FIELD(listedprofile, as2id, string, no).
+USE TF_DATA_TYPE_FIELD(listedprofile, profileid, string, no).
+USE TF_DATA_TYPE_FIELD(listedprofile, profiletype, string, no).
+USE TF_VALID_VALUE(listedprofile, profiletype, local).
+USE TF_VALID_VALUE(listedprofile, profiletype, partner).
+
+// --- ListedServer ---
+USE TF_DATA_TYPE(listedserver, returns_properties_of_a_file_transfer).
+USE TF_DATA_TYPE_FIELD(listedserver, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(listedserver, domain, string, no).
+USE TF_VALID_VALUE(listedserver, domain, s3).
+USE TF_VALID_VALUE(listedserver, domain, efs).
+USE TF_DATA_TYPE_FIELD(listedserver, endpointtype, string, no).
+USE TF_VALID_VALUE(listedserver, endpointtype, public).
+USE TF_VALID_VALUE(listedserver, endpointtype, vpc).
+USE TF_VALID_VALUE(listedserver, endpointtype, vpc_endpoint).
+USE TF_DATA_TYPE_FIELD(listedserver, identityprovidertype, string, no).
+USE TF_VALID_VALUE(listedserver, identityprovidertype, service_managed).
+USE TF_VALID_VALUE(listedserver, identityprovidertype, api_gateway).
+USE TF_VALID_VALUE(listedserver, identityprovidertype, aws_directory_service).
+USE TF_DATA_TYPE_FIELD(listedserver, loggingrole, string, no).
+USE TF_DATA_TYPE_FIELD(listedserver, serverid, string, no).
+USE TF_DATA_TYPE_FIELD(listedserver, state, string, no).
+USE TF_VALID_VALUE(listedserver, state, offline).
+USE TF_VALID_VALUE(listedserver, state, online).
+USE TF_VALID_VALUE(listedserver, state, starting).
+USE TF_VALID_VALUE(listedserver, state, stopping).
+USE TF_VALID_VALUE(listedserver, state, start_failed).
+USE TF_DATA_TYPE_FIELD(listedserver, usercount, integer, no).
+
+// --- ListedUser ---
+USE TF_DATA_TYPE(listeduser, returns_properties_of_the_user_that).
+USE TF_DATA_TYPE_FIELD(listeduser, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(listeduser, homedirectory, string, no).
+USE TF_DATA_TYPE_FIELD(listeduser, homedirectorytype, string, no).
+USE TF_VALID_VALUE(listeduser, homedirectorytype, path).
+USE TF_VALID_VALUE(listeduser, homedirectorytype, logical).
+USE TF_DATA_TYPE_FIELD(listeduser, role, string, no).
+USE TF_DATA_TYPE_FIELD(listeduser, sshpublickeycount, integer, no).
+USE TF_DATA_TYPE_FIELD(listeduser, username, string, no).
+
+// --- ListedWebApp ---
+USE TF_DATA_TYPE(listedwebapp, a_structure_that_contains_details_for).
+USE TF_DATA_TYPE_FIELD(listedwebapp, arn, string, yes).
+USE TF_DATA_TYPE_FIELD(listedwebapp, webappid, string, yes).
+USE TF_DATA_TYPE_FIELD(listedwebapp, accessendpoint, string, no).
+USE TF_DATA_TYPE_FIELD(listedwebapp, endpointtype, string, no).
+USE TF_VALID_VALUE(listedwebapp, endpointtype, public).
+USE TF_VALID_VALUE(listedwebapp, endpointtype, vpc).
+USE TF_DATA_TYPE_FIELD(listedwebapp, webappendpoint, string, no).
+
+// --- ListedWorkflow ---
+USE TF_DATA_TYPE(listedworkflow, contains_the_identifier_text_description_and).
+USE TF_DATA_TYPE_FIELD(listedworkflow, arn, string, no).
+USE TF_DATA_TYPE_FIELD(listedworkflow, description, string, no).
+USE TF_DATA_TYPE_FIELD(listedworkflow, workflowid, string, no).
+
+// --- LoggingConfiguration ---
+USE TF_DATA_TYPE(loggingconfiguration, consists_of_the_logging_role_and).
+USE TF_DATA_TYPE_FIELD(loggingconfiguration, loggingrole, string, no).
+USE TF_DATA_TYPE_FIELD(loggingconfiguration, loggroupname, string, no).
+
+// --- PosixProfile ---
+USE TF_DATA_TYPE(posixprofile, the_full_posix_identity_including_user).
+USE TF_DATA_TYPE_FIELD(posixprofile, gid, long, yes).
+USE TF_DATA_TYPE_FIELD(posixprofile, uid, long, yes).
+USE TF_DATA_TYPE_FIELD(posixprofile, secondarygids, array_of_longs, no).
+
+// --- ProtocolDetails ---
+USE TF_DATA_TYPE(protocoldetails, the_protocol_settings_that_are_configured).
+USE TF_DATA_TYPE_FIELD(protocoldetails, as2transports, array_of_strings, no).
+USE TF_VALID_VALUE(protocoldetails, as2transports, http).
+USE TF_DATA_TYPE_FIELD(protocoldetails, passiveip, string, no).
+USE TF_DATA_TYPE_FIELD(protocoldetails, setstatoption, string, no).
+USE TF_VALID_VALUE(protocoldetails, setstatoption, default).
+USE TF_VALID_VALUE(protocoldetails, setstatoption, enable_no_op).
+USE TF_DATA_TYPE_FIELD(protocoldetails, tlssessionresumptionmode, string, no).
+USE TF_VALID_VALUE(protocoldetails, tlssessionresumptionmode, disabled).
+USE TF_VALID_VALUE(protocoldetails, tlssessionresumptionmode, enabled).
+USE TF_VALID_VALUE(protocoldetails, tlssessionresumptionmode, enforced).
+
+// --- S3FileLocation ---
+USE TF_DATA_TYPE(s3filelocation, specifies_the_details_for_the_file).
+USE TF_DATA_TYPE_FIELD(s3filelocation, bucket, string, no).
+USE TF_DATA_TYPE_FIELD(s3filelocation, etag, string, no).
+USE TF_DATA_TYPE_FIELD(s3filelocation, key, string, no).
+USE TF_DATA_TYPE_FIELD(s3filelocation, versionid, string, no).
+
+// --- S3InputFileLocation ---
+USE TF_DATA_TYPE(s3inputfilelocation, specifies_the_customer_input_amazon_s3).
+USE TF_DATA_TYPE_FIELD(s3inputfilelocation, bucket, string, no).
+USE TF_DATA_TYPE_FIELD(s3inputfilelocation, key, string, no).
+
+// --- S3StorageOptions ---
+USE TF_DATA_TYPE(s3storageoptions, the_amazon_s3_storage_options_that).
+USE TF_DATA_TYPE_FIELD(s3storageoptions, directorylistingoptimization, string, no).
+USE TF_VALID_VALUE(s3storageoptions, directorylistingoptimization, enabled).
+USE TF_VALID_VALUE(s3storageoptions, directorylistingoptimization, disabled).
+
+// --- S3Tag ---
+USE TF_DATA_TYPE(s3tag, specifies_the_key_value_pair_that_are).
+USE TF_DATA_TYPE_FIELD(s3tag, key, string, yes).
+USE TF_DATA_TYPE_FIELD(s3tag, value, string, yes).
+
+// --- ServiceMetadata ---
+USE TF_DATA_TYPE(servicemetadata, a_container_object_for_the_session).
+USE TF_DATA_TYPE_FIELD(servicemetadata, userdetails, userdetails_object, yes).
+
+// --- SftpConnectorConfig ---
+USE TF_DATA_TYPE(sftpconnectorconfig, contains_the_details_for_an_sftp).
+USE TF_DATA_TYPE_FIELD(sftpconnectorconfig, maxconcurrentconnections, integer, no).
+USE TF_DATA_TYPE_FIELD(sftpconnectorconfig, trustedhostkeys, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(sftpconnectorconfig, usersecretid, string, no).
+
+// --- SftpConnectorConnectionDetails ---
+USE TF_DATA_TYPE(sftpconnectorconnectiondetails, contains_the_details_for_an_sftp).
+USE TF_DATA_TYPE_FIELD(sftpconnectorconnectiondetails, hostkey, string, no).
+
+// --- SshPublicKey ---
+USE TF_DATA_TYPE(sshpublickey, provides_information_about_the_public_secure).
+USE TF_DATA_TYPE_FIELD(sshpublickey, dateimported, timestamp, yes).
+USE TF_DATA_TYPE_FIELD(sshpublickey, sshpublickeybody, string, yes).
+USE TF_DATA_TYPE_FIELD(sshpublickey, sshpublickeyid, string, yes).
+
+// --- Tag ---
+USE TF_DATA_TYPE(tag, creates_a_key_value_pair_for_a).
+USE TF_DATA_TYPE_FIELD(tag, key, string, yes).
+USE TF_DATA_TYPE_FIELD(tag, value, string, yes).
+
+// --- TagStepDetails ---
+USE TF_DATA_TYPE(tagstepdetails, each_step_type_has_its_own).
+USE TF_DATA_TYPE_FIELD(tagstepdetails, name, string, no).
+USE TF_DATA_TYPE_FIELD(tagstepdetails, sourcefilelocation, string, no).
+USE TF_DATA_TYPE_FIELD(tagstepdetails, tags, array_of_s3tag_objects, no).
+
+// --- UpdateConnectorEgressConfig ---
+USE TF_DATA_TYPE(updateconnectoregressconfig, structure_for_updating_the_egress_configuration).
+USE TF_DATA_TYPE_FIELD(updateconnectoregressconfig, vpclattice, updateconnectorvpclatticeegressconfig_object, no).
+
+// --- UpdateConnectorVpcLatticeEgressConfig ---
+USE TF_DATA_TYPE(updateconnectorvpclatticeegressconfig, vpc_lattice_egress_configuration_updates_for_modifying).
+USE TF_DATA_TYPE_FIELD(updateconnectorvpclatticeegressconfig, portnumber, integer, no).
+USE TF_DATA_TYPE_FIELD(updateconnectorvpclatticeegressconfig, resourceconfigurationarn, string, no).
+
+// --- UpdateWebAppEndpointDetails ---
+USE TF_DATA_TYPE(updatewebappendpointdetails, contains_the_endpoint_configuration_details_for).
+USE TF_DATA_TYPE_FIELD(updatewebappendpointdetails, vpc, updatewebappvpcconfig_object, no).
+
+// --- UpdateWebAppIdentityCenterConfig ---
+USE TF_DATA_TYPE(updatewebappidentitycenterconfig, a_structure_that_describes_the_values).
+USE TF_DATA_TYPE_FIELD(updatewebappidentitycenterconfig, role, string, no).
+
+// --- UpdateWebAppIdentityProviderDetails ---
+USE TF_DATA_TYPE(updatewebappidentityproviderdetails, a_union_that_contains_the_updatewebappidentitycenterconfig).
+USE TF_DATA_TYPE_FIELD(updatewebappidentityproviderdetails, identitycenterconfig, updatewebappidentitycenterconfig_object, no).
+
+// --- UpdateWebAppVpcConfig ---
+USE TF_DATA_TYPE(updatewebappvpcconfig, contains_the_vpc_configuration_settings_for).
+USE TF_DATA_TYPE_FIELD(updatewebappvpcconfig, subnetids, array_of_strings, no).
+
+// --- UserDetails ---
+USE TF_DATA_TYPE(userdetails, specifies_the_user_name_server_id).
+USE TF_DATA_TYPE_FIELD(userdetails, serverid, string, yes).
+USE TF_DATA_TYPE_FIELD(userdetails, username, string, yes).
+USE TF_DATA_TYPE_FIELD(userdetails, sessionid, string, no).
+
+// --- WebAppEndpointDetails ---
+USE TF_DATA_TYPE(webappendpointdetails, contains_the_endpoint_configuration_for_a).
+USE TF_DATA_TYPE_FIELD(webappendpointdetails, vpc, webappvpcconfig_object, no).
+
+// --- WebAppIdentityProviderDetails ---
+USE TF_DATA_TYPE(webappidentityproviderdetails, a_union_that_contains_the_identitycenterconfig).
+USE TF_DATA_TYPE_FIELD(webappidentityproviderdetails, identitycenterconfig, identitycenterconfig_object, no).
+
+// --- WebAppUnits ---
+USE TF_DATA_TYPE(webappunits, contains_an_integer_value_that_represents).
+USE TF_DATA_TYPE_FIELD(webappunits, provisioned, integer, no).
+
+// --- WebAppVpcConfig ---
+USE TF_DATA_TYPE(webappvpcconfig, contains_the_vpc_configuration_settings_for).
+USE TF_DATA_TYPE_FIELD(webappvpcconfig, securitygroupids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(webappvpcconfig, subnetids, array_of_strings, no).
+USE TF_DATA_TYPE_FIELD(webappvpcconfig, vpcid, string, no).
+
+// --- WorkflowDetail ---
+USE TF_DATA_TYPE(workflowdetail, specifies_the_workflow_id_for_the).
+USE TF_DATA_TYPE_FIELD(workflowdetail, executionrole, string, yes).
+USE TF_DATA_TYPE_FIELD(workflowdetail, workflowid, string, yes).
+
+// --- WorkflowDetails ---
+USE TF_DATA_TYPE(workflowdetails, container_for_the_workflowdetail_data_type).
+USE TF_DATA_TYPE_FIELD(workflowdetails, onpartialupload, array_of_workflowdetail_objects, no).
+USE TF_DATA_TYPE_FIELD(workflowdetails, onupload, array_of_workflowdetail_objects, no).
+
+// --- WorkflowStep ---
+USE TF_DATA_TYPE(workflowstep, the_basic_building_block_of_a).
+USE TF_DATA_TYPE_FIELD(workflowstep, copystepdetails, copystepdetails_object, no).
+USE TF_DATA_TYPE_FIELD(workflowstep, customstepdetails, customstepdetails_object, no).
+USE TF_DATA_TYPE_FIELD(workflowstep, decryptstepdetails, decryptstepdetails_object, no).
+USE TF_DATA_TYPE_FIELD(workflowstep, deletestepdetails, deletestepdetails_object, no).
+USE TF_DATA_TYPE_FIELD(workflowstep, tagstepdetails, string, no).
+USE TF_VALID_VALUE(workflowstep, tagstepdetails, copy).
+USE TF_VALID_VALUE(workflowstep, tagstepdetails, custom).
+USE TF_VALID_VALUE(workflowstep, tagstepdetails, tag).
+USE TF_VALID_VALUE(workflowstep, tagstepdetails, delete).
+USE TF_VALID_VALUE(workflowstep, tagstepdetails, decrypt).
+

@@ -1,0 +1,34 @@
+MODULE k8s.helm.compat.generated.
+
+// Run with:
+//   ./tools/generate_k8s_helm_compat.py
+//   ./bin/zil preprocess examples/k8s-helm-compat.zc /tmp/k8s_helm_compat.pre.zc libsets/k8s-helm-compat
+//   ./bin/zil /tmp/k8s_helm_compat.pre.zc
+
+USE KHC_DOC(k8s_helm_generated, generator, dev).
+USE KHC_COMPAT_PROFILE(profile_default, true, 300).
+USE KHC_CHART(chart_data_sync, data_sync, n_1_2_3, n_2_0_0).
+USE KHC_CHART_VALUE(chart_data_sync, feature_crdsync, bool, true, false).
+USE KHC_CHART_VALUE(chart_data_sync, image_repository, string, corp_data_sync, true).
+USE KHC_CHART_VALUE(chart_data_sync, image_tag, string, v2, true).
+USE KHC_CHART_VALUE(chart_data_sync, service_port, number, n_8443, true).
+USE KHC_CRD(synccontract_sync_example_io_v1, sync_example_io, v1, synccontract, synccontracts, namespaced).
+USE KHC_TEMPLATE_RESOURCE(deployment_data_sync, chart_data_sync, apps_v1, deployment, data_sync).
+USE KHC_TEMPLATE_RESOURCE(synccontract_contract_a, chart_data_sync, sync_example_io_v1, synccontract, contract_a).
+USE KHC_RELEASE(prod_migration, chart_data_sync, migration, profile_default).
+USE KHC_RELEASE_VALUE(prod_migration, feature_crdsync, true).
+USE KHC_RELEASE_VALUE(prod_migration, image_repository, corp_data_sync).
+USE KHC_RELEASE_VALUE(prod_migration, image_tag, v2).
+USE KHC_RELEASE_VALUE(prod_migration, service_port, n_8443).
+
+QUERY khc_releases:
+FIND ?release ?namespace WHERE ?release#kind@entity:k8s_release AND ?release#namespace@?namespace.
+
+QUERY khc_missing_required_values:
+FIND ?release ?path WHERE ?release#missing_required_value@?path.
+
+QUERY khc_drift_candidates:
+FIND ?release ?res WHERE ?release#drift_candidate@?res.
+
+QUERY khc_release_requirements:
+FIND ?release ?crd WHERE ?release#requires_crd@?crd.

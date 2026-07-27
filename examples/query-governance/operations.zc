@@ -1,0 +1,15 @@
+MODULE query.operations.
+
+QUERY_PACK operations [queries=[services, dependencies], must_return=[services]].
+DSL_PROFILE operations [query_pack=operations, planner_hint=high_selectivity_first].
+
+service:api#kind@entity:service.
+service:db#kind@entity:service.
+service:api#depends_on@service:db.
+node:fixed#anchor@service:api.
+
+QUERY services:
+FIND ?service WHERE ?service#kind@entity:service.
+
+QUERY dependencies:
+FIND ?dependency WHERE ?service#depends_on@?dependency AND node:fixed#anchor@?service.

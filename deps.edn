@@ -1,0 +1,26 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/data.json {:mvn/version "2.5.1"}
+        datascript/datascript {:mvn/version "1.7.8"}
+        org.xerial/sqlite-jdbc {:mvn/version "3.48.0.0"}}
+ :aliases {:test {:extra-paths ["test"]
+                  :main-opts ["-m" "zil.test-runner"]}
+           :tuple-lean {:main-opts ["-m" "zil.bridge.tuple-lean"]}
+           :library {:main-opts ["-m" "zil.control.adapters" "library"]}
+           :conformance {:main-opts ["-m" "zil.control.conformance"]}
+           :port-gate {:main-opts ["-m" "zil.port.gate-runner"]}
+           :verify-generated {:main-opts ["-m" "zil.port.verify"]}
+           :embedded-native {:main-opts ["-m" "zil.control.adapters" "embedded"]}
+           :retirement {:main-opts ["-m" "zil.port.retirement"]}
+           :workflow-native {:main-opts ["-m" "zil.bridge.workflow-runner"]}
+           :proof-tokens {:main-opts ["-m" "zil.bridge.proof-token"]}
+           :theorem-locks {:main-opts ["-m" "zil.bridge.theorem-lock"]}
+           :release-attest {:main-opts ["-m" "zil.release.attestation"]}
+           :macro-native {:main-opts ["-m" "zil.control.adapters" "macro"]}
+           :exchange {:main-opts ["-m" "zil.worker.client"]}
+           :control {:main-opts ["-m" "zil.control.cli"]}
+           :control-store {:main-opts ["-m" "zil.control.store-cli"]}
+           :evaluate-runtime {:main-opts ["-m" "zil.evaluation.cli"]}
+           :plugins {:main-opts ["-m" "zil.plugin.cli"]}
+           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+                   :ns-default build}}}

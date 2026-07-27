@@ -1,0 +1,9 @@
+{:workflow_id "workflow:release"
+ :request_id "request:consume"
+ :base_revision "rev:42"
+ :context_bundle_id "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ :plugin_id "-"
+ :token_id "token:release"
+ :action_id "action:release"
+ :lean_status "consumed"
+ :observed_outputs [{:artifact "artifact:release" :hash "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}]}

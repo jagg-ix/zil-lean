@@ -1,0 +1,184 @@
+MODULE incident.workflow.tool.dsl.analysis.demo.
+
+// Model synthesized from enterprise incident + postmortem practices.
+// Goal: infer what the tool should include and which DSL constructs are needed.
+//
+// Run:
+//   ./bin/zil preprocess examples/incident-workflow-tool-dsl-analysis.zc /tmp/iwf.pre.zc
+//   ./bin/zil /tmp/iwf.pre.zc
+
+// Lifecycle states.
+USE IWF_STATE(declared, 1).
+USE IWF_STATE(investigating, 2).
+USE IWF_STATE(active, 3).
+USE IWF_STATE(identified, 4).
+USE IWF_STATE(monitoring, 5).
+USE IWF_STATE(resolved, 6).
+USE IWF_STATE(postmortem_open, 7).
+USE IWF_STATE(postmortem_closed, 8).
+
+// Core events.
+USE IWF_EVENT(incident_declared, detection).
+USE IWF_EVENT(lead_assigned, command).
+USE IWF_EVENT(status_update_sent, communication).
+USE IWF_EVENT(mitigation_executed, response).
+USE IWF_EVENT(handoff_acknowledged, command).
+USE IWF_EVENT(incident_resolved, closure).
+USE IWF_EVENT(postmortem_published, learning).
+USE IWF_EVENT(action_item_closed, learning).
+
+// Typical transitions.
+USE IWF_TRANSITION(declared, incident_declared, investigating).
+USE IWF_TRANSITION(investigating, lead_assigned, active).
+USE IWF_TRANSITION(active, mitigation_executed, identified).
+USE IWF_TRANSITION(identified, status_update_sent, monitoring).
+USE IWF_TRANSITION(monitoring, incident_resolved, resolved).
+USE IWF_TRANSITION(resolved, postmortem_published, postmortem_open).
+USE IWF_TRANSITION(postmortem_open, action_item_closed, postmortem_closed).
+
+// Roles.
+USE IWF_ROLE(incident_lead, command).
+USE IWF_ROLE(responder, technical).
+USE IWF_ROLE(comms_liaison, communications).
+USE IWF_ROLE(scribe, documentation).
+
+// Information planes / channels.
+USE IWF_CHANNEL(incident_chat, command_plane, synchronous).
+USE IWF_CHANNEL(war_room_call, command_plane, synchronous).
+USE IWF_CHANNEL(shared_state_doc, state_plane, asynchronous).
+USE IWF_CHANNEL(incident_ticket, state_plane, asynchronous).
+USE IWF_CHANNEL(status_page, external_plane, asynchronous).
+USE IWF_CHANNEL(support_case, external_plane, asynchronous).
+
+// Durable artifacts.
+USE IWF_ARTIFACT(timeline_log, state_plane).
+USE IWF_ARTIFACT(resolution_summary, external_plane).
+USE IWF_ARTIFACT(postmortem_doc, state_plane).
+USE IWF_ARTIFACT(action_tracker, state_plane).
+
+// Requirement set derived from practical incident handling.
+USE IWF_REQUIREMENT(single_owner_at_a_time, high, governance).
+USE IWF_REQ_TAG(single_owner_at_a_time, single_owner).
+USE IWF_REQ_TAG(single_owner_at_a_time, invariants).
+USE IWF_REQ_NEEDS_ROLE(single_owner_at_a_time, incident_lead).
+USE IWF_REQ_NEEDS_EVENT(single_owner_at_a_time, lead_assigned).
+USE IWF_REQ_NEEDS_EVENT(single_owner_at_a_time, handoff_acknowledged).
+USE IWF_REQ_SOURCE(single_owner_at_a_time, google_sre).
+USE IWF_REQ_SOURCE(single_owner_at_a_time, pagerduty).
+USE IWF_REQ_SOURCE(single_owner_at_a_time, gitlab).
+
+USE IWF_REQUIREMENT(role_split_during_response, high, collaboration).
+USE IWF_REQ_TAG(role_split_during_response, role_split).
+USE IWF_REQ_NEEDS_ROLE(role_split_during_response, incident_lead).
+USE IWF_REQ_NEEDS_ROLE(role_split_during_response, responder).
+USE IWF_REQ_NEEDS_ROLE(role_split_during_response, comms_liaison).
+USE IWF_REQ_SOURCE(role_split_during_response, google_sre).
+USE IWF_REQ_SOURCE(role_split_during_response, pagerduty).
+
+USE IWF_REQUIREMENT(multi_plane_information_flow, high, communication).
+USE IWF_REQ_TAG(multi_plane_information_flow, multi_plane_comms).
+USE IWF_REQ_TAG(multi_plane_information_flow, timeline).
+USE IWF_REQ_NEEDS_CHANNEL(multi_plane_information_flow, incident_chat).
+USE IWF_REQ_NEEDS_CHANNEL(multi_plane_information_flow, shared_state_doc).
+USE IWF_REQ_NEEDS_CHANNEL(multi_plane_information_flow, status_page).
+USE IWF_REQ_NEEDS_ARTIFACT(multi_plane_information_flow, timeline_log).
+USE IWF_REQ_SOURCE(multi_plane_information_flow, gitlab).
+USE IWF_REQ_SOURCE(multi_plane_information_flow, redhat).
+
+USE IWF_REQUIREMENT(stateful_incident_lifecycle, high, control_loop).
+USE IWF_REQ_TAG(stateful_incident_lifecycle, state_machine).
+USE IWF_REQ_NEEDS_STATE(stateful_incident_lifecycle, investigating).
+USE IWF_REQ_NEEDS_STATE(stateful_incident_lifecycle, active).
+USE IWF_REQ_NEEDS_STATE(stateful_incident_lifecycle, identified).
+USE IWF_REQ_NEEDS_STATE(stateful_incident_lifecycle, monitoring).
+USE IWF_REQ_NEEDS_STATE(stateful_incident_lifecycle, resolved).
+USE IWF_REQ_SOURCE(stateful_incident_lifecycle, gitlab).
+USE IWF_REQ_SOURCE(stateful_incident_lifecycle, solaris_fma).
+
+USE IWF_REQUIREMENT(external_updates_must_reference_state, high, communication).
+USE IWF_REQ_TAG(external_updates_must_reference_state, external_updates).
+USE IWF_REQ_NEEDS_CHANNEL(external_updates_must_reference_state, status_page).
+USE IWF_REQ_NEEDS_CHANNEL(external_updates_must_reference_state, support_case).
+USE IWF_REQ_NEEDS_EVENT(external_updates_must_reference_state, status_update_sent).
+USE IWF_REQ_SOURCE(external_updates_must_reference_state, redhat).
+USE IWF_REQ_SOURCE(external_updates_must_reference_state, gitlab).
+
+USE IWF_REQUIREMENT(resolution_summary_before_closure, medium, closure).
+USE IWF_REQ_TAG(resolution_summary_before_closure, resolution_summary).
+USE IWF_REQ_NEEDS_ARTIFACT(resolution_summary_before_closure, resolution_summary).
+USE IWF_REQ_NEEDS_EVENT(resolution_summary_before_closure, incident_resolved).
+USE IWF_REQ_SOURCE(resolution_summary_before_closure, redhat).
+
+USE IWF_REQUIREMENT(blameless_postmortem_with_actions, high, learning).
+USE IWF_REQ_TAG(blameless_postmortem_with_actions, postmortem).
+USE IWF_REQ_TAG(blameless_postmortem_with_actions, action_tracking).
+USE IWF_REQ_NEEDS_ARTIFACT(blameless_postmortem_with_actions, postmortem_doc).
+USE IWF_REQ_NEEDS_ARTIFACT(blameless_postmortem_with_actions, action_tracker).
+USE IWF_REQ_NEEDS_EVENT(blameless_postmortem_with_actions, postmortem_published).
+USE IWF_REQ_SOURCE(blameless_postmortem_with_actions, google_sre).
+
+USE IWF_REQUIREMENT(fix_proposal_must_include_risk_and_rollback, high, remediation).
+USE IWF_REQ_TAG(fix_proposal_must_include_risk_and_rollback, fix_proposal).
+USE IWF_REQ_SOURCE(fix_proposal_must_include_risk_and_rollback, redhat_quay_postmortem).
+USE IWF_REQ_SOURCE(fix_proposal_must_include_risk_and_rollback, sre_practice).
+
+USE IWF_REQUIREMENT(test_gate_matrix_for_changes, high, verification).
+USE IWF_REQ_TAG(test_gate_matrix_for_changes, test_gates).
+USE IWF_REQ_SOURCE(test_gate_matrix_for_changes, sre_practice).
+USE IWF_REQ_SOURCE(test_gate_matrix_for_changes, redhat_quay_postmortem).
+
+USE IWF_REQUIREMENT(no_postmortem_close_with_open_critical_actions, high, invariants).
+USE IWF_REQ_TAG(no_postmortem_close_with_open_critical_actions, invariants).
+USE IWF_REQ_TAG(no_postmortem_close_with_open_critical_actions, action_tracking).
+USE IWF_REQ_SOURCE(no_postmortem_close_with_open_critical_actions, sre_practice).
+
+// Requirement dependency graph.
+USE IWF_REQ_IMPLIES(stateful_incident_lifecycle, external_updates_must_reference_state).
+USE IWF_REQ_IMPLIES(multi_plane_information_flow, external_updates_must_reference_state).
+USE IWF_REQ_IMPLIES(blameless_postmortem_with_actions, no_postmortem_close_with_open_critical_actions).
+USE IWF_REQ_IMPLIES(test_gate_matrix_for_changes, fix_proposal_must_include_risk_and_rollback).
+USE IWF_REQ_IMPLIES(single_owner_at_a_time, role_split_during_response).
+
+// Invariants for operations quality.
+USE IWF_INVARIANT(exactly_one_incident_lead_active, high).
+USE IWF_INVARIANT_REQUIRES(exactly_one_incident_lead_active, single_owner_at_a_time).
+
+USE IWF_INVARIANT(resolve_requires_summary, high).
+USE IWF_INVARIANT_REQUIRES(resolve_requires_summary, resolution_summary_before_closure).
+
+USE IWF_INVARIANT(postmortem_close_requires_critical_actions_closed, high).
+USE IWF_INVARIANT_REQUIRES(postmortem_close_requires_critical_actions_closed, no_postmortem_close_with_open_critical_actions).
+
+// Data shape to model incident problem solving.
+USE IWF_MODEL_FIELD(problem, incident_id).
+USE IWF_MODEL_FIELD(problem, severity).
+USE IWF_MODEL_FIELD(problem, services).
+USE IWF_MODEL_FIELD(problem, impact).
+USE IWF_MODEL_FIELD(problem, symptoms).
+USE IWF_MODEL_FIELD(problem, suspected_causes).
+USE IWF_MODEL_FIELD(problem, evidence_refs).
+USE IWF_MODEL_FIELD(problem, owner).
+USE IWF_MODEL_FIELD(problem, state).
+
+USE IWF_MODEL_FIELD(test_plan, repro_test).
+USE IWF_MODEL_FIELD(test_plan, mitigation_safety_test).
+USE IWF_MODEL_FIELD(test_plan, rollback_test).
+USE IWF_MODEL_FIELD(test_plan, regression_test).
+USE IWF_MODEL_FIELD(test_plan, acceptance_criteria).
+
+USE IWF_MODEL_FIELD(fix_proposal, hypothesis).
+USE IWF_MODEL_FIELD(fix_proposal, change_plan).
+USE IWF_MODEL_FIELD(fix_proposal, risk).
+USE IWF_MODEL_FIELD(fix_proposal, blast_radius).
+USE IWF_MODEL_FIELD(fix_proposal, rollback).
+USE IWF_MODEL_FIELD(fix_proposal, validation_signals).
+USE IWF_MODEL_FIELD(fix_proposal, decision).
+USE IWF_MODEL_FIELD(fix_proposal, post_deploy_result).
+
+USE IWF_MODEL_FIELD(postmortem, trigger).
+USE IWF_MODEL_FIELD(postmortem, root_cause).
+USE IWF_MODEL_FIELD(postmortem, timeline).
+USE IWF_MODEL_FIELD(postmortem, what_worked).
+USE IWF_MODEL_FIELD(postmortem, what_failed).
+USE IWF_MODEL_FIELD(postmortem, actions_owner_due_status).
+

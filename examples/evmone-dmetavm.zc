@@ -1,0 +1,182 @@
+MODULE dmetavm.evmone.model.
+
+// D-MetaVM model (ZIL-first) oriented to evmone execution structure.
+// Run:
+//   ./bin/zil examples/evmone-dmetavm.zc
+//   ./bin/zil bundle-check examples/evmone-dmetavm.zc lts
+//   ./bin/zil bundle-check examples/evmone-dmetavm.zc constraint
+//   ./bin/zil export-tla examples/evmone-dmetavm.zc /tmp/dmetavm_evmone.tla DMetaVMEvmone
+//   ./bin/zil export-lean examples/evmone-dmetavm.zc /tmp/dmetavm_evmone.lean Zil.Generated.DMetaVMEvmone
+
+// ------------------------------------------------------------------
+// Macro layer
+// ------------------------------------------------------------------
+
+MACRO DMV_NODE(node_id, engine, mode):
+EMIT dmetavm:node:{{node_id}}#kind@entity:dmetavm_node.
+EMIT dmetavm:node:{{node_id}}#engine@value:{{engine}}.
+EMIT dmetavm:node:{{node_id}}#mode@value:{{mode}}.
+EMIT dmetavm:node:{{node_id}}#memory_model@value:tape_like.
+EMIT dmetavm:node:{{node_id}}#stack_model@value:word256.
+EMIT dmetavm:node:{{node_id}}#jump_control@value:pc_direct.
+EMIT dmetavm:node:{{node_id}}#budget_model@value:node_budget.
+ENDMACRO.
+
+MACRO DMV_CHANNEL(ch, src, dst, qos):
+EMIT dmetavm:channel:{{ch}}#kind@entity:dmetavm_channel.
+EMIT dmetavm:channel:{{ch}}#from@dmetavm:node:{{src}}.
+EMIT dmetavm:channel:{{ch}}#to@dmetavm:node:{{dst}}.
+EMIT dmetavm:channel:{{ch}}#qos@value:{{qos}}.
+ENDMACRO.
+
+MACRO DMV_INTERPRETER(interpreter_id, language, profile):
+EMIT dmetavm:interp:{{interpreter_id}}#kind@entity:dmetavm_interpreter.
+EMIT dmetavm:interp:{{interpreter_id}}#language@value:{{language}}.
+EMIT dmetavm:interp:{{interpreter_id}}#profile@value:{{profile}}.
+EMIT dmetavm:interp:{{interpreter_id}}#entry_opcode@value:exec_interpreter.
+ENDMACRO.
+
+MACRO DMV_REGISTER_INTERPRETER(node_id, interpreter_id):
+EMIT dmetavm:reg:{{node_id}}_{{interpreter_id}}#kind@entity:dmetavm_registration.
+EMIT dmetavm:reg:{{node_id}}_{{interpreter_id}}#node@dmetavm:node:{{node_id}}.
+EMIT dmetavm:reg:{{node_id}}_{{interpreter_id}}#interpreter@dmetavm:interp:{{interpreter_id}}.
+EMIT dmetavm:reg:{{node_id}}_{{interpreter_id}}#status@value:registered.
+ENDMACRO.
+
+MACRO DMV_CORE_STEP(step_id, node_id, opcode_class, pc_before, pc_after, budget_cost):
+EMIT dmetavm:step:{{step_id}}#kind@entity:dmetavm_exec_step.
+EMIT dmetavm:step:{{step_id}}#node@dmetavm:node:{{node_id}}.
+EMIT dmetavm:step:{{step_id}}#opcode_class@value:{{opcode_class}}.
+EMIT dmetavm:step:{{step_id}}#pc_before@value:{{pc_before}}.
+EMIT dmetavm:step:{{step_id}}#pc_after@value:{{pc_after}}.
+EMIT dmetavm:step:{{step_id}}#budget_cost@value:{{budget_cost}}.
+ENDMACRO.
+
+MACRO DMV_MESSAGE(msg_id, src, dst, kind, payload, channel, storage_domain):
+EMIT dmetavm:msg:{{msg_id}}#kind@entity:dmetavm_message.
+EMIT dmetavm:msg:{{msg_id}}#from@dmetavm:node:{{src}}.
+EMIT dmetavm:msg:{{msg_id}}#to@dmetavm:node:{{dst}}.
+EMIT dmetavm:msg:{{msg_id}}#msg_kind@value:{{kind}}.
+EMIT dmetavm:msg:{{msg_id}}#payload@value:{{payload}}.
+EMIT dmetavm:msg:{{msg_id}}#channel@dmetavm:channel:{{channel}}.
+EMIT dmetavm:msg:{{msg_id}}#storage_domain@{{storage_domain}}.
+EMIT dmetavm:msg:{{msg_id}}#status@value:issued.
+EMIT dmetavm:msg:{{msg_id}}#status@value:accepted.
+ENDMACRO.
+
+MACRO DMV_PROFILE_FLAG(flag_name, value_token):
+EMIT dmetavm:profile:neutral#{{flag_name}}@value:{{value_token}}.
+ENDMACRO.
+
+// ------------------------------------------------------------------
+// Core + meta + distributed entities
+// ------------------------------------------------------------------
+
+USE DMV_NODE(node_a, evmone_baseline, sovereign).
+USE DMV_NODE(node_b, evmone_advanced, sovereign).
+USE DMV_NODE(node_c, evmone_advanced, sovereign).
+
+USE DMV_CHANNEL(ch_ab, node_a, node_b, loosely_timed).
+USE DMV_CHANNEL(ch_ba, node_b, node_a, loosely_timed).
+USE DMV_CHANNEL(ch_ac, node_a, node_c, approximately_timed).
+USE DMV_CHANNEL(ch_ca, node_c, node_a, approximately_timed).
+USE DMV_CHANNEL(ch_bc, node_b, node_c, loosely_timed).
+USE DMV_CHANNEL(ch_cb, node_c, node_b, loosely_timed).
+
+USE DMV_INTERPRETER(interp_jvm, jvm, pv).
+USE DMV_INTERPRETER(interp_cpython, cpython, loosely_timed).
+
+USE DMV_REGISTER_INTERPRETER(node_b, interp_jvm).
+USE DMV_REGISTER_INTERPRETER(node_c, interp_cpython).
+USE DMV_REGISTER_INTERPRETER(node_a, interp_cpython).
+
+USE DMV_CORE_STEP(step_a_1, node_a, arithmetic, 0, 1, 3).
+USE DMV_CORE_STEP(step_a_2, node_a, jump, 1, 8, 8).
+USE DMV_CORE_STEP(step_b_1, node_b, memory, 0, 1, 3).
+USE DMV_CORE_STEP(step_b_2, node_b, return, 1, 2, 0).
+USE DMV_CORE_STEP(step_c_1, node_c, arithmetic, 0, 1, 3).
+USE DMV_CORE_STEP(step_c_2, node_c, mload, 1, 2, 3).
+
+USE DMV_MESSAGE(msg_exec_py_1, node_a, node_c, exec_remote, py_job_alpha, ch_ac, domain:alpha).
+USE DMV_MESSAGE(msg_exec_jvm_1, node_b, node_c, exec_remote, jvm_task_beta, ch_bc, domain:beta).
+USE DMV_MESSAGE(msg_result_py_1, node_c, node_a, return_result, partial_result_alpha, ch_ca, domain:alpha).
+USE DMV_MESSAGE(msg_sync_1, node_c, node_b, sync_state, state_digest_gamma, ch_cb, domain:gamma).
+
+domain:alpha#disjoint@domain:beta.
+domain:beta#disjoint@domain:gamma.
+domain:alpha#disjoint@domain:gamma.
+
+// Blockchain-free profile requirements.
+USE DMV_PROFILE_FLAG(token_native_enabled, false).
+USE DMV_PROFILE_FLAG(global_ledger_enabled, false).
+USE DMV_PROFILE_FLAG(pow_enabled, false).
+USE DMV_PROFILE_FLAG(mining_enabled, false).
+
+// ------------------------------------------------------------------
+// Derived semantics
+// ------------------------------------------------------------------
+
+RULE node_tm_ready:
+IF ?n#memory_model@value:tape_like AND ?n#stack_model@value:word256 AND ?n#jump_control@value:pc_direct
+THEN ?n#tm_emulation_ready@value:true.
+
+RULE registration_projects_to_node:
+IF ?r#kind@entity:dmetavm_registration AND ?r#node@?n AND ?r#interpreter@?i
+THEN ?n#hosts_interpreter@?i.
+
+RULE remote_exec_is_meta_layer:
+IF ?m#kind@entity:dmetavm_message AND ?m#msg_kind@value:exec_remote
+THEN ?m#layer@value:meta_runtime.
+
+RULE parallel_safe_remote_pair:
+IF ?m1#msg_kind@value:exec_remote AND ?m2#msg_kind@value:exec_remote AND ?m1#storage_domain@?d1 AND ?m2#storage_domain@?d2 AND ?d1#disjoint@?d2
+THEN ?m1#parallel_safe_with@?m2.
+
+RULE accepted_message_progress:
+IF ?m#kind@entity:dmetavm_message AND ?m#status@value:accepted
+THEN ?m#progress_signal@value:ready_for_compute.
+
+// ------------------------------------------------------------------
+// Formal overlays for LTS / theorem bridge / constraint bridge
+// ------------------------------------------------------------------
+
+LTS_ATOM dmetavm_core_flow [actor=DMetaVMCore, actor_key=dmetavmCore, states=#{boot ready fetch decode execute return halted out_of_budget fault}, initial=boot, transitions={[boot init] [ready], [ready fetch_op] [fetch], [fetch decode_op] [decode], [decode run_step] [execute], [execute emit_return] [return], [return halt] [halted], [execute budget_exhausted] [out_of_budget], [decode invalid_opcode] [fault], [out_of_budget recover_budget] [ready]}].
+
+LTS_ATOM dmetavm_meta_flow [actor=DMetaVMMeta, actor_key=dmetavmMeta, states=#{unregistered registered loading running returned failed}, initial=unregistered, transitions={[unregistered register_interpreter] [registered], [registered load_foreign_bytecode] [loading], [loading run_interpreter] [running], [running return_value] [returned], [running interpreter_fault] [failed], [failed restart_runtime] [loading]}].
+
+LTS_ATOM dmetavm_distributed_flow [actor=DMetaVMDistributed, actor_key=dmetavmDistributed, states=#{idle active waiting_msg processing_msg syncing completed failed}, initial=idle, transitions={[idle activate] [active], [active recv_msg] [processing_msg], [processing_msg wait_more] [waiting_msg], [waiting_msg recv_msg] [processing_msg], [processing_msg sync_state] [syncing], [syncing commit_results] [completed], [processing_msg transport_fault] [failed], [failed recover_transport] [active]}].
+
+POLICY dmetavm_no_blockchain_profile [condition="token_native_enabled = false AND global_ledger_enabled = false AND pow_enabled = false AND mining_enabled = false", criticality=high].
+POLICY dmetavm_budget_nonnegative [condition="budget_left >= 0", criticality=high].
+POLICY dmetavm_pc_bounds [condition="pc >= 0 AND pc < code_len", criticality=high].
+POLICY dmetavm_message_integrity [condition="payload_bytes >= 0 AND payload_bytes <= max_payload_bytes", criticality=medium].
+POLICY dmetavm_tm_surface [condition="tape_like_memory AND jump_control AND finite_state_encoding", criticality=high].
+POLICY dmetavm_fair_progress [condition="active_nodes >= 1 AND pending_messages >= 0", criticality=medium].
+
+// ------------------------------------------------------------------
+// Queries
+// ------------------------------------------------------------------
+
+QUERY dmetavm_nodes:
+FIND ?n WHERE ?n#kind@entity:dmetavm_node.
+
+QUERY dmetavm_registered_interpreters:
+FIND ?n ?i WHERE ?n#hosts_interpreter@?i.
+
+QUERY dmetavm_core_steps:
+FIND ?s WHERE ?s#kind@entity:dmetavm_exec_step.
+
+QUERY dmetavm_remote_exec_messages:
+FIND ?m WHERE ?m#msg_kind@value:exec_remote.
+
+QUERY dmetavm_parallel_safe_pairs:
+FIND ?m1 ?m2 WHERE ?m1#parallel_safe_with@?m2.
+
+QUERY dmetavm_tm_ready_nodes:
+FIND ?n WHERE ?n#tm_emulation_ready@value:true.
+
+QUERY dmetavm_progress_messages:
+FIND ?m WHERE ?m#progress_signal@value:ready_for_compute.
+
+QUERY dmetavm_policy_entities:
+FIND ?p WHERE ?p#kind@entity:policy.

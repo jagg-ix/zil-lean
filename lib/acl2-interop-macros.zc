@@ -1,0 +1,37 @@
+MODULE acl2.interop.macros.lib.
+
+// ACL2 integration helpers layered on top of core REFINES/CORRESPONDS/PROOF_OBLIGATION
+// and optional BackendCapabilities/FormalFeedbackSchema macros.
+
+MACRO ACL2_BACKEND(id, profile):
+EMIT USE BFC_BACKEND({{id}}, clj, {{profile}}).
+EMIT USE BFC_BACKEND_ENABLED({{id}}).
+EMIT USE BFC_BACKEND_CAP({{id}}, check_acl2).
+EMIT USE BFC_BACKEND_CAP({{id}}, emit_acl2).
+EMIT USE BFC_BACKEND_CAP({{id}}, ingest_feedback).
+EMIT USE BFC_BACKEND_FORMAL_BRIDGE({{id}}, acl2, artifact_log).
+ENDMACRO.
+
+MACRO ACL2_CORRESPONDS(id, left, right, refines):
+EMIT CORRESPONDS {{id}} [left={{left}}, right={{right}}, refines={{refines}}].
+ENDMACRO.
+
+MACRO ACL2_OBLIGATION(id, relation, statement, criticality):
+EMIT PROOF_OBLIGATION {{id}} [relation={{relation}}, statement={{statement}}, tool=acl2, criticality={{criticality}}].
+ENDMACRO.
+
+MACRO ACL2_OBLIGATION_LOG(id, relation, statement, artifact_in, criticality):
+EMIT PROOF_OBLIGATION {{id}} [relation={{relation}}, statement={{statement}}, tool=acl2, artifact_in={{artifact_in}}, criticality={{criticality}}].
+ENDMACRO.
+
+MACRO ACL2_BFC_OBLIGATION(id, run_id, artifact_id, criticality):
+EMIT USE BFC_OBLIGATION({{id}}, consistency, {{criticality}}).
+EMIT USE BFC_OBLIGATION_RUN({{id}}, {{run_id}}).
+EMIT USE BFC_OBLIGATION_TARGET_TOOL({{id}}, acl2).
+EMIT USE BFC_OBLIGATION_REQUIRES_CAP({{id}}, check_acl2).
+EMIT USE BFC_OBLIGATION_ARTIFACT({{id}}, {{artifact_id}}).
+ENDMACRO.
+
+MACRO ACL2_BFC_FEEDBACK(id, run_id, obligation_id, verdict, artifact_id, evidence):
+EMIT USE BFC_FEEDBACK({{id}}, {{run_id}}, {{obligation_id}}, acl2, {{verdict}}, {{artifact_id}}, {{evidence}}).
+ENDMACRO.

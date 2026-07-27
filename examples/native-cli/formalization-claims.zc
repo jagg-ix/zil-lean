@@ -1,0 +1,15 @@
+MODULE native.cli.formalization.claims.
+
+// A small formalization-claims graph: a Lean declaration formalizes a claim
+// and requires a requirement; the rule derives which requirements each claim
+// rests on. See README.md for the native CLI walkthrough.
+
+lean:Parser.parse#formalizes@claim:parserContract.
+lean:Parser.parse#requires@requirement:inputGrammar.
+
+RULE claimRequirement:
+IF ?declaration#formalizes@?claim AND ?declaration#requires@?requirement
+THEN ?claim#requires_claim@?requirement.
+
+QUERY claim_requirements:
+FIND ?claim ?requirement WHERE ?claim#requires_claim@?requirement.

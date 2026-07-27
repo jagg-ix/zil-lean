@@ -1,0 +1,322 @@
+MODULE zil.lib.category_theory.
+
+// Category Theory Macro Library for ZIL
+// =========================================
+// Provides CT vocabulary for the ZIL triple-graph layer.
+//
+// IMPORTANT: This library does NOT compile to Lean4 via `export-lean`.
+// `export-lean` targets LTS_ATOM state-machine declarations only.
+// A corresponding Lean4 file is hand-maintained by the consuming project.
+//
+// Design principles:
+//   1. Each CT construct emits ZIL triple-graph nodes (entities, predicates).
+//   2. Each structural obligation (functoriality, naturality, triangle identities)
+//      emits a THM_LEMMA node — these document proof obligations in the graph.
+//   3. EVIDENCE_FOR_LEMMA / EVIDENCE_FOR_THEOREM points to Mathlib names,
+//      recording which Mathlib theorem discharges which obligation.
+//   4. CT_LEAN4(name, module, lean4_name) registers a Mathlib discharge witness.
+//   5. CT_QUERY_MISSING() emits queries for unproved CT obligations.
+//
+// Intended Lean4 correspondence (when a CT→Lean4 backend is built):
+//   THM_ASSUMPTION with no evidence  →  axiom id : Prop
+//   THM_LEMMA with lean4 evidence    →  theorem id := lean4_name
+//   THM_THEOREM with lean4 evidence  →  theorem id := lean4_name
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// PRIMITIVE TRIPLE CONVENTIONS
+//
+// Entity namespaces used by this library:
+//   ct:cat:<name>   -- a category
+//   ct:obj:<name>   -- an object
+//   ct:mor:<name>   -- a morphism (edge between two objects)
+//   ct:fun:<name>   -- a functor (between two categories)
+//   ct:nt:<name>    -- a natural transformation (between two functors)
+//   ct:adj:<name>   -- an adjunction (a pair of adjoint functors)
+//   ct:iso:<name>   -- marks that a morphism/component is an isomorphism
+//
+// Predicate conventions:
+//   #kind           -- entity type
+//   #in_cat         -- category this object/morphism belongs to
+//   #domain         -- source object of a morphism
+//   #codomain       -- target object of a morphism
+//   #from_cat       -- source category of a functor
+//   #to_cat         -- target category of a functor
+//   #from_fun       -- source functor of a nat. trans.
+//   #to_fun         -- target functor of a nat. trans.
+//   #left_fun       -- left functor of an adjunction
+//   #right_fun      -- right functor of an adjunction
+//   #universe       -- universe level (u, v, ...)
+//   #lean4_module   -- Mathlib module containing the proof
+//   #lean4_name     -- Lean4/Mathlib identifier for this construct
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_CATEGORY: Declare a category with its structural axioms.
+//
+// Emits:
+//   - ct:cat:<name> entity node
+//   - THM_COMPONENT (infrastructure component for this category)
+//   - Three structural assumptions: identity, composition, associativity
+//   - A composition-type axiom (what the hom-sets are)
+//
+// Lean4 target:
+//   variable (C : Type*) [Category C]
+//   -- or: structure MyCategory where ...
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_CATEGORY(name, universe_level):
+EMIT ct:cat:{{name}}#kind@entity:ct_category.
+EMIT ct:cat:{{name}}#universe@value:{{universe_level}}.
+EMIT USE THM_COMPONENT(ct_cat_{{name}}, tier1).
+EMIT USE THM_ASSUMPTION(ct_cat_{{name}}_identity_morphisms, high).
+EMIT USE THM_ASSUMPTION(ct_cat_{{name}}_composition, high).
+EMIT USE THM_ASSUMPTION(ct_cat_{{name}}_associativity, high).
+EMIT USE THM_ASSUMPTION_FROM_SIGNAL(ct_cat_{{name}}_identity_morphisms, ct_cat_{{name}}).
+EMIT USE THM_ASSUMPTION_FROM_SIGNAL(ct_cat_{{name}}_composition, ct_cat_{{name}}).
+EMIT USE THM_ASSUMPTION_FROM_SIGNAL(ct_cat_{{name}}_associativity, ct_cat_{{name}}).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_OBJECT: Declare an object in a category.
+//
+// Lean4 target: a term of type C (the category's type of objects)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_OBJECT(name, in_category):
+EMIT ct:obj:{{name}}#kind@entity:ct_object.
+EMIT ct:obj:{{name}}#in_cat@ct:cat:{{in_category}}.
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_MORPHISM: Declare a morphism between two objects in a category.
+//
+// Emits a THM_LEMMA for well-typedness (domain/codomain in the right category).
+//
+// Lean4 target: f : A ⟶ B   (in CategoryTheory: Hom A B or A ⟶ B)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_MORPHISM(name, domain_obj, codomain_obj, in_category):
+EMIT ct:mor:{{name}}#kind@entity:ct_morphism.
+EMIT ct:mor:{{name}}#domain@ct:obj:{{domain_obj}}.
+EMIT ct:mor:{{name}}#codomain@ct:obj:{{codomain_obj}}.
+EMIT ct:mor:{{name}}#in_cat@ct:cat:{{in_category}}.
+EMIT USE THM_LEMMA(ct_mor_{{name}}_welltyped, high).
+EMIT USE THM_LEMMA_REQUIRES_ASSUMPTION(ct_mor_{{name}}_welltyped, ct_cat_{{in_category}}_composition).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_ISOMORPHISM: Declare that a morphism is an isomorphism (structure-preserving
+// bijection in the categorical sense: has an inverse morphism).
+//
+// Emits:
+//   - ct:iso entity
+//   - THM_THEOREM for the isomorphism property (inverse exists + roundtrip = id)
+//
+// Lean4 target: IsIso f   or   Iso A B   (in Mathlib.CategoryTheory.Iso)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_ISOMORPHISM(name, morphism_name):
+EMIT ct:iso:{{name}}#kind@entity:ct_isomorphism.
+EMIT ct:iso:{{name}}#morphism@ct:mor:{{morphism_name}}.
+EMIT USE THM_THEOREM(ct_iso_{{name}}_has_inverse, high).
+EMIT USE THM_THEOREM(ct_iso_{{name}}_roundtrip_domain, high).
+EMIT USE THM_THEOREM(ct_iso_{{name}}_roundtrip_codomain, high).
+EMIT USE THM_THEOREM_REQUIRES_LEMMA(ct_iso_{{name}}_has_inverse, ct_mor_{{morphism_name}}_welltyped).
+EMIT USE THM_THEOREM_ENSURES(ct_iso_{{name}}_has_inverse, structure_preserving_bijection).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_FUNCTOR: Declare a functor between two categories.
+//
+// Emits two structural lemmas:
+//   - Preserves identity: F(id_X) = id_{F(X)}
+//   - Preserves composition: F(g ∘ f) = F(g) ∘ F(f)
+//
+// Lean4 target:
+//   variable (F : Functor C D)
+//   -- or: structure MyFunctor extends CategoryTheory.Functor C D
+//   -- Mathlib: Mathlib.CategoryTheory.Functor.Basic
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_FUNCTOR(name, from_category, to_category):
+EMIT ct:fun:{{name}}#kind@entity:ct_functor.
+EMIT ct:fun:{{name}}#from_cat@ct:cat:{{from_category}}.
+EMIT ct:fun:{{name}}#to_cat@ct:cat:{{to_category}}.
+EMIT USE THM_LEMMA(ct_fun_{{name}}_preserves_id, high).
+EMIT USE THM_LEMMA(ct_fun_{{name}}_preserves_comp, high).
+EMIT USE THM_LEMMA_REQUIRES_ASSUMPTION(ct_fun_{{name}}_preserves_id, ct_cat_{{from_category}}_identity_morphisms).
+EMIT USE THM_LEMMA_REQUIRES_ASSUMPTION(ct_fun_{{name}}_preserves_id, ct_cat_{{to_category}}_identity_morphisms).
+EMIT USE THM_LEMMA_REQUIRES_ASSUMPTION(ct_fun_{{name}}_preserves_comp, ct_cat_{{from_category}}_composition).
+EMIT USE THM_LEMMA_REQUIRES_ASSUMPTION(ct_fun_{{name}}_preserves_comp, ct_cat_{{to_category}}_composition).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_NAT_TRANS: Declare a natural transformation between two functors.
+//
+// Emits:
+//   - ct:nt entity
+//   - THM_LEMMA for the naturality condition: for every f: X -> Y in C,
+//     the naturality square commutes: η_Y ∘ F(f) = G(f) ∘ η_X
+//
+// Lean4 target: NatTrans F G  (in Mathlib.CategoryTheory.NatTrans)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_NAT_TRANS(name, from_functor, to_functor):
+EMIT ct:nt:{{name}}#kind@entity:ct_nat_trans.
+EMIT ct:nt:{{name}}#from_fun@ct:fun:{{from_functor}}.
+EMIT ct:nt:{{name}}#to_fun@ct:fun:{{to_functor}}.
+EMIT USE THM_LEMMA(ct_nt_{{name}}_components_welltyped, high).
+EMIT USE THM_LEMMA(ct_nt_{{name}}_naturality_square, high).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_nt_{{name}}_naturality_square, ct_nt_{{name}}_components_welltyped).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_nt_{{name}}_naturality_square, ct_fun_{{from_functor}}_preserves_comp).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_nt_{{name}}_naturality_square, ct_fun_{{to_functor}}_preserves_comp).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_NAT_ISO: Declare a natural isomorphism between two functors.
+// Each component η_X is an isomorphism in the target category.
+//
+// Lean4 target: NatIso F G  or  Iso F G  (in Mathlib.CategoryTheory.NatTrans)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_NAT_ISO(name, from_functor, to_functor):
+EMIT ct:nt:{{name}}#kind@entity:ct_nat_iso.
+EMIT ct:nt:{{name}}#from_fun@ct:fun:{{from_functor}}.
+EMIT ct:nt:{{name}}#to_fun@ct:fun:{{to_functor}}.
+EMIT USE THM_LEMMA(ct_nt_{{name}}_components_welltyped, high).
+EMIT USE THM_LEMMA(ct_nt_{{name}}_naturality_square, high).
+EMIT USE THM_THEOREM(ct_nt_{{name}}_components_are_isos, high).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_nt_{{name}}_naturality_square, ct_nt_{{name}}_components_welltyped).
+EMIT USE THM_THEOREM_REQUIRES_LEMMA(ct_nt_{{name}}_components_are_isos, ct_nt_{{name}}_naturality_square).
+EMIT USE THM_THEOREM_ENSURES(ct_nt_{{name}}_components_are_isos, natural_isomorphism).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_ADJUNCTION: Declare an adjunction L ⊣ R.
+//
+// Emits:
+//   - ct:adj entity
+//   - THM_LEMMA for unit: η : Id_C => R ∘ L
+//   - THM_LEMMA for counit: ε : L ∘ R => Id_D
+//   - THM_THEOREM for left triangle: (ε_L) ∘ (L_η) = id_L
+//   - THM_THEOREM for right triangle: (R_ε) ∘ (η_R) = id_R
+//
+// Lean4 target: Adjunction L R  (in Mathlib.CategoryTheory.Adjunction.Basic)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_ADJUNCTION(name, left_functor, right_functor):
+EMIT ct:adj:{{name}}#kind@entity:ct_adjunction.
+EMIT ct:adj:{{name}}#left_fun@ct:fun:{{left_functor}}.
+EMIT ct:adj:{{name}}#right_fun@ct:fun:{{right_functor}}.
+EMIT USE THM_LEMMA(ct_adj_{{name}}_unit_nat_trans, high).
+EMIT USE THM_LEMMA(ct_adj_{{name}}_counit_nat_trans, high).
+EMIT USE THM_THEOREM(ct_adj_{{name}}_left_triangle, high).
+EMIT USE THM_THEOREM(ct_adj_{{name}}_right_triangle, high).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_adj_{{name}}_unit_nat_trans, ct_fun_{{left_functor}}_preserves_comp).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_adj_{{name}}_unit_nat_trans, ct_fun_{{right_functor}}_preserves_comp).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_adj_{{name}}_counit_nat_trans, ct_fun_{{left_functor}}_preserves_comp).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_adj_{{name}}_counit_nat_trans, ct_fun_{{right_functor}}_preserves_comp).
+EMIT USE THM_THEOREM_REQUIRES_LEMMA(ct_adj_{{name}}_left_triangle, ct_adj_{{name}}_unit_nat_trans).
+EMIT USE THM_THEOREM_REQUIRES_LEMMA(ct_adj_{{name}}_left_triangle, ct_adj_{{name}}_counit_nat_trans).
+EMIT USE THM_THEOREM_REQUIRES_LEMMA(ct_adj_{{name}}_right_triangle, ct_adj_{{name}}_unit_nat_trans).
+EMIT USE THM_THEOREM_REQUIRES_LEMMA(ct_adj_{{name}}_right_triangle, ct_adj_{{name}}_counit_nat_trans).
+EMIT USE THM_THEOREM_ENSURES(ct_adj_{{name}}_left_triangle, adjoint_functor_left_identity).
+EMIT USE THM_THEOREM_ENSURES(ct_adj_{{name}}_right_triangle, adjoint_functor_right_identity).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_LEAN4: Register a Lean4/Mathlib discharge witness for a CT entity.
+//
+// This links any ct:* node to an actual Lean4 proof term.
+// When a CT→Lean4 backend exists, this would replace `sorry` with the real proof.
+//
+// Arguments:
+//   ct_entity_id   -- the ZIL entity id (e.g. ct_cat_Diff, ct_fun_PolarDec)
+//   lean4_module   -- Mathlib module (e.g. Mathlib.CategoryTheory.Functor.Basic)
+//   lean4_name     -- Lean4 term name (e.g. CategoryTheory.Functor)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_LEAN4(ct_entity_id, lean4_module, lean4_name):
+EMIT evidence:ct:{{ct_entity_id}}#engine@engine:lean4.
+EMIT evidence:ct:{{ct_entity_id}}#module@value:{{lean4_module}}.
+EMIT evidence:ct:{{ct_entity_id}}#lean4_name@value:{{lean4_name}}.
+EMIT USE THM_COMPONENT_HEALTHY(lean4_mathlib, {{lean4_module}}).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_LEAN4_LEMMA: Attach a Lean4 evidence witness to a specific CT lemma.
+//
+// Used after CT_MORPHISM / CT_FUNCTOR / CT_NAT_TRANS to discharge the
+// automatically-generated structural lemmas.
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_LEAN4_LEMMA(lemma_id, lean4_module, lean4_name):
+EMIT USE EVIDENCE_FOR_LEMMA({{lemma_id}}, lean4, proof:{{lean4_name}}).
+EMIT USE THM_COMPONENT_HEALTHY(lean4_mathlib, {{lean4_module}}).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_LEAN4_THEOREM: Attach a Lean4 evidence witness to a CT theorem.
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_LEAN4_THEOREM(theorem_id, lean4_module, lean4_name):
+EMIT USE EVIDENCE_FOR_THEOREM({{theorem_id}}, lean4, proof:{{lean4_name}}).
+EMIT USE THM_COMPONENT_HEALTHY(lean4_mathlib, {{lean4_module}}).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_PULLBACK_BUNDLE: Declare the pullback bundle xi*(E) along a map xi: X -> Y.
+// This encodes the VectBun pullback construction needed for the DS fiber.
+//
+// Lean4 target: Mathlib.Topology.VectorBundle.Pullback
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_PULLBACK_BUNDLE(name, base_map, source_bundle):
+EMIT ct:obj:{{name}}#kind@entity:ct_pullback_bundle.
+EMIT ct:obj:{{name}}#base_map@ct:mor:{{base_map}}.
+EMIT ct:obj:{{name}}#source_bundle@ct:obj:{{source_bundle}}.
+EMIT USE THM_LEMMA(ct_pullback_{{name}}_universal_property, high).
+EMIT USE THM_LEMMA(ct_pullback_{{name}}_fiber_iso, high).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_pullback_{{name}}_fiber_iso, ct_pullback_{{name}}_universal_property).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_BANACH_MORPHISM: A bounded linear map between Banach spaces.
+// Emits lemma for boundedness (which in ZIL maps to the norm bound theorem).
+//
+// Lean4 target: BoundedLinearMap or ContinuousLinearMap
+//   (Mathlib.Analysis.NormedSpace.BoundedLinearMaps)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_BANACH_MORPHISM(name, domain_space, codomain_space):
+EMIT ct:mor:{{name}}#kind@entity:ct_banach_morphism.
+EMIT ct:mor:{{name}}#domain@ct:obj:{{domain_space}}.
+EMIT ct:mor:{{name}}#codomain@ct:obj:{{codomain_space}}.
+EMIT USE THM_LEMMA(ct_banach_{{name}}_linearity, high).
+EMIT USE THM_LEMMA(ct_banach_{{name}}_boundedness, high).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_banach_{{name}}_boundedness, ct_banach_{{name}}_linearity).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_BILINEAR_MORPHISM: A bounded bilinear map B: X x Y -> Z (e.g. CLMS).
+//
+// Lean4 target: BoundedBilinearMap or ContinuousLinearMap₂
+//   (Mathlib.Analysis.NormedSpace.BoundedLinearMaps)
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_BILINEAR_MORPHISM(name, space1, space2, codomain_space):
+EMIT ct:mor:{{name}}#kind@entity:ct_bilinear_morphism.
+EMIT ct:mor:{{name}}#space1@ct:obj:{{space1}}.
+EMIT ct:mor:{{name}}#space2@ct:obj:{{space2}}.
+EMIT ct:mor:{{name}}#codomain@ct:obj:{{codomain_space}}.
+EMIT USE THM_LEMMA(ct_bilin_{{name}}_bilinearity, high).
+EMIT USE THM_LEMMA(ct_bilin_{{name}}_boundedness, high).
+EMIT USE THM_LEMMA_REQUIRES_LEMMA(ct_bilin_{{name}}_boundedness, ct_bilin_{{name}}_bilinearity).
+ENDMACRO.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CT_QUERY_MISSING: Emit Datalog queries to find unproved CT obligations.
+// Use after declaring all CT entities to audit what still needs lean4 evidence.
+// ─────────────────────────────────────────────────────────────────────────────
+MACRO CT_QUERY_MISSING():
+EMIT QUERY ct_categories:
+EMIT FIND ?c WHERE ?c#kind@entity:ct_category.
+EMIT QUERY ct_morphisms:
+EMIT FIND ?m ?dom ?cod WHERE ?m#kind@entity:ct_morphism AND ?m#domain@?dom AND ?m#codomain@?cod.
+EMIT QUERY ct_functors:
+EMIT FIND ?f ?src ?tgt WHERE ?f#kind@entity:ct_functor AND ?f#from_cat@?src AND ?f#to_cat@?tgt.
+EMIT QUERY ct_nat_transforms:
+EMIT FIND ?n ?f ?g WHERE ?n#kind@entity:ct_nat_trans AND ?n#from_fun@?f AND ?n#to_fun@?g.
+EMIT QUERY ct_isomorphisms:
+EMIT FIND ?i ?m WHERE ?i#kind@entity:ct_isomorphism AND ?i#morphism@?m.
+EMIT QUERY ct_lean4_evidence:
+EMIT FIND ?e ?mod ?name WHERE ?e#engine@engine:lean4 AND ?e#module@?mod AND ?e#lean4_name@?name.
+EMIT QUERY ct_unproved_lemmas:
+EMIT FIND ?lemma WHERE ?lemma#kind@entity:thm_lemma AND NOT ?lemma#has_proof@value:true.
+ENDMACRO.

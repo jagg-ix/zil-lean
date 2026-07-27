@@ -1,0 +1,430 @@
+MODULE aws.transfer.family.lib.
+
+// AWS Transfer Family domain macro library.
+//
+// Covers all resources defined in the Transfer Family API Reference:
+// Server, User, Access, Connector, Agreement, Profile, Certificate,
+// HostKey, Workflow, WebApp, SshPublicKey, SecurityPolicy, Execution.
+//
+// Layer 1 — Entity constructors: one macro per resource type
+// Layer 2 — Relation bundles: grouped attributes and associations
+// Layer 3 — API schema modeling: operations, fields, valid values
+// Layer 4 — Structural invariant rules: constraints from the API spec
+// Layer 5 — Queries: introspection and gap detection
+
+
+// ---------------------------------------------------------------------------
+// Layer 1 — Entity Constructors
+// ---------------------------------------------------------------------------
+
+// Server — the core file-transfer endpoint.
+// domain: s3 | efs
+// endpoint_type: public | vpc | vpc_endpoint
+// identity_provider_type: service_managed | api_gateway | aws_directory_service | aws_lambda
+MACRO TF_SERVER(id, domain, endpoint_type, identity_provider_type):
+EMIT tf:server:{{id}}#kind@entity:tf_server.
+EMIT tf:server:{{id}}#domain@value:{{domain}}.
+EMIT tf:server:{{id}}#endpoint_type@value:{{endpoint_type}}.
+EMIT tf:server:{{id}}#identity_provider_type@value:{{identity_provider_type}}.
+ENDMACRO.
+
+// User — a SERVICE_MANAGED identity on a server.
+// home_dir_type: path | logical
+MACRO TF_USER(id, server_id, home_dir_type, iam_role):
+EMIT tf:user:{{server_id}}:{{id}}#kind@entity:tf_user.
+EMIT tf:user:{{server_id}}:{{id}}#username@value:{{id}}.
+EMIT tf:user:{{server_id}}:{{id}}#server@tf:server:{{server_id}}.
+EMIT tf:user:{{server_id}}:{{id}}#home_directory_type@value:{{home_dir_type}}.
+EMIT tf:user:{{server_id}}:{{id}}#iam_role@value:{{iam_role}}.
+ENDMACRO.
+
+// Access — an Active Directory group bound to a server (AWS_DIRECTORY_SERVICE auth).
+MACRO TF_ACCESS(id, server_id, external_id, iam_role):
+EMIT tf:access:{{server_id}}:{{id}}#kind@entity:tf_access.
+EMIT tf:access:{{server_id}}:{{id}}#server@tf:server:{{server_id}}.
+EMIT tf:access:{{server_id}}:{{id}}#external_id@value:{{external_id}}.
+EMIT tf:access:{{server_id}}:{{id}}#iam_role@value:{{iam_role}}.
+ENDMACRO.
+
+// Connector — outbound file-transfer connection (AS2 or SFTP protocol).
+// protocol: as2 | sftp
+MACRO TF_CONNECTOR(id, protocol, access_role):
+EMIT tf:connector:{{id}}#kind@entity:tf_connector.
+EMIT tf:connector:{{id}}#protocol@value:{{protocol}}.
+EMIT tf:connector:{{id}}#access_role@value:{{access_role}}.
+ENDMACRO.
+
+// Agreement — bilateral AS2 trading-partner agreement on a server.
+// status: active | inactive
+MACRO TF_AGREEMENT(id, server_id, local_profile_id, partner_profile_id, status):
+EMIT tf:agreement:{{id}}#kind@entity:tf_agreement.
+EMIT tf:agreement:{{id}}#server@tf:server:{{server_id}}.
+EMIT tf:agreement:{{id}}#local_profile@tf:profile:{{local_profile_id}}.
+EMIT tf:agreement:{{id}}#partner_profile@tf:profile:{{partner_profile_id}}.
+EMIT tf:agreement:{{id}}#status@value:{{status}}.
+ENDMACRO.
+
+// Profile — AS2 identity (local or partner).
+// profile_type: local | partner
+MACRO TF_PROFILE(id, as2_id, profile_type):
+EMIT tf:profile:{{id}}#kind@entity:tf_profile.
+EMIT tf:profile:{{id}}#as2_id@value:{{as2_id}}.
+EMIT tf:profile:{{id}}#profile_type@value:{{profile_type}}.
+ENDMACRO.
+
+// Certificate — X.509 certificate for AS2 signing/encryption or FTPS TLS.
+// usage: signing | encryption | tls
+// cert_type: certificate | certificate_with_private_key | certificate_chain
+MACRO TF_CERTIFICATE(id, usage, cert_type):
+EMIT tf:certificate:{{id}}#kind@entity:tf_certificate.
+EMIT tf:certificate:{{id}}#usage@value:{{usage}}.
+EMIT tf:certificate:{{id}}#cert_type@value:{{cert_type}}.
+ENDMACRO.
+
+// HostKey — SSH host key for a server (RSA, ECDSA, or ED25519).
+// key_type: rsa | ecdsa | ed25519
+MACRO TF_HOST_KEY(id, server_id, key_type):
+EMIT tf:host_key:{{id}}#kind@entity:tf_host_key.
+EMIT tf:host_key:{{id}}#server@tf:server:{{server_id}}.
+EMIT tf:host_key:{{id}}#key_type@value:{{key_type}}.
+ENDMACRO.
+
+// Workflow — post-upload or partial-upload processing pipeline.
+MACRO TF_WORKFLOW(id, description):
+EMIT tf:workflow:{{id}}#kind@entity:tf_workflow.
+EMIT tf:workflow:{{id}}#description@value:{{description}}.
+ENDMACRO.
+
+// WorkflowStep — a single step in a workflow.
+// step_type: copy | custom | tag | delete | decrypt
+MACRO TF_WORKFLOW_STEP(id, workflow_id, step_type, step_order):
+EMIT tf:workflow_step:{{id}}#kind@entity:tf_workflow_step.
+EMIT tf:workflow_step:{{id}}#workflow@tf:workflow:{{workflow_id}}.
+EMIT tf:workflow_step:{{id}}#step_type@value:{{step_type}}.
+EMIT tf:workflow_step:{{id}}#step_order@value:{{step_order}}.
+ENDMACRO.
+
+// SecurityPolicy — named TLS/SSH cipher policy (pre-defined by AWS).
+MACRO TF_SECURITY_POLICY(name, policy_type):
+EMIT tf:security_policy:{{name}}#kind@entity:tf_security_policy.
+EMIT tf:security_policy:{{name}}#policy_type@value:{{policy_type}}.
+ENDMACRO.
+
+// WebApp — browser-based file-transfer interface.
+MACRO TF_WEBAPP(id):
+EMIT tf:webapp:{{id}}#kind@entity:tf_webapp.
+ENDMACRO.
+
+// SshPublicKey — SSH public key associated with a user on a server.
+MACRO TF_SSH_PUBLIC_KEY(id, user_id, server_id):
+EMIT tf:ssh_key:{{id}}#kind@entity:tf_ssh_public_key.
+EMIT tf:ssh_key:{{id}}#user@tf:user:{{server_id}}:{{user_id}}.
+EMIT tf:ssh_key:{{id}}#server@tf:server:{{server_id}}.
+ENDMACRO.
+
+// Execution — a workflow run triggered by a file upload.
+// status: completed | exception | handling_exception | in_progress
+MACRO TF_EXECUTION(id, workflow_id, server_id, status):
+EMIT tf:execution:{{id}}#kind@entity:tf_execution.
+EMIT tf:execution:{{id}}#workflow@tf:workflow:{{workflow_id}}.
+EMIT tf:execution:{{id}}#server@tf:server:{{server_id}}.
+EMIT tf:execution:{{id}}#status@value:{{status}}.
+ENDMACRO.
+
+
+// ---------------------------------------------------------------------------
+// Layer 2 — Relation Bundles
+// ---------------------------------------------------------------------------
+
+// Add a file-transfer protocol to a server (call once per protocol).
+// protocol: sftp | ftp | ftps | as2
+MACRO TF_SERVER_PROTOCOL(server_id, protocol):
+EMIT tf:server:{{server_id}}#protocol@value:{{protocol}}.
+ENDMACRO.
+
+// Bind an ACM certificate ARN to a server (required for FTPS).
+MACRO TF_SERVER_CERTIFICATE(server_id, cert_arn):
+EMIT tf:server:{{server_id}}#acm_certificate@value:{{cert_arn}}.
+ENDMACRO.
+
+// Assign a named security policy to a server or connector.
+MACRO TF_SERVER_SECURITY_POLICY(server_id, policy_name):
+EMIT tf:server:{{server_id}}#security_policy@tf:security_policy:{{policy_name}}.
+ENDMACRO.
+
+// Attach a VPC endpoint configuration to a server.
+MACRO TF_SERVER_VPC_ENDPOINT(server_id, vpc_id, subnet_id, sg_id):
+EMIT tf:server:{{server_id}}#vpc_id@value:{{vpc_id}}.
+EMIT tf:server:{{server_id}}#subnet@value:{{subnet_id}}.
+EMIT tf:server:{{server_id}}#security_group@value:{{sg_id}}.
+ENDMACRO.
+
+// Trigger a workflow on file-upload events for a server.
+// trigger: on_upload | on_partial_upload
+MACRO TF_SERVER_WORKFLOW(server_id, workflow_id, trigger):
+EMIT tf:server:{{server_id}}#workflow_trigger@tf:workflow:{{workflow_id}}.
+EMIT tf:server:{{server_id}}#workflow_trigger_event@value:{{trigger}}.
+ENDMACRO.
+
+// Attach a logging IAM role to a server or connector.
+MACRO TF_SERVER_LOGGING_ROLE(server_id, role_arn):
+EMIT tf:server:{{server_id}}#logging_role@value:{{role_arn}}.
+ENDMACRO.
+
+// Logical home directory mapping for a user (when HomeDirectoryType=logical).
+MACRO TF_USER_HOME_MAPPING(user_id, server_id, entry_path, target_path):
+EMIT tf:user:{{server_id}}:{{user_id}}#home_mapping_entry@value:{{entry_path}}.
+EMIT tf:user:{{server_id}}:{{user_id}}#home_mapping_target@value:{{target_path}}.
+ENDMACRO.
+
+// Associate an SSH public key with a user.
+MACRO TF_USER_SSH_KEY(user_id, server_id, key_id):
+EMIT tf:user:{{server_id}}:{{user_id}}#ssh_key@tf:ssh_key:{{key_id}}.
+ENDMACRO.
+
+// Set POSIX uid/gid for a user (required for EFS storage domain).
+MACRO TF_USER_POSIX_PROFILE(user_id, server_id, uid, gid):
+EMIT tf:user:{{server_id}}:{{user_id}}#posix_uid@value:{{uid}}.
+EMIT tf:user:{{server_id}}:{{user_id}}#posix_gid@value:{{gid}}.
+ENDMACRO.
+
+// Configure AS2 parameters on a connector.
+// encrypt_algo: aes128_cbc | aes192_cbc | aes256_cbc | des_ede3_cbc | none
+// sign_algo: sha256 | sha384 | sha512 | sha1 | none
+// mdn_response: sync | async | none
+MACRO TF_CONNECTOR_AS2_CONFIG(connector_id, local_profile, partner_profile, encrypt_algo, sign_algo, mdn_response):
+EMIT tf:connector:{{connector_id}}#local_profile@tf:profile:{{local_profile}}.
+EMIT tf:connector:{{connector_id}}#partner_profile@tf:profile:{{partner_profile}}.
+EMIT tf:connector:{{connector_id}}#encryption_algorithm@value:{{encrypt_algo}}.
+EMIT tf:connector:{{connector_id}}#signing_algorithm@value:{{sign_algo}}.
+EMIT tf:connector:{{connector_id}}#mdn_response@value:{{mdn_response}}.
+ENDMACRO.
+
+// Configure SFTP parameters on a connector.
+MACRO TF_CONNECTOR_SFTP_CONFIG(connector_id, user_secret_id):
+EMIT tf:connector:{{connector_id}}#sftp_user_secret@value:{{user_secret_id}}.
+ENDMACRO.
+
+// Set the remote URL on a connector (AS2 partner server or SFTP server).
+MACRO TF_CONNECTOR_URL(connector_id, url):
+EMIT tf:connector:{{connector_id}}#url@value:{{url}}.
+ENDMACRO.
+
+// Attach a certificate to a profile (AS2 signing or encryption cert).
+MACRO TF_PROFILE_CERTIFICATE(profile_id, cert_id):
+EMIT tf:profile:{{profile_id}}#certificate@tf:certificate:{{cert_id}}.
+ENDMACRO.
+
+// Set the base directory for an agreement (S3 path where AS2 files land).
+MACRO TF_AGREEMENT_BASE_DIR(agreement_id, base_directory):
+EMIT tf:agreement:{{agreement_id}}#base_directory@value:{{base_directory}}.
+ENDMACRO.
+
+// Tag any Transfer Family resource.
+MACRO TF_TAG(resource_id, tag_key, tag_value):
+EMIT tf:resource:{{resource_id}}#tag@value:{{tag_key}}.
+EMIT tf:resource:{{resource_id}}#tag_value:{{tag_key}}@value:{{tag_value}}.
+ENDMACRO.
+
+
+// ---------------------------------------------------------------------------
+// Layer 3 — API Schema Modeling
+// (Macro vocabulary for the emitter to describe the API surface itself)
+// ---------------------------------------------------------------------------
+
+// Declare a Transfer Family API operation.
+// action: create | delete | describe | update | list | import | start | stop | test | tag | send
+MACRO TF_OPERATION(id, resource_type, action):
+EMIT tf:operation:{{id}}#kind@entity:tf_operation.
+EMIT tf:operation:{{id}}#resource_type@value:{{resource_type}}.
+EMIT tf:operation:{{id}}#action@value:{{action}}.
+ENDMACRO.
+
+// Declare a field on an API resource type.
+// required: yes | no
+MACRO TF_FIELD(resource_type, field_name, field_type, required):
+EMIT tf:field:{{resource_type}}:{{field_name}}#kind@entity:tf_field.
+EMIT tf:field:{{resource_type}}:{{field_name}}#resource_type@value:{{resource_type}}.
+EMIT tf:field:{{resource_type}}:{{field_name}}#field_name@value:{{field_name}}.
+EMIT tf:field:{{resource_type}}:{{field_name}}#field_type@value:{{field_type}}.
+EMIT tf:field:{{resource_type}}:{{field_name}}#required@value:{{required}}.
+ENDMACRO.
+
+// Declare one valid enumeration value for a field.
+MACRO TF_VALID_VALUE(resource_type, field_name, valid_value):
+EMIT tf:field:{{resource_type}}:{{field_name}}#valid_value@value:{{valid_value}}.
+ENDMACRO.
+
+// Declare a nested data type (struct) used by the API.
+MACRO TF_DATA_TYPE(type_name, description_token):
+EMIT tf:data_type:{{type_name}}#kind@entity:tf_data_type.
+EMIT tf:data_type:{{type_name}}#description@value:{{description_token}}.
+ENDMACRO.
+
+// Declare a field on a data type.
+MACRO TF_DATA_TYPE_FIELD(type_name, field_name, field_type, required):
+EMIT tf:dt_field:{{type_name}}:{{field_name}}#kind@entity:tf_data_type_field.
+EMIT tf:dt_field:{{type_name}}:{{field_name}}#data_type@value:{{type_name}}.
+EMIT tf:dt_field:{{type_name}}:{{field_name}}#field_name@value:{{field_name}}.
+EMIT tf:dt_field:{{type_name}}:{{field_name}}#field_type@value:{{field_type}}.
+EMIT tf:dt_field:{{type_name}}:{{field_name}}#required@value:{{required}}.
+ENDMACRO.
+
+
+// ---------------------------------------------------------------------------
+// Layer 4 — Structural Invariant Rules
+// (Constraints directly encoded from the API Reference specification)
+// ---------------------------------------------------------------------------
+
+// Helper derivations — used to safely negate existence of optional attributes.
+// ZIL (Datalog) requires all variables in NOT clauses to be positively bound.
+// These rules derive a positive "has_X" fact so NOT can check it safely.
+
+RULE tf_server_has_certificate:
+IF ?s#kind@entity:tf_server AND ?s#acm_certificate@?cert
+THEN ?s#has_acm_certificate@value:true.
+
+RULE tf_connector_has_local_profile:
+IF ?c#kind@entity:tf_connector AND ?c#local_profile@?p
+THEN ?c#has_local_profile@value:true.
+
+RULE tf_connector_has_sftp_secret:
+IF ?c#kind@entity:tf_connector AND ?c#sftp_user_secret@?sec
+THEN ?c#has_sftp_secret@value:true.
+
+RULE tf_user_has_posix_uid:
+IF ?u#kind@entity:tf_user AND ?u#posix_uid@?uid
+THEN ?u#has_posix_uid@value:true.
+
+// FTPS requires an ACM certificate on the server.
+RULE tf_ftps_requires_acm_certificate:
+IF ?s#kind@entity:tf_server AND ?s#protocol@value:ftps AND NOT ?s#has_acm_certificate@value:true
+THEN ?s#violation@value:ftps_requires_acm_certificate.
+
+// FTP and FTPS require VPC endpoint type.
+RULE tf_ftp_requires_vpc_endpoint:
+IF ?s#kind@entity:tf_server AND ?s#protocol@value:ftp AND NOT ?s#endpoint_type@value:vpc
+THEN ?s#violation@value:ftp_requires_vpc_endpoint.
+
+RULE tf_ftps_requires_vpc_endpoint:
+IF ?s#kind@entity:tf_server AND ?s#protocol@value:ftps AND NOT ?s#endpoint_type@value:vpc
+THEN ?s#violation@value:ftps_requires_vpc_endpoint.
+
+// AS2 requires VPC endpoint type and S3 storage domain.
+RULE tf_as2_requires_vpc_endpoint:
+IF ?s#kind@entity:tf_server AND ?s#protocol@value:as2 AND NOT ?s#endpoint_type@value:vpc
+THEN ?s#violation@value:as2_requires_vpc_endpoint.
+
+RULE tf_as2_requires_s3_domain:
+IF ?s#kind@entity:tf_server AND ?s#protocol@value:as2 AND NOT ?s#domain@value:s3
+THEN ?s#violation@value:as2_requires_s3_domain.
+
+// SERVICE_MANAGED servers use TF_USER; directory-service servers use TF_ACCESS.
+RULE tf_directory_service_user_conflict:
+IF ?s#kind@entity:tf_server AND ?s#identity_provider_type@value:aws_directory_service AND ?u#kind@entity:tf_user AND ?u#server@?s
+THEN ?s#violation@value:directory_service_cannot_have_service_managed_users.
+
+// An agreement's local profile must be a LOCAL-type profile.
+RULE tf_agreement_local_profile_type:
+IF ?a#kind@entity:tf_agreement AND ?a#local_profile@?p AND NOT ?p#profile_type@value:local
+THEN ?a#violation@value:agreement_local_profile_must_be_local_type.
+
+// An agreement's partner profile must be a PARTNER-type profile.
+RULE tf_agreement_partner_profile_type:
+IF ?a#kind@entity:tf_agreement AND ?a#partner_profile@?p AND NOT ?p#profile_type@value:partner
+THEN ?a#violation@value:agreement_partner_profile_must_be_partner_type.
+
+// An AS2 connector must have a local profile configured.
+RULE tf_connector_as2_has_local_profile:
+IF ?c#kind@entity:tf_connector AND ?c#protocol@value:as2 AND NOT ?c#has_local_profile@value:true
+THEN ?c#violation@value:as2_connector_requires_local_profile.
+
+// SFTP connector must have user credentials configured.
+RULE tf_connector_sftp_has_secret:
+IF ?c#kind@entity:tf_connector AND ?c#protocol@value:sftp AND NOT ?c#has_sftp_secret@value:true
+THEN ?c#violation@value:sftp_connector_requires_user_secret.
+
+// EFS storage domain requires POSIX profile on each user.
+RULE tf_efs_requires_posix_profile:
+IF ?s#kind@entity:tf_server AND ?s#domain@value:efs AND ?u#kind@entity:tf_user AND ?u#server@?s AND NOT ?u#has_posix_uid@value:true
+THEN ?u#violation@value:efs_domain_requires_posix_profile.
+
+// Aggregate: derive has_violation, then compliant = NOT has_violation.
+// (Matches stratified Datalog pattern from aws-model-macros: has_X → NOT has_X → positive state.)
+
+RULE tf_server_has_any_violation:
+IF ?s#kind@entity:tf_server AND ?s#violation@?v
+THEN ?s#has_violation@value:true.
+
+RULE tf_server_compliant:
+IF ?s#kind@entity:tf_server AND NOT ?s#has_violation@value:true
+THEN ?s#compliant@value:true.
+
+RULE tf_connector_has_any_violation:
+IF ?c#kind@entity:tf_connector AND ?c#violation@?v
+THEN ?c#has_violation@value:true.
+
+RULE tf_connector_compliant:
+IF ?c#kind@entity:tf_connector AND NOT ?c#has_violation@value:true
+THEN ?c#compliant@value:true.
+
+RULE tf_agreement_has_any_violation:
+IF ?a#kind@entity:tf_agreement AND ?a#violation@?v
+THEN ?a#has_violation@value:true.
+
+RULE tf_agreement_compliant:
+IF ?a#kind@entity:tf_agreement AND NOT ?a#has_violation@value:true
+THEN ?a#compliant@value:true.
+
+
+// ---------------------------------------------------------------------------
+// Layer 5 — Queries
+// ---------------------------------------------------------------------------
+
+QUERY tf_servers:
+FIND ?s WHERE ?s#kind@entity:tf_server.
+
+QUERY tf_servers_by_protocol:
+FIND ?s ?p WHERE ?s#kind@entity:tf_server AND ?s#protocol@?p.
+
+QUERY tf_sftp_servers:
+FIND ?s WHERE ?s#kind@entity:tf_server AND ?s#protocol@value:sftp.
+
+QUERY tf_as2_servers:
+FIND ?s WHERE ?s#kind@entity:tf_server AND ?s#protocol@value:as2.
+
+QUERY tf_violations:
+FIND ?r ?v WHERE ?r#violation@?v.
+
+QUERY tf_non_compliant_servers:
+FIND ?s WHERE ?s#kind@entity:tf_server AND ?s#compliant@value:false.
+
+QUERY tf_compliant_servers:
+FIND ?s WHERE ?s#kind@entity:tf_server AND ?s#compliant@value:true.
+
+QUERY tf_agreements:
+FIND ?a ?lp ?pp WHERE ?a#kind@entity:tf_agreement AND ?a#local_profile@?lp AND ?a#partner_profile@?pp.
+
+QUERY tf_agreements_by_server:
+FIND ?a ?s WHERE ?a#kind@entity:tf_agreement AND ?a#server@?s.
+
+QUERY tf_workflow_steps:
+FIND ?step ?wf ?type ?order WHERE ?step#kind@entity:tf_workflow_step AND ?step#workflow@?wf AND ?step#step_type@?type AND ?step#step_order@?order.
+
+QUERY tf_server_workflows:
+FIND ?s ?wf ?trigger WHERE ?s#kind@entity:tf_server AND ?s#workflow_trigger@?wf AND ?s#workflow_trigger_event@?trigger.
+
+QUERY tf_connectors_by_protocol:
+FIND ?c ?p WHERE ?c#kind@entity:tf_connector AND ?c#protocol@?p.
+
+QUERY tf_api_operations:
+FIND ?op ?res ?act WHERE ?op#kind@entity:tf_operation AND ?op#resource_type@?res AND ?op#action@?act.
+
+QUERY tf_api_fields:
+FIND ?res ?fn ?ft ?req WHERE ?f#kind@entity:tf_field AND ?f#resource_type@?res AND ?f#field_name@?fn AND ?f#field_type@?ft AND ?f#required@?req.
+
+QUERY tf_required_fields:
+FIND ?res ?fn WHERE ?f#kind@entity:tf_field AND ?f#resource_type@?res AND ?f#field_name@?fn AND ?f#required@value:yes.
+
+QUERY tf_enum_fields:
+FIND ?res ?fn ?val WHERE ?f#kind@entity:tf_field AND ?f#resource_type@?res AND ?f#field_name@?fn AND ?f#valid_value@?val.

@@ -1,0 +1,12 @@
+MODULE conformance.access.
+
+group:eng#member@user:11.
+doc:readme#viewer@group:eng#member.
+doc:readme#blocked@user:12.
+
+RULE activeViewer:
+IF ?doc#viewer@?user AND NOT ?doc#blocked@?user
+THEN ?doc#active_viewer@?user.
+
+QUERY activeViewers:
+FIND ?user WHERE doc:readme#active_viewer@?user.

@@ -1,0 +1,15 @@
+MODULE policy.macroAccess.
+
+MACRO grant(object, group):
+EMIT {{object}}#viewer@{{group}}#member.
+ENDMACRO.
+
+MACRO grantPlatform(object):
+EMIT USE grant({{object}}, group:platform).
+ENDMACRO.
+
+group:platform#member@user:11.
+USE grantPlatform(doc:readme).
+
+QUERY viewers:
+FIND ?user WHERE doc:readme#viewer@?user.

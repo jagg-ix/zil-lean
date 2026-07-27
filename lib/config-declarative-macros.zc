@@ -1,0 +1,156 @@
+MODULE config.declarative.lib.
+
+// Declarative configuration macro layer.
+//
+// Goal:
+// - Let users model common config-file patterns without hand-writing many
+//   low-level entity facts.
+//
+// This layer models:
+// - config documents and profiles,
+// - named blocks/sections,
+// - key-value entries and references,
+// - list items,
+// - env-variable bindings,
+// - secret references,
+// - endpoint/retry/timeout/feature/schedule patterns,
+// - include and profile overrides.
+
+MACRO CFG_DOC(id, format, path):
+EMIT DATASOURCE cfgdoc_{{id}} [type=file, format={{format}}, path={{path}}].
+EMIT config:{{id}}#kind@entity:config_document.
+EMIT config:{{id}}#format@value:{{format}}.
+EMIT config:{{id}}#path@{{path}}.
+EMIT config:{{id}}#source@datasource:cfgdoc_{{id}}.
+ENDMACRO.
+
+MACRO CFG_PROFILE(doc, profile):
+EMIT config:{{doc}}#profile@value:{{profile}}.
+ENDMACRO.
+
+MACRO CFG_BLOCK(doc, block, kind):
+EMIT cfg:block:{{doc}}:{{block}}#kind@entity:config_block.
+EMIT cfg:block:{{doc}}:{{block}}#block_kind@value:{{kind}}.
+EMIT cfg:block:{{doc}}:{{block}}#in_document@config:{{doc}}.
+EMIT config:{{doc}}#has_block@cfg:block:{{doc}}:{{block}}.
+ENDMACRO.
+
+MACRO CFG_SERVICE(doc, block, service, env, criticality):
+EMIT SERVICE {{service}} [env={{env}}, criticality={{criticality}}].
+EMIT cfg:block:{{doc}}:{{block}}#declares_service@service:{{service}}.
+ENDMACRO.
+
+MACRO CFG_KV(doc, block, key, value):
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#kind@entity:config_entry.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_document@config:{{doc}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#key@value:{{key}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#value@value:{{value}}.
+ENDMACRO.
+
+MACRO CFG_REF(doc, block, key, target):
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#kind@entity:config_entry.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_document@config:{{doc}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#key@value:{{key}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#value_ref@{{target}}.
+ENDMACRO.
+
+MACRO CFG_LIST_ITEM(doc, block, key, idx, value):
+EMIT cfg:list_item:{{doc}}:{{block}}:{{key}}:{{idx}}#kind@entity:config_list_item.
+EMIT cfg:list_item:{{doc}}:{{block}}:{{key}}:{{idx}}#in_document@config:{{doc}}.
+EMIT cfg:list_item:{{doc}}:{{block}}:{{key}}:{{idx}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT cfg:list_item:{{doc}}:{{block}}:{{key}}:{{idx}}#key@value:{{key}}.
+EMIT cfg:list_item:{{doc}}:{{block}}:{{key}}:{{idx}}#index@value:{{idx}}.
+EMIT cfg:list_item:{{doc}}:{{block}}:{{key}}:{{idx}}#value@value:{{value}}.
+ENDMACRO.
+
+MACRO CFG_ENV_BIND(doc, block, key, env_var, default):
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#kind@entity:config_entry.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_document@config:{{doc}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#key@value:{{key}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#env_var@value:{{env_var}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#default@value:{{default}}.
+ENDMACRO.
+
+MACRO CFG_SECRET_REF(doc, block, key, provider, secret_ref):
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#kind@entity:config_entry.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_document@config:{{doc}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#key@value:{{key}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#secret_provider@provider:{{provider}}.
+EMIT cfg:entry:{{doc}}:{{block}}:{{key}}#secret_ref@value:{{secret_ref}}.
+ENDMACRO.
+
+MACRO CFG_ENDPOINT(doc, block, endpoint, scheme, host, port, path):
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#kind@entity:config_endpoint.
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#in_document@config:{{doc}}.
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#scheme@value:{{scheme}}.
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#host@value:{{host}}.
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#port@value:{{port}}.
+EMIT endpoint:{{doc}}:{{block}}:{{endpoint}}#path@value:{{path}}.
+ENDMACRO.
+
+MACRO CFG_RETRY(doc, block, retries, backoff_ms):
+EMIT cfg:block:{{doc}}:{{block}}#retry_count@value:{{retries}}.
+EMIT cfg:block:{{doc}}:{{block}}#retry_backoff_ms@value:{{backoff_ms}}.
+ENDMACRO.
+
+MACRO CFG_TIMEOUT_MS(doc, block, timeout_ms):
+EMIT cfg:block:{{doc}}:{{block}}#timeout_ms@value:{{timeout_ms}}.
+ENDMACRO.
+
+MACRO CFG_FEATURE(doc, block, flag, enabled):
+EMIT feature:{{doc}}:{{block}}:{{flag}}#kind@entity:config_feature.
+EMIT feature:{{doc}}:{{block}}:{{flag}}#in_document@config:{{doc}}.
+EMIT feature:{{doc}}:{{block}}:{{flag}}#in_block@cfg:block:{{doc}}:{{block}}.
+EMIT feature:{{doc}}:{{block}}:{{flag}}#flag@value:{{flag}}.
+EMIT feature:{{doc}}:{{block}}:{{flag}}#enabled@value:{{enabled}}.
+ENDMACRO.
+
+MACRO CFG_CRON(doc, block, cron_expr, timezone):
+EMIT cfg:block:{{doc}}:{{block}}#schedule_cron@value:{{cron_expr}}.
+EMIT cfg:block:{{doc}}:{{block}}#schedule_tz@value:{{timezone}}.
+ENDMACRO.
+
+MACRO CFG_INCLUDE(parent_doc, child_doc):
+EMIT config:{{parent_doc}}#includes@config:{{child_doc}}.
+EMIT config:{{child_doc}}#included_by@config:{{parent_doc}}.
+ENDMACRO.
+
+MACRO CFG_OVERRIDE(doc, profile, block, key, value):
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#kind@entity:config_override.
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#in_document@config:{{doc}}.
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#profile@value:{{profile}}.
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#target_block@cfg:block:{{doc}}:{{block}}.
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#target_entry@cfg:entry:{{doc}}:{{block}}:{{key}}.
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#key@value:{{key}}.
+EMIT cfg:override:{{doc}}:{{profile}}:{{block}}:{{key}}#value@value:{{value}}.
+ENDMACRO.
+
+RULE cfg_override_marks_entry:
+IF ?ov#kind@entity:config_override AND ?ov#target_entry@?entry
+THEN ?entry#overridden_by@?ov.
+
+QUERY cfg_documents:
+FIND ?doc ?path WHERE ?doc#kind@entity:config_document AND ?doc#path@?path.
+
+QUERY cfg_blocks:
+FIND ?doc ?block ?kind WHERE ?block#kind@entity:config_block AND ?block#in_document@?doc AND ?block#block_kind@?kind.
+
+QUERY cfg_entries:
+FIND ?entry ?doc ?block ?key ?value WHERE ?entry#kind@entity:config_entry AND ?entry#in_document@?doc AND ?entry#in_block@?block AND ?entry#key@?key AND ?entry#value@?value.
+
+QUERY cfg_entry_refs:
+FIND ?entry ?key ?target WHERE ?entry#kind@entity:config_entry AND ?entry#key@?key AND ?entry#value_ref@?target.
+
+QUERY cfg_env_bindings:
+FIND ?entry ?env ?default WHERE ?entry#env_var@?env AND ?entry#default@?default.
+
+QUERY cfg_secret_refs:
+FIND ?entry ?provider ?secret WHERE ?entry#secret_provider@?provider AND ?entry#secret_ref@?secret.
+
+QUERY cfg_overrides:
+FIND ?ov ?profile ?entry ?value WHERE ?ov#kind@entity:config_override AND ?ov#profile@?profile AND ?ov#target_entry@?entry AND ?ov#value@?value.

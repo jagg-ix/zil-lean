@@ -1,0 +1,22 @@
+{:fixtures
+ [{:file "AdS3ConformalBoundaryBad.lean"
+   :lean-compiles true
+   :formalization-lint false
+   :expected-codes [:missing-ads3-geometry
+                    :missing-conformal-boundary
+                    :missing-cft-object
+                    :misleading-file-scope]}
+  {:file "RyuTakayanagiBad.lean"
+   :lean-compiles true
+   :formalization-lint false
+   :expected-codes [:missing-boundary-region
+                    :missing-bulk-minimal-surface
+                    :missing-entanglement-entropy
+                    :algebraic-only-result]}
+  {:file "GNSVonNeumannHadamardBad.lean"
+   :lean-compiles true
+   :formalization-lint false
+   :expected-codes [:missing-positive-linear-functional
+                    :missing-gns-representation
+                    :missing-von-neumann-algebra
+                    :missing-hadamard-state]}]}

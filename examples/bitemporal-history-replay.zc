@@ -1,0 +1,55 @@
+MODULE bitemporal.history.replay.demo.
+
+// Bitemporal history + correction + replay example.
+//
+// Run:
+//   ./bin/zil preprocess examples/bitemporal-history-replay.zc /tmp/bt.pre.zc libsets/bitemporal
+//   ./bin/zil /tmp/bt.pre.zc
+
+// Timepoints for valid-time and tx-time axes.
+USE BT_TIMEPOINT(v_20260301, valid, 2026_03_01T00_00_00Z).
+USE BT_TIMEPOINT(v_20260302, valid, 2026_03_02T00_00_00Z).
+USE BT_TIMEPOINT(v_20260303, valid, 2026_03_03T00_00_00Z).
+
+USE BT_TIMEPOINT(tx_20260303, tx, 2026_03_03T10_00_00Z).
+USE BT_TIMEPOINT(tx_20260305, tx, 2026_03_05T14_00_00Z).
+USE BT_TIMEPOINT(tx_20260306, tx, 2026_03_06T11_00_00Z).
+
+USE BT_TIME_BEFORE(v_20260301, v_20260302).
+USE BT_TIME_BEFORE(v_20260302, v_20260303).
+USE BT_TIME_BEFORE(tx_20260303, tx_20260305).
+USE BT_TIME_BEFORE(tx_20260305, tx_20260306).
+
+// Logical assertion: sync state for one migration link.
+USE BT_ASSERTION(link_invoices_state, sync_link:link_invoices_cloud, sync_state).
+
+// Initial version (later corrected).
+USE BT_VERSION(v_link_state_001, link_invoices_state, value:in_sync, v_20260301, tx_20260303).
+USE BT_TX_TO(v_link_state_001, tx_20260305).
+USE BT_EVIDENCE(ev_probe_001, net_probe, sha256_a1).
+USE BT_EVIDENCE_CAPTURED_AT(ev_probe_001, tx_20260303).
+USE BT_VERSION_EVIDENCE(v_link_state_001, ev_probe_001).
+
+// Corrected version after late evidence arrives.
+USE BT_VERSION(v_link_state_002, link_invoices_state, value:out_of_sync, v_20260301, tx_20260305).
+USE BT_EVIDENCE(ev_probe_002, reconciler, sha256_b2).
+USE BT_EVIDENCE_CAPTURED_AT(ev_probe_002, tx_20260305).
+USE BT_VERSION_EVIDENCE(v_link_state_002, ev_probe_002).
+USE BT_CORRECTION(corr_link_state_001, link_invoices_state, v_link_state_001, v_link_state_002, late_probe_correction).
+USE BT_CORRECTION_AT(corr_link_state_001, tx_20260305).
+USE BT_CORRECTION_EVIDENCE(corr_link_state_001, ev_probe_002).
+
+// Additional assertion with no correction.
+USE BT_ASSERTION(link_payroll_state, sync_link:link_payroll_dc, sync_state).
+USE BT_VERSION(v_link_payroll_001, link_payroll_state, value:in_sync, v_20260302, tx_20260306).
+USE BT_EVIDENCE(ev_probe_003, net_probe, sha256_c3).
+USE BT_EVIDENCE_CAPTURED_AT(ev_probe_003, tx_20260306).
+USE BT_VERSION_EVIDENCE(v_link_payroll_001, ev_probe_003).
+
+// Replay run snapshot.
+USE BT_REPLAY_RUN(replay_audit_20260306, link_invoices_state, v_20260303, tx_20260306).
+
+// Explicit as-of snapshots (language-layer replay checkpoints).
+USE BT_ASOF_SNAPSHOT(snap_20260304_link_invoices, link_invoices_state, v_link_state_001, v_20260303, tx_20260303).
+USE BT_ASOF_SNAPSHOT(snap_20260306_link_invoices, link_invoices_state, v_link_state_002, v_20260303, tx_20260306).
+USE BT_ASOF_SNAPSHOT(snap_20260306_link_payroll, link_payroll_state, v_link_payroll_001, v_20260303, tx_20260306).

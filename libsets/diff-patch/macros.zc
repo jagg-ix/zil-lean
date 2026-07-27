@@ -1,0 +1,165 @@
+MODULE diff.patch.lib.
+
+// diff-patch macro library — ZIL-native ontology for structural diffs and patchsets.
+//
+// Designed to work with the entspotter Python provider, which emits:
+//   python -m entspotter diff --base A --target B --format zc   (direct ZIL facts)
+//   python -m entspotter diff --base A --target B --format flat  (import-data)
+//   python -m entspotter diff --base A --target B               (IO_COMMAND_SOURCE)
+//
+// Three integration paths (see diff-patch-demo.zc for examples):
+//   Path A — ENTSPOTTER_DIFF_SOURCE  : live DATASOURCE via command adapter
+//   Path B — import-data + flat JSON : one-shot batch import
+//   Path C — --format zc             : direct .zc include (no macros needed)
+//
+// Layer 1 — Entity constructors : SNAPSHOT, PATCHSET, PATCH
+// Layer 2 — Provider macro      : ENTSPOTTER_DIFF_SOURCE
+// Layer 3 — Derived rules       : empty, conflicts, breaking, data-only
+// Layer 4 — Queries             : all_patchsets, by_scope, conflicts, breaking
+
+
+// ---------------------------------------------------------------------------
+// Layer 1 — Entity Constructors
+// ---------------------------------------------------------------------------
+
+// Declare a versioned document snapshot.
+// format: html | json | yaml | csv
+// role  : base | target | checkpoint
+MACRO SNAPSHOT(id, source_path, format, role):
+EMIT snapshot:{{id}}#kind@entity:snapshot.
+EMIT snapshot:{{id}}#format@value:{{format}}.
+EMIT snapshot:{{id}}#role@value:{{role}}.
+EMIT snapshot:{{id}}#path@value:{{source_path}}.
+ENDMACRO.
+
+// Declare a patchset — the diff between two snapshots.
+// base_snap / target_snap must be ids registered with SNAPSHOT.
+MACRO PATCHSET(id, base_snap, target_snap, source_id):
+EMIT patchset:{{id}}#kind@entity:patchset.
+EMIT patchset:{{id}}#base@snapshot:{{base_snap}}.
+EMIT patchset:{{id}}#target@snapshot:{{target_snap}}.
+EMIT patchset:{{id}}#source_id@value:{{source_id}}.
+ENDMACRO.
+
+// Declare an individual patch operation within a patchset.
+// op    : add | remove | replace | move | copy  (RFC 6902)
+// path  : path:<token> subject — use the path: namespace (e.g. path:rows_3_Status)
+// scope : data | schema | structure
+MACRO PATCH(id, patchset_id, op, path_token, scope):
+EMIT patch:{{id}}#kind@entity:patch.
+EMIT patch:{{id}}#belongs_to@patchset:{{patchset_id}}.
+EMIT patch:{{id}}#op@value:{{op}}.
+EMIT patch:{{id}}#path@path:{{path_token}}.
+EMIT patch:{{id}}#scope@value:{{scope}}.
+ENDMACRO.
+
+// Short form: declare a patch and record before/after values as attrs.
+MACRO PATCH_FULL(id, patchset_id, op, path_token, scope, from_val, to_val):
+EMIT patch:{{id}}#kind@entity:patch.
+EMIT patch:{{id}}#belongs_to@patchset:{{patchset_id}}.
+EMIT patch:{{id}}#op@value:{{op}}.
+EMIT patch:{{id}}#path@path:{{path_token}}.
+EMIT patch:{{id}}#scope@value:{{scope}}.
+EMIT patch:{{id}}#from@value:{{from_val}}.
+EMIT patch:{{id}}#to@value:{{to_val}}.
+ENDMACRO.
+
+
+// ---------------------------------------------------------------------------
+// Layer 2 — Provider Macro (entspotter as command datasource)
+// ---------------------------------------------------------------------------
+
+// Wire an entspotter live diff as a ZIL DATASOURCE.
+// Emits full patchset JSON on each ingest trigger.
+// The payload is stored as datasource:<name>#ingested_record attrs.
+//
+// Usage:
+//   USE ENTSPOTTER_DIFF_SOURCE(ds_q1, "reports/2024-q4.html", "reports/2025-q1.html", "transfer-list").
+//
+// Note: table_filter is the --table-id value passed to entspotter.
+MACRO ENTSPOTTER_DIFF_SOURCE(name, base_path, target_path, table_filter):
+EMIT DATASOURCE {{name}} [type=command, format=json, command="python -m entspotter diff --base {{base_path}} --target {{target_path}} --table-id {{table_filter}}"].
+ENDMACRO.
+
+// Flat variant — emits patches array; suitable for rules that pattern-match
+// individual patch records directly from the ingest pipeline.
+MACRO ENTSPOTTER_DIFF_FLAT(name, base_path, target_path, table_filter):
+EMIT DATASOURCE {{name}} [type=command, format=json, command="python -m entspotter diff --base {{base_path}} --target {{target_path}} --table-id {{table_filter}} --format flat"].
+ENDMACRO.
+
+// Scoped variant — JMESPath filter applied by Python before ZIL ingestion.
+// jmespath_expr example: [?scope=='schema']
+MACRO ENTSPOTTER_DIFF_SCOPED(name, base_path, target_path, table_filter, jmespath_expr):
+EMIT DATASOURCE {{name}} [type=command, format=json, command="python -m entspotter diff --base {{base_path}} --target {{target_path}} --table-id {{table_filter}} --format flat --filter {{jmespath_expr}}"].
+ENDMACRO.
+
+
+// ---------------------------------------------------------------------------
+// Layer 3 — Derived Rules
+// ---------------------------------------------------------------------------
+
+// A patchset is empty when no patch belongs to it.
+RULE dp_patchset_empty:
+IF patchset:?ps#kind@entity:patchset AND NOT patch:?_#belongs_to@patchset:?ps
+THEN patchset:?ps#is_empty@value:true.
+
+// A patchset has at least one patch.
+RULE dp_patchset_non_empty:
+IF patchset:?ps#kind@entity:patchset AND patch:?p#belongs_to@patchset:?ps
+THEN patchset:?ps#is_empty@value:false.
+
+// A patch is breaking when it touches schema scope.
+RULE dp_patch_breaking:
+IF patch:?p#kind@entity:patch AND patch:?p#scope@value:schema
+THEN patch:?p#is_breaking@value:true.
+
+// A patchset contains a breaking change if any of its patches is breaking.
+RULE dp_patchset_has_breaking:
+IF patchset:?ps#kind@entity:patchset AND patch:?p#belongs_to@patchset:?ps AND patch:?p#is_breaking@value:true
+THEN patchset:?ps#has_breaking_change@value:true.
+
+// Two patchsets conflict when they modify the same path on the same base snapshot.
+// This fires for every (ps1, ps2) pair that share a base and touch the same path.
+RULE dp_patchset_conflict:
+IF patchset:?ps1#base@?snap AND patch:?p1#belongs_to@patchset:?ps1 AND patch:?p1#path@?path AND patchset:?ps2#base@?snap AND patch:?p2#belongs_to@patchset:?ps2 AND patch:?p2#path@?path AND NOT patchset:?ps1#kind@value:sentinel AND NOT patchset:?ps2#kind@value:sentinel
+THEN patchset:?ps1#conflicts_with@patchset:?ps2.
+
+// A patchset is data-only when all its patches are data-scoped.
+RULE dp_patchset_data_only:
+IF patchset:?ps#kind@entity:patchset AND NOT patch:?_p#belongs_to@patchset:?ps AND NOT patch:?_p#scope@value:schema
+THEN patchset:?ps#is_data_only@value:true.
+
+
+// ---------------------------------------------------------------------------
+// Layer 4 — Queries
+// ---------------------------------------------------------------------------
+
+QUERY dp_all_patchsets:
+FIND ?ps ?src ?base ?target WHERE
+  ?ps#kind@entity:patchset AND ?ps#source_id@?src AND ?ps#base@?base AND ?ps#target@?target.
+
+QUERY dp_empty_patchsets:
+FIND ?ps WHERE ?ps#is_empty@value:true.
+
+QUERY dp_patches_by_patchset:
+FIND ?ps ?p ?op ?path ?scope WHERE
+  ?p#belongs_to@?ps AND ?p#op@?op AND ?p#path@?path AND ?p#scope@?scope.
+
+QUERY dp_patches_by_scope:
+FIND ?ps ?p ?op ?path WHERE
+  ?p#belongs_to@?ps AND ?p#op@?op AND ?p#path@?path AND ?p#scope@value:schema.
+
+QUERY dp_data_patches:
+FIND ?ps ?p ?op ?path WHERE
+  ?p#belongs_to@?ps AND ?p#op@?op AND ?p#path@?path AND ?p#scope@value:data.
+
+QUERY dp_breaking_changes:
+FIND ?ps ?p ?path WHERE
+  ?ps#has_breaking_change@value:true AND ?p#belongs_to@patchset:?ps AND ?p#is_breaking@value:true AND ?p#path@?path.
+
+QUERY dp_conflicts:
+FIND ?ps1 ?ps2 WHERE ?ps1#conflicts_with@?ps2.
+
+QUERY dp_snapshots:
+FIND ?snap ?role ?fmt ?src WHERE
+  ?snap#kind@entity:snapshot AND ?snap#role@?role AND ?snap#format@?fmt AND ?snap#path@?src.

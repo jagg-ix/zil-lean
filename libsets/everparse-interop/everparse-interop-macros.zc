@@ -1,0 +1,145 @@
+MODULE everparse.interop.lib.
+
+// EverParse interop macro layer for ZIL.
+//
+// Goal:
+// - keep EverParse/3d specs and generated validator evidence queryable in ZIL
+// - represent verification guarantees and deterministic pos/neg test contracts
+// - keep this as a macro/domain layer (no core semantic changes)
+
+MACRO EP_SPEC(id, module_name, entrypoint, source_path):
+EMIT ep:spec:{{id}}#kind@entity:everparse_spec.
+EMIT ep:spec:{{id}}#module@value:{{module_name}}.
+EMIT ep:spec:{{id}}#entrypoint@value:{{entrypoint}}.
+EMIT ep:spec:{{id}}#source_path@value:{{source_path}}.
+ENDMACRO.
+
+MACRO EP_PROFILE(id, target_lang, toolchain, memory_model):
+EMIT ep:profile:{{id}}#kind@entity:everparse_profile.
+EMIT ep:profile:{{id}}#target_lang@value:{{target_lang}}.
+EMIT ep:profile:{{id}}#toolchain@value:{{toolchain}}.
+EMIT ep:profile:{{id}}#memory_model@value:{{memory_model}}.
+ENDMACRO.
+
+MACRO EP_RUN(id, spec_id, profile_id, status):
+EMIT ep:run:{{id}}#kind@entity:everparse_run.
+EMIT ep:run:{{id}}#spec@ep:spec:{{spec_id}}.
+EMIT ep:run:{{id}}#profile@ep:profile:{{profile_id}}.
+EMIT ep:run:{{id}}#status@value:{{status}}.
+ENDMACRO.
+
+MACRO EP_ARTIFACT(run_id, artifact_id, kind, path_token):
+EMIT ep:artifact:{{artifact_id}}#kind@entity:everparse_artifact.
+EMIT ep:artifact:{{artifact_id}}#artifact_kind@value:{{kind}}.
+EMIT ep:artifact:{{artifact_id}}#path@value:{{path_token}}.
+EMIT ep:artifact:{{artifact_id}}#run@ep:run:{{run_id}}.
+ENDMACRO.
+
+MACRO EP_TEST_SUITE(run_id, mode, deterministic, has_pos, has_neg, depth):
+EMIT ep:test:{{run_id}}:{{mode}}#kind@entity:everparse_test_suite.
+EMIT ep:test:{{run_id}}:{{mode}}#run@ep:run:{{run_id}}.
+EMIT ep:test:{{run_id}}:{{mode}}#mode@value:{{mode}}.
+EMIT ep:test:{{run_id}}:{{mode}}#deterministic@value:{{deterministic}}.
+EMIT ep:test:{{run_id}}:{{mode}}#has_pos@value:{{has_pos}}.
+EMIT ep:test:{{run_id}}:{{mode}}#has_neg@value:{{has_neg}}.
+EMIT ep:test:{{run_id}}:{{mode}}#branch_depth@value:{{depth}}.
+ENDMACRO.
+
+MACRO EP_GUARANTEE(run_id, guarantee_id, name, verdict):
+EMIT ep:guarantee:{{run_id}}:{{guarantee_id}}#kind@entity:everparse_guarantee.
+EMIT ep:guarantee:{{run_id}}:{{guarantee_id}}#run@ep:run:{{run_id}}.
+EMIT ep:guarantee:{{run_id}}:{{guarantee_id}}#name@value:{{name}}.
+EMIT ep:guarantee:{{run_id}}:{{guarantee_id}}#verdict@value:{{verdict}}.
+ENDMACRO.
+
+MACRO EP_EVIDENCE(run_id, evidence_id, theorem_id, backend, ref_token):
+EMIT ep:evidence:{{run_id}}:{{evidence_id}}#kind@entity:everparse_evidence.
+EMIT ep:evidence:{{run_id}}:{{evidence_id}}#run@ep:run:{{run_id}}.
+EMIT ep:evidence:{{run_id}}:{{evidence_id}}#theorem@value:{{theorem_id}}.
+EMIT ep:evidence:{{run_id}}:{{evidence_id}}#backend@value:{{backend}}.
+EMIT ep:evidence:{{run_id}}:{{evidence_id}}#ref@value:{{ref_token}}.
+ENDMACRO.
+
+RULE ep_run_has_artifacts:
+IF ?a#kind@entity:everparse_artifact AND ?a#run@?run
+THEN ?run#has_artifacts@value:true.
+
+RULE ep_run_has_deterministic_test:
+IF ?t#kind@entity:everparse_test_suite AND ?t#run@?run AND ?t#deterministic@value:true
+THEN ?run#has_deterministic_test@value:true.
+
+RULE ep_run_has_pos_test:
+IF ?t#kind@entity:everparse_test_suite AND ?t#run@?run AND ?t#has_pos@value:true
+THEN ?run#has_pos_test@value:true.
+
+RULE ep_run_has_neg_test:
+IF ?t#kind@entity:everparse_test_suite AND ?t#run@?run AND ?t#has_neg@value:true
+THEN ?run#has_neg_test@value:true.
+
+RULE ep_run_has_required_guarantee_memory:
+IF ?g#kind@entity:everparse_guarantee AND ?g#run@?run AND ?g#name@value:memory_safety AND ?g#verdict@value:proved
+THEN ?run#has_memory_safety@value:true.
+
+RULE ep_run_has_required_guarantee_arithmetic:
+IF ?g#kind@entity:everparse_guarantee AND ?g#run@?run AND ?g#name@value:arithmetic_safety AND ?g#verdict@value:proved
+THEN ?run#has_arithmetic_safety@value:true.
+
+RULE ep_run_has_required_guarantee_double_fetch:
+IF ?g#kind@entity:everparse_guarantee AND ?g#run@?run AND ?g#name@value:double_fetch_freedom AND ?g#verdict@value:proved
+THEN ?run#has_double_fetch_freedom@value:true.
+
+RULE ep_run_has_evidence:
+IF ?e#kind@entity:everparse_evidence AND ?e#run@?run
+THEN ?run#has_evidence@value:true.
+
+RULE ep_run_contract_verified:
+IF ?run#kind@entity:everparse_run AND ?run#status@value:succeeded AND ?run#has_artifacts@value:true AND ?run#has_deterministic_test@value:true AND ?run#has_pos_test@value:true AND ?run#has_neg_test@value:true AND ?run#has_memory_safety@value:true AND ?run#has_arithmetic_safety@value:true AND ?run#has_double_fetch_freedom@value:true AND ?run#has_evidence@value:true
+THEN ?run#contract_verified@value:true.
+
+RULE ep_run_contract_gap_from_missing_artifacts:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_artifacts@value:true
+THEN ?run#contract_gap@value:missing_artifacts.
+
+RULE ep_run_contract_gap_from_missing_pos:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_pos_test@value:true
+THEN ?run#contract_gap@value:missing_positive_tests.
+
+RULE ep_run_contract_gap_from_missing_neg:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_neg_test@value:true
+THEN ?run#contract_gap@value:missing_negative_tests.
+
+RULE ep_run_contract_gap_from_nondeterministic:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_deterministic_test@value:true
+THEN ?run#contract_gap@value:tests_not_deterministic.
+
+RULE ep_run_contract_gap_from_missing_memory:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_memory_safety@value:true
+THEN ?run#contract_gap@value:missing_memory_safety.
+
+RULE ep_run_contract_gap_from_missing_arithmetic:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_arithmetic_safety@value:true
+THEN ?run#contract_gap@value:missing_arithmetic_safety.
+
+RULE ep_run_contract_gap_from_missing_double_fetch:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_double_fetch_freedom@value:true
+THEN ?run#contract_gap@value:missing_double_fetch_freedom.
+
+RULE ep_run_contract_gap_from_missing_evidence:
+IF ?run#kind@entity:everparse_run AND NOT ?run#has_evidence@value:true
+THEN ?run#contract_gap@value:missing_evidence.
+
+QUERY ep_specs:
+FIND ?spec ?module ?entry WHERE ?spec#kind@entity:everparse_spec AND ?spec#module@?module AND ?spec#entrypoint@?entry.
+
+QUERY ep_runs:
+FIND ?run ?status WHERE ?run#kind@entity:everparse_run AND ?run#status@?status.
+
+QUERY ep_contract_verified_runs:
+FIND ?run WHERE ?run#contract_verified@value:true.
+
+QUERY ep_contract_gaps:
+FIND ?run ?gap WHERE ?run#contract_gap@?gap.
+
+QUERY ep_guarantees:
+FIND ?g ?name ?v WHERE ?g#kind@entity:everparse_guarantee AND ?g#name@?name AND ?g#verdict@?v.
+

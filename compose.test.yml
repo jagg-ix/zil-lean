@@ -1,0 +1,15 @@
+services:
+  zil-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      args:
+        CLOJURE_TOOLS_VERSION: ${CLOJURE_TOOLS_VERSION:-1.12.5.1654}
+    command:
+      - --profile
+      - ${ZIL_TEST_PROFILE:-all}
+      - --skip-build
+      - --report
+      - /workspace/.zil/test-reports/${ZIL_TEST_PROFILE:-all}.tsv
+    volumes:
+      - ./.zil/container-reports:/workspace/.zil/test-reports

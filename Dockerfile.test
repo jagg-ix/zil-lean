@@ -1,0 +1,35 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG CLOJURE_TOOLS_VERSION=1.12.5.1654
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       bash ca-certificates curl git make openjdk-21-jdk-headless rlwrap \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --fail --location --retry 3 --silent --show-error \
+      "https://github.com/clojure/brew-install/releases/download/${CLOJURE_TOOLS_VERSION}/linux-install.sh" \
+      --output /tmp/clojure-install.sh \
+    && chmod +x /tmp/clojure-install.sh \
+    && /tmp/clojure-install.sh \
+    && rm /tmp/clojure-install.sh
+
+RUN curl --fail --location --silent --show-error \
+      https://elan.lean-lang.org/elan-init.sh \
+      --output /tmp/elan-init.sh \
+    && sh /tmp/elan-init.sh -y --default-toolchain none \
+    && rm /tmp/elan-init.sh
+
+ENV PATH="/root/.elan/bin:${PATH}"
+ENV ZIL_CONTAINER=1
+
+WORKDIR /workspace
+COPY . /workspace
+
+RUN chmod +x scripts/*.sh scripts/lib/*.sh bin/zil bin/zil-legacy bin/build-jar \
+    && clojure -Spath >/dev/null \
+    && lake build
+
+ENTRYPOINT ["bash", "scripts/test.sh"]
+CMD ["--profile", "all", "--skip-build"]

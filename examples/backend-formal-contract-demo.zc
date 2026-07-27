@@ -1,0 +1,173 @@
+MODULE backend.formal.contract.demo.
+
+// Concrete BackendCapabilities + FormalFeedbackSchema contract demo.
+// Run:
+//   ./bin/zil preprocess examples/backend-formal-contract-demo.zc /tmp/bfc.pre.zc
+//   ./bin/zil /tmp/bfc.pre.zc
+
+// ------------------------------------------------------------------
+// Backends
+// ------------------------------------------------------------------
+
+USE BFC_BACKEND(b_clj_main, clj, default).
+USE BFC_BACKEND_VERSION(b_clj_main, v1_2_0).
+USE BFC_BACKEND_ENABLED(b_clj_main).
+USE BFC_BACKEND_CAP(b_clj_main, fixpoint).
+USE BFC_BACKEND_CAP(b_clj_main, incremental).
+USE BFC_BACKEND_CAP(b_clj_main, emit_tla).
+USE BFC_BACKEND_CAP(b_clj_main, emit_lean4).
+USE BFC_BACKEND_CAP(b_clj_main, check_z3).
+USE BFC_BACKEND_CAP(b_clj_main, check_acl2).
+USE BFC_BACKEND_CAP(b_clj_main, emit_acl2).
+USE BFC_BACKEND_CAP(b_clj_main, ingest_feedback).
+USE BFC_BACKEND_CAP(b_clj_main, artifact_json).
+USE BFC_BACKEND_IO(b_clj_main, input, json).
+USE BFC_BACKEND_IO(b_clj_main, output, json).
+USE BFC_BACKEND_FORMAL_BRIDGE(b_clj_main, tla, direct).
+USE BFC_BACKEND_FORMAL_BRIDGE(b_clj_main, lean4, direct).
+USE BFC_BACKEND_FORMAL_BRIDGE(b_clj_main, z3, direct).
+USE BFC_BACKEND_FORMAL_BRIDGE(b_clj_main, acl2, artifact_log).
+USE BFC_BACKEND_COST(b_clj_main, 120, 15, 500000, 2048).
+
+USE BFC_BACKEND(b_souffle_batch, souffle, batch).
+USE BFC_BACKEND_VERSION(b_souffle_batch, v2_4_1).
+USE BFC_BACKEND_ENABLED(b_souffle_batch).
+USE BFC_BACKEND_CAP(b_souffle_batch, fixpoint).
+USE BFC_BACKEND_CAP(b_souffle_batch, stratified_negation).
+USE BFC_BACKEND_CAP(b_souffle_batch, artifact_csv).
+USE BFC_BACKEND_FORMAL_BRIDGE(b_souffle_batch, z3, file_exchange).
+USE BFC_BACKEND_COST(b_souffle_batch, 250, 40, 3000000, 8192).
+
+// Intentionally invalid backend metadata (for contract error queries).
+USE BFC_BACKEND(b_invalid, custom_engine_x, experimental).
+USE BFC_BACKEND_CAP(b_invalid, speculative_magic).
+
+// ------------------------------------------------------------------
+// Runs + artifacts
+// ------------------------------------------------------------------
+
+USE BFC_RUN(run_main, backend.formal.contract.demo, rev_20260318, b_clj_main).
+USE BFC_RUN(run_batch, backend.formal.contract.demo, rev_20260318, b_souffle_batch).
+USE BFC_RUN(run_empty, backend.formal.contract.demo, rev_20260318, b_clj_main).
+
+USE BFC_ARTIFACT(a_lean_proof, edn, uri_lean_proof, schema_formal_feedback_v1).
+USE BFC_ARTIFACT_PRODUCER(a_lean_proof, lean4).
+USE BFC_ARTIFACT_CONSUMER(a_lean_proof, b_clj_main).
+
+USE BFC_ARTIFACT(a_tla_trace, json, uri_tla_trace, schema_formal_feedback_v1).
+USE BFC_ARTIFACT_PRODUCER(a_tla_trace, tla).
+USE BFC_ARTIFACT_CONSUMER(a_tla_trace, b_clj_main).
+
+USE BFC_ARTIFACT(a_policy_report, json, uri_policy_report, schema_formal_feedback_v1).
+USE BFC_ARTIFACT_PRODUCER(a_policy_report, z3).
+USE BFC_ARTIFACT_CONSUMER(a_policy_report, b_clj_main).
+
+USE BFC_ARTIFACT(a_csv_report, csv, uri_csv_report, schema_formal_feedback_v1).
+USE BFC_ARTIFACT_PRODUCER(a_csv_report, z3).
+USE BFC_ARTIFACT_CONSUMER(a_csv_report, b_souffle_batch).
+
+USE BFC_ARTIFACT(a_acl2_log, text, uri_acl2_log, schema_formal_feedback_v1).
+USE BFC_ARTIFACT_PRODUCER(a_acl2_log, acl2).
+USE BFC_ARTIFACT_CONSUMER(a_acl2_log, b_clj_main).
+
+// Invalid artifact format to show schema validation.
+USE BFC_ARTIFACT(a_unknown_format, xml, uri_unknown, schema_formal_feedback_v1).
+
+USE BFC_RUN_OUTPUT_ARTIFACT(run_main, a_lean_proof).
+USE BFC_RUN_OUTPUT_ARTIFACT(run_main, a_tla_trace).
+USE BFC_RUN_OUTPUT_ARTIFACT(run_main, a_policy_report).
+USE BFC_RUN_OUTPUT_ARTIFACT(run_batch, a_csv_report).
+
+// ------------------------------------------------------------------
+// Obligations
+// ------------------------------------------------------------------
+
+// Expected: PROVED.
+USE BFC_OBLIGATION(o_proved, theorem, high).
+USE BFC_OBLIGATION_RUN(o_proved, run_main).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_proved, emit_lean4).
+USE BFC_OBLIGATION_TARGET_TOOL(o_proved, lean4).
+USE BFC_OBLIGATION_ARTIFACT(o_proved, a_lean_proof).
+
+// Expected: BROKEN from violated feedback.
+USE BFC_OBLIGATION(o_broken, policy, high).
+USE BFC_OBLIGATION_RUN(o_broken, run_main).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_broken, check_z3).
+USE BFC_OBLIGATION_ARTIFACT(o_broken, a_policy_report).
+
+// Expected: CONDITIONAL from satisfied + timeout.
+USE BFC_OBLIGATION(o_conditional, safety, medium).
+USE BFC_OBLIGATION_RUN(o_conditional, run_main).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_conditional, emit_tla).
+USE BFC_OBLIGATION_ARTIFACT(o_conditional, a_tla_trace).
+
+// Expected: WEAK from unknown-only feedback.
+USE BFC_OBLIGATION(o_weak, liveness, medium).
+USE BFC_OBLIGATION_RUN(o_weak, run_main).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_weak, emit_tla).
+USE BFC_OBLIGATION_ARTIFACT(o_weak, a_tla_trace).
+
+// Expected: NO_FEEDBACK.
+USE BFC_OBLIGATION(o_no_feedback, consistency, low).
+USE BFC_OBLIGATION_RUN(o_no_feedback, run_main).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_no_feedback, check_z3).
+USE BFC_OBLIGATION_ARTIFACT(o_no_feedback, a_policy_report).
+
+// Expected: BROKEN from contract errors (missing tool bridge + missing capability).
+USE BFC_OBLIGATION(o_bridge_missing, theorem, high).
+USE BFC_OBLIGATION_RUN(o_bridge_missing, run_batch).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_bridge_missing, emit_lean4).
+USE BFC_OBLIGATION_ARTIFACT(o_bridge_missing, a_csv_report).
+
+// Expected: PROVED from ACL2 feedback.
+USE BFC_OBLIGATION(o_acl2_ok, consistency, medium).
+USE BFC_OBLIGATION_RUN(o_acl2_ok, run_main).
+USE BFC_OBLIGATION_TARGET_TOOL(o_acl2_ok, acl2).
+USE BFC_OBLIGATION_REQUIRES_CAP(o_acl2_ok, check_acl2).
+USE BFC_OBLIGATION_ARTIFACT(o_acl2_ok, a_acl2_log).
+
+// Expected: contract error (unknown class).
+USE BFC_OBLIGATION(o_unknown_class, theorem_like, low).
+USE BFC_OBLIGATION_RUN(o_unknown_class, run_main).
+
+// ------------------------------------------------------------------
+// Feedback records
+// ------------------------------------------------------------------
+
+USE BFC_FEEDBACK(f_proved, run_main, o_proved, lean4, satisfied, a_lean_proof, proof_single_controller_001).
+USE BFC_FEEDBACK_METRICS(f_proved, 180, c99, usd_0_07).
+
+USE BFC_FEEDBACK(f_broken, run_main, o_broken, z3, violated, a_policy_report, counterexample_policy_004).
+USE BFC_FEEDBACK_METRICS(f_broken, 45, c100, usd_0_02).
+
+USE BFC_FEEDBACK(f_conditional_ok, run_main, o_conditional, tla, satisfied, a_tla_trace, trace_ok_101).
+USE BFC_FEEDBACK(f_conditional_timeout, run_main, o_conditional, tla, timeout, a_tla_trace, trace_timeout_102).
+
+USE BFC_FEEDBACK(f_weak_unknown, run_main, o_weak, tla, unknown, a_tla_trace, unknown_due_state_space).
+USE BFC_FEEDBACK(f_acl2_ok, run_main, o_acl2_ok, acl2, satisfied, a_acl2_log, acl2_execstep_qed).
+
+// Feedback schema error examples.
+USE BFC_FEEDBACK(f_bad_tool, run_main, o_proved, coq, satisfied, a_lean_proof, unsupported_tool_example).
+USE BFC_FEEDBACK(f_bad_run_ref, run_missing, o_proved, lean4, satisfied, a_lean_proof, invalid_run_ref_example).
+
+// ------------------------------------------------------------------
+// Focused queries for this demo
+// ------------------------------------------------------------------
+
+QUERY demo_backend_contract_errors:
+FIND ?backend ?error WHERE ?backend#kind@entity:backend_engine AND ?backend#contract_error@?error.
+
+QUERY demo_artifact_contract_errors:
+FIND ?artifact ?error WHERE ?artifact#kind@entity:interop_artifact AND ?artifact#contract_error@?error.
+
+QUERY demo_obligation_status:
+FIND ?obligation ?status WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#status@?status.
+
+QUERY demo_obligation_contract_errors:
+FIND ?obligation ?error WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#contract_error@?error.
+
+QUERY demo_feedback_contract_errors:
+FIND ?feedback ?error WHERE ?feedback#kind@entity:formal_feedback AND ?feedback#contract_error@?error.
+
+QUERY demo_run_status:
+FIND ?run ?status WHERE ?run#kind@entity:backend_run AND ?run#status@?status.

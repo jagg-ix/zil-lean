@@ -1,0 +1,4 @@
+{:input-path "examples/extensions/sample-report.edn"
+ :output-path "generated/examples/sample-report.json"
+ :format "json"
+ :subject "artifact:sample-report"}

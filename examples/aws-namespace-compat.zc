@@ -1,0 +1,58 @@
+MODULE aws.namespace.compat.demo.
+
+// AWS compatibility with namespace-scoped resolution.
+//
+// Run:
+//   ./bin/zil preprocess examples/aws-namespace-compat.zc /tmp/aws_ns.pre.zc libsets/aws-namespace
+//   ./bin/zil /tmp/aws_ns.pre.zc
+
+USE NS_DIMENSION(d2_scope, 2).
+USE NS_CONTEXT(root_org, d2_scope, global).
+USE NS_CONTEXT(prod_env, d2_scope, env).
+USE NS_CONTEXT(dev_env, d2_scope, env).
+USE NS_CHILD(root_org, prod_env).
+USE NS_CHILD(root_org, dev_env).
+
+USE AWS_PROVIDER(aws, amazon_web_services).
+USE AWS_SERVICE(amazon_ec2, aws, amazon_ec2).
+USE AWS_SERVICE(aws_cloudtrail, aws, aws_cloudtrail).
+USE AWS_REGION(us_east_northern_virginia, us_east_northern_virginia).
+USE AWS_REGION(europe_ireland, europe_ireland).
+
+USE AWS_TARGET(prod_scoped, strict).
+USE AWS_TARGET_REQ_SERVICE(prod_scoped, amazon_ec2).
+USE AWS_TARGET_REQ_SERVICE(prod_scoped, aws_cloudtrail).
+USE AWS_TARGET_REQ_REGION(prod_scoped, us_east_northern_virginia).
+USE AWS_NS_SCOPE_TARGET(prod_scoped, prod_env).
+
+USE AWS_TARGET(dev_scoped, strict).
+USE AWS_TARGET_REQ_SERVICE(dev_scoped, aws_cloudtrail).
+USE AWS_TARGET_REQ_REGION(dev_scoped, europe_ireland).
+USE AWS_NS_SCOPE_TARGET(dev_scoped, dev_env).
+
+// prod_env has both required services and region bound through namespace names.
+USE AWS_NS_BIND_SERVICE(prod_env, compute, amazon_ec2).
+USE AWS_NS_BIND_SERVICE(prod_env, audit, aws_cloudtrail).
+USE AWS_NS_BIND_REGION(prod_env, primary_region, us_east_northern_virginia).
+
+// dev_env is intentionally incomplete to demonstrate scoped gap detection.
+USE AWS_NS_BIND_SERVICE(dev_env, compute, amazon_ec2).
+USE AWS_NS_BIND_REGION(dev_env, primary_region, us_east_northern_virginia).
+
+QUERY aws_ns_target_scopes:
+FIND ?m ?ctx WHERE ?m#scope_ctx@?ctx.
+
+QUERY aws_ns_visible_services:
+FIND ?ctx ?svc WHERE ?ctx#visible_service@?svc.
+
+QUERY aws_ns_visible_regions:
+FIND ?ctx ?region WHERE ?ctx#visible_region@?region.
+
+QUERY aws_ns_scoped_missing_services:
+FIND ?m ?svc WHERE ?m#scoped_missing_required_service@?svc.
+
+QUERY aws_ns_scoped_missing_regions:
+FIND ?m ?region WHERE ?m#scoped_missing_required_region@?region.
+
+QUERY aws_compat_ready_models:
+FIND ?m WHERE ?m#compat_ready@value:true.

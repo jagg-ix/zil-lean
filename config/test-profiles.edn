@@ -1,0 +1,32 @@
+{:schema "ZIL-TEST-PROFILES/1"
+ :default-profile :smoke
+ :profiles
+ [{:id :smoke
+   :doctor-profile :full
+   :description "Fast native, Clojure, exchange, plugin, and evaluator checks"
+   :requires #{:lean :clojure :java}}
+  {:id :lean
+   :doctor-profile :lean
+   :description "Lean build, native tests, generated module elaboration, and semantic CLI checks"
+   :requires #{:lean}}
+  {:id :clojure
+   :doctor-profile :extensions
+   :description "Clojure tests, extension discovery, repository scanning, export, and evaluator checks"
+   :requires #{:clojure :java}}
+  {:id :hybrid
+   :doctor-profile :full
+   :description "Exchange, control plane, macros, recursive corpus, conformance, and embedded checks"
+   :requires #{:lean :clojure :java}}
+  {:id :durable
+   :doctor-profile :full
+   :description "SQLite control-event invocation, append, verification, and projection checks"
+   :requires #{:lean :clojure :java}}
+  {:id :all
+   :doctor-profile :full
+   :description "Complete local validation across Lean, Clojure, hybrid, and durable profiles"
+   :requires #{:lean :clojure :java}}
+  {:id :container
+   :doctor-profile :container
+   :description "Run the complete profile in the pinned Docker test workbench"
+   :requires #{:docker}}]
+ :report-schema "ZIL-TEST-REPORT/1"}

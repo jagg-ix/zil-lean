@@ -1,0 +1,37 @@
+MODULE query.planner.adaptive.demo.
+
+// Adaptive query-planning demo.
+//
+// Run:
+//   ./bin/zil query-plan examples/query-planner-adaptive.zc
+//   ./bin/zil examples/query-planner-adaptive.zc
+
+QUERY_PACK ops_pack [queries=[q_hot_path q_risk]].
+DSL_PROFILE ops_profile [query_pack=ops_pack, planner_hint=high_selectivity_first, verification_chain=[constraint proof_obligation], default_profile=constraint].
+
+service:web#kind@entity:service.
+service:web#depends_on@service:db.
+service:web#depends_on@service:cache.
+service:web#criticality@value:high.
+
+service:db#kind@entity:service.
+service:db#available@value:true.
+service:db#criticality@value:high.
+
+service:cache#kind@entity:service.
+service:cache#available@value:false.
+service:cache#criticality@value:medium.
+
+event:e1#kind@entity:event.
+event:e1#service@service:web.
+event:e1#severity@value:high.
+
+event:e2#kind@entity:event.
+event:e2#service@service:web.
+event:e2#severity@value:low.
+
+QUERY q_hot_path:
+FIND ?dep WHERE service:web#depends_on@?dep AND ?dep#criticality@value:high AND ?dep#available@value:true.
+
+QUERY q_risk:
+FIND ?e WHERE ?e#service@service:web AND ?e#severity@value:high AND ?e#kind@entity:event.

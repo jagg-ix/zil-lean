@@ -1,0 +1,325 @@
+MODULE theorem.impact.lib.
+
+// Theorem/Lemma + backward breakage macro layer.
+//
+// Purpose:
+// - encode proof contracts in ZIL facts
+// - classify theorem status as PROVED / CONDITIONAL / BROKEN / WEAK
+// - maintain dependency DAG edges
+// - compute backward impact from broken roots
+
+MACRO THM_COMPONENT(id, tier):
+EMIT component:{{id}}#kind@entity:component.
+EMIT component:{{id}}#tier@value:{{tier}}.
+ENDMACRO.
+
+MACRO THM_COMPONENT_HEALTHY(id, source):
+EMIT component:{{id}}#healthy_witness@source:{{source}}.
+ENDMACRO.
+
+MACRO THM_COMPONENT_BROKEN(id, source, reason):
+EMIT component:{{id}}#broken_witness@source:{{source}}.
+EMIT component:{{id}}#break_reason@value:{{reason}}.
+ENDMACRO.
+
+MACRO THM_SIGNAL(id, component):
+EMIT signal:{{id}}#kind@entity:signal.
+EMIT signal:{{id}}#component@component:{{component}}.
+EMIT signal:{{id}}#depends_on_direct@component:{{component}}.
+ENDMACRO.
+
+MACRO THM_SIGNAL_HEALTHY(id, source):
+EMIT signal:{{id}}#healthy_witness@source:{{source}}.
+ENDMACRO.
+
+MACRO THM_SIGNAL_BROKEN(id, source, reason):
+EMIT signal:{{id}}#broken_witness@source:{{source}}.
+EMIT signal:{{id}}#break_reason@value:{{reason}}.
+ENDMACRO.
+
+MACRO THM_ASSUMPTION(id, class):
+EMIT assumption:{{id}}#kind@entity:assumption.
+EMIT assumption:{{id}}#class@value:{{class}}.
+ENDMACRO.
+
+MACRO THM_ASSUMPTION_FROM_SIGNAL(assumption, signal):
+EMIT assumption:{{assumption}}#from_signal@signal:{{signal}}.
+EMIT assumption:{{assumption}}#depends_on_direct@signal:{{signal}}.
+ENDMACRO.
+
+MACRO THM_ASSUME_HOLDS(id, source):
+EMIT assumption:{{id}}#holds_witness@source:{{source}}.
+ENDMACRO.
+
+MACRO THM_ASSUME_BROKEN(id, source, reason):
+EMIT assumption:{{id}}#broken_witness@source:{{source}}.
+EMIT assumption:{{id}}#break_reason@value:{{reason}}.
+ENDMACRO.
+
+MACRO THM_LEMMA(id, criticality):
+EMIT lemma:{{id}}#kind@entity:lemma.
+EMIT lemma:{{id}}#criticality@value:{{criticality}}.
+ENDMACRO.
+
+MACRO THM_LEMMA_REQUIRES_ASSUMPTION(lemma, assumption):
+EMIT lemma:{{lemma}}#requires_assumption@assumption:{{assumption}}.
+EMIT lemma:{{lemma}}#depends_on_direct@assumption:{{assumption}}.
+ENDMACRO.
+
+MACRO THM_LEMMA_REQUIRES_LEMMA(lemma, dep_lemma):
+EMIT lemma:{{lemma}}#requires_lemma@lemma:{{dep_lemma}}.
+EMIT lemma:{{lemma}}#depends_on_direct@lemma:{{dep_lemma}}.
+ENDMACRO.
+
+MACRO THM_LEMMA_PROOF(id, engine, evidence):
+EMIT lemma:{{id}}#proof_witness@engine:{{engine}}.
+EMIT lemma:{{id}}#proof_evidence@evidence:{{evidence}}.
+ENDMACRO.
+
+MACRO THM_THEOREM(id, criticality):
+EMIT theorem:{{id}}#kind@entity:theorem.
+EMIT theorem:{{id}}#criticality@value:{{criticality}}.
+ENDMACRO.
+
+MACRO THM_THEOREM_REQUIRES_ASSUMPTION(theorem, assumption):
+EMIT theorem:{{theorem}}#requires_assumption@assumption:{{assumption}}.
+EMIT theorem:{{theorem}}#depends_on_direct@assumption:{{assumption}}.
+ENDMACRO.
+
+MACRO THM_THEOREM_REQUIRES_LEMMA(theorem, lemma):
+EMIT theorem:{{theorem}}#requires_lemma@lemma:{{lemma}}.
+EMIT theorem:{{theorem}}#depends_on_direct@lemma:{{lemma}}.
+ENDMACRO.
+
+MACRO THM_THEOREM_ENSURES(theorem, guarantee):
+EMIT theorem:{{theorem}}#ensures@guarantee:{{guarantee}}.
+ENDMACRO.
+
+MACRO THM_THEOREM_PROOF(id, engine, evidence):
+EMIT theorem:{{id}}#proof_witness@engine:{{engine}}.
+EMIT theorem:{{id}}#proof_evidence@evidence:{{evidence}}.
+ENDMACRO.
+
+RULE thm_component_is_broken:
+IF ?c#broken_witness@?source
+THEN ?c#component_is_broken@value:true.
+
+RULE thm_component_is_healthy:
+IF ?c#kind@entity:component AND ?c#healthy_witness@?source AND NOT ?c#component_is_broken@value:true
+THEN ?c#component_is_healthy@value:true.
+
+RULE thm_component_state_broken:
+IF ?c#component_is_broken@value:true
+THEN ?c#node_state@value:broken.
+
+RULE thm_component_state_healthy:
+IF ?c#component_is_healthy@value:true
+THEN ?c#node_state@value:healthy.
+
+RULE thm_signal_broken_from_component:
+IF ?s#kind@entity:signal AND ?s#component@?c AND ?c#component_is_broken@value:true
+THEN ?s#broken_witness@source:component_state.
+
+RULE thm_signal_is_broken:
+IF ?s#broken_witness@?source
+THEN ?s#signal_is_broken@value:true.
+
+RULE thm_signal_is_healthy:
+IF ?s#kind@entity:signal AND ?s#healthy_witness@?source AND NOT ?s#signal_is_broken@value:true
+THEN ?s#signal_is_healthy@value:true.
+
+RULE thm_signal_state_broken:
+IF ?s#signal_is_broken@value:true
+THEN ?s#node_state@value:broken.
+
+RULE thm_signal_state_healthy:
+IF ?s#signal_is_healthy@value:true
+THEN ?s#node_state@value:healthy.
+
+RULE thm_assumption_broken_from_signal:
+IF ?a#kind@entity:assumption AND ?a#from_signal@?s AND ?s#signal_is_broken@value:true
+THEN ?a#broken_witness@source:signal_state.
+
+RULE thm_assumption_holds_from_signal:
+IF ?a#kind@entity:assumption AND ?a#from_signal@?s AND ?s#signal_is_healthy@value:true
+THEN ?a#holds_witness@source:signal_state.
+
+RULE thm_assumption_is_broken:
+IF ?a#broken_witness@?source
+THEN ?a#assumption_is_broken@value:true.
+
+RULE thm_assumption_is_holds:
+IF ?a#kind@entity:assumption AND ?a#holds_witness@?source AND NOT ?a#assumption_is_broken@value:true
+THEN ?a#assumption_is_holds@value:true.
+
+RULE thm_assumption_state_broken:
+IF ?a#assumption_is_broken@value:true
+THEN ?a#node_state@value:broken.
+
+RULE thm_assumption_state_holds:
+IF ?a#assumption_is_holds@value:true
+THEN ?a#node_state@value:holds.
+
+RULE thm_dependency_seed:
+IF ?n#depends_on_direct@?d
+THEN ?n#depends_on@?d.
+
+RULE thm_dependency_transitive:
+IF ?n#depends_on@?d AND ?d#depends_on@?u
+THEN ?n#depends_on@?u.
+
+RULE thm_lemma_has_proof:
+IF ?l#proof_witness@?engine AND ?l#kind@entity:lemma
+THEN ?l#lemma_has_proof@value:true.
+
+RULE thm_lemma_has_broken_assumption_dep:
+IF ?l#kind@entity:lemma AND ?l#requires_assumption@?a AND ?a#assumption_is_broken@value:true
+THEN ?l#lemma_has_broken_dep@value:true.
+
+RULE thm_lemma_has_broken_lemma_dep:
+IF ?l#kind@entity:lemma AND ?l#requires_lemma@?d AND ?d#lemma_is_broken@value:true
+THEN ?l#lemma_has_broken_dep@value:true.
+
+RULE thm_lemma_is_broken:
+IF ?l#kind@entity:lemma AND ?l#lemma_has_broken_dep@value:true
+THEN ?l#lemma_is_broken@value:true.
+
+RULE thm_lemma_is_proved:
+IF ?l#kind@entity:lemma AND ?l#lemma_has_proof@value:true AND NOT ?l#lemma_has_broken_dep@value:true
+THEN ?l#lemma_is_proved@value:true.
+
+RULE thm_lemma_is_weak:
+IF ?l#kind@entity:lemma AND NOT ?l#lemma_has_proof@value:true AND NOT ?l#lemma_has_broken_dep@value:true
+THEN ?l#lemma_is_weak@value:true.
+
+RULE thm_lemma_state_broken:
+IF ?l#lemma_is_broken@value:true
+THEN ?l#node_state@value:broken.
+
+RULE thm_lemma_state_proved:
+IF ?l#lemma_is_proved@value:true
+THEN ?l#node_state@value:proved.
+
+RULE thm_lemma_state_weak:
+IF ?l#lemma_is_weak@value:true
+THEN ?l#node_state@value:weak.
+
+RULE thm_theorem_has_proof:
+IF ?t#proof_witness@?engine AND ?t#kind@entity:theorem
+THEN ?t#theorem_has_proof@value:true.
+
+RULE thm_theorem_has_broken_assumption_dep:
+IF ?t#kind@entity:theorem AND ?t#requires_assumption@?a AND ?a#assumption_is_broken@value:true
+THEN ?t#theorem_has_broken_dep@value:true.
+
+RULE thm_theorem_has_broken_lemma_dep:
+IF ?t#kind@entity:theorem AND ?t#requires_lemma@?l AND ?l#lemma_is_broken@value:true
+THEN ?t#theorem_has_broken_dep@value:true.
+
+RULE thm_theorem_missing_assumption:
+IF ?t#kind@entity:theorem AND ?t#requires_assumption@?a AND NOT ?a#assumption_is_holds@value:true
+THEN ?t#theorem_has_missing_req@value:true.
+
+RULE thm_theorem_missing_lemma_proof:
+IF ?t#kind@entity:theorem AND ?t#requires_lemma@?l AND NOT ?l#lemma_is_proved@value:true
+THEN ?t#theorem_has_missing_req@value:true.
+
+RULE thm_theorem_is_broken:
+IF ?t#kind@entity:theorem AND ?t#theorem_has_broken_dep@value:true
+THEN ?t#theorem_is_broken@value:true.
+
+RULE thm_theorem_is_proved:
+IF ?t#kind@entity:theorem AND ?t#theorem_has_proof@value:true AND NOT ?t#theorem_has_broken_dep@value:true AND NOT ?t#theorem_has_missing_req@value:true
+THEN ?t#theorem_is_proved@value:true.
+
+RULE thm_theorem_is_conditional:
+IF ?t#kind@entity:theorem AND ?t#theorem_has_proof@value:true AND NOT ?t#theorem_has_broken_dep@value:true AND ?t#theorem_has_missing_req@value:true
+THEN ?t#theorem_is_conditional@value:true.
+
+RULE thm_theorem_is_weak:
+IF ?t#kind@entity:theorem AND NOT ?t#theorem_has_proof@value:true AND NOT ?t#theorem_has_broken_dep@value:true
+THEN ?t#theorem_is_weak@value:true.
+
+RULE thm_theorem_status_broken:
+IF ?t#theorem_is_broken@value:true
+THEN ?t#status@value:BROKEN AND ?t#node_state@value:broken.
+
+RULE thm_theorem_status_proved:
+IF ?t#theorem_is_proved@value:true
+THEN ?t#status@value:PROVED AND ?t#node_state@value:proved.
+
+RULE thm_theorem_status_conditional:
+IF ?t#theorem_is_conditional@value:true
+THEN ?t#status@value:CONDITIONAL AND ?t#node_state@value:conditional.
+
+RULE thm_theorem_status_weak:
+IF ?t#theorem_is_weak@value:true
+THEN ?t#status@value:WEAK AND ?t#node_state@value:weak.
+
+RULE thm_theorem_conditional_on_assumption:
+IF ?t#theorem_is_conditional@value:true AND ?t#requires_assumption@?a AND NOT ?a#assumption_is_holds@value:true
+THEN ?t#conditional_on@?a.
+
+RULE thm_theorem_conditional_on_lemma:
+IF ?t#theorem_is_conditional@value:true AND ?t#requires_lemma@?l AND NOT ?l#lemma_is_proved@value:true
+THEN ?t#conditional_on@?l.
+
+RULE thm_node_is_broken_from_component:
+IF ?n#component_is_broken@value:true
+THEN ?n#node_is_broken@value:true.
+
+RULE thm_node_is_broken_from_signal:
+IF ?n#signal_is_broken@value:true
+THEN ?n#node_is_broken@value:true.
+
+RULE thm_node_is_broken_from_assumption:
+IF ?n#assumption_is_broken@value:true
+THEN ?n#node_is_broken@value:true.
+
+RULE thm_node_is_broken_from_lemma:
+IF ?n#lemma_is_broken@value:true
+THEN ?n#node_is_broken@value:true.
+
+RULE thm_node_is_broken_from_theorem:
+IF ?n#theorem_is_broken@value:true
+THEN ?n#node_is_broken@value:true.
+
+RULE thm_has_broken_parent:
+IF ?n#depends_on@?p AND ?p#node_is_broken@value:true
+THEN ?n#has_broken_parent@value:true.
+
+RULE thm_break_root:
+IF ?n#node_is_broken@value:true AND NOT ?n#has_broken_parent@value:true
+THEN ?n#is_break_root@value:true.
+
+RULE thm_impacted_by_break_root:
+IF ?n#depends_on@?r AND ?r#is_break_root@value:true
+THEN ?n#impacted_by_root@?r.
+
+RULE thm_theorem_predicted_break:
+IF ?t#kind@entity:theorem AND ?t#impacted_by_root@?r AND NOT ?t#theorem_is_broken@value:true
+THEN ?t#predicted_break@value:true.
+
+QUERY thm_theorem_statuses:
+FIND ?theorem ?status WHERE ?theorem#kind@entity:theorem AND ?theorem#status@?status.
+
+QUERY thm_lemma_states:
+FIND ?lemma ?state WHERE ?lemma#kind@entity:lemma AND ?lemma#node_state@?state.
+
+QUERY thm_conditional_dependencies:
+FIND ?theorem ?dep WHERE ?theorem#conditional_on@?dep.
+
+QUERY thm_break_roots:
+FIND ?node WHERE ?node#is_break_root@value:true.
+
+QUERY thm_impacted_theorems_by_root:
+FIND ?theorem ?root WHERE ?theorem#kind@entity:theorem AND ?theorem#impacted_by_root@?root.
+
+QUERY thm_dependency_dag:
+FIND ?node ?dep WHERE ?node#depends_on@?dep.
+
+QUERY thm_proof_registry:
+FIND ?node ?proof WHERE ?node#proof_evidence@?proof.
+
+QUERY thm_predicted_break_theorems:
+FIND ?theorem WHERE ?theorem#kind@entity:theorem AND ?theorem#predicted_break@value:true.

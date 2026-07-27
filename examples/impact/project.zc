@@ -1,0 +1,15 @@
+MODULE impact.project.
+
+lean:Parser.parse#implements@requirement:parseInput.
+lean:Normalize.normalize#depends_on@lean:Parser.parse.
+lean:Proof.sound#validates@lean:Normalize.normalize.
+app:cli#uses@lean:Normalize.normalize.
+
+component:ui#requires@service:api.
+
+RULE requirementDependency:
+IF ?component#requires@?service
+THEN ?component#depends_on@?service.
+
+cycle:a#depends_on@cycle:b.
+cycle:b#depends_on@cycle:a.

@@ -1,0 +1,27 @@
+MODULE provenance.access.
+
+group:eng#member@user:11.
+doc:readme#viewer@group:eng#member.
+
+service:db#kind@entity:service.
+
+RULE degraded:
+IF service:db#kind@entity:service AND NOT service:db#available@value:true
+THEN service:db#status@value:degraded.
+
+doc:readme#parent@folder:a.
+folder:a#parent@folder:b.
+
+RULE ancestorBase:
+IF ?child#parent@?parent
+THEN ?child#ancestor@?parent.
+
+RULE ancestorStep:
+IF ?child#ancestor@?middle AND ?middle#parent@?ancestor
+THEN ?child#ancestor@?ancestor.
+
+QUERY viewers:
+FIND ?user WHERE doc:readme#viewer@?user.
+
+QUERY ancestors:
+FIND ?ancestor WHERE doc:readme#ancestor@?ancestor.

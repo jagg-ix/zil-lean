@@ -1,0 +1,242 @@
+MODULE tpl.macro.layer.demo.
+
+// Temporal Process Language (TPL)-inspired macro layer for ZIL.
+// This file models TPL syntax shapes as process-graph facts plus derived rules.
+// Reference: https://en.wikipedia.org/wiki/Temporal_Process_Language
+
+// -----------------------
+// Action and proc macros
+// -----------------------
+
+MACRO TPL_ACTION(name, class):
+EMIT tpl:action:{{name}}#kind@entity:tpl_action.
+EMIT tpl:action:{{name}}#class@value:{{class}}.
+ENDMACRO.
+
+MACRO TPL_VISIBLE(name):
+EMIT USE TPL_ACTION({{name}}, visible).
+ENDMACRO.
+
+MACRO TPL_TAU(name):
+EMIT USE TPL_ACTION({{name}}, tau).
+ENDMACRO.
+
+MACRO TPL_SIGMA(name):
+EMIT USE TPL_ACTION({{name}}, sigma).
+ENDMACRO.
+
+MACRO TPL_PREFIX(proc, action, next_proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:prefix.
+EMIT tpl:proc:{{proc}}#action@tpl:action:{{action}}.
+EMIT tpl:proc:{{proc}}#next@tpl:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO TPL_TIMEOUT(proc, guard_proc, on_tick_proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:timeout.
+EMIT tpl:proc:{{proc}}#guard@tpl:proc:{{guard_proc}}.
+EMIT tpl:proc:{{proc}}#on_tick@tpl:proc:{{on_tick_proc}}.
+ENDMACRO.
+
+MACRO TPL_CHOICE(proc, left_proc, right_proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:choice.
+EMIT tpl:proc:{{proc}}#left@tpl:proc:{{left_proc}}.
+EMIT tpl:proc:{{proc}}#right@tpl:proc:{{right_proc}}.
+ENDMACRO.
+
+MACRO TPL_PAR(proc, left_proc, right_proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:parallel.
+EMIT tpl:proc:{{proc}}#left@tpl:proc:{{left_proc}}.
+EMIT tpl:proc:{{proc}}#right@tpl:proc:{{right_proc}}.
+ENDMACRO.
+
+MACRO TPL_REC(proc, label, body_proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:rec.
+EMIT tpl:proc:{{proc}}#label@value:{{label}}.
+EMIT tpl:proc:{{proc}}#body@tpl:proc:{{body_proc}}.
+ENDMACRO.
+
+MACRO TPL_VAR(proc, label):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:var.
+EMIT tpl:proc:{{proc}}#var_label@value:{{label}}.
+ENDMACRO.
+
+MACRO TPL_OMEGA(proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:omega.
+EMIT tpl:proc:{{proc}}#blocks_tick@value:true.
+ENDMACRO.
+
+MACRO TPL_RESTRICT(proc, inner_proc, action):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:restrict.
+EMIT tpl:proc:{{proc}}#inner@tpl:proc:{{inner_proc}}.
+EMIT tpl:proc:{{proc}}#restricted_action@tpl:action:{{action}}.
+ENDMACRO.
+
+MACRO TPL_NIL(proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:nil.
+ENDMACRO.
+
+// ------------------------------------------
+// TPL-inspired semantics (abstracted as rules)
+// ------------------------------------------
+
+// Prefix with visible action is patient and allows tick.
+RULE prefix_visible_patient:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:visible
+THEN ?p#patient@value:true AND ?p#can_sigma@value:true.
+
+// Explicit sigma action allows tick transition.
+RULE prefix_sigma_tick:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:sigma
+THEN ?p#can_sigma@value:true.
+
+// Tau readiness is a source of maximal progress.
+RULE prefix_tau_ready:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:tau
+THEN ?p#can_tau@value:true.
+
+RULE maximal_progress_blocks_tick:
+IF ?p#can_tau@value:true
+THEN ?p#blocks_tick@value:true.
+
+// Timeout floor(E)(F): tick branch is available when E does not block time.
+RULE timeout_tick_branch_enabled:
+IF ?p#operator@value:timeout AND ?p#guard@?e AND ?p#on_tick@?f AND NOT ?e#blocks_tick@value:true
+THEN ?p#tick_branch_enabled@value:true AND ?p#sigma_target@?f AND ?p#can_sigma@value:true.
+
+// Choice propagates urgency/blocking and sigma capability.
+RULE choice_blocks_left:
+IF ?p#operator@value:choice AND ?p#left@?l AND ?l#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+
+RULE choice_blocks_right:
+IF ?p#operator@value:choice AND ?p#right@?r AND ?r#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+
+RULE choice_sigma_left:
+IF ?p#operator@value:choice AND ?p#left@?l AND ?l#can_sigma@value:true AND NOT ?p#blocks_tick@value:true
+THEN ?p#can_sigma@value:true.
+
+RULE choice_sigma_right:
+IF ?p#operator@value:choice AND ?p#right@?r AND ?r#can_sigma@value:true AND NOT ?p#blocks_tick@value:true
+THEN ?p#can_sigma@value:true.
+
+// Parallel synchronization: all parties must allow tick and none may block.
+RULE parallel_blocks_left:
+IF ?p#operator@value:parallel AND ?p#left@?l AND ?l#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+
+RULE parallel_blocks_right:
+IF ?p#operator@value:parallel AND ?p#right@?r AND ?r#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+
+RULE parallel_tau_left:
+IF ?p#operator@value:parallel AND ?p#left@?l AND ?l#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE parallel_tau_right:
+IF ?p#operator@value:parallel AND ?p#right@?r AND ?r#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE parallel_sigma:
+IF ?p#operator@value:parallel AND ?p#left@?l AND ?p#right@?r AND ?l#can_sigma@value:true AND ?r#can_sigma@value:true AND NOT ?l#blocks_tick@value:true AND NOT ?r#blocks_tick@value:true
+THEN ?p#can_sigma@value:true.
+
+// Restriction and recursion/variables are structural wrappers.
+RULE restrict_inherit_sigma:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#can_sigma@value:true
+THEN ?p#can_sigma@value:true.
+
+RULE restrict_inherit_tau:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE restrict_inherit_block:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+
+RULE rec_inherit_sigma:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#can_sigma@value:true
+THEN ?p#can_sigma@value:true.
+
+RULE rec_inherit_tau:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#can_tau@value:true
+THEN ?p#can_tau@value:true.
+
+RULE rec_inherit_block:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+
+RULE var_resolves_sigma:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#can_sigma@value:true
+THEN ?v#can_sigma@value:true.
+
+RULE var_resolves_tau:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#can_tau@value:true
+THEN ?v#can_tau@value:true.
+
+RULE var_resolves_block:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#blocks_tick@value:true
+THEN ?v#blocks_tick@value:true.
+
+// ------------------------
+// Example TPL-like program
+// ------------------------
+
+USE TPL_VISIBLE(act_a).
+USE TPL_VISIBLE(act_b).
+USE TPL_TAU(act_tau).
+USE TPL_SIGMA(act_sigma).
+
+USE TPL_NIL(p0).
+USE TPL_NIL(p1).
+
+USE TPL_PREFIX(p_visible, act_a, p0).
+USE TPL_PREFIX(p_visible_b, act_b, p1).
+USE TPL_PREFIX(p_tau_only, act_tau, p0).
+USE TPL_PREFIX(p_sigma_pref, act_sigma, p1).
+
+USE TPL_OMEGA(p_omega).
+USE TPL_CHOICE(p_insistent, p_visible, p_omega).
+
+USE TPL_TIMEOUT(p_timeout_clean, p_visible, p1).
+USE TPL_TIMEOUT(p_timeout_blocked, p_insistent, p1).
+
+USE TPL_PAR(p_parallel_clean, p_visible, p_visible_b).
+USE TPL_PAR(p_parallel_blocked, p_visible, p_insistent).
+USE TPL_PAR(p_parallel_tau_blocked, p_visible, p_tau_only).
+
+USE TPL_REC(p_rec_loop, loop_x, p_visible).
+USE TPL_VAR(p_var_loop_x, loop_x).
+
+USE TPL_RESTRICT(p_restrict_visible, p_visible, act_a).
+
+// -------
+// Queries
+// -------
+
+QUERY patient_processes:
+FIND ?p WHERE ?p#patient@value:true.
+
+QUERY sigma_enabled_processes:
+FIND ?p WHERE ?p#can_sigma@value:true.
+
+QUERY blocked_processes:
+FIND ?p WHERE ?p#blocks_tick@value:true.
+
+QUERY timeout_tick_enabled:
+FIND ?p WHERE ?p#tick_branch_enabled@value:true.
+
+QUERY parallel_tick_enabled:
+FIND ?p WHERE ?p#operator@value:parallel AND ?p#can_sigma@value:true.
+
+QUERY recursive_var_resolutions:
+FIND ?v WHERE ?v#operator@value:var AND ?v#can_sigma@value:true.

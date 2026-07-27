@@ -1,0 +1,1 @@
+{"schema":"ZIL-EXTENSION/1","id":"extension:external-solver","version":"1.0.0","runtime":"clojure","entrypoint":"zil.extensions.external-solver/create","capabilities":["evidence-producer","external-solver"],"requires":["ZIL-EVIDENCE/1","ZIL-EXTENSION/1"],"inputs":[],"outputs":["ZIL-EVIDENCE/1","ZIL-EXTERNAL-TOOL/1"],"authority":"external","trusted":false}

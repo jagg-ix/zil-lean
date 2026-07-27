@@ -1,0 +1,3 @@
+mAcRo grant(object, relation, subject): // control keywords are case-insensitive
+  eMiT {{object}}#{{relation}}@{{subject}}. // trailing comments are ignored
+EeNdMaCrO.

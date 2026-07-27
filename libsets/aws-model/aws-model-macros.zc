@@ -1,0 +1,152 @@
+MODULE aws.model.lib.
+
+// Reusable AWS modeling macro layer:
+// - baseline catalog entities (service/region/control)
+// - compatibility target requirements and gap checks
+// - icon concept + asset representation (external package references)
+
+MACRO AWS_PROVIDER(id, source):
+EMIT provider:{{id}}#kind@entity:provider.
+EMIT provider:{{id}}#source@value:{{source}}.
+ENDMACRO.
+
+MACRO AWS_SERVICE(id, provider, name_token):
+EMIT aws:service:{{id}}#kind@entity:aws_service.
+EMIT aws:service:{{id}}#provider@provider:{{provider}}.
+EMIT aws:service:{{id}}#name@value:{{name_token}}.
+ENDMACRO.
+
+MACRO AWS_REGION(id, display_token):
+EMIT aws:region:{{id}}#kind@entity:aws_region.
+EMIT aws:region:{{id}}#name@value:{{display_token}}.
+ENDMACRO.
+
+MACRO AWS_CONTROL(id, category):
+EMIT aws:control:{{id}}#kind@entity:aws_control.
+EMIT aws:control:{{id}}#category@value:{{category}}.
+ENDMACRO.
+
+MACRO AWS_TARGET(id, profile):
+EMIT aws:model:{{id}}#kind@entity:aws_compat_target.
+EMIT aws:model:{{id}}#profile@value:{{profile}}.
+ENDMACRO.
+
+MACRO AWS_TARGET_REQ_SERVICE(target, service):
+EMIT aws:model:{{target}}#requires_service@aws:service:{{service}}.
+ENDMACRO.
+
+MACRO AWS_TARGET_REQ_REGION(target, region):
+EMIT aws:model:{{target}}#requires_region@aws:region:{{region}}.
+ENDMACRO.
+
+MACRO AWS_TARGET_REQ_CONTROL_CATEGORY(target, category):
+EMIT aws:model:{{target}}#requires_control_category@value:{{category}}.
+ENDMACRO.
+
+MACRO AWS_RUNTIME_CONFIG(id):
+EMIT aws:config:{{id}}#kind@entity:aws_runtime_config.
+ENDMACRO.
+
+MACRO AWS_TARGET_USES_CONFIG(target, config_id):
+EMIT aws:model:{{target}}#uses_config@aws:config:{{config_id}}.
+ENDMACRO.
+
+MACRO AWS_TARGET_REQ_CONFIG_KEY(target, key):
+EMIT aws:model:{{target}}#requires_config_key@value:{{key}}.
+ENDMACRO.
+
+MACRO AWS_CONFIG_KEY_PRESENT(config_id, key):
+EMIT aws:config:{{config_id}}#has_key@value:{{key}}.
+ENDMACRO.
+
+MACRO AWS_ICON_CONCEPT(id, family, token):
+EMIT aws:icon_concept:{{id}}#kind@entity:aws_icon_concept.
+EMIT aws:icon_concept:{{id}}#family@value:{{family}}.
+EMIT aws:icon_concept:{{id}}#token@value:{{token}}.
+ENDMACRO.
+
+MACRO AWS_ICON_ASSET(id, concept_id, fmt, size, variant, relpath_token):
+EMIT aws:icon_asset:{{id}}#kind@entity:aws_icon_asset.
+EMIT aws:icon_asset:{{id}}#concept@aws:icon_concept:{{concept_id}}.
+EMIT aws:icon_asset:{{id}}#format@value:{{fmt}}.
+EMIT aws:icon_asset:{{id}}#size@value:{{size}}.
+EMIT aws:icon_asset:{{id}}#variant@value:{{variant}}.
+EMIT aws:icon_asset:{{id}}#relpath@value:{{relpath_token}}.
+ENDMACRO.
+
+MACRO AWS_SERVICE_ICON_LINK(service_id, concept_id, confidence):
+EMIT aws:service:{{service_id}}#icon_concept@aws:icon_concept:{{concept_id}}.
+EMIT aws:service:{{service_id}}#icon_link_confidence@value:{{confidence}}.
+ENDMACRO.
+
+RULE aws_has_control_category:
+IF ?c#kind@entity:aws_control AND ?c#category@?cat
+THEN aws:catalog#has_control_category@?cat.
+
+RULE aws_missing_required_service:
+IF ?m#kind@entity:aws_compat_target AND ?m#requires_service@?svc AND NOT ?svc#kind@entity:aws_service
+THEN ?m#missing_required_service@?svc.
+
+RULE aws_missing_required_region:
+IF ?m#kind@entity:aws_compat_target AND ?m#requires_region@?r AND NOT ?r#kind@entity:aws_region
+THEN ?m#missing_required_region@?r.
+
+RULE aws_missing_required_control_category:
+IF ?m#kind@entity:aws_compat_target AND ?m#requires_control_category@?cat AND NOT aws:catalog#has_control_category@?cat
+THEN ?m#missing_required_control_category@?cat.
+
+RULE aws_missing_required_config_key:
+IF ?m#kind@entity:aws_compat_target AND ?m#uses_config@?cfg AND ?m#requires_config_key@?key AND NOT ?cfg#has_key@?key
+THEN ?m#missing_required_config_key@?key.
+
+RULE aws_has_missing_any_from_service:
+IF ?m#missing_required_service@?svc
+THEN ?m#has_missing_any@value:true.
+
+RULE aws_has_missing_any_from_region:
+IF ?m#missing_required_region@?r
+THEN ?m#has_missing_any@value:true.
+
+RULE aws_has_missing_any_from_control:
+IF ?m#missing_required_control_category@?cat
+THEN ?m#has_missing_any@value:true.
+
+RULE aws_has_missing_any_from_config:
+IF ?m#missing_required_config_key@?key
+THEN ?m#has_missing_any@value:true.
+
+RULE aws_target_compat_ready:
+IF ?m#kind@entity:aws_compat_target AND NOT ?m#has_missing_any@value:true
+THEN ?m#compat_ready@value:true.
+
+RULE aws_service_icon_missing:
+IF ?s#icon_concept@?icon
+THEN ?s#has_icon@value:true.
+
+RULE aws_service_icon_missing:
+IF ?s#kind@entity:aws_service AND NOT ?s#has_icon@value:true
+THEN ?s#icon_missing@value:true.
+
+QUERY aws_compat_missing_services:
+FIND ?m ?svc WHERE ?m#missing_required_service@?svc.
+
+QUERY aws_compat_missing_regions:
+FIND ?m ?region WHERE ?m#missing_required_region@?region.
+
+QUERY aws_compat_missing_control_categories:
+FIND ?m ?cat WHERE ?m#missing_required_control_category@?cat.
+
+QUERY aws_compat_missing_config_keys:
+FIND ?m ?key WHERE ?m#missing_required_config_key@?key.
+
+QUERY aws_compat_ready_models:
+FIND ?m WHERE ?m#compat_ready@value:true.
+
+QUERY aws_icon_concepts:
+FIND ?icon ?family WHERE ?icon#kind@entity:aws_icon_concept AND ?icon#family@?family.
+
+QUERY aws_service_icon_links:
+FIND ?svc ?icon WHERE ?svc#icon_concept@?icon.
+
+QUERY aws_services_missing_icons:
+FIND ?svc WHERE ?svc#icon_missing@value:true.

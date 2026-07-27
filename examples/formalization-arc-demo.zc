@@ -1,0 +1,41 @@
+MODULE verification.arc.demo.
+
+// Minimal theorem-dependency model for a software verification arc.
+// Statuses are computed from dependencies and proof evidence:
+//   PROVED      dependencies satisfied and a proof witness is present
+//   CONDITIONAL witness present, but an assumption remains under review
+//   WEAK        no proof witness yet
+//   BROKEN      a required assumption or lemma is broken
+// Proof status here is bookkeeping only. The proof assistant remains the sole
+// proof authority; proof tokens name checked declarations but do not assert them.
+
+USE THM_COMPONENT(lean4_toolchain, tier0).
+USE THM_COMPONENT_HEALTHY(lean4_toolchain, toolchain_check).
+
+USE ASSUMPTION(a_input_well_formed, contract).
+USE ASSUME_HOLDS(a_input_well_formed, review).
+
+USE ASSUMPTION(a_normalization_terminates, contract).
+USE ASSUME_HOLDS(a_normalization_terminates, review).
+
+USE LEMMA(l_parse_preserves_structure, high).
+USE LEMMA_REQUIRES_ASSUMPTION(l_parse_preserves_structure, a_input_well_formed).
+USE EVIDENCE_FOR_LEMMA(l_parse_preserves_structure, lean4, proof:Parser.structure_preserved).
+
+USE LEMMA(l_normalization_idempotent, high).
+USE LEMMA_REQUIRES_ASSUMPTION(l_normalization_idempotent, a_normalization_terminates).
+USE LEMMA_REQUIRES_LEMMA(l_normalization_idempotent, l_parse_preserves_structure).
+USE EVIDENCE_FOR_LEMMA(l_normalization_idempotent, lean4, proof:Normalize.idempotent).
+
+USE THEOREM(t_pipeline_canonical, high).
+USE THEOREM_REQUIRES_ASSUMPTION(t_pipeline_canonical, a_input_well_formed).
+USE THEOREM_REQUIRES_LEMMA(t_pipeline_canonical, l_normalization_idempotent).
+USE THEOREM_ENSURES(t_pipeline_canonical, canonical_pipeline_output).
+USE EVIDENCE_FOR_THEOREM(t_pipeline_canonical, lean4, proof:Pipeline.canonical_output).
+
+// Open target: no proof witness yet, so it reports WEAK.
+USE THEOREM(t_incremental_equivalent, medium).
+USE THEOREM_REQUIRES_LEMMA(t_incremental_equivalent, l_parse_preserves_structure).
+USE THEOREM_ENSURES(t_incremental_equivalent, incremental_matches_full_run).
+
+USE DSL_SUMMARY_QUERIES().

@@ -1,0 +1,16 @@
+MODULE stdlib.native.
+
+MACRO productionService(name):
+EMIT SERVICE {{name}} [env=prod].
+ENDMACRO.
+
+SERVICE db [env=prod].
+SERVICE api [env=prod, uses=service:db].
+USE productionService(worker).
+
+DATASOURCE app_metrics [type=rest, format=json].
+METRIC latency [source=datasource:app_metrics, unit=ms].
+POLICY latency_guard [condition="latency > 120", criticality=high].
+
+QUERY dependencies:
+FIND ?dependency WHERE service:api#depends_on@?dependency.

@@ -1,0 +1,14 @@
+MODULE stdlib.demo.
+
+SERVICE payment [env=prod, tier=critical].
+HOST host1 [environment=prod, timezone="America/Mexico_City"].
+DATASOURCE app_metrics [type=rest, format=json].
+METRIC latency [source=datasource:app_metrics, unit=ms].
+POLICY latency_guard [condition="latency > 120", criticality=high].
+EVENT deploy [start_time="2026-03-16T10:00:00-06:00", labels=["ops","deploy"]].
+
+QUERY services:
+FIND ?s WHERE ?s#kind@entity:service.
+
+QUERY policy_criticality:
+FIND ?c WHERE policy:latency_guard#criticality@?c.

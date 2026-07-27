@@ -1,0 +1,6 @@
+MODULE formalization.nativePlan.
+
+FORMALIZATION_TARGET foundations [module=Research.Foundation, file=Research/Foundation.lean, declaration=Research.Foundation.core, status=verified, priority=100].
+FORMALIZATION_TARGET finiteModel [module=Research.Finite, file=Research/Finite.lean, declaration=Research.Finite.main, status=ready, priority=80, dependencies=[foundations]].
+FORMALIZATION_TARGET continuumLimit [module=Research.Continuum, file=Research/Continuum.lean, declaration=Research.Continuum.limit, status=ready, priority=60, dependencies=[finiteModel]].
+FORMALIZATION_TARGET archivedDraft [module=Research.Archive, file=Research/Archive.lean, declaration=Research.Archive.old, status=superseded, priority=1000].

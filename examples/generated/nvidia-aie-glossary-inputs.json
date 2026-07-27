@@ -1,0 +1,750 @@
+{
+  "source_url": "https://docs.nvidia.com/ai-enterprise/release-7/latest/troubleshooting/glossary.html",
+  "source_html_file": "",
+  "fetched_at": "2026-03-26T19:04:40.969646+00:00",
+  "title": "Glossary \u2014 NVIDIA AI Enterprise",
+  "meta": {
+    "docbuild:last-update": "Mar 11, 2026",
+    "docs_products": "NVIDIA AI Enterprise",
+    "docs_version": "7.4",
+    "docs_books": "NVIDIA AI Enterprise 7.4"
+  },
+  "stats": {
+    "sections_found": 6,
+    "terms_found": 86
+  },
+  "sections": [
+    {
+      "id": "glossary",
+      "name": "Glossary",
+      "id_token": "glossary",
+      "name_token": "glossary",
+      "terms": 48
+    },
+    {
+      "id": "architecture-specific-terms",
+      "name": "Architecture-Specific Terms",
+      "id_token": "architecture_specific_terms",
+      "name_token": "architecture_specific_terms",
+      "terms": 6
+    },
+    {
+      "id": "licensing-terms",
+      "name": "Licensing Terms",
+      "id_token": "licensing_terms",
+      "name_token": "licensing_terms",
+      "terms": 7
+    },
+    {
+      "id": "deployment-terms",
+      "name": "Deployment Terms",
+      "id_token": "deployment_terms",
+      "name_token": "deployment_terms",
+      "terms": 5
+    },
+    {
+      "id": "related-concepts",
+      "name": "Related Concepts",
+      "id_token": "related_concepts",
+      "name_token": "related_concepts",
+      "terms": 10
+    },
+    {
+      "id": "performance-and-optimization",
+      "name": "Performance and Optimization",
+      "id_token": "performance_and_optimization",
+      "name_token": "performance_and_optimization",
+      "terms": 10
+    }
+  ],
+  "terms": [
+    {
+      "id": "AI-Enterprise",
+      "term": "AI Enterprise",
+      "definition": "NVIDIA AI Enterprise is a cloud-native suite of AI tools, libraries, and frameworks for production AI deployments, providing optimized performance, security, and enterprise-grade support.",
+      "section_id": "glossary",
+      "term_token": "ai_enterprise",
+      "definition_token": "nvidia_ai_enterprise_is_a_cloud_native_suite_of_ai_tools_libraries_and_frameworks_for_production_ai_deployments_providing_optimized_performance_security_and_enterprise_grade_support"
+    },
+    {
+      "id": "Base-Command-Manager-BCM",
+      "term": "Base Command Manager (BCM)",
+      "definition": "NVIDIA Base Command Manager is a cluster management platform that streamlines provisioning, workload management, and infrastructure monitoring for data centers.",
+      "section_id": "glossary",
+      "term_token": "base_command_manager_bcm",
+      "definition_token": "nvidia_base_command_manager_is_a_cluster_management_platform_that_streamlines_provisioning_workload_management_and_infrastructure_monitoring_for_data_centers"
+    },
+    {
+      "id": "Cloud-License-Service-CLS",
+      "term": "Cloud License Service (CLS)",
+      "definition": "A cloud-hosted NVIDIA License System service instance that manages software licenses for NVIDIA AI Enterprise products without requiring on-premises infrastructure.",
+      "section_id": "glossary",
+      "term_token": "cloud_license_service_cls",
+      "definition_token": "a_cloud_hosted_nvidia_license_system_service_instance_that_manages_software_licenses_for_nvidia_ai_enterprise_products_without_requiring_on_premises_infrastructure"
+    },
+    {
+      "id": "Compute-Instance",
+      "term": "Compute Instance",
+      "definition": "In MIG (Multi-Instance GPU), a compute instance is a subdivision of a GPU instance that provides dedicated compute resources with isolated execution contexts.",
+      "section_id": "glossary",
+      "term_token": "compute_instance",
+      "definition_token": "in_mig_multi_instance_gpu_a_compute_instance_is_a_subdivision_of_a_gpu_instance_that_provides_dedicated_compute_resources_with_isolated_execution_contexts"
+    },
+    {
+      "id": "Container-Toolkit",
+      "term": "Container Toolkit",
+      "definition": "The NVIDIA Container Toolkit (formerly nvidia-docker) enables GPU-accelerated Docker containers by providing a container runtime library and utilities.",
+      "section_id": "glossary",
+      "term_token": "container_toolkit",
+      "definition_token": "the_nvidia_container_toolkit_formerly_nvidia_docker_enables_gpu_accelerated_docker_containers_by_providing_a_container_runtime_library_and_utilities"
+    },
+    {
+      "id": "CUDA",
+      "term": "CUDA",
+      "definition": "Compute Unified Device Architecture - NVIDIA\u2019s parallel computing platform and programming model for GPU acceleration.",
+      "section_id": "glossary",
+      "term_token": "cuda",
+      "definition_token": "compute_unified_device_architecture_nvidia_s_parallel_computing_platform_and_programming_model_for_gpu_acceleration"
+    },
+    {
+      "id": "Delegated-License-Service-DLS",
+      "term": "Delegated License Service (DLS)",
+      "definition": "An on-premises NVIDIA License System service instance hosted on a local network, providing license management without external connectivity requirements.",
+      "section_id": "glossary",
+      "term_token": "delegated_license_service_dls",
+      "definition_token": "an_on_premises_nvidia_license_system_service_instance_hosted_on_a_local_network_providing_license_management_without_external_connectivity_requirements"
+    },
+    {
+      "id": "Device-Group",
+      "term": "Device Group",
+      "definition": "An abstraction layer that automatically detects and presents sets of physically connected devices (GPUs, NICs) as a single logical unit for optimal topology-aware provisioning.",
+      "section_id": "glossary",
+      "term_token": "device_group",
+      "definition_token": "an_abstraction_layer_that_automatically_detects_and_presents_sets_of_physically_connected_devices_gpus_nics_as_a_single_logical_unit_for_optimal_topology_aware_provisioning"
+    },
+    {
+      "id": "DPU",
+      "term": "DPU",
+      "definition": "Data Processing Unit - A programmable processor designed to handle data center infrastructure tasks and accelerate networking, security, and storage operations.",
+      "section_id": "glossary",
+      "term_token": "dpu",
+      "definition_token": "data_processing_unit_a_programmable_processor_designed_to_handle_data_center_infrastructure_tasks_and_accelerate_networking_security_and_storage_operations"
+    },
+    {
+      "id": "Fabric-Manager",
+      "term": "Fabric Manager",
+      "definition": "NVIDIA Fabric Manager manages NVSwitch memory fabric and NVLink interconnects on NVIDIA HGX platforms, enabling multi-GPU configurations.",
+      "section_id": "glossary",
+      "term_token": "fabric_manager",
+      "definition_token": "nvidia_fabric_manager_manages_nvswitch_memory_fabric_and_nvlink_interconnects_on_nvidia_hgx_platforms_enabling_multi_gpu_configurations"
+    },
+    {
+      "id": "GPU-Instance",
+      "term": "GPU Instance",
+      "definition": "In MIG mode, a GPU instance is a hardware-partitioned section of a physical GPU with dedicated memory, cache, and compute resources.",
+      "section_id": "glossary",
+      "term_token": "gpu_instance",
+      "definition_token": "in_mig_mode_a_gpu_instance_is_a_hardware_partitioned_section_of_a_physical_gpu_with_dedicated_memory_cache_and_compute_resources"
+    },
+    {
+      "id": "GPU-Operator",
+      "term": "GPU Operator",
+      "definition": "The NVIDIA GPU Operator automates GPU management in Kubernetes, handling driver installation, runtime configuration, and GPU feature discovery.",
+      "section_id": "glossary",
+      "term_token": "gpu_operator",
+      "definition_token": "the_nvidia_gpu_operator_automates_gpu_management_in_kubernetes_handling_driver_installation_runtime_configuration_and_gpu_feature_discovery"
+    },
+    {
+      "id": "GPUDirect-RDMA",
+      "term": "GPUDirect RDMA",
+      "definition": "GPUDirect Remote Direct Memory Access - Technology enabling direct data exchange between GPUs and network devices or storage, bypassing CPU memory.",
+      "section_id": "glossary",
+      "term_token": "gpudirect_rdma",
+      "definition_token": "gpudirect_remote_direct_memory_access_technology_enabling_direct_data_exchange_between_gpus_and_network_devices_or_storage_bypassing_cpu_memory"
+    },
+    {
+      "id": "GPUDirect-Storage-GDS",
+      "term": "GPUDirect Storage (GDS)",
+      "definition": "Technology enabling direct data path between storage devices and GPU memory, avoiding CPU bounce buffers for improved bandwidth and latency.",
+      "section_id": "glossary",
+      "term_token": "gpudirect_storage_gds",
+      "definition_token": "technology_enabling_direct_data_path_between_storage_devices_and_gpu_memory_avoiding_cpu_bounce_buffers_for_improved_bandwidth_and_latency"
+    },
+    {
+      "id": "Heterogeneous-vGPU",
+      "term": "Heterogeneous vGPU",
+      "definition": "Configuration allowing a single physical GPU to simultaneously support multiple vGPU profiles with different memory allocations (framebuffer sizes).",
+      "section_id": "glossary",
+      "term_token": "heterogeneous_vgpu",
+      "definition_token": "configuration_allowing_a_single_physical_gpu_to_simultaneously_support_multiple_vgpu_profiles_with_different_memory_allocations_framebuffer_sizes"
+    },
+    {
+      "id": "HGX",
+      "term": "HGX",
+      "definition": "NVIDIA HGX is a GPU computing platform featuring multiple GPUs connected through NVSwitch, designed for AI training and large-scale computing workloads.",
+      "section_id": "glossary",
+      "term_token": "hgx",
+      "definition_token": "nvidia_hgx_is_a_gpu_computing_platform_featuring_multiple_gpus_connected_through_nvswitch_designed_for_ai_training_and_large_scale_computing_workloads"
+    },
+    {
+      "id": "Hypervisor",
+      "term": "Hypervisor",
+      "definition": "Software that creates and manages virtual machines, enabling multiple operating systems to share a single hardware host. Examples: VMware vSphere, KVM.",
+      "section_id": "glossary",
+      "term_token": "hypervisor",
+      "definition_token": "software_that_creates_and_manages_virtual_machines_enabling_multiple_operating_systems_to_share_a_single_hardware_host_examples_vmware_vsphere_kvm"
+    },
+    {
+      "id": "License-System",
+      "term": "License System",
+      "definition": "The NVIDIA License System manages software licenses for NVIDIA AI Enterprise, providing both cloud-hosted (CLS) and on-premises (DLS) licensing options.",
+      "section_id": "glossary",
+      "term_token": "license_system",
+      "definition_token": "the_nvidia_license_system_manages_software_licenses_for_nvidia_ai_enterprise_providing_both_cloud_hosted_cls_and_on_premises_dls_licensing_options"
+    },
+    {
+      "id": "Live-Migration",
+      "term": "Live Migration",
+      "definition": "The capability to transfer running VMs with NVIDIA vGPUs between physical hosts without downtime, enabling maintenance and load balancing.",
+      "section_id": "glossary",
+      "term_token": "live_migration",
+      "definition_token": "the_capability_to_transfer_running_vms_with_nvidia_vgpus_between_physical_hosts_without_downtime_enabling_maintenance_and_load_balancing"
+    },
+    {
+      "id": "MIG-Multi-Instance-GPU",
+      "term": "MIG (Multi-Instance GPU)",
+      "definition": "Multi-Instance GPU technology allows hardware-level partitioning of a GPU into multiple isolated instances, each with dedicated resources.",
+      "section_id": "glossary",
+      "term_token": "mig_multi_instance_gpu",
+      "definition_token": "multi_instance_gpu_technology_allows_hardware_level_partitioning_of_a_gpu_into_multiple_isolated_instances_each_with_dedicated_resources"
+    },
+    {
+      "id": "MIG-Backed-vGPU",
+      "term": "MIG-Backed vGPU",
+      "definition": "A virtual GPU created from one or more MIG slices, providing spatial isolation with dedicated compute resources for multi-tenant workloads.",
+      "section_id": "glossary",
+      "term_token": "mig_backed_vgpu",
+      "definition_token": "a_virtual_gpu_created_from_one_or_more_mig_slices_providing_spatial_isolation_with_dedicated_compute_resources_for_multi_tenant_workloads"
+    },
+    {
+      "id": "Multi-vGPU",
+      "term": "Multi-vGPU",
+      "definition": "Configuration allowing a single virtual machine to use multiple vGPUs simultaneously, aggregating computational power from several vGPU devices.",
+      "section_id": "glossary",
+      "term_token": "multi_vgpu",
+      "definition_token": "configuration_allowing_a_single_virtual_machine_to_use_multiple_vgpus_simultaneously_aggregating_computational_power_from_several_vgpu_devices"
+    },
+    {
+      "id": "NCCL",
+      "term": "NCCL",
+      "definition": "NVIDIA Collective Communications Library - Optimized library for multi-GPU and multi-node communication in distributed training.",
+      "section_id": "glossary",
+      "term_token": "nccl",
+      "definition_token": "nvidia_collective_communications_library_optimized_library_for_multi_gpu_and_multi_node_communication_in_distributed_training"
+    },
+    {
+      "id": "NGC-NVIDIA-GPU-Cloud",
+      "term": "NGC (NVIDIA GPU Cloud)",
+      "definition": "NVIDIA\u2019s catalog and registry for GPU-optimized software, including containers, models, and tools for AI and HPC applications.",
+      "section_id": "glossary",
+      "term_token": "ngc_nvidia_gpu_cloud",
+      "definition_token": "nvidia_s_catalog_and_registry_for_gpu_optimized_software_including_containers_models_and_tools_for_ai_and_hpc_applications"
+    },
+    {
+      "id": "NGC-CLI",
+      "term": "NGC CLI",
+      "definition": "Command-line interface for accessing and downloading resources from the NVIDIA NGC Catalog, including drivers, containers, and models.",
+      "section_id": "glossary",
+      "term_token": "ngc_cli",
+      "definition_token": "command_line_interface_for_accessing_and_downloading_resources_from_the_nvidia_ngc_catalog_including_drivers_containers_and_models"
+    },
+    {
+      "id": "NIM-NVIDIA-Inference-Microservices",
+      "term": "NIM (NVIDIA Inference Microservices)",
+      "definition": "Containerized inference services providing optimized deployment of AI models with standardized APIs for production environments.",
+      "section_id": "glossary",
+      "term_token": "nim_nvidia_inference_microservices",
+      "definition_token": "containerized_inference_services_providing_optimized_deployment_of_ai_models_with_standardized_apis_for_production_environments"
+    },
+    {
+      "id": "nvidia-smi",
+      "term": "nvidia-smi",
+      "definition": "NVIDIA System Management Interface - Command-line utility for monitoring and managing NVIDIA GPUs, displaying utilization, temperature, and configuration.",
+      "section_id": "glossary",
+      "term_token": "nvidia_smi",
+      "definition_token": "nvidia_system_management_interface_command_line_utility_for_monitoring_and_managing_nvidia_gpus_displaying_utilization_temperature_and_configuration"
+    },
+    {
+      "id": "NVLink",
+      "term": "NVLink",
+      "definition": "High-bandwidth, direct GPU-to-GPU interconnect technology enabling fast communication between GPUs in the same system.",
+      "section_id": "glossary",
+      "term_token": "nvlink",
+      "definition_token": "high_bandwidth_direct_gpu_to_gpu_interconnect_technology_enabling_fast_communication_between_gpus_in_the_same_system"
+    },
+    {
+      "id": "NVLink-Multicast",
+      "term": "NVLink Multicast",
+      "definition": "Technology enabling efficient one-to-many data distribution across multiple GPUs connected through NVLink, optimizing distributed training.",
+      "section_id": "glossary",
+      "term_token": "nvlink_multicast",
+      "definition_token": "technology_enabling_efficient_one_to_many_data_distribution_across_multiple_gpus_connected_through_nvlink_optimizing_distributed_training"
+    },
+    {
+      "id": "NVSwitch",
+      "term": "NVSwitch",
+      "definition": "High-speed interconnect fabric providing full NVLink bandwidth between all GPUs in HGX systems, enabling optimal multi-GPU communication.",
+      "section_id": "glossary",
+      "term_token": "nvswitch",
+      "definition_token": "high_speed_interconnect_fabric_providing_full_nvlink_bandwidth_between_all_gpus_in_hgx_systems_enabling_optimal_multi_gpu_communication"
+    },
+    {
+      "id": "Passthrough",
+      "term": "Passthrough",
+      "definition": "GPU passthrough assigns an entire physical GPU directly to a virtual machine, providing native performance without virtualization overhead.",
+      "section_id": "glossary",
+      "term_token": "passthrough",
+      "definition_token": "gpu_passthrough_assigns_an_entire_physical_gpu_directly_to_a_virtual_machine_providing_native_performance_without_virtualization_overhead"
+    },
+    {
+      "id": "Peer-to-Peer-P2P",
+      "term": "Peer-to-Peer (P2P)",
+      "definition": "Capability allowing direct memory access between GPUs without CPU involvement, enabling fast inter-GPU communication over NVLink.",
+      "section_id": "glossary",
+      "term_token": "peer_to_peer_p2p",
+      "definition_token": "capability_allowing_direct_memory_access_between_gpus_without_cpu_involvement_enabling_fast_inter_gpu_communication_over_nvlink"
+    },
+    {
+      "id": "Persistence-Mode",
+      "term": "Persistence Mode",
+      "definition": "GPU configuration mode that keeps the NVIDIA kernel driver loaded even when no applications are running, reducing startup latency.",
+      "section_id": "glossary",
+      "term_token": "persistence_mode",
+      "definition_token": "gpu_configuration_mode_that_keeps_the_nvidia_kernel_driver_loaded_even_when_no_applications_are_running_reducing_startup_latency"
+    },
+    {
+      "id": "SR-IOV",
+      "term": "SR-IOV",
+      "definition": "Single Root I/O Virtualization - PCIe standard enabling a single physical device to present multiple virtual functions to different virtual machines.",
+      "section_id": "glossary",
+      "term_token": "sr_iov",
+      "definition_token": "single_root_i_o_virtualization_pcie_standard_enabling_a_single_physical_device_to_present_multiple_virtual_functions_to_different_virtual_machines"
+    },
+    {
+      "id": "Suspend-Resume",
+      "term": "Suspend-Resume",
+      "definition": "Feature allowing vGPU-configured VMs to be temporarily suspended and later resumed without losing operational state, optimizing resource utilization.",
+      "section_id": "glossary",
+      "term_token": "suspend_resume",
+      "definition_token": "feature_allowing_vgpu_configured_vms_to_be_temporarily_suspended_and_later_resumed_without_losing_operational_state_optimizing_resource_utilization"
+    },
+    {
+      "id": "TensorRT",
+      "term": "TensorRT",
+      "definition": "NVIDIA\u2019s deep learning inference optimizer and runtime, providing high-performance inference acceleration with automatic optimization.",
+      "section_id": "glossary",
+      "term_token": "tensorrt",
+      "definition_token": "nvidia_s_deep_learning_inference_optimizer_and_runtime_providing_high_performance_inference_acceleration_with_automatic_optimization"
+    },
+    {
+      "id": "Time-Sliced-MIG-Backed-vGPU",
+      "term": "Time-Sliced MIG-Backed vGPU",
+      "definition": "Advanced vGPU mode combining MIG\u2019s spatial partitioning with time-slicing within each MIG instance, maximizing density while maintaining isolation.",
+      "section_id": "glossary",
+      "term_token": "time_sliced_mig_backed_vgpu",
+      "definition_token": "advanced_vgpu_mode_combining_mig_s_spatial_partitioning_with_time_slicing_within_each_mig_instance_maximizing_density_while_maintaining_isolation"
+    },
+    {
+      "id": "Time-Sliced-vGPU",
+      "term": "Time-Sliced vGPU",
+      "definition": "Virtual GPU configuration where multiple vGPUs share access to GPU resources through temporal scheduling, with round-robin time slicing.",
+      "section_id": "glossary",
+      "term_token": "time_sliced_vgpu",
+      "definition_token": "virtual_gpu_configuration_where_multiple_vgpus_share_access_to_gpu_resources_through_temporal_scheduling_with_round_robin_time_slicing"
+    },
+    {
+      "id": "Unified-Virtual-Memory-UVM",
+      "term": "Unified Virtual Memory (UVM)",
+      "definition": "Feature providing a single, cohesive memory address space accessible by both CPUs and GPUs, simplifying programming and improving performance.",
+      "section_id": "glossary",
+      "term_token": "unified_virtual_memory_uvm",
+      "definition_token": "feature_providing_a_single_cohesive_memory_address_space_accessible_by_both_cpus_and_gpus_simplifying_programming_and_improving_performance"
+    },
+    {
+      "id": "vGPU-Virtual-GPU",
+      "term": "vGPU (Virtual GPU)",
+      "definition": "A virtualized GPU instance that allows multiple virtual machines to share a single physical GPU while providing dedicated GPU capabilities.",
+      "section_id": "glossary",
+      "term_token": "vgpu_virtual_gpu",
+      "definition_token": "a_virtualized_gpu_instance_that_allows_multiple_virtual_machines_to_share_a_single_physical_gpu_while_providing_dedicated_gpu_capabilities"
+    },
+    {
+      "id": "vGPU-for-Compute",
+      "term": "vGPU for Compute",
+      "definition": "NVIDIA vGPU profile optimized for compute workloads like AI training and inference, providing full compute capabilities without graphics features.",
+      "section_id": "glossary",
+      "term_token": "vgpu_for_compute",
+      "definition_token": "nvidia_vgpu_profile_optimized_for_compute_workloads_like_ai_training_and_inference_providing_full_compute_capabilities_without_graphics_features"
+    },
+    {
+      "id": "vGPU-Guest-Driver",
+      "term": "vGPU Guest Driver",
+      "definition": "Driver installed in virtual machines that enables them to use virtualized GPU resources, providing the interface to access GPU capabilities.",
+      "section_id": "glossary",
+      "term_token": "vgpu_guest_driver",
+      "definition_token": "driver_installed_in_virtual_machines_that_enables_them_to_use_virtualized_gpu_resources_providing_the_interface_to_access_gpu_capabilities"
+    },
+    {
+      "id": "vGPU-Profile",
+      "term": "vGPU Profile",
+      "definition": "A configuration template defining the framebuffer size, compute resources, and capabilities allocated to a vGPU instance.",
+      "section_id": "glossary",
+      "term_token": "vgpu_profile",
+      "definition_token": "a_configuration_template_defining_the_framebuffer_size_compute_resources_and_capabilities_allocated_to_a_vgpu_instance"
+    },
+    {
+      "id": "vGPU-Type",
+      "term": "vGPU Type",
+      "definition": "Specific vGPU configuration identified by name (e.g., A100-4-20C), defining memory allocation and resource limits for a virtual GPU.",
+      "section_id": "glossary",
+      "term_token": "vgpu_type",
+      "definition_token": "specific_vgpu_configuration_identified_by_name_e_g_a100_4_20c_defining_memory_allocation_and_resource_limits_for_a_virtual_gpu"
+    },
+    {
+      "id": "Virtual-GPU-Manager",
+      "term": "Virtual GPU Manager",
+      "definition": "Software component installed on the hypervisor that enables GPU virtualization, managing vGPU creation and resource allocation.",
+      "section_id": "glossary",
+      "term_token": "virtual_gpu_manager",
+      "definition_token": "software_component_installed_on_the_hypervisor_that_enables_gpu_virtualization_managing_vgpu_creation_and_resource_allocation"
+    },
+    {
+      "id": "VMI-Virtual-Machine-Instance-Image",
+      "term": "VMI (Virtual Machine Instance/Image)",
+      "definition": "Pre-configured virtual machine image with NVIDIA drivers and software pre-installed, available on cloud marketplaces for rapid deployment.",
+      "section_id": "glossary",
+      "term_token": "vmi_virtual_machine_instance_image",
+      "definition_token": "pre_configured_virtual_machine_image_with_nvidia_drivers_and_software_pre_installed_available_on_cloud_marketplaces_for_rapid_deployment"
+    },
+    {
+      "id": "VMware-vSphere",
+      "term": "VMware vSphere",
+      "definition": "Enterprise virtualization platform from VMware, including ESXi hypervisor and vCenter management, supporting NVIDIA vGPU technology.",
+      "section_id": "glossary",
+      "term_token": "vmware_vsphere",
+      "definition_token": "enterprise_virtualization_platform_from_vmware_including_esxi_hypervisor_and_vcenter_management_supporting_nvidia_vgpu_technology"
+    },
+    {
+      "id": "VT-d-IOMMU",
+      "term": "VT-d / IOMMU",
+      "definition": "Intel VT-d (AMD IOMMU) - Hardware virtualization technology enabling direct device assignment and DMA remapping for improved VM I/O performance.",
+      "section_id": "glossary",
+      "term_token": "vt_d_iommu",
+      "definition_token": "intel_vt_d_amd_iommu_hardware_virtualization_technology_enabling_direct_device_assignment_and_dma_remapping_for_improved_vm_i_o_performance"
+    },
+    {
+      "id": "Ampere-Architecture",
+      "term": "Ampere Architecture",
+      "definition": "NVIDIA GPU architecture featuring A100, A30, A40, and RTX A-series GPUs with MIG support and improved AI performance.",
+      "section_id": "architecture-specific-terms",
+      "term_token": "ampere_architecture",
+      "definition_token": "nvidia_gpu_architecture_featuring_a100_a30_a40_and_rtx_a_series_gpus_with_mig_support_and_improved_ai_performance"
+    },
+    {
+      "id": "Ada-Lovelace-Architecture",
+      "term": "Ada Lovelace Architecture",
+      "definition": "NVIDIA GPU architecture featuring L4, L40, and RTX 6000 Ada GPUs with advanced ray tracing and AI capabilities.",
+      "section_id": "architecture-specific-terms",
+      "term_token": "ada_lovelace_architecture",
+      "definition_token": "nvidia_gpu_architecture_featuring_l4_l40_and_rtx_6000_ada_gpus_with_advanced_ray_tracing_and_ai_capabilities"
+    },
+    {
+      "id": "Blackwell-Architecture",
+      "term": "Blackwell Architecture",
+      "definition": "Latest NVIDIA GPU architecture with B200 GPUs featuring enhanced AI capabilities and universal MIG technology supporting both compute and graphics.",
+      "section_id": "architecture-specific-terms",
+      "term_token": "blackwell_architecture",
+      "definition_token": "latest_nvidia_gpu_architecture_with_b200_gpus_featuring_enhanced_ai_capabilities_and_universal_mig_technology_supporting_both_compute_and_graphics"
+    },
+    {
+      "id": "Hopper-Architecture",
+      "term": "Hopper Architecture",
+      "definition": "NVIDIA GPU architecture with H100, H200, H800 GPUs featuring Transformer Engine and advanced features for large-scale AI workloads.",
+      "section_id": "architecture-specific-terms",
+      "term_token": "hopper_architecture",
+      "definition_token": "nvidia_gpu_architecture_with_h100_h200_h800_gpus_featuring_transformer_engine_and_advanced_features_for_large_scale_ai_workloads"
+    },
+    {
+      "id": "Volta-Architecture",
+      "term": "Volta Architecture",
+      "definition": "Earlier NVIDIA GPU architecture featuring V100 GPUs, the first to support Tensor Cores for AI acceleration.",
+      "section_id": "architecture-specific-terms",
+      "term_token": "volta_architecture",
+      "definition_token": "earlier_nvidia_gpu_architecture_featuring_v100_gpus_the_first_to_support_tensor_cores_for_ai_acceleration"
+    },
+    {
+      "id": "Turing-Architecture",
+      "term": "Turing Architecture",
+      "definition": "NVIDIA GPU architecture featuring T4 and Quadro RTX GPUs with first-generation ray tracing and AI capabilities.",
+      "section_id": "architecture-specific-terms",
+      "term_token": "turing_architecture",
+      "definition_token": "nvidia_gpu_architecture_featuring_t4_and_quadro_rtx_gpus_with_first_generation_ray_tracing_and_ai_capabilities"
+    },
+    {
+      "id": "CLS-Instance",
+      "term": "CLS Instance",
+      "definition": "Cloud License Service instance hosted on NVIDIA Licensing Portal, providing license management through the cloud.",
+      "section_id": "licensing-terms",
+      "term_token": "cls_instance",
+      "definition_token": "cloud_license_service_instance_hosted_on_nvidia_licensing_portal_providing_license_management_through_the_cloud"
+    },
+    {
+      "id": "DLS-Instance",
+      "term": "DLS Instance",
+      "definition": "Delegated License Service instance hosted on-premises, providing local license management without cloud connectivity.",
+      "section_id": "licensing-terms",
+      "term_token": "dls_instance",
+      "definition_token": "delegated_license_service_instance_hosted_on_premises_providing_local_license_management_without_cloud_connectivity"
+    },
+    {
+      "id": "Entitlement-Certificate",
+      "term": "Entitlement Certificate",
+      "definition": "Document containing product activation keys and license information, provided after purchasing NVIDIA AI Enterprise.",
+      "section_id": "licensing-terms",
+      "term_token": "entitlement_certificate",
+      "definition_token": "document_containing_product_activation_keys_and_license_information_provided_after_purchasing_nvidia_ai_enterprise"
+    },
+    {
+      "id": "Feature-Type",
+      "term": "Feature Type",
+      "definition": "License configuration parameter specifying the type of licensed software (e.g., FeatureType=4 for vComputeServer).",
+      "section_id": "licensing-terms",
+      "term_token": "feature_type",
+      "definition_token": "license_configuration_parameter_specifying_the_type_of_licensed_software_e_g_featuretype_4_for_vcomputeserver"
+    },
+    {
+      "id": "Floating-License",
+      "term": "Floating License",
+      "definition": "License that can be shared among multiple clients, checked out when needed and returned to the pool when no longer required.",
+      "section_id": "licensing-terms",
+      "term_token": "floating_license",
+      "definition_token": "license_that_can_be_shared_among_multiple_clients_checked_out_when_needed_and_returned_to_the_pool_when_no_longer_required"
+    },
+    {
+      "id": "License-Lease",
+      "term": "License Lease",
+      "definition": "Temporary license assignment to a client, with automatic renewal and release mechanisms.",
+      "section_id": "licensing-terms",
+      "term_token": "license_lease",
+      "definition_token": "temporary_license_assignment_to_a_client_with_automatic_renewal_and_release_mechanisms"
+    },
+    {
+      "id": "Node-Locked-License",
+      "term": "Node-Locked License",
+      "definition": "License tied to a specific physical machine or VM, not transferable to other systems.",
+      "section_id": "licensing-terms",
+      "term_token": "node_locked_license",
+      "definition_token": "license_tied_to_a_specific_physical_machine_or_vm_not_transferable_to_other_systems"
+    },
+    {
+      "id": "Bare-Metal-Deployment",
+      "term": "Bare Metal Deployment",
+      "definition": "Installation directly on physical servers without virtualization, providing maximum performance and direct GPU access.",
+      "section_id": "deployment-terms",
+      "term_token": "bare_metal_deployment",
+      "definition_token": "installation_directly_on_physical_servers_without_virtualization_providing_maximum_performance_and_direct_gpu_access"
+    },
+    {
+      "id": "Cloud-Deployment",
+      "term": "Cloud Deployment",
+      "definition": "Deployment on public cloud platforms (AWS, Azure, GCP) using GPU-enabled virtual machine instances.",
+      "section_id": "deployment-terms",
+      "term_token": "cloud_deployment",
+      "definition_token": "deployment_on_public_cloud_platforms_aws_azure_gcp_using_gpu_enabled_virtual_machine_instances"
+    },
+    {
+      "id": "Kubernetes-Deployment",
+      "term": "Kubernetes Deployment",
+      "definition": "Container orchestration deployment using Kubernetes with GPU Operator for automated GPU management.",
+      "section_id": "deployment-terms",
+      "term_token": "kubernetes_deployment",
+      "definition_token": "container_orchestration_deployment_using_kubernetes_with_gpu_operator_for_automated_gpu_management"
+    },
+    {
+      "id": "Multi-Node-Deployment",
+      "term": "Multi-Node Deployment",
+      "definition": "Distributed deployment across multiple physical servers for large-scale training and inference workloads.",
+      "section_id": "deployment-terms",
+      "term_token": "multi_node_deployment",
+      "definition_token": "distributed_deployment_across_multiple_physical_servers_for_large_scale_training_and_inference_workloads"
+    },
+    {
+      "id": "Virtualized-Deployment",
+      "term": "Virtualized Deployment",
+      "definition": "Installation using hypervisors (VMware, KVM) with vGPU technology for GPU sharing across virtual machines.",
+      "section_id": "deployment-terms",
+      "term_token": "virtualized_deployment",
+      "definition_token": "installation_using_hypervisors_vmware_kvm_with_vgpu_technology_for_gpu_sharing_across_virtual_machines"
+    },
+    {
+      "id": "API-Key",
+      "term": "API Key",
+      "definition": "Authentication credential for accessing NVIDIA NGC Catalog and downloading enterprise software resources.",
+      "section_id": "related-concepts",
+      "term_token": "api_key",
+      "definition_token": "authentication_credential_for_accessing_nvidia_ngc_catalog_and_downloading_enterprise_software_resources"
+    },
+    {
+      "id": "BIOS-Settings",
+      "term": "BIOS Settings",
+      "definition": "Firmware configuration including SR-IOV, VT-d/IOMMU, and other settings required for GPU virtualization.",
+      "section_id": "related-concepts",
+      "term_token": "bios_settings",
+      "definition_token": "firmware_configuration_including_sr_iov_vt_d_iommu_and_other_settings_required_for_gpu_virtualization"
+    },
+    {
+      "id": "CUDA-Toolkit",
+      "term": "CUDA Toolkit",
+      "definition": "Complete development environment for CUDA applications, including compiler, libraries, and debugging tools.",
+      "section_id": "related-concepts",
+      "term_token": "cuda_toolkit",
+      "definition_token": "complete_development_environment_for_cuda_applications_including_compiler_libraries_and_debugging_tools"
+    },
+    {
+      "id": "DGX",
+      "term": "DGX",
+      "definition": "NVIDIA DGX systems are purpose-built AI infrastructure featuring multiple GPUs with optimized networking and software stack.",
+      "section_id": "related-concepts",
+      "term_token": "dgx",
+      "definition_token": "nvidia_dgx_systems_are_purpose_built_ai_infrastructure_featuring_multiple_gpus_with_optimized_networking_and_software_stack"
+    },
+    {
+      "id": "DOCA",
+      "term": "DOCA",
+      "definition": "NVIDIA Data Center Infrastructure on a Chip - Development framework for programming DPUs and SmartNICs.",
+      "section_id": "related-concepts",
+      "term_token": "doca",
+      "definition_token": "nvidia_data_center_infrastructure_on_a_chip_development_framework_for_programming_dpus_and_smartnics"
+    },
+    {
+      "id": "Kubernetes",
+      "term": "Kubernetes",
+      "definition": "Open-source container orchestration platform for automating deployment, scaling, and management of containerized applications.",
+      "section_id": "related-concepts",
+      "term_token": "kubernetes",
+      "definition_token": "open_source_container_orchestration_platform_for_automating_deployment_scaling_and_management_of_containerized_applications"
+    },
+    {
+      "id": "NGC-Catalog",
+      "term": "NGC Catalog",
+      "definition": "Repository of GPU-optimized software including containers, models, SDKs, and AI tools supported by NVIDIA.",
+      "section_id": "related-concepts",
+      "term_token": "ngc_catalog",
+      "definition_token": "repository_of_gpu_optimized_software_including_containers_models_sdks_and_ai_tools_supported_by_nvidia"
+    },
+    {
+      "id": "NVML",
+      "term": "NVML",
+      "definition": "NVIDIA Management Library - C-based API for monitoring and managing NVIDIA GPUs programmatically.",
+      "section_id": "related-concepts",
+      "term_token": "nvml",
+      "definition_token": "nvidia_management_library_c_based_api_for_monitoring_and_managing_nvidia_gpus_programmatically"
+    },
+    {
+      "id": "Red-Hat-OpenShift",
+      "term": "Red Hat OpenShift",
+      "definition": "Enterprise Kubernetes platform from Red Hat providing additional developer and operational tools.",
+      "section_id": "related-concepts",
+      "term_token": "red_hat_openshift",
+      "definition_token": "enterprise_kubernetes_platform_from_red_hat_providing_additional_developer_and_operational_tools"
+    },
+    {
+      "id": "Slurm",
+      "term": "Slurm",
+      "definition": "Workload manager for Linux clusters, providing job scheduling and resource management for HPC environments.",
+      "section_id": "related-concepts",
+      "term_token": "slurm",
+      "definition_token": "workload_manager_for_linux_clusters_providing_job_scheduling_and_resource_management_for_hpc_environments"
+    },
+    {
+      "id": "AMP-Automatic-Mixed-Precision",
+      "term": "AMP (Automatic Mixed Precision)",
+      "definition": "PyTorch/TensorFlow feature automatically using FP16 precision where appropriate while maintaining FP32 for stability.",
+      "section_id": "performance-and-optimization",
+      "term_token": "amp_automatic_mixed_precision",
+      "definition_token": "pytorch_tensorflow_feature_automatically_using_fp16_precision_where_appropriate_while_maintaining_fp32_for_stability"
+    },
+    {
+      "id": "Batch-Size",
+      "term": "Batch Size",
+      "definition": "Number of samples processed together in a single forward/backward pass during training or inference.",
+      "section_id": "performance-and-optimization",
+      "term_token": "batch_size",
+      "definition_token": "number_of_samples_processed_together_in_a_single_forward_backward_pass_during_training_or_inference"
+    },
+    {
+      "id": "DDP-Distributed-Data-Parallel",
+      "term": "DDP (Distributed Data Parallel)",
+      "definition": "PyTorch\u2019s multi-GPU training approach distributing data across GPUs with synchronized gradient updates.",
+      "section_id": "performance-and-optimization",
+      "term_token": "ddp_distributed_data_parallel",
+      "definition_token": "pytorch_s_multi_gpu_training_approach_distributing_data_across_gpus_with_synchronized_gradient_updates"
+    },
+    {
+      "id": "FP16",
+      "term": "FP16",
+      "definition": "16-bit floating-point precision, providing faster computation and lower memory usage with minimal accuracy loss.",
+      "section_id": "performance-and-optimization",
+      "term_token": "fp16",
+      "definition_token": "n_16_bit_floating_point_precision_providing_faster_computation_and_lower_memory_usage_with_minimal_accuracy_loss"
+    },
+    {
+      "id": "FP32",
+      "term": "FP32",
+      "definition": "32-bit floating-point precision, standard precision for neural network training providing high numerical accuracy.",
+      "section_id": "performance-and-optimization",
+      "term_token": "fp32",
+      "definition_token": "n_32_bit_floating_point_precision_standard_precision_for_neural_network_training_providing_high_numerical_accuracy"
+    },
+    {
+      "id": "Gradient-Accumulation",
+      "term": "Gradient Accumulation",
+      "definition": "Technique simulating larger batch sizes by accumulating gradients over multiple forward/backward passes before updating weights.",
+      "section_id": "performance-and-optimization",
+      "term_token": "gradient_accumulation",
+      "definition_token": "technique_simulating_larger_batch_sizes_by_accumulating_gradients_over_multiple_forward_backward_passes_before_updating_weights"
+    },
+    {
+      "id": "Gradient-Checkpointing",
+      "term": "Gradient Checkpointing",
+      "definition": "Memory optimization technique trading computation for memory by recomputing activations during backward pass.",
+      "section_id": "performance-and-optimization",
+      "term_token": "gradient_checkpointing",
+      "definition_token": "memory_optimization_technique_trading_computation_for_memory_by_recomputing_activations_during_backward_pass"
+    },
+    {
+      "id": "INT8",
+      "term": "INT8",
+      "definition": "8-bit integer precision for inference, providing maximum throughput with minimal accuracy loss through quantization.",
+      "section_id": "performance-and-optimization",
+      "term_token": "int8",
+      "definition_token": "n_8_bit_integer_precision_for_inference_providing_maximum_throughput_with_minimal_accuracy_loss_through_quantization"
+    },
+    {
+      "id": "Mixed-Precision",
+      "term": "Mixed Precision",
+      "definition": "Training technique using both FP16 and FP32 precision to accelerate training while maintaining model accuracy.",
+      "section_id": "performance-and-optimization",
+      "term_token": "mixed_precision",
+      "definition_token": "training_technique_using_both_fp16_and_fp32_precision_to_accelerate_training_while_maintaining_model_accuracy"
+    },
+    {
+      "id": "Tensor-Core",
+      "term": "Tensor Core",
+      "definition": "Specialized hardware units in NVIDIA GPUs designed for accelerating mixed-precision matrix operations in AI workloads.",
+      "section_id": "performance-and-optimization",
+      "term_token": "tensor_core",
+      "definition_token": "specialized_hardware_units_in_nvidia_gpus_designed_for_accelerating_mixed_precision_matrix_operations_in_ai_workloads"
+    }
+  ]
+}
