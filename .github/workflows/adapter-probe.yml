@@ -1,0 +1,22 @@
+name: Physlib adapter compiler probe
+
+on:
+  pull_request:
+    paths:
+      - AdapterProbe.lean
+      - .github/workflows/adapter-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lean
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Compile adapter probe
+        run: lake env lean AdapterProbe.lean
