@@ -18,6 +18,8 @@ jobs:
         run: |
           curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Build ZIL library
+        run: lake build Zil
       - name: Compile adapter probe
         shell: bash
         run: |
