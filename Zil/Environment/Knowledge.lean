@@ -1,7 +1,11 @@
-import Lean
-import Zil.Core.Relation
-import Zil.Core.Rule
-import Zil.Profile.Core
+module
+
+public import Lean
+public import Zil.Core.Relation
+public import Zil.Core.Rule
+public import Zil.Profile.Core
+
+@[expose] public section
 
 namespace Zil.Environment
 
