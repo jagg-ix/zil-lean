@@ -1,4 +1,8 @@
-import Zil.Core.Relation
+module
+
+public import Zil.Core.Relation
+
+@[expose] public section
 
 namespace Zil
 
