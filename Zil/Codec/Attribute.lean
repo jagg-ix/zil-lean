@@ -1,4 +1,8 @@
-import Zil.Core.Attribute
+module
+
+public import Zil.Core.Attribute
+
+@[expose] public section
 
 open Lean (Name)
 

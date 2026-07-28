@@ -1,5 +1,9 @@
-import Zil.Environment.Knowledge
-import Zil.Core.Query
+module
+
+public import Zil.Environment.Knowledge
+public import Zil.Core.Query
+
+@[expose] public section
 
 namespace Zil.Engine
 
