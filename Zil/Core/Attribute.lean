@@ -1,4 +1,8 @@
-import Zil.Core.Term
+module
+
+public import Zil.Core.Term
+
+@[expose] public section
 
 namespace Zil
 
