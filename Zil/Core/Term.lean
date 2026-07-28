@@ -1,3 +1,7 @@
+module
+
+@[expose] public section
+
 export Lean (Name)
 
 /-- Convert an optional value to `Except`, reporting `error` for `none`. -/
