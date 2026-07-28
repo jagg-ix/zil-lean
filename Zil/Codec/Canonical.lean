@@ -1,5 +1,9 @@
-import Zil.Core.Rule
-import Zil.Codec.Attribute
+module
+
+public import Zil.Core.Rule
+public import Zil.Codec.Attribute
+
+@[expose] public section
 
 open Lean (Name)
 
