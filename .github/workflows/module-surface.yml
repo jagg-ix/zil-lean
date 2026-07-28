@@ -1,0 +1,70 @@
+name: Module surface regression
+
+on:
+  pull_request:
+    paths:
+      - "Zil/Core/**"
+      - "Zil/Codec/**"
+      - "Zil/Environment/**"
+      - "Zil/Profile/**"
+      - "Zil/Engine/**"
+      - "Zil/Impact.lean"
+      - "Zil/ProofObligation.lean"
+      - "Zil/TheoremAudit.lean"
+      - "Zil/QueryGovernance.lean"
+      - "Zil/Parser/Tuple.lean"
+      - "scripts/check_module_closure.py"
+      - "scripts/probes/**"
+      - ".github/workflows/module-surface.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: module-surface-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  module-surface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: 1. Build native query engine
+        run: lake build Zil.Engine.Query
+
+      - name: 2. Build native provenance
+        run: lake build Zil.Engine.Provenance
+
+      - name: 3. Build impact governance
+        run: lake build Zil.Impact
+
+      - name: 4. Build proof obligations
+        run: lake build Zil.ProofObligation
+
+      - name: 5. Build theorem audit
+        run: lake build Zil.TheoremAudit
+
+      - name: 6. Build query governance
+        run: lake build Zil.QueryGovernance
+
+      - name: 7. Compile module-system consumer probe
+        run: lake env lean scripts/probes/ModuleSurface.lean
+
+      - name: 8. Compile legacy non-module consumer probe
+        run: lake env lean scripts/probes/LegacyModuleConsumer.lean
+
+      - name: 9. Audit the real module import closure
+        run: python3 scripts/check_module_closure.py
+
+      - name: 10. Build the complete package
+        run: lake build
