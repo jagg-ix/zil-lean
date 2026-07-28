@@ -2,6 +2,8 @@ module
 
 public import Zil.Datalog.Basic
 public import Zil.Engine.Provenance
+public meta import Zil.Datalog.Basic
+public meta import Zil.Engine.Provenance
 
 open Lean
 
@@ -25,11 +27,11 @@ def valueName : Zil.Datalog.Value → Name
   | .boolean value => Name.str booleanPrefix (toString value)
 
 def valueOfName? : Name → Option Zil.Datalog.Value
-  | .str prefix payload =>
-      if prefix == symbolPrefix then some (.symbol payload)
-      else if prefix == stringPrefix then some (.string payload)
-      else if prefix == integerPrefix then payload.toInt?.map .integer
-      else if prefix == booleanPrefix then
+  | .str pre payload =>
+      if pre == symbolPrefix then some (.symbol payload)
+      else if pre == stringPrefix then some (.string payload)
+      else if pre == integerPrefix then payload.toInt?.map .integer
+      else if pre == booleanPrefix then
         if payload == "true" then some (.boolean true)
         else if payload == "false" then some (.boolean false)
         else none
@@ -42,16 +44,16 @@ def attributeName (value : String) : Name := Name.str attributePrefix value
 def nativeRuleName (value : String) : Name := Name.str rulePrefix value
 
 def relationOfName? : Name → Option String
-  | .str prefix payload => if prefix == relationPrefix then some payload else none
+  | .str pre payload => if pre == relationPrefix then some payload else none
   | _ => none
 
 def attributeOfName? : Name → Option String
-  | .str prefix payload => if prefix == attributePrefix then some payload else none
+  | .str pre payload => if pre == attributePrefix then some payload else none
   | _ => none
 
 def ruleOfName (name : Name) : String :=
   match name with
-  | .str prefix payload => if prefix == rulePrefix then payload else name.toString
+  | .str pre payload => if pre == rulePrefix then payload else name.toString
   | _ => name.toString
 
 def valueTerm (value : Zil.Datalog.Value) : Zil.Term := .node ⟨valueName value⟩
@@ -162,11 +164,9 @@ def roundTripProbe : Zil.Datalog.Atom :=
     subject := .string "claim.with/punctuation",
     attrs := [("count", .integer (-3)), ("enabled", .boolean true)] }
 
-example : nativeToAtom? (atomToNative roundTripProbe) = some roundTripProbe := by decide
-
 open Zil.Datalog
 
-def pat (object : Term) (relation : String) (subject : Term) : Pattern :=
+def pat (object : Zil.Datalog.Term) (relation : String) (subject : Zil.Datalog.Term) : Pattern :=
   { object, relation, subject }
 
 def hasTestRule : Rule :=
@@ -188,6 +188,8 @@ def untestedAtom (d c : String) : Atom :=
   { object := .symbol d, relation := "untestedPrediction", subject := .symbol c }
 
 run_cmd do
+  unless nativeToAtom? (atomToNative roundTripProbe) == some roundTripProbe do
+    throwError "adapter round-trip failed"
   let result := closeProgram sample
   if let some error := result.error then throwError "closure failed: {error}"
   unless untestedAtom "D2" "C2" ∈ result.atoms do throwError "missing expected derivation"
