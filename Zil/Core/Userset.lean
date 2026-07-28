@@ -1,4 +1,8 @@
-import Zil.Core.Rule
+module
+
+public import Zil.Core.Rule
+
+@[expose] public section
 
 open Lean (Name)
 
