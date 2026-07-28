@@ -24,11 +24,12 @@ jobs:
           ref: agent/complete-engine-governance-modules
           fetch-depth: 0
 
-      - name: Convert remaining engine and governance files
+      - name: Convert and expose module dependencies
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           targets = [
               "Zil/Core/Declaration.lean",
@@ -42,30 +43,64 @@ jobs:
               "Zil/QueryGovernance.lean",
           ]
 
+          module_closure = [
+              "Zil/Core/Term.lean",
+              "Zil/Core/Attribute.lean",
+              "Zil/Core/Relation.lean",
+              "Zil/Core/Rule.lean",
+              "Zil/Core/Macro.lean",
+              "Zil/Core/Declaration.lean",
+              "Zil/Core/DeclarationSet.lean",
+              "Zil/Core/Program.lean",
+              "Zil/Core/Query.lean",
+              "Zil/Core/Userset.lean",
+              "Zil/Codec/Attribute.lean",
+              "Zil/Codec/Canonical.lean",
+              "Zil/Environment/Knowledge.lean",
+              "Zil/Profile/Core.lean",
+              "Zil/Engine/Query.lean",
+              "Zil/Engine/Provenance.lean",
+              "Zil/Impact.lean",
+              "Zil/Parser/Tuple.lean",
+              "Zil/ProofObligation.lean",
+              "Zil/TheoremAudit.lean",
+              "Zil/QueryGovernance.lean",
+          ]
+
           for filename in targets:
               path = Path(filename)
               lines = path.read_text(encoding="utf-8").splitlines()
-              if lines and lines[0] == "module":
-                  continue
-              import_end = 0
-              while import_end < len(lines) and lines[import_end].startswith("import "):
-                  import_end += 1
-              if import_end == 0:
-                  raise SystemExit(f"{filename}: expected leading imports")
-              public_imports = [
-                  line.replace("import ", "public import ", 1)
-                  for line in lines[:import_end]
-              ]
-              converted = [
-                  "module",
-                  "",
-                  *public_imports,
-                  "",
-                  "@[expose] public section",
-                  "",
-                  *lines[import_end:],
-              ]
-              path.write_text("\n".join(converted).rstrip() + "\n", encoding="utf-8")
+              if not (lines and lines[0] == "module"):
+                  import_end = 0
+                  while import_end < len(lines) and lines[import_end].startswith("import "):
+                      import_end += 1
+                  if import_end == 0:
+                      raise SystemExit(f"{filename}: expected leading imports")
+                  public_imports = [
+                      line.replace("import ", "public import ", 1)
+                      for line in lines[:import_end]
+                  ]
+                  lines = [
+                      "module",
+                      "",
+                      *public_imports,
+                      "",
+                      "@[expose] public section",
+                      "",
+                      *lines[import_end:],
+                  ]
+                  path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+          # In Lean's module system, an exposed declaration cannot depend on a
+          # private helper. The first compiled failure was RelExpr.variables ->
+          # private pushName. During this blanket-exposure phase, promote the
+          # helper declarations throughout the converted closure; interface
+          # tightening is a later task.
+          for filename in module_closure:
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8")
+              text = re.sub(r"(?m)^(\s*)private\s+", r"\1", text)
+              path.write_text(text.rstrip() + "\n", encoding="utf-8")
           PY
 
       - name: Install Lean toolchain
@@ -132,9 +167,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
+            Zil/Core/Term.lean \
+            Zil/Core/Attribute.lean \
+            Zil/Core/Relation.lean \
+            Zil/Core/Rule.lean \
+            Zil/Core/Macro.lean \
             Zil/Core/Declaration.lean \
             Zil/Core/DeclarationSet.lean \
             Zil/Core/Program.lean \
+            Zil/Core/Query.lean \
+            Zil/Core/Userset.lean \
+            Zil/Codec/Attribute.lean \
+            Zil/Codec/Canonical.lean \
+            Zil/Environment/Knowledge.lean \
+            Zil/Profile/Core.lean \
+            Zil/Engine/Query.lean \
             Zil/Engine/Provenance.lean \
             Zil/Impact.lean \
             Zil/Parser/Tuple.lean \
