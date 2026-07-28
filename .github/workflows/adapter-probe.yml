@@ -19,4 +19,17 @@ jobs:
           curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Compile adapter probe
-        run: lake env lean AdapterProbe.lean
+        shell: bash
+        run: |
+          set +e
+          lake env lean AdapterProbe.lean > adapter-compile.log 2>&1
+          status=$?
+          cat adapter-compile.log
+          exit $status
+      - name: Upload compiler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adapter-compiler-log
+          path: adapter-compile.log
+          retention-days: 7
