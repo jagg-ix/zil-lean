@@ -18,10 +18,10 @@ structure Query where
 
 namespace Query
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def relationsVariables (relations : Array RelExpr) : Array Name :=
+def relationsVariables (relations : Array RelExpr) : Array Name :=
   relations.foldl (init := #[]) fun names relation =>
     relation.variables.foldl (init := names) pushName
 

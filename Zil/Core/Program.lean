@@ -1,7 +1,12 @@
-import Zil.Core.Userset
-import Zil.Core.Query
-import Zil.Core.Macro
-import Zil.Core.DeclarationSet
+module
+
+public import Zil.Core.Userset
+public import Zil.Core.Query
+public import Zil.Core.Macro
+public import Zil.Core.DeclarationSet
+
+@[expose] public section
+
 
 namespace Zil
 

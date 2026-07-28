@@ -21,18 +21,18 @@ def bind (binding : Binding) (name : Name) (term : Zil.Term) : Option Binding :=
 
 end Binding
 
-private def unifyTerm (pattern value : Zil.Term) (binding : Binding) : Option Binding :=
+def unifyTerm (pattern value : Zil.Term) (binding : Binding) : Option Binding :=
   match pattern with
   | .var name => binding.bind name value
   | .node node => if value == .node node then some binding else none
 
-private def unifyAttrValue
+def unifyAttrValue
     (pattern value : Zil.AttrValue) (binding : Binding) : Option Binding :=
   match pattern, value with
   | .term patternTerm, .term valueTerm => unifyTerm patternTerm valueTerm binding
   | _, _ => if pattern == value then some binding else none
 
-private def unifyAttributes
+def unifyAttributes
     (patterns facts : Array Zil.Attribute) (binding : Binding) : Option Binding :=
   patterns.foldl (init := some binding) fun state pattern =>
     match state with
@@ -42,7 +42,7 @@ private def unifyAttributes
         | none => none
         | some fact => unifyAttrValue pattern.value fact.value current
 
-private def unifyRelation (pattern fact : Zil.RelExpr) (binding : Binding) : Option Binding :=
+def unifyRelation (pattern fact : Zil.RelExpr) (binding : Binding) : Option Binding :=
   if pattern.relation != fact.relation then none
   else
     match unifyTerm pattern.subject fact.subject binding with
@@ -52,16 +52,16 @@ private def unifyRelation (pattern fact : Zil.RelExpr) (binding : Binding) : Opt
         | none => none
         | some endpoints => unifyAttributes pattern.attrs fact.attrs endpoints
 
-private def instantiateTerm (binding : Binding) : Zil.Term → Option Zil.Term
+def instantiateTerm (binding : Binding) : Zil.Term → Option Zil.Term
   | .node node => some (.node node)
   | .var name => binding.lookup name
 
-private def instantiateAttrValue
+def instantiateAttrValue
     (binding : Binding) : Zil.AttrValue → Option Zil.AttrValue
   | .term term => (instantiateTerm binding term).map .term
   | value => some value
 
-private def instantiateRelation (binding : Binding) (relation : Zil.RelExpr) : Option Zil.RelExpr := do
+def instantiateRelation (binding : Binding) (relation : Zil.RelExpr) : Option Zil.RelExpr := do
   let subject ← instantiateTerm binding relation.subject
   let object ← instantiateTerm binding relation.object
   let mut attrs : Array Zil.Attribute := #[]
@@ -70,7 +70,7 @@ private def instantiateRelation (binding : Binding) (relation : Zil.RelExpr) : O
     attrs := attrs.push { entry with value }
   pure { relation with subject, object, attrs }
 
-private def extendBindings (facts : Array Zil.RelExpr)
+def extendBindings (facts : Array Zil.RelExpr)
     (patterns : Array Zil.RelExpr) (seed : Binding := #[]) : Array Binding :=
   patterns.foldl (init := #[seed]) fun bindings pattern =>
     bindings.foldl (init := #[]) fun out binding =>
@@ -79,15 +79,15 @@ private def extendBindings (facts : Array Zil.RelExpr)
         | some next => acc.push next
         | none => acc
 
-private def hasMatch
+def hasMatch
     (facts : Array Zil.RelExpr) (pattern : Zil.RelExpr) (binding : Binding) : Bool :=
   facts.any fun fact => (unifyRelation pattern fact binding).isSome
 
-private def negativesHold
+def negativesHold
     (facts : Array Zil.RelExpr) (patterns : Array Zil.RelExpr) (binding : Binding) : Bool :=
   patterns.all fun pattern => !hasMatch facts pattern binding
 
-private def deriveRule
+def deriveRule
     (positiveFacts negativeFacts : Array Zil.RelExpr)
     (rule : Zil.Rule) : Array Zil.RelExpr :=
   (extendBindings positiveFacts rule.premises).filterMap fun binding =>
@@ -95,7 +95,7 @@ private def deriveRule
       instantiateRelation binding rule.conclusion
     else none
 
-private def pushSemantic (facts : Array Zil.RelExpr) (fact : Zil.RelExpr) : Array Zil.RelExpr :=
+def pushSemantic (facts : Array Zil.RelExpr) (fact : Zil.RelExpr) : Array Zil.RelExpr :=
   if facts.any (·.semanticallyEqual fact) then facts else facts.push fact
 
 /-- One weighted dependency between rule-body and rule-head relations. -/
@@ -120,7 +120,7 @@ def set (strata : Strata) (relation : Name) (level : Nat) : Strata :=
 
 end Strata
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
 /-- Weighted relation dependencies used by the stratifier. -/
@@ -131,7 +131,7 @@ def dependencyEdges (rules : Array Zil.Rule) : Array DependencyEdge :=
     rule.negativePremises.foldl (init := edges) fun current premise =>
       current.push { source := premise.relation, target := rule.conclusion.relation, strict := true }
 
-private def relationNames (rules : Array Zil.Rule) : Array Name :=
+def relationNames (rules : Array Zil.Rule) : Array Name :=
   rules.foldl (init := #[]) fun names rule =>
     let names := pushName names rule.conclusion.relation
     let names := rule.premises.foldl (init := names) fun current premise =>
@@ -139,16 +139,16 @@ private def relationNames (rules : Array Zil.Rule) : Array Name :=
     rule.negativePremises.foldl (init := names) fun current premise =>
       pushName current premise.relation
 
-private def relaxEdge (strata : Strata) (edge : DependencyEdge) : Strata :=
+def relaxEdge (strata : Strata) (edge : DependencyEdge) : Strata :=
   let source := strata.lookup edge.source
   let required := source + (if edge.strict then 1 else 0)
   let current := strata.lookup edge.target
   if current < required then strata.set edge.target required else strata
 
-private def relaxAll (strata : Strata) (edges : Array DependencyEdge) : Strata :=
+def relaxAll (strata : Strata) (edges : Array DependencyEdge) : Strata :=
   edges.foldl (init := strata) relaxEdge
 
-private def relaxSteps (strata : Strata) (edges : Array DependencyEdge) : Nat → Strata
+def relaxSteps (strata : Strata) (edges : Array DependencyEdge) : Nat → Strata
   | 0 => strata
   | count + 1 => relaxSteps (relaxAll strata edges) edges count
 
@@ -168,11 +168,11 @@ def stratify (rules : Array Zil.Rule) : Except String Strata := do
     throw "program is not stratifiable: negative dependency cycle"
   pure settled
 
-private def rulesAt
+def rulesAt
     (rules : Array Zil.Rule) (strata : Strata) (level : Nat) : Array Zil.Rule :=
   rules.filter fun rule => strata.lookup rule.conclusion.relation == level
 
-private def closeOneStratum
+def closeOneStratum
     (baseFacts : Array Zil.RelExpr)
     (rules : Array Zil.Rule)
     (fuel : Nat) : Array Zil.RelExpr :=
@@ -184,10 +184,10 @@ private def closeOneStratum
         if next.size == facts.size then facts else loop next remaining
   loop baseFacts fuel
 
-private def maxStratum (strata : Strata) : Nat :=
+def maxStratum (strata : Strata) : Nat :=
   strata.foldl (init := 0) fun current entry => Nat.max current entry.2
 
-private def executeLevels
+def executeLevels
     (facts : Array Zil.RelExpr)
     (rules : Array Zil.Rule)
     (strata : Strata)

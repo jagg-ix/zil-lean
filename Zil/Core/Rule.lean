@@ -26,14 +26,14 @@ structure Rule where
 
 namespace Rule
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def relationsVariables (relations : Array RelExpr) : Array Name :=
+def relationsVariables (relations : Array RelExpr) : Array Name :=
   relations.foldl (init := #[]) fun names relation =>
     relation.variables.foldl (init := names) pushName
 
-private def relationVariablesBound (bound : Array Name) (relation : RelExpr) : Bool :=
+def relationVariablesBound (bound : Array Name) (relation : RelExpr) : Bool :=
   relation.variables.all bound.contains
 
 /-- Variables bound by positive premises. -/

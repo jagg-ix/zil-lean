@@ -1,4 +1,9 @@
-import Zil.Core.Userset
+module
+
+public import Zil.Core.Userset
+
+@[expose] public section
+
 
 open Lean (Name)
 
@@ -164,22 +169,22 @@ structure DeclarationIssue where
 
 namespace Declaration
 
-private def nameFromString (value : String) : Name :=
+def nameFromString (value : String) : Name :=
   value.splitOn "." |>.foldl (init := Name.anonymous) fun current segment =>
     if current == Name.anonymous then Name.mkSimple segment else Name.str current segment
 
-private def hasNamespace (name : Name) : Bool :=
+def hasNamespace (name : Name) : Bool :=
   (name.toString.splitOn ".").length > 1
 
-private def relationName (key : Name) : Name :=
+def relationName (key : Name) : Name :=
   if key.toString.startsWith "zil." then key else Name.str `zil key.toString
 
-private def normalizeKey (kind : DeclarationKind) (key : Name) : Name :=
+def normalizeKey (kind : DeclarationKind) (key : Name) : Name :=
   if kind == .service && key == `depends then `uses
   else if kind == .service && key == `depended_by then `used_by
   else key
 
-private def normalizedAttrs (declaration : Declaration) : Array DeclAttribute :=
+def normalizedAttrs (declaration : Declaration) : Array DeclAttribute :=
   declaration.attrs.map fun attr => { attr with key := normalizeKey declaration.kind attr.key }
 
 /-- Stable entity name. Explicitly qualified declaration names remain unchanged. -/
@@ -191,7 +196,7 @@ def entityName (declaration : Declaration) : Name :=
 def attr? (declaration : Declaration) (key : Name) : Option DeclAttribute :=
   (normalizedAttrs declaration).find? fun attr => attr.key == key
 
-private def requiredKeys : DeclarationKind → Array Name
+def requiredKeys : DeclarationKind → Array Name
   | .datasource => #[`type]
   | .provider => #[`source]
   | .metric => #[`source]
@@ -208,7 +213,7 @@ private def requiredKeys : DeclarationKind → Array Name
   | .queryPack => #[`queries]
   | _ => #[]
 
-private def allowedEnums (kind : DeclarationKind) (key : Name) : Array String :=
+def allowedEnums (kind : DeclarationKind) (key : Name) : Array String :=
   match kind, key with
   | .service, `criticality => #["low", "medium", "high", "critical"]
   | .service, `environment | .service, `env => #["dev", "qa", "prod", "dr", "cqa"]
@@ -239,7 +244,7 @@ private def allowedEnums (kind : DeclarationKind) (key : Name) : Array String :=
   | .dslProfile, `verification_chain => #["tm.det", "lts", "constraint", "proof_obligation", "theorem_ci", "vstack_ci", "query_ci"]
   | _, _ => #[]
 
-private def pushIssue
+def pushIssue
     (issues : Array DeclarationIssue)
     (declaration : Declaration)
     (kind : DeclarationIssueKind)
@@ -247,13 +252,13 @@ private def pushIssue
     (key : Option Name := none) : Array DeclarationIssue :=
   issues.push { kind, declaration := declaration.entityName, key, message }
 
-private def tokenSet (value : DeclValue) : Array String :=
+def tokenSet (value : DeclValue) : Array String :=
   value.members.filterMap DeclValue.token?
 
-private def keysUnique (attrs : Array DeclAttribute) : Bool :=
+def keysUnique (attrs : Array DeclAttribute) : Bool :=
   attrs.all fun attr => (attrs.filter fun candidate => candidate.key == attr.key).size == 1
 
-private def validateTm (declaration : Declaration) (issues : Array DeclarationIssue) : Array DeclarationIssue :=
+def validateTm (declaration : Declaration) (issues : Array DeclarationIssue) : Array DeclarationIssue :=
   let states := (declaration.attr? `states).map (tokenSet ·.value) |>.getD #[]
   let alphabet := (declaration.attr? `alphabet).map (tokenSet ·.value) |>.getD #[]
   let accept := (declaration.attr? `accept).map (tokenSet ·.value) |>.getD #[]
@@ -275,7 +280,7 @@ private def validateTm (declaration : Declaration) (issues : Array DeclarationIs
   accept.foldl (init := issues) fun out state =>
     if reject.contains state then pushIssue out declaration .invalidStructure s!"state {state} is both accepting and rejecting" else out
 
-private def validateLts (declaration : Declaration) (issues : Array DeclarationIssue) : Array DeclarationIssue :=
+def validateLts (declaration : Declaration) (issues : Array DeclarationIssue) : Array DeclarationIssue :=
   let states := (declaration.attr? `states).map (tokenSet ·.value) |>.getD #[]
   let initial := (declaration.attr? `initial).bind (DeclValue.token? ·.value)
   let issues := if states.isEmpty then pushIssue issues declaration .invalidStructure "LTS_ATOM states must be nonempty" else issues
@@ -306,33 +311,33 @@ def issues (declaration : Declaration) : Array DeclarationIssue :=
 /-- True when local declaration validation succeeds. -/
 def valid (declaration : Declaration) : Bool := declaration.issues.isEmpty
 
-private def sanitizeValue (value : String) : String :=
+def sanitizeValue (value : String) : String :=
   value.replace ":" "." |>.replace "/" "." |>.replace " " "_" |>.replace "-" "_" |>.replace "\"" ""
 
-private def scalarTerm? : AttrValue → Option Term
+def scalarTerm? : AttrValue → Option Term
   | .term term => some term
   | .text value => some (.ground (nameFromString ("value." ++ sanitizeValue value)))
   | .integer value => some (.ground (nameFromString ("value." ++ sanitizeValue (toString value))))
   | .decimal value => some (.ground (nameFromString ("value." ++ sanitizeValue value)))
   | .boolean value => some (.ground (if value then `value.true else `value.false))
 
-private def referenceTerm? (defaultPrefix : String) (value : DeclValue) : Option Term :=
+def referenceTerm? (defaultPrefix : String) (value : DeclValue) : Option Term :=
   match value with
   | .scalar (.term term) => some term
   | _ => value.token?.map fun token => .ground (nameFromString (defaultPrefix ++ "." ++ sanitizeValue token))
 
-private def fact
+def fact
     (declaration : Declaration)
     (relation : Name)
     (object : Term)
     (attrs : Array Attribute := #[]) : RelExpr :=
   { subject := .ground declaration.entityName, relation, object, attrs, source := declaration.source }
 
-private def genericFacts (declaration : Declaration) (attr : DeclAttribute) : Array RelExpr :=
+def genericFacts (declaration : Declaration) (attr : DeclAttribute) : Array RelExpr :=
   attr.value.scalarValues.filterMap fun scalar =>
     (scalarTerm? scalar).map fun term => fact declaration (relationName attr.key) term
 
-private def dependencyFacts (declaration : Declaration) (key : Name) (value : DeclValue) : Array RelExpr :=
+def dependencyFacts (declaration : Declaration) (key : Name) (value : DeclValue) : Array RelExpr :=
   let refs := value.members.filterMap (referenceTerm? "service")
   refs.foldl (init := #[]) fun out reference =>
     let relation := if key == `used_by then `zil.usedBy else `zil.uses
@@ -347,7 +352,7 @@ private def dependencyFacts (declaration : Declaration) (key : Name) (value : De
     let out := out.push direct |>.push inverseFact
     if key == `uses then out.push (fact declaration `zil.dependsOn reference) else out
 
-private def providerFacts (declaration : Declaration) (key : Name) (value : DeclValue) : Array RelExpr :=
+def providerFacts (declaration : Declaration) (key : Name) (value : DeclValue) : Array RelExpr :=
   value.members.filterMap (referenceTerm? "provider") |>.foldl (init := #[]) fun out reference =>
     let direct := fact declaration (if key == `providers then `zil.providers else `zil.provider) reference
     let inverse : RelExpr := {
@@ -358,7 +363,7 @@ private def providerFacts (declaration : Declaration) (key : Name) (value : Decl
     }
     out.push direct |>.push inverse
 
-private def transitionAttrs
+def transitionAttrs
     (fromState readSymbol toState writeSymbol move : String) : Array Attribute := #[
   { key := `from_state, value := .text fromState },
   { key := `read_symbol, value := .text readSymbol },
@@ -367,7 +372,7 @@ private def transitionAttrs
   { key := `move, value := .text move }
 ]
 
-private def tmTransitionFacts (declaration : Declaration) (value : DeclValue) : Array RelExpr :=
+def tmTransitionFacts (declaration : Declaration) (value : DeclValue) : Array RelExpr :=
   match value with
   | .map entries =>
       entries.foldl (init := #[]) fun out entry =>
@@ -384,7 +389,7 @@ private def tmTransitionFacts (declaration : Declaration) (value : DeclValue) : 
         | _, _ => out
   | _ => #[]
 
-private def ltsTransitionFacts (declaration : Declaration) (value : DeclValue) : Array RelExpr :=
+def ltsTransitionFacts (declaration : Declaration) (value : DeclValue) : Array RelExpr :=
   match value with
   | .map entries =>
       entries.foldl (init := #[]) fun out entry =>

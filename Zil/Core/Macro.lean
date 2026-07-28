@@ -17,7 +17,7 @@ structure MacroDef where
 
 namespace MacroDef
 
-private def uniqueNames (names : Array Name) : Bool :=
+def uniqueNames (names : Array Name) : Bool :=
   (names.foldl (init := (((#[] : Array Name), true) : Array Name × Bool)) fun state name =>
     if state.1.contains name then (state.1, false)
     else (state.1.push name, state.2)).2

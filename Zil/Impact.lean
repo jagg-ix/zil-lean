@@ -1,4 +1,9 @@
-import Zil.Engine.Provenance
+module
+
+public import Zil.Engine.Provenance
+
+@[expose] public section
+
 
 open Lean (Name)
 
@@ -55,10 +60,10 @@ structure Report where
   impacts : Array Impact
   deriving Repr, Inhabited
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def insertName (value : Name) : List Name → List Name
+def insertName (value : Name) : List Name → List Name
   | [] => [value]
   | head :: tail =>
       match compare value.toString head.toString with
@@ -66,10 +71,10 @@ private def insertName (value : Name) : List Name → List Name
       | .eq => head :: tail
       | .gt => head :: insertName value tail
 
-private def sortedNames (names : Array Name) : Array Name :=
+def sortedNames (names : Array Name) : Array Name :=
   (names.foldl (init := []) fun out name => insertName name out).toArray
 
-private def edgeOrder (left right : Edge) : Ordering :=
+def edgeOrder (left right : Edge) : Ordering :=
   match compare left.dependency.toString right.dependency.toString with
   | .lt => .lt
   | .gt => .gt
@@ -83,7 +88,7 @@ private def edgeOrder (left right : Edge) : Ordering :=
           | .gt => .gt
           | .eq => compare left.factId right.factId
 
-private def insertEdge (value : Edge) : List Edge → List Edge
+def insertEdge (value : Edge) : List Edge → List Edge
   | [] => [value]
   | head :: tail =>
       match edgeOrder value head with
@@ -91,14 +96,14 @@ private def insertEdge (value : Edge) : List Edge → List Edge
       | .eq => head :: tail
       | .gt => head :: insertEdge value tail
 
-private def sortedEdges (edges : Array Edge) : Array Edge :=
+def sortedEdges (edges : Array Edge) : Array Edge :=
   (edges.foldl (init := []) fun out edge => insertEdge edge out).toArray
 
-private def nodeName? : Zil.Term → Option Name
+def nodeName? : Zil.Term → Option Name
   | .node node => some node.name
   | .var _ => none
 
-private def edgeOf
+def edgeOf
     (policy : Policy)
     (node : Zil.Engine.Provenance.FactNode) : Option Edge := do
   if !policy.relations.contains node.fact.relation then none
@@ -138,7 +143,7 @@ def outgoing (graph : Graph) (dependent : Name) : Array Edge :=
 def reverse (graph : Graph) (dependency : Name) : Array Edge :=
   graph.edges.filter fun edge => edge.dependency == dependency
 
-private def reaches
+def reaches
     (graph : Graph)
     (current goal : Name)
     (visited : Array Name)
@@ -161,17 +166,17 @@ def cyclicNodes (graph : Graph) : Array Name :=
 
 end Graph
 
-private structure Frontier where
+structure Frontier where
   node : Name
   distance : Nat
   path : Array Edge
 
-private structure SearchState where
+structure SearchState where
   queue : List Frontier
   visited : Array Name
   impacts : Array Impact
 
-private def enqueueDependents (graph : Graph) (state : SearchState) : SearchState :=
+def enqueueDependents (graph : Graph) (state : SearchState) : SearchState :=
   match state.queue with
   | [] => state
   | current :: rest =>
@@ -194,7 +199,7 @@ private def enqueueDependents (graph : Graph) (state : SearchState) : SearchStat
             }
           }
 
-private def search
+def search
     (graph : Graph)
     (state : SearchState) : Nat → SearchState
   | 0 => state
@@ -218,14 +223,14 @@ def analyze (graph : Graph) (changed : Name) : Report :=
     impacts := result.impacts
   }
 
-private def edgeText (edge : Edge) : String :=
+def edgeText (edge : Edge) : String :=
   edge.dependent.toString ++ "#" ++ edge.relation.toString ++ "@" ++
   edge.dependency.toString ++ ":fact=" ++ toString edge.factId
 
-private def pathText (path : Array Edge) : String :=
+def pathText (path : Array Edge) : String :=
   String.intercalate "|" (path.toList.map edgeText)
 
-private def namesText (names : Array Name) : String :=
+def namesText (names : Array Name) : String :=
   String.intercalate "," (names.toList.map Name.toString)
 
 /-- Stable dependency graph report. -/

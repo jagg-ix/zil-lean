@@ -1,6 +1,11 @@
-import Zil.Core.Program
-import Zil.Engine.Query
-import Zil.Codec.Canonical
+module
+
+public import Zil.Core.Program
+public import Zil.Engine.Query
+public import Zil.Codec.Canonical
+
+@[expose] public section
+
 
 namespace Zil.Engine.Provenance
 
@@ -61,21 +66,21 @@ def findId? (trace : Trace) (id : Nat) : Option FactNode :=
 
 end Trace
 
-private def unifyTerm
+def unifyTerm
     (pattern value : Zil.Term)
     (binding : Zil.Engine.Binding) : Option Zil.Engine.Binding :=
   match pattern with
   | .var name => binding.bind name value
   | .node node => if value == .node node then some binding else none
 
-private def unifyAttrValue
+def unifyAttrValue
     (pattern value : Zil.AttrValue)
     (binding : Zil.Engine.Binding) : Option Zil.Engine.Binding :=
   match pattern, value with
   | .term patternTerm, .term valueTerm => unifyTerm patternTerm valueTerm binding
   | _, _ => if pattern == value then some binding else none
 
-private def unifyAttributes
+def unifyAttributes
     (patterns facts : Array Zil.Attribute)
     (binding : Zil.Engine.Binding) : Option Zil.Engine.Binding :=
   patterns.foldl (init := some binding) fun state pattern =>
@@ -86,7 +91,7 @@ private def unifyAttributes
         | none => none
         | some fact => unifyAttrValue pattern.value fact.value current
 
-private def unifyRelation
+def unifyRelation
     (pattern fact : Zil.RelExpr)
     (binding : Zil.Engine.Binding) : Option Zil.Engine.Binding :=
   if pattern.relation != fact.relation then none
@@ -98,17 +103,17 @@ private def unifyRelation
         | none => none
         | some endpoints => unifyAttributes pattern.attrs fact.attrs endpoints
 
-private def instantiateTerm
+def instantiateTerm
     (binding : Zil.Engine.Binding) : Zil.Term → Option Zil.Term
   | .node node => some (.node node)
   | .var name => binding.lookup name
 
-private def instantiateAttrValue
+def instantiateAttrValue
     (binding : Zil.Engine.Binding) : Zil.AttrValue → Option Zil.AttrValue
   | .term term => (instantiateTerm binding term).map .term
   | value => some value
 
-private def instantiateRelation
+def instantiateRelation
     (binding : Zil.Engine.Binding)
     (relation : Zil.RelExpr) : Option Zil.RelExpr := do
   let subject ← instantiateTerm binding relation.subject
@@ -119,7 +124,7 @@ private def instantiateRelation
     attrs := attrs.push { entry with value }
   pure { relation with subject, object, attrs }
 
-private def extendWitnesses
+def extendWitnesses
     (facts : Array FactNode)
     (patterns : Array Zil.RelExpr)
     (seed : WitnessState := {}) : Array WitnessState :=
@@ -134,19 +139,19 @@ private def extendWitnesses
               premiseFactIds := state.premiseFactIds.push node.id
             }
 
-private def hasMatch
+def hasMatch
     (facts : Array FactNode)
     (pattern : Zil.RelExpr)
     (binding : Zil.Engine.Binding) : Bool :=
   facts.any fun node => (unifyRelation pattern node.fact binding).isSome
 
-private def negativesHold
+def negativesHold
     (facts : Array FactNode)
     (patterns : Array Zil.RelExpr)
     (binding : Zil.Engine.Binding) : Bool :=
   patterns.all fun pattern => !hasMatch facts pattern binding
 
-private def appendBase (trace : Trace) (fact : Zil.RelExpr) : Trace :=
+def appendBase (trace : Trace) (fact : Zil.RelExpr) : Trace :=
   if (trace.findFact? fact).isSome then trace
   else {
     facts := trace.facts.push {
@@ -157,14 +162,14 @@ private def appendBase (trace : Trace) (fact : Zil.RelExpr) : Trace :=
     }
   }
 
-private def baseTrace (facts : Array Zil.RelExpr) : Trace :=
+def baseTrace (facts : Array Zil.RelExpr) : Trace :=
   facts.foldl (init := {}) appendBase
 
-private structure Candidate where
+structure Candidate where
   fact : Zil.RelExpr
   origin : Origin
 
-private def deriveRule
+def deriveRule
     (positiveFacts negativeFacts : Array FactNode)
     (rule : Zil.Rule) : Array Candidate :=
   (extendWitnesses positiveFacts rule.premises).filterMap fun state =>
@@ -179,7 +184,7 @@ private def deriveRule
           }
     else none
 
-private def appendCandidate
+def appendCandidate
     (trace : Trace)
     (candidate : Candidate)
     (stratum : Nat) : Trace :=
@@ -193,16 +198,16 @@ private def appendCandidate
     }
   }
 
-private def rulesAt
+def rulesAt
     (rules : Array Zil.Rule)
     (strata : Zil.Engine.Strata)
     (level : Nat) : Array Zil.Rule :=
   rules.filter fun rule => strata.lookup rule.conclusion.relation == level
 
-private def maxStratum (strata : Zil.Engine.Strata) : Nat :=
+def maxStratum (strata : Zil.Engine.Strata) : Nat :=
   strata.foldl (init := 0) fun current entry => Nat.max current entry.2
 
-private def closeOneStratum
+def closeOneStratum
     (initial : Trace)
     (rules : Array Zil.Rule)
     (level fuel : Nat) : Trace :=
@@ -216,7 +221,7 @@ private def closeOneStratum
         if next.facts.size == trace.facts.size then next else loop next remaining
   loop initial fuel
 
-private def executeLevels
+def executeLevels
     (trace : Trace)
     (rules : Array Zil.Rule)
     (strata : Zil.Engine.Strata)
@@ -240,7 +245,7 @@ def traceProgram (program : Zil.Program) (fuel : Nat := 64) : Except String Trac
   unless program.valid do throw "provenance requires a structurally valid program"
   traceChecked program.facts program.allRules fuel
 
-private def queryStates (trace : Trace) (query : Zil.Query) : Array WitnessState :=
+def queryStates (trace : Trace) (query : Zil.Query) : Array WitnessState :=
   if !query.selectedVariablesBound || !query.safe then #[]
   else
     (extendWitnesses trace.facts query.premises).filter fun state =>
@@ -269,21 +274,21 @@ def explainFact (trace : Trace) (target : Zil.RelExpr) : FactExplanation :=
         | .rule _ _ _ _ => "rule"
       { target, allowed := true, factId := some node.id, source }
 
-private def termText : Zil.Term → String
+def termText : Zil.Term → String
   | .node node => node.name.toString
   | .var name => "?" ++ name.toString
 
-private def bindingText (binding : Zil.Engine.Binding) : String :=
+def bindingText (binding : Zil.Engine.Binding) : String :=
   String.intercalate "," (binding.toList.map fun pair =>
     pair.1.toString ++ "=" ++ termText pair.2)
 
-private def idsText (ids : Array Nat) : String :=
+def idsText (ids : Array Nat) : String :=
   String.intercalate "," (ids.toList.map toString)
 
-private def negativeText (relations : Array Zil.RelExpr) : String :=
+def negativeText (relations : Array Zil.RelExpr) : String :=
   String.intercalate "|" (relations.toList.map Zil.Codec.encodeRelation)
 
-private def factRows (trace : Trace) : List String :=
+def factRows (trace : Trace) : List String :=
   trace.facts.toList.flatMap fun node =>
     let fact := "fact\t" ++ toString node.id ++ "\t" ++ toString node.stratum ++
       "\t" ++ Zil.Codec.encodeRelation node.fact
