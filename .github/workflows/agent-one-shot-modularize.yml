@@ -91,11 +91,18 @@ jobs:
                   ]
                   path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
-          # In Lean's module system, an exposed declaration cannot depend on a
-          # private helper. The first compiled failure was RelExpr.variables ->
-          # private pushName. During this blanket-exposure phase, promote the
-          # helper declarations throughout the converted closure; interface
-          # tightening is a later task.
+          # These two files share namespace Zil.Codec and originally relied on
+          # private-name mangling. Give the promoted Canonical helper a stable,
+          # file-specific name before exposing it.
+          canonical = Path("Zil/Codec/Canonical.lean")
+          canonical_text = canonical.read_text(encoding="utf-8")
+          if "private def nameFromString" in canonical_text:
+              canonical_text = re.sub(r"\bnameFromString\b", "canonicalNameFromString", canonical_text)
+              canonical.write_text(canonical_text, encoding="utf-8")
+
+          # An exposed declaration cannot depend on a private helper. During
+          # this blanket-exposure phase, promote helper declarations throughout
+          # the converted closure. Interface tightening remains a later task.
           for filename in module_closure:
               path = Path(filename)
               text = path.read_text(encoding="utf-8")
