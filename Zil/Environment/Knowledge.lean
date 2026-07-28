@@ -37,10 +37,10 @@ def semanticallyEqual : KnowledgeEntry → KnowledgeEntry → Bool
 
 end KnowledgeEntry
 
-private def pushUnique (state : KnowledgeState) (entry : KnowledgeEntry) : KnowledgeState :=
+def pushUnique (state : KnowledgeState) (entry : KnowledgeEntry) : KnowledgeState :=
   if state.any (KnowledgeEntry.semanticallyEqual entry) then state else state.push entry
 
-private def addImportedKnowledge (states : Array KnowledgeState) : KnowledgeState :=
+def addImportedKnowledge (states : Array KnowledgeState) : KnowledgeState :=
   states.foldl (init := #[]) fun acc state =>
     state.foldl (init := acc) pushUnique
 

@@ -1,5 +1,10 @@
-import Zil.Core.Program
-import Zil.Parser.Tuple
+module
+
+public import Zil.Core.Program
+public import Zil.Parser.Tuple
+
+@[expose] public section
+
 
 open Lean (Name)
 
@@ -137,17 +142,17 @@ structure Report where
   ok : Bool
   deriving Repr, Inhabited
 
-private def attrTokens (declaration : Zil.Declaration) (key : Name) : Array String :=
+def attrTokens (declaration : Zil.Declaration) (key : Name) : Array String :=
   match declaration.attr? key with
   | none => #[]
   | some attr => attr.value.members.filterMap Zil.DeclValue.token?
 
-private def attrToken? (declaration : Zil.Declaration) (key : Name) : Option String :=
+def attrToken? (declaration : Zil.Declaration) (key : Name) : Option String :=
   (attrTokens declaration key)[0]?
 
-private def nonempty? (value : String) : Bool := !value.trim.isEmpty
+def nonempty? (value : String) : Bool := !value.trim.isEmpty
 
-private def requiredToken
+def requiredToken
     (declaration : Zil.Declaration)
     (key : Name) : Except String String := do
   let value ← match attrToken? declaration key with
@@ -156,19 +161,19 @@ private def requiredToken
   if nonempty? value then pure value
   else throw s!"{declaration.name}: {key} must be nonempty"
 
-private def parseRelation (declaration : Zil.Declaration) : Except String Name := do
+def parseRelation (declaration : Zil.Declaration) : Except String Name := do
   let token ← requiredToken declaration `relation
   match Zil.Parser.relationNameFromToken token with
   | .ok relation => pure relation
   | .error error => throw s!"{declaration.name}: {error}"
 
-private def parseTool (declaration : Zil.Declaration) : Except String Tool := do
+def parseTool (declaration : Zil.Declaration) : Except String Tool := do
   let token ← requiredToken declaration `tool
   match Tool.ofToken? token with
   | some value => pure value
   | none => throw s!"{declaration.name}: invalid proof tool {token}"
 
-private def parseStatus (declaration : Zil.Declaration) : Except String Status := do
+def parseStatus (declaration : Zil.Declaration) : Except String Status := do
   match attrToken? declaration `status with
   | none => pure .open
   | some token =>
@@ -176,7 +181,7 @@ private def parseStatus (declaration : Zil.Declaration) : Except String Status :
       | some value => pure value
       | none => throw s!"{declaration.name}: invalid proof status {token}"
 
-private def parseCriticality (declaration : Zil.Declaration) : Except String Criticality := do
+def parseCriticality (declaration : Zil.Declaration) : Except String Criticality := do
   match attrToken? declaration `criticality with
   | none => pure .low
   | some token =>
@@ -184,7 +189,7 @@ private def parseCriticality (declaration : Zil.Declaration) : Except String Cri
       | some value => pure value
       | none => throw s!"{declaration.name}: invalid proof criticality {token}"
 
-private def evidenceRefs (declaration : Zil.Declaration) : Array String :=
+def evidenceRefs (declaration : Zil.Declaration) : Array String :=
   let keys : Array Name := #[`evidence, `artifact_in, `artifact_out, `proof_token, `declaration]
   keys.foldl (init := #[]) fun out key =>
     (attrTokens declaration key).foldl (init := out) fun current value =>
@@ -224,11 +229,11 @@ def fromProgram (program : Zil.Program) : Except String (Array Obligation) := do
     throw "proof obligation IDs must be unique"
   pure out
 
-private def relationKnown (program : Zil.Program) (relation : Name) : Bool :=
+def relationKnown (program : Zil.Program) (relation : Name) : Bool :=
   program.facts.any (·.relation == relation) ||
   program.allRules.any fun rule => rule.conclusion.relation == relation
 
-private def evaluate (program : Zil.Program) (obligation : Obligation) : Result :=
+def evaluate (program : Zil.Program) (obligation : Obligation) : Result :=
   let known := relationKnown program obligation.relation
   let hasEvidence := !obligation.evidence.isEmpty
   let waiverPresent := obligation.waiverReason.map nonempty? |>.getD false
@@ -286,7 +291,7 @@ def audit
     ok := violated == 0 && blocked == 0
   }
 
-private def stringsText (values : Array String) : String :=
+def stringsText (values : Array String) : String :=
   String.intercalate "," values.toList
 
 /-- Stable fail-closed proof-obligation governance report. -/

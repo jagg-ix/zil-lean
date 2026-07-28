@@ -1,29 +1,34 @@
-import Zil.Core.Declaration
+module
+
+public import Zil.Core.Declaration
+
+@[expose] public section
+
 
 open Lean (Name)
 
 namespace Zil.DeclarationSet
 
-private def nameFromString (value : String) : Name :=
+def nameFromString (value : String) : Name :=
   value.splitOn "." |>.foldl (init := Name.anonymous) fun current segment =>
     if current == Name.anonymous then Name.mkSimple segment else Name.str current segment
 
-private def sanitize (value : String) : String :=
+def sanitize (value : String) : String :=
   value.replace ":" "." |>.replace "/" "." |>.replace "-" "_" |>.replace " " "_"
 
-private def referenceName (pre : String) (value : DeclValue) : Option Name :=
+def referenceName (pre : String) (value : DeclValue) : Option Name :=
   value.token?.map fun token =>
     let normalized := sanitize token
     if (normalized.splitOn ".").length > 1 then nameFromString normalized
     else nameFromString (pre ++ "." ++ normalized)
 
-private def references (pre : String) (value : DeclValue) : Array Name :=
+def references (pre : String) (value : DeclValue) : Array Name :=
   value.members.filterMap (referenceName pre)
 
-private def hasEntity (declarations : Array Declaration) (name : Name) : Bool :=
+def hasEntity (declarations : Array Declaration) (name : Name) : Bool :=
   declarations.any fun declaration => declaration.entityName == name
 
-private def addIssue
+def addIssue
     (issues : Array DeclarationIssue)
     (declaration : Declaration)
     (kind : DeclarationIssueKind)
@@ -31,7 +36,7 @@ private def addIssue
     (key : Option Name := none) : Array DeclarationIssue :=
   issues.push { kind, declaration := declaration.entityName, key, message }
 
-private def checkReferences
+def checkReferences
     (declarations : Array Declaration)
     (declaration : Declaration)
     (key : Name)
@@ -45,7 +50,7 @@ private def checkReferences
         else addIssue out declaration .invalidReference
           s!"attribute {key} references missing declaration {reference}" (some key)
 
-private def checkDeclarationReferences
+def checkDeclarationReferences
     (declarations : Array Declaration)
     (declaration : Declaration)
     (issues : Array DeclarationIssue) : Array DeclarationIssue :=
@@ -80,7 +85,7 @@ private def checkDeclarationReferences
     else issues
   issues
 
-private def serviceEdges (declarations : Array Declaration) : Array (Name × Name) :=
+def serviceEdges (declarations : Array Declaration) : Array (Name × Name) :=
   declarations.foldl (init := #[]) fun edges declaration =>
     if declaration.kind != .service then edges
     else
@@ -92,14 +97,14 @@ private def serviceEdges (declarations : Array Declaration) : Array (Name × Nam
         | some attr => references "service" attr.value |>.map fun source => (source, declaration.entityName)
       edges ++ direct ++ inverse
 
-private def pushUniqueName (names : Array Name) (name : Name) : Array Name :=
+def pushUniqueName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def nextNodes (edges : Array (Name × Name)) (frontier : Array Name) : Array Name :=
+def nextNodes (edges : Array (Name × Name)) (frontier : Array Name) : Array Name :=
   edges.foldl (init := #[]) fun out edge =>
     if frontier.contains edge.1 then pushUniqueName out edge.2 else out
 
-private def reachable
+def reachable
     (edges : Array (Name × Name))
     (start target : Name)
     (fuel : Nat) : Bool :=
@@ -113,7 +118,7 @@ private def reachable
           else loop next (next.foldl (init := visited) pushUniqueName) remaining
   loop #[start] #[start] fuel
 
-private def cycleIssues
+def cycleIssues
     (declarations : Array Declaration)
     (issues : Array DeclarationIssue) : Array DeclarationIssue :=
   let edges := serviceEdges declarations

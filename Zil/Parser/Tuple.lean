@@ -1,4 +1,9 @@
-import Zil.Core.Userset
+module
+
+public import Zil.Core.Userset
+
+@[expose] public section
+
 
 open Lean (Name)
 
@@ -20,10 +25,10 @@ def render (error : ParseError) : String :=
 
 end ParseError
 
-private def failAt (line : Nat) (text message : String) : Except ParseError α :=
+def failAt (line : Nat) (text message : String) : Except ParseError α :=
   .error { line, message, sourceLine := text }
 
-private def cleanSegment (previous : Option String) (segment : String) : Except String String := do
+def cleanSegment (previous : Option String) (segment : String) : Except String String := do
   let clean := segment.replace "-" "_"
   if clean.isEmpty then throw "empty name segment"
   let startsWithDigit := match clean.data.head? with
@@ -57,7 +62,7 @@ def termFromToken (value : String) : Except String Term := do
   else
     pure (.ground (← nameFromToken token))
 
-private def upperFirst (value : String) : String :=
+def upperFirst (value : String) : String :=
   match value.data with
   | [] => ""
   | head :: tail => String.mk (head.toUpper :: tail)
@@ -71,7 +76,7 @@ def relationNameFromToken (value : String) : Except String Name := do
   let ident := first.toLower ++ String.intercalate "" tail
   pure (Name.str `zil ident)
 
-private def parseAttrValue (value : String) : Except String AttrValue := do
+def parseAttrValue (value : String) : Except String AttrValue := do
   let token := value.trim
   if token.length >= 2 && token.startsWith "\"" && token.endsWith "\"" then
     pure (.text ((token.drop 1).dropRight 1).toString)
@@ -86,7 +91,7 @@ private def parseAttrValue (value : String) : Except String AttrValue := do
   else
     pure (.term (← termFromToken token))
 
-private def parseAttributes
+def parseAttributes
     (lineNumber : Nat) (sourceLine text : String) : Except ParseError (Array Attribute) := do
   if text.trim.isEmpty then return #[]
   let mut attrs : Array Attribute := #[]
@@ -105,7 +110,7 @@ private def parseAttributes
     throw { line := lineNumber, message := "duplicate attribute key", sourceLine }
   pure attrs
 
-private def splitTupleAndAttributes
+def splitTupleAndAttributes
     (lineNumber : Nat) (sourceLine body : String) : Except ParseError (String × Array Attribute) := do
   match body.splitOn "[" with
   | [tupleText] => pure (tupleText.trim, #[])
@@ -116,7 +121,7 @@ private def splitTupleAndAttributes
       pure (tupleText.trim, ← parseAttributes lineNumber sourceLine content)
   | _ => failAt lineNumber sourceLine "tuple contains more than one attribute list"
 
-private def parseDirectOrUserset
+def parseDirectOrUserset
     (lineNumber : Nat) (line subjectText : String)
     (object : Term) (relation : Name) (attrs : Array Attribute) : Except ParseError TupleExpr := do
   let subjectParts := subjectText.trim.splitOn "#"
@@ -168,7 +173,7 @@ def parseTupleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError 
     throw { line := lineNumber, message := "top-level tuple facts must be ground", sourceLine }
   pure tuple
 
-private def parseModuleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError Name := do
+def parseModuleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError Name := do
   let line := sourceLine.trim
   unless line.endsWith "." do
     throw { line := lineNumber, message := "MODULE declaration must end with '.'", sourceLine }
@@ -203,18 +208,18 @@ def parseFile (path : String) : IO (Except ParseError TupleProgram) := do
   let text ← IO.FS.readFile path
   pure (parseText text)
 
-private def groundName : Term → Except String Name
+def groundName : Term → Except String Name
   | .node node => pure node.name
   | .var name => throw s!"generated tuple source contains variable {name}"
 
-private def leanString (value : String) : String :=
+def leanString (value : String) : String :=
   let escaped := value.replace "\\" "\\\\"
     |>.replace "\"" "\\\""
     |>.replace "\n" "\\n"
     |>.replace "\t" "\\t"
   "\"" ++ escaped ++ "\""
 
-private def renderAttrValue : AttrValue → String
+def renderAttrValue : AttrValue → String
   | .text value => s!".text {leanString value}"
   | .integer value => s!".integer {value}"
   | .decimal value => s!".decimal {leanString value}"
@@ -222,13 +227,13 @@ private def renderAttrValue : AttrValue → String
   | .term (.var name) => s!".term (.variable `{name})"
   | .term (.node node) => s!".term (.ground `{node.name})"
 
-private def renderAttributes (attrs : Array Attribute) : String :=
+def renderAttributes (attrs : Array Attribute) : String :=
   if attrs.isEmpty then "#[]"
   else
     "#[\n      " ++ String.intercalate ",\n      " (attrs.toList.map fun entry =>
       s!"\{ key := `{entry.key}, value := {renderAttrValue entry.value} }") ++ "\n    ]"
 
-private def renderSource (source : Source) : String :=
+def renderSource (source : Source) : String :=
   let file := match source.file with
     | none => "none"
     | some value => "some " ++ leanString value
@@ -237,7 +242,7 @@ private def renderSource (source : Source) : String :=
     | some value => s!"some {value}"
   s!"\{ frontend := {leanString source.frontend}, file := {file}, line := {line} }"
 
-private def renderTupleDefinition (index : Nat) (tuple : TupleExpr) : Except String String := do
+def renderTupleDefinition (index : Nat) (tuple : TupleExpr) : Except String String := do
   let objectName ← groundName tuple.object
   let base ← match tuple.subject with
     | .direct subject =>

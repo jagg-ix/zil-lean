@@ -68,7 +68,7 @@ structure Profile where
 
 namespace Profile
 
-private def variableKind? (variables : Array VariableKind) (name : Name) : Option NodeKind :=
+def variableKind? (variables : Array VariableKind) (name : Name) : Option NodeKind :=
   (variables.find? fun entry => entry.variable == name).map (·.kind)
 
 /-- Resolve the semantic kind of a relation term. -/

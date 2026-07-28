@@ -115,14 +115,14 @@ structure TupleProgram where
 
 namespace TupleProgram
 
-private def rulesSemanticallyEqual (left right : Rule) : Bool :=
+def rulesSemanticallyEqual (left right : Rule) : Bool :=
   left.variables == right.variables &&
   left.premises.size == right.premises.size &&
   ((left.premises.zip right.premises).all fun pair =>
     pair.1.semanticallyEqual pair.2) &&
   left.conclusion.semanticallyEqual right.conclusion
 
-private def appendRuleIfMissing (rules : Array Rule) (candidate : Rule) : Array Rule :=
+def appendRuleIfMissing (rules : Array Rule) (candidate : Rule) : Array Rule :=
   if rules.any (fun rule => rulesSemanticallyEqual rule candidate) then rules
   else rules.push candidate
 

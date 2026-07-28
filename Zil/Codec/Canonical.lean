@@ -9,20 +9,20 @@ open Lean (Name)
 
 namespace Zil.Codec
 
-private def nameFromString (value : String) : Name :=
+def canonicalNameFromString (value : String) : Name :=
   value.splitOn "." |>.foldl (init := Name.anonymous) fun acc part =>
     if acc == Name.anonymous then Name.mkSimple part else Name.str acc part
 
-private def encodeName (name : Name) : String := toString name
+def encodeName (name : Name) : String := toString name
 
-private def encodeTerm : Zil.Term → String
+def encodeTerm : Zil.Term → String
   | .var name => s!"var:{encodeName name}"
   | .node node => s!"node:{encodeName node.name}"
 
-private def decodeTerm (text : String) : Except String Zil.Term :=
+def decodeTerm (text : String) : Except String Zil.Term :=
   match text.splitOn ":" with
-  | ["var", name] => .ok (.variable (nameFromString name))
-  | ["node", name] => .ok (.ground (nameFromString name))
+  | ["var", name] => .ok (.variable (canonicalNameFromString name))
+  | ["node", name] => .ok (.ground (canonicalNameFromString name))
   | _ => .error s!"invalid canonical term: {text}"
 
 /-- Stable tab-separated encoding for one canonical relation. -/
@@ -35,27 +35,27 @@ def encodeRelation (relation : Zil.RelExpr) : String :=
 def decodeRelation (text : String) : Except String Zil.RelExpr := do
   match text.splitOn "\t" with
   | ["rel", subject, relation, object] =>
-      pure <| .mk' (← decodeTerm subject) (nameFromString relation) (← decodeTerm object)
+      pure <| .mk' (← decodeTerm subject) (canonicalNameFromString relation) (← decodeTerm object)
   | ["rel", subject, relation, object, attrs] =>
       pure <| .mkWithAttrs
         (← decodeTerm subject)
-        (nameFromString relation)
+        (canonicalNameFromString relation)
         (← decodeTerm object)
         (← decodeAttributes attrs)
   | _ => throw s!"invalid canonical relation: {text}"
 
-private def encodeNames (names : Array Name) : String :=
+def encodeNames (names : Array Name) : String :=
   String.intercalate "," (names.map encodeName).toList
 
-private def decodeNames (text : String) : Array Name :=
-  if text.isEmpty then #[] else (text.splitOn ",").toArray.map nameFromString
+def decodeNames (text : String) : Array Name :=
+  if text.isEmpty then #[] else (text.splitOn ",").toArray.map canonicalNameFromString
 
-private def trustName : Zil.TrustClass → String
+def trustName : Zil.TrustClass → String
   | .asserted => "asserted"
   | .graphDerived => "graphDerived"
   | .certified => "certified"
 
-private def decodeTrust : String → Except String Zil.TrustClass
+def decodeTrust : String → Except String Zil.TrustClass
   | "asserted" => .ok .asserted
   | "graphDerived" => .ok .graphDerived
   | "certified" => .ok .certified
@@ -79,7 +79,7 @@ def decodeRule (text : String) : Except String Zil.Rule := do
   let (ruleName, variables, trust) ←
     match header.splitOn "\t" with
     | ["rule", name, variables, trust] =>
-        pure (nameFromString name, decodeNames variables, ← decodeTrust trust)
+        pure (canonicalNameFromString name, decodeNames variables, ← decodeTrust trust)
     | _ => throw "invalid canonical rule header"
   let mut premises : Array Zil.RelExpr := #[]
   let mut negativePremises : Array Zil.RelExpr := #[]
@@ -105,7 +105,7 @@ def relationRoundTrips (relation : Zil.RelExpr) : Bool :=
   | .ok decoded => relation.semanticallyEqual decoded
   | .error _ => false
 
-private def relationArraysEqual (left right : Array Zil.RelExpr) : Bool :=
+def relationArraysEqual (left right : Array Zil.RelExpr) : Bool :=
   left.size == right.size &&
   ((left.zip right).all fun pair => pair.1.semanticallyEqual pair.2)
 

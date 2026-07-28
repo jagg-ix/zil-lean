@@ -1,5 +1,10 @@
-import Zil.Core.Program
-import Zil.Engine.Query
+module
+
+public import Zil.Core.Program
+public import Zil.Engine.Query
+
+@[expose] public section
+
 
 open Lean (Name)
 
@@ -82,10 +87,10 @@ structure CiReport where
   ok : Bool
   deriving Repr, Inhabited
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def sortedNames (names : Array Name) : Array Name :=
+def sortedNames (names : Array Name) : Array Name :=
   let rec insert (value : Name) : List Name → List Name
     | [] => [value]
     | head :: tail =>
@@ -95,24 +100,24 @@ private def sortedNames (names : Array Name) : Array Name :=
         | .gt => head :: insert value tail
   (names.foldl (init := []) fun out value => insert value out).toArray
 
-private def stripPrefix (pre value : String) : String :=
+def stripPrefix (pre value : String) : String :=
   if value.startsWith (pre ++ ".") then (value.drop (pre.length + 1)).toString
   else if value.startsWith (pre ++ ":") then (value.drop (pre.length + 1)).toString
   else value
 
-private def nameFromString (value : String) : Name :=
+def nameFromString (value : String) : Name :=
   value.splitOn "." |>.foldl (init := Name.anonymous) fun current segment =>
     if current == Name.anonymous then Name.mkSimple segment else Name.str current segment
 
-private def canonicalRef (pre : String) (value : String) : Name :=
+def canonicalRef (pre : String) (value : String) : Name :=
   nameFromString (stripPrefix pre value)
 
-private def declarationTokens (declaration : Zil.Declaration) (key : Name) : Array String :=
+def declarationTokens (declaration : Zil.Declaration) (key : Name) : Array String :=
   match declaration.attr? key with
   | none => #[]
   | some attr => attr.value.members.filterMap Zil.DeclValue.token?
 
-private def queryPackOf (declaration : Zil.Declaration) : Option QueryPack :=
+def queryPackOf (declaration : Zil.Declaration) : Option QueryPack :=
   if declaration.kind != .queryPack then none
   else
     let queries := declarationTokens declaration `queries |>.map (canonicalRef "query")
@@ -123,7 +128,7 @@ private def queryPackOf (declaration : Zil.Declaration) : Option QueryPack :=
       mustReturn := mustReturn.foldl (init := #[]) pushName
     }
 
-private def profileOf (declaration : Zil.Declaration) : Except String (Option DslProfile) := do
+def profileOf (declaration : Zil.Declaration) : Except String (Option DslProfile) := do
   if declaration.kind != .dslProfile then return none
   let queryPacks := declarationTokens declaration `query_pack |>.map (canonicalRef "query_pack")
   let hint ← match declarationTokens declaration `planner_hint with
@@ -158,14 +163,14 @@ def plannerHint (program : Zil.Program) : Except String PlannerHint := do
   let hints := profiles.filterMap (·.plannerHint)
   pure <| hints[0]?.getD .highSelectivityFirst
 
-private def relationCardinality (facts : Array Zil.RelExpr) (relation : Name) : Nat :=
+def relationCardinality (facts : Array Zil.RelExpr) (relation : Name) : Nat :=
   (facts.filter fun fact => fact.relation == relation).size
 
-private def relationCardinalities (facts : Array Zil.RelExpr) : Array (Name × Nat) :=
+def relationCardinalities (facts : Array Zil.RelExpr) : Array (Name × Nat) :=
   let names := facts.foldl (init := #[]) fun out fact => pushName out fact.relation
   sortedNames names |>.map fun relation => (relation, relationCardinality facts relation)
 
-private def constantCount (relation : Zil.RelExpr) : Nat :=
+def constantCount (relation : Zil.RelExpr) : Nat :=
   let endpoints :=
     (match relation.subject with | .node _ => 1 | .var _ => 0) +
     (match relation.object with | .node _ => 1 | .var _ => 0)
@@ -174,10 +179,10 @@ private def constantCount (relation : Zil.RelExpr) : Nat :=
     | .term (.var _) => count
     | _ => count + 1
 
-private def boundCount (bound : Array Name) (relation : Zil.RelExpr) : Nat :=
+def boundCount (bound : Array Name) (relation : Zil.RelExpr) : Nat :=
   (relation.variables.filter bound.contains).size
 
-private def better
+def better
     (hint : PlannerHint)
     (facts : Array Zil.RelExpr)
     (bound : Array Name)
@@ -205,7 +210,7 @@ private def better
       (leftCardinality == rightCardinality && leftBound == rightBound &&
         leftConstants == rightConstants && left.1 < right.1)
 
-private def chooseBest
+def chooseBest
     (hint : PlannerHint)
     (facts : Array Zil.RelExpr)
     (bound : Array Name) : List (Nat × Zil.RelExpr) → Option (Nat × Zil.RelExpr)
@@ -214,15 +219,15 @@ private def chooseBest
       some <| tail.foldl (init := head) fun best candidate =>
         if better hint facts bound candidate best then candidate else best
 
-private def removeIndexed
+def removeIndexed
     (index : Nat) : List (Nat × Zil.RelExpr) → List (Nat × Zil.RelExpr)
   | [] => []
   | head :: tail => if head.1 == index then tail else head :: removeIndexed index tail
 
-private def addVariables (bound : Array Name) (relation : Zil.RelExpr) : Array Name :=
+def addVariables (bound : Array Name) (relation : Zil.RelExpr) : Array Name :=
   relation.variables.foldl (init := bound) pushName
 
-private partial def planPositive
+partial def planPositive
     (hint : PlannerHint)
     (facts : Array Zil.RelExpr)
     (remaining : List (Nat × Zil.RelExpr))
@@ -270,13 +275,13 @@ def planProgram (program : Zil.Program) : Except String PlanReport := do
     queries := program.queries.map (planQuery facts hint)
   }
 
-private def findPack? (packs : Array QueryPack) (name : Name) : Option QueryPack :=
+def findPack? (packs : Array QueryPack) (name : Name) : Option QueryPack :=
   packs.find? fun pack => pack.name == name
 
-private def findQuery? (queries : Array Zil.Query) (name : Name) : Option Zil.Query :=
+def findQuery? (queries : Array Zil.Query) (name : Name) : Option Zil.Query :=
   queries.find? fun query => query.name == name
 
-private def selectedProfiles
+def selectedProfiles
     (profiles : Array DslProfile)
     (requested : Option Name) : Except String (Array DslProfile) :=
   match requested with
@@ -287,7 +292,7 @@ private def selectedProfiles
         throw s!"requested DSL profile {name} was not found"
       else pure selected
 
-private def unionNames (groups : Array (Array Name)) : Array Name :=
+def unionNames (groups : Array (Array Name)) : Array Name :=
   groups.foldl (init := #[]) fun out group => group.foldl (init := out) pushName
 
 /-- Run DSL profile and query-pack governance over the native engine. -/
@@ -335,10 +340,10 @@ def checkProgram
     ok
   }
 
-private def relationList (relations : Array Zil.RelExpr) : String :=
+def relationList (relations : Array Zil.RelExpr) : String :=
   String.intercalate "," (relations.toList.map fun relation => relation.relation.toString)
 
-private def namesText (names : Array Name) : String :=
+def namesText (names : Array Name) : String :=
   String.intercalate "," (names.toList.map Name.toString)
 
 /-- Stable tab-separated adaptive planner report. -/

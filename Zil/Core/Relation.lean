@@ -24,7 +24,7 @@ structure RelExpr where
 
 namespace RelExpr
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
 /-- Semantic equality ignores source locations and treats attributes as a finite map. -/

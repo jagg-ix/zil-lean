@@ -8,11 +8,11 @@ open Lean (Name)
 
 namespace Zil.Codec
 
-private def nameFromString (value : String) : Name :=
+def nameFromString (value : String) : Name :=
   value.splitOn "." |>.foldl (init := Name.anonymous) fun acc part =>
     if acc == Name.anonymous then Name.mkSimple part else Name.str acc part
 
-private def escape (value : String) : String :=
+def escape (value : String) : String :=
   value.replace "%" "%25"
     |>.replace ";" "%3B"
     |>.replace "=" "%3D"
@@ -20,7 +20,7 @@ private def escape (value : String) : String :=
     |>.replace "\t" "%09"
     |>.replace "\n" "%0A"
 
-private def unescape (value : String) : String :=
+def unescape (value : String) : String :=
   value.replace "%0A" "\n"
     |>.replace "%09" "\t"
     |>.replace "%3A" ":"

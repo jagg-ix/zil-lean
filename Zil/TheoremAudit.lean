@@ -1,4 +1,9 @@
-import Zil.Core.Program
+module
+
+public import Zil.Core.Program
+
+@[expose] public section
+
 
 open Lean (Name)
 
@@ -92,14 +97,14 @@ structure Report where
   ok : Bool
   deriving Repr, Inhabited
 
-private def nodeName? : Zil.Term → Option Name
+def nodeName? : Zil.Term → Option Name
   | .node node => some node.name
   | .var _ => none
 
-private def pushName (names : Array Name) (name : Name) : Array Name :=
+def pushName (names : Array Name) (name : Name) : Array Name :=
   if names.contains name then names else names.push name
 
-private def insertName (value : Name) : List Name → List Name
+def insertName (value : Name) : List Name → List Name
   | [] => [value]
   | head :: tail =>
       match compare value.toString head.toString with
@@ -107,13 +112,13 @@ private def insertName (value : Name) : List Name → List Name
       | .eq => head :: tail
       | .gt => head :: insertName value tail
 
-private def sortedNames (names : Array Name) : Array Name :=
+def sortedNames (names : Array Name) : Array Name :=
   (names.foldl (init := []) fun out name => insertName name out).toArray
 
-private def factsFor (program : Zil.Program) (subject : Name) : Array Zil.RelExpr :=
+def factsFor (program : Zil.Program) (subject : Name) : Array Zil.RelExpr :=
   program.facts.filter fun fact => fact.subject == .ground subject
 
-private def objectsFor
+def objectsFor
     (program : Zil.Program)
     (subject relation : Name) : Array Name :=
   sortedNames <| (factsFor program subject).foldl (init := #[]) fun out fact =>
@@ -123,7 +128,7 @@ private def objectsFor
       | none => out
     else out
 
-private def hasFact
+def hasFact
     (program : Zil.Program)
     (subject relation object : Name) : Bool :=
   program.facts.any fun fact =>
@@ -131,7 +136,7 @@ private def hasFact
     fact.relation == relation &&
     fact.object == .ground object
 
-private def subjectsOfKind (program : Zil.Program) (kind : Name) : Array Name :=
+def subjectsOfKind (program : Zil.Program) (kind : Name) : Array Name :=
   sortedNames <| program.facts.foldl (init := #[]) fun out fact =>
     if fact.relation == `zil.kind && fact.object == .ground kind then
       match nodeName? fact.subject with
@@ -139,23 +144,23 @@ private def subjectsOfKind (program : Zil.Program) (kind : Name) : Array Name :=
       | none => out
     else out
 
-private def declaredKind? (program : Zil.Program) (node kind : Name) : Bool :=
+def declaredKind? (program : Zil.Program) (node kind : Name) : Bool :=
   hasFact program node `zil.kind kind
 
-private def hasAnyKind (program : Zil.Program) (node : Name) : Bool :=
+def hasAnyKind (program : Zil.Program) (node : Name) : Bool :=
   (factsFor program node).any fun fact => fact.relation == `zil.kind
 
-private def trueFact (program : Zil.Program) (subject relation : Name) : Bool :=
+def trueFact (program : Zil.Program) (subject relation : Name) : Bool :=
   hasFact program subject relation `value.true
 
-private def theoremCriticality
+def theoremCriticality
     (program : Zil.Program)
     (thm : Name) : Criticality :=
   let values := (factsFor program thm).filterMap fun fact =>
     if fact.relation == `zil.criticality then Criticality.ofTerm? fact.object else none
   values[0]?.getD .low
 
-private def proofEvidence (program : Zil.Program) (thm : Name) : Array Name :=
+def proofEvidence (program : Zil.Program) (thm : Name) : Array Name :=
   let relations : Array Name := #[`zil.proofToken, `zil.validatedBy, `zil.proves]
   sortedNames <| (factsFor program thm).foldl (init := #[]) fun out fact =>
     if relations.contains fact.relation then
@@ -164,13 +169,13 @@ private def proofEvidence (program : Zil.Program) (thm : Name) : Array Name :=
       | none => out
     else out
 
-private def missingDeclared
+def missingDeclared
     (program : Zil.Program)
     (nodes : Array Name)
     (kind : Name) : Array Name :=
   nodes.filter fun node => !declaredKind? program node kind
 
-private def theoremContract
+def theoremContract
     (program : Zil.Program)
     (thm : Name) : TheoremContract := Id.run do
   let assumptions := objectsFor program thm `zil.requiresAssumption
@@ -208,7 +213,7 @@ private def theoremContract
     ok := issues.isEmpty
   }
 
-private def evidenceClass (program : Zil.Program) (node : Name) : EvidenceClass :=
+def evidenceClass (program : Zil.Program) (node : Name) : EvidenceClass :=
   if declaredKind? program node `entity.theorem ||
      declaredKind? program node `entity.proof then .kernel
   else if declaredKind? program node `entity.experiment ||
@@ -221,7 +226,7 @@ private def evidenceClass (program : Zil.Program) (node : Name) : EvidenceClass 
   else if hasAnyKind program node then .graph
   else .unknown
 
-private def claimAudit (program : Zil.Program) (claim : Name) : ClaimAudit := Id.run do
+def claimAudit (program : Zil.Program) (claim : Name) : ClaimAudit := Id.run do
   let supportNodes := objectsFor program claim `zil.supportedBy
   let supports := supportNodes.map fun node => {
     node
@@ -265,14 +270,14 @@ def audit (program : Zil.Program) : Except String Report := do
     ok := theoremFailures == 0 && claimFailures == 0
   }
 
-private def namesText (names : Array Name) : String :=
+def namesText (names : Array Name) : String :=
   String.intercalate "," (names.toList.map Name.toString)
 
-private def evidenceText (evidence : Array EvidenceRef) : String :=
+def evidenceText (evidence : Array EvidenceRef) : String :=
   String.intercalate "," (evidence.toList.map fun item =>
     item.node.toString ++ ":" ++ item.evidenceClass.token)
 
-private def stringsText (values : Array String) : String :=
+def stringsText (values : Array String) : String :=
   String.intercalate "," values.toList
 
 /-- Stable theorem-contract and external-claim audit report. -/
