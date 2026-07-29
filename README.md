@@ -516,7 +516,7 @@ Zil.Codec.encodeRule
 Zil.Codec.decodeRule
 ```
 
-`ZILX/1` stores revisioned snapshots. `ZILD/1` stores incremental updates with base and target revisions, fact changes, rule changes, and schema changes.
+`ZILX/1` stores revisioned snapshots. `ZILD/1` stores incremental updates with base and target revisions, fact changes, rule changes, and schema changes
 
 Facts and rules can be exported to Soufflé Datalog or Prolog:
 
@@ -525,7 +525,7 @@ Facts and rules can be exported to Soufflé Datalog or Prolog:
 #zil_export_prolog
 ```
 
-These interfaces let external analysis tools and assistants consume the same relational state used by the Lean implementation.
+These interfaces let external analysis tools and assistants use the same relational state by the Lean implementation.
 
 ## Use cases
 
@@ -576,4 +576,4 @@ lake exe zilLeanTests
 clojure -M:test
 ```
 
-The Lean toolchain is pinned to `leanprover/lean4:v4.31.0`.
+The Lean toolchain uses `leanprover/lean4:v4.31.0`.
