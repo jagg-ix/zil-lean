@@ -22,6 +22,7 @@ import Zil.Test.TheoremAudit
 import Zil.Test.RecoveryAudit
 import Zil.Test.Exchange
 import Zil.Test.Horn
+import Zil.Test.HornGrounding
 
 /-- Executable validation target for native safety and hybrid exchange contracts. -/
 def main : IO Unit := do

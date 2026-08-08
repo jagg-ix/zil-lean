@@ -20,6 +20,7 @@ public import Zil.Datalog.Index
 public import Zil.Datalog.Interop
 public import Zil.Datalog.Compat
 public import Zil.Horn
+public meta import Zil.Datalog.HornGrounding
 
 /-!
 # ZIL public root

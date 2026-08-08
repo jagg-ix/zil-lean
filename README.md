@@ -202,6 +202,26 @@ silently emulated.
 The versioned operational and proof contract is in
 [`spec/horn-resolution-v0.1.md`](spec/horn-resolution-v0.1.md).
 
+### Certified grounding of a formalization contract
+
+`#zil_formalization_lint` reports a coverage *percentage* over a contract's
+executable requirements. `#zil_horn_grounding` uses the Horn engine to answer a
+sharper, structural question: does the contract's `requires_objects` /
+`witnessed_by` closure actually *bottom out* in the environment? It reads the
+live `zil_file_contract`, emits a `provided(o)` fact only for each `lean:`
+requirement that resolves and a `witnessed(w)` fact only for each witness that
+exists, and asks the SLD engine to derive `grounded(contract)` — accepting the
+answer only after independent proof-tree replay. A dangling requirement or a
+mistyped witness leaves a body atom unprovable, so the check fails and names the
+unmet obligation.
+
+```lean
+import Zil
+
+#zil_horn_grounding my.contract   -- one contract
+#zil_horn_grounding_all           -- every contract declared in this module
+```
+
 ## A project example
 
 Consider a project containing a parser, a normalization pass, and a theorem about normalized output:
