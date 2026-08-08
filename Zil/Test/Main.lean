@@ -21,6 +21,7 @@ import Zil.Test.ProofObligation
 import Zil.Test.TheoremAudit
 import Zil.Test.RecoveryAudit
 import Zil.Test.Exchange
+import Zil.Test.Horn
 
 /-- Executable validation target for native safety and hybrid exchange contracts. -/
 def main : IO Unit := do

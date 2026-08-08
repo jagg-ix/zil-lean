@@ -19,6 +19,7 @@ public import Zil.Datalog.Revision
 public import Zil.Datalog.Index
 public import Zil.Datalog.Interop
 public import Zil.Datalog.Compat
+public import Zil.Horn
 
 /-!
 # ZIL public root

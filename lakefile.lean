@@ -31,6 +31,10 @@ lean_exe zilTokenLifecycle where
 lean_exe zilRecoveryAudit where
   root := `Zil.CLI.RecoveryAuditMain
 
+/-- HORC-compatible first-order Horn-clause interpreter. -/
+lean_exe zilHorc where
+  root := `Zil.CLI.HornMain
+
 lean_exe zilAgentContext where
   root := `Zil.CLI.AgentContextMain
 

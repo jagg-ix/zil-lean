@@ -157,9 +157,30 @@ Covers:
 
 - `lake build`;
 - `zilLeanTests`;
+- first-order Horn parsing, occurs-check unification, recursive SLD resolution,
+  backtracking, cutoff reporting, iterative deepening, proof-tree replay,
+  tamper rejection, declarative/certificate completeness, `horn_solve`, and
+  `horn_certify`;
 - `.zc` to Lean generation;
 - elaboration of generated Lean;
 - native authorization and impact.
+
+Run compatibility smoke tests against a HORC checkout with:
+
+```bash
+lake exe zilHorc "$HORC_ROOT/src/horn/list.hn" \
+  'member(X, cons(nil,1))' 16
+lake exe zilHorc "$HORC_ROOT/src/horn/map.hn" \
+  'maps_to(cons(cons(nil,a,0),b,1), K, V)' 32
+lake exe zilHorc "$HORC_ROOT/src/horn/tm.hn" \
+  'natural(successor_natural(zero_natural))' 8
+lake exe zilHorc "$HORC_ROOT/src/horn/horn.hn" \
+  'variable(form_variable(empty_word))' 8
+```
+
+These commands exercise the original model syntax without modifying the HORC
+sources. A successful answer exits with status 0; finite failure or a runtime
+error exits with status 1; invalid command usage exits with status 2.
 
 ### Clojure
 

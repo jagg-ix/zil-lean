@@ -144,6 +144,64 @@ doc.readme ── viewer ──▶ user.u11
 
 The same rule structure can derive project relationships, such as requirement coverage and change impact.
 
+### First-order Horn clauses and HORC compatibility
+
+`Zil.Horn` is the opt-in logic-programming layer for programs that need more
+than finite Datalog terms. It adds:
+
+- nested constructor terms and function symbols;
+- variables with first-order unification and an occurs check;
+- ordered definite clauses and recursive predicates;
+- leftmost, depth-first SLD resolution with clause-order backtracking;
+- explicit depth bounds, cutoff reporting, and bounded iterative deepening;
+- auditable traces, independently replayed proof trees, and a soundness theorem
+  connecting certified answers to the proof-facing `Entails` relation;
+- a completeness theorem showing every finite `Entails` proof has a valid,
+  executably replayable proof-tree certificate;
+- a parser for the pure Prolog notation used by HORC `.hn` models.
+
+The existing `Zil.Datalog` layer remains the default for finite bottom-up
+workloads. Import `Zil.Horn` when constructor trees or top-down proof search are
+required:
+
+```lean
+import Zil.Horn
+
+open Zil.Horn
+
+def program : Program :=
+  match Parser.parseText "natural(zero). natural(successor(N)) :- natural(N)." with
+  | .ok value => value
+  | .error _ => []
+
+def query : List Atom :=
+  match Parser.parseGoalsText "natural(successor(zero))" with
+  | .ok value => value
+  | .error _ => []
+
+example : HasCertifiedSolution program query 4 := by
+  horn_certify
+```
+
+Run a HORC model directly from the command line:
+
+```bash
+lake exe zilHorc "$HORC_ROOT/src/horn/list.hn" \
+  'member(X, cons(nil,1))' 16
+
+lake exe zilHorc "$HORC_ROOT/src/horn/map.hn" \
+  'maps_to(cons(cons(nil,a,0),b,1), K, V)' 32
+```
+
+Set `HORC_ROOT` to a HORC checkout. The command returns all answers reachable
+within the supplied clause-application bound and says whether any branch was
+cut off. The accepted language is deliberately pure definite Horn logic; Prolog
+built-ins, cut, negation, arithmetic operators, and bracket-list syntax are not
+silently emulated.
+
+The versioned operational and proof contract is in
+[`spec/horn-resolution-v0.1.md`](spec/horn-resolution-v0.1.md).
+
 ## A project example
 
 Consider a project containing a parser, a normalization pass, and a theorem about normalized output:
@@ -558,6 +616,7 @@ The standard exchange layer connects that runtime with the native Lean represent
 ```text
 Zil/                 native Lean library
 Zil/Engine/          Horn-rule evaluation and relationship explanations
+Zil/Horn/            first-order terms, unification, SLD resolution, and parsing
 Zil/Trust/           proof-backed rules
 Zil/Exchange/        snapshots and deltas
 examples/lean/       progressive native examples

@@ -42,3 +42,4 @@ import Zil.TheoremAudit
 import Zil.RecoveryAudit
 import Zil.Exchange.Protocol
 import Zil.Exchange.Dispatch
+import Zil.Horn
