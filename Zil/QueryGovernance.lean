@@ -318,7 +318,10 @@ def checkProgram
   let activeQueries := requestedQueries.filterMap (findQuery? program.queries)
   let required := unionNames (selectedPackRows.map (·.mustReturn))
   let closed ← Zil.Engine.closureChecked program.facts program.allRules fuel
-  let queryRows := activeQueries.map fun query => (query.name, (Zil.Engine.solve closed query).size)
+  -- One index for every query: solving each against `closed` rebuilt the index of the whole closure per query.
+  let closedIndex := Zil.Engine.FactIndex.build closed
+  let queryRows := activeQueries.map fun query =>
+    (query.name, (Zil.Engine.solveIndexed closedIndex query).size)
   let checks := required.map fun name =>
     let rows := (queryRows.find? fun row => row.1 == name).map (·.2) |>.getD 0
     { query := name, rowCount := rows, ok := rows > 0 }

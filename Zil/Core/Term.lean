@@ -14,13 +14,13 @@ namespace Zil
 /-- A stable knowledge node identifier. -/
 structure Node where
   name : Name
-  deriving Repr, BEq, Inhabited
+  deriving Repr, BEq, Hashable, Inhabited
 
 /-- A term in a canonical ZIL relation expression. -/
 inductive Term where
   | var : Name → Term
   | node : Node → Term
-  deriving Repr, BEq, Inhabited
+  deriving Repr, BEq, Hashable, Inhabited
 
 namespace Term
 

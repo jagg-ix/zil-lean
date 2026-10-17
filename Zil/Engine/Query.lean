@@ -1,5 +1,6 @@
 module
 
+import Std.Data.HashMap
 public import Zil.Environment.Knowledge
 public import Zil.Core.Query
 
@@ -52,6 +53,63 @@ def unifyRelation (pattern fact : Zil.RelExpr) (binding : Binding) : Option Bind
         | none => none
         | some endpoints => unifyAttributes pattern.attrs fact.attrs endpoints
 
+/-- Relation and endpoint indexes preserve source order within every fact bucket. -/
+structure FactIndex where
+  byRelation : Std.HashMap Name (Array Zil.RelExpr) := {}
+  bySubject : Std.HashMap (Name × Zil.Term) (Array Zil.RelExpr) := {}
+  byObject : Std.HashMap (Name × Zil.Term) (Array Zil.RelExpr) := {}
+  deriving Inhabited
+
+namespace FactIndex
+
+/-- Grow a bucket in place. Reading the bucket out and inserting a longer copy kept the old array shared with
+    the map, so every insert copied the whole bucket: building the index of a large relation was quadratic. -/
+def appendBucket {key : Type} [BEq key] [Hashable key]
+    (index : Std.HashMap key (Array Zil.RelExpr))
+    (value : key) (fact : Zil.RelExpr) : Std.HashMap key (Array Zil.RelExpr) :=
+  if index.contains value then index.modify value (·.push fact) else index.insert value #[fact]
+
+/-- Add one fact to its relation, subject and object indexes. -/
+def insert (index : FactIndex) (fact : Zil.RelExpr) : FactIndex :=
+  { byRelation := appendBucket index.byRelation fact.relation fact
+    bySubject := appendBucket index.bySubject (fact.relation, fact.subject) fact
+    byObject := appendBucket index.byObject (fact.relation, fact.object) fact }
+
+/-- Build indexes once for a stable fact set. -/
+def build (facts : Array Zil.RelExpr) : FactIndex :=
+  facts.foldl insert {}
+
+def relation (index : FactIndex) (name : Name) : Array Zil.RelExpr :=
+  index.byRelation[name]?.getD #[]
+
+def subject (index : FactIndex) (relation : Name) (value : Zil.Term) : Array Zil.RelExpr :=
+  index.bySubject[(relation, value)]?.getD #[]
+
+def object (index : FactIndex) (relation : Name) (value : Zil.Term) : Array Zil.RelExpr :=
+  index.byObject[(relation, value)]?.getD #[]
+
+/-- Semantic equality needs the same relation and subject, so only that bucket is searched: a whole relation's
+    bucket made deduplicating a large derived relation (a transitive closure) quadratic. -/
+def containsSemantic (index : FactIndex) (fact : Zil.RelExpr) : Bool :=
+  (index.subject fact.relation fact.subject).any (·.semanticallyEqual fact)
+
+/-- Narrow candidates by any endpoint already fixed or bound in the current join. -/
+def candidates (index : FactIndex) (pattern : Zil.RelExpr) (binding : Binding) : Array Zil.RelExpr :=
+  let subject := match pattern.subject with
+    | .node node => some (.node node)
+    | .var name => binding.lookup name
+  let object := match pattern.object with
+    | .node node => some (.node node)
+    | .var name => binding.lookup name
+  match subject, object with
+  | some subject, some object =>
+      (index.subject pattern.relation subject).filter (·.object == object)
+  | some subject, none => index.subject pattern.relation subject
+  | none, some object => index.object pattern.relation object
+  | none, none => index.relation pattern.relation
+
+end FactIndex
+
 def instantiateTerm (binding : Binding) : Zil.Term → Option Zil.Term
   | .node node => some (.node node)
   | .var name => binding.lookup name
@@ -70,30 +128,48 @@ def instantiateRelation (binding : Binding) (relation : Zil.RelExpr) : Option Zi
     attrs := attrs.push { entry with value }
   pure { relation with subject, object, attrs }
 
-def extendBindings (facts : Array Zil.RelExpr)
+def extendBindingsIndexed (index : FactIndex)
     (patterns : Array Zil.RelExpr) (seed : Binding := #[]) : Array Binding :=
   patterns.foldl (init := #[seed]) fun bindings pattern =>
     bindings.foldl (init := #[]) fun out binding =>
-      facts.foldl (init := out) fun acc fact =>
+      (index.candidates pattern binding).foldl (init := out) fun acc fact =>
         match unifyRelation pattern fact binding with
         | some next => acc.push next
         | none => acc
+
+def extendBindings (facts : Array Zil.RelExpr)
+    (patterns : Array Zil.RelExpr) (seed : Binding := #[]) : Array Binding :=
+  extendBindingsIndexed (FactIndex.build facts) patterns seed
 
 def hasMatch
     (facts : Array Zil.RelExpr) (pattern : Zil.RelExpr) (binding : Binding) : Bool :=
   facts.any fun fact => (unifyRelation pattern fact binding).isSome
 
+def hasMatchIndexed
+    (index : FactIndex) (pattern : Zil.RelExpr) (binding : Binding) : Bool :=
+  (index.candidates pattern binding).any fun fact =>
+    (unifyRelation pattern fact binding).isSome
+
 def negativesHold
     (facts : Array Zil.RelExpr) (patterns : Array Zil.RelExpr) (binding : Binding) : Bool :=
   patterns.all fun pattern => !hasMatch facts pattern binding
 
+def negativesHoldIndexed
+    (index : FactIndex) (patterns : Array Zil.RelExpr) (binding : Binding) : Bool :=
+  patterns.all fun pattern => !hasMatchIndexed index pattern binding
+
+def deriveRuleIndexed
+    (positiveFacts negativeFacts : FactIndex)
+    (rule : Zil.Rule) : Array Zil.RelExpr :=
+  (extendBindingsIndexed positiveFacts rule.premises).filterMap fun binding =>
+    if negativesHoldIndexed negativeFacts rule.negativePremises binding then
+      instantiateRelation binding rule.conclusion
+    else none
+
 def deriveRule
     (positiveFacts negativeFacts : Array Zil.RelExpr)
     (rule : Zil.Rule) : Array Zil.RelExpr :=
-  (extendBindings positiveFacts rule.premises).filterMap fun binding =>
-    if negativesHold negativeFacts rule.negativePremises binding then
-      instantiateRelation binding rule.conclusion
-    else none
+  deriveRuleIndexed (FactIndex.build positiveFacts) (FactIndex.build negativeFacts) rule
 
 def pushSemantic (facts : Array Zil.RelExpr) (fact : Zil.RelExpr) : Array Zil.RelExpr :=
   if facts.any (·.semanticallyEqual fact) then facts else facts.push fact
@@ -176,13 +252,17 @@ def closeOneStratum
     (baseFacts : Array Zil.RelExpr)
     (rules : Array Zil.Rule)
     (fuel : Nat) : Array Zil.RelExpr :=
-  let rec loop (facts : Array Zil.RelExpr) : Nat → Array Zil.RelExpr
+  let negativeIndex := FactIndex.build baseFacts
+  let rec loop (facts : Array Zil.RelExpr) (index : FactIndex) : Nat → Array Zil.RelExpr
     | 0 => facts
     | remaining + 1 =>
-        let next := rules.foldl (init := facts) fun current rule =>
-          (deriveRule current baseFacts rule).foldl (init := current) pushSemantic
-        if next.size == facts.size then facts else loop next remaining
-  loop baseFacts fuel
+        let (next, nextIndex) := rules.foldl (init := (facts, index)) fun (current, currentIndex) rule =>
+          (deriveRuleIndexed currentIndex negativeIndex rule).foldl
+            (init := (current, currentIndex)) fun (stateFacts, stateIndex) fact =>
+              if stateIndex.containsSemantic fact then (stateFacts, stateIndex)
+              else (stateFacts.push fact, stateIndex.insert fact)
+        if next.size == facts.size then facts else loop next nextIndex remaining
+  loop baseFacts (FactIndex.build baseFacts) fuel
 
 def maxStratum (strata : Strata) : Nat :=
   strata.foldl (init := 0) fun current entry => Nat.max current entry.2
@@ -216,11 +296,14 @@ def closureOfEnvironment (env : Lean.Environment) (fuel : Nat := 64) : Array Zil
   closure (Zil.Environment.facts env) (Zil.Environment.rules env) fuel
 
 /-- Solve a safe conjunctive query with absence checks over a closed fact set. -/
-def solve (facts : Array Zil.RelExpr) (query : Zil.Query) : Array Binding :=
+def solveIndexed (index : FactIndex) (query : Zil.Query) : Array Binding :=
   if !query.selectedVariablesBound || !query.safe then #[]
   else
-    (extendBindings facts query.premises).filter fun binding =>
-      negativesHold facts query.negativePremises binding
+    (extendBindingsIndexed index query.premises).filter fun binding =>
+      negativesHoldIndexed index query.negativePremises binding
+
+def solve (facts : Array Zil.RelExpr) (query : Zil.Query) : Array Binding :=
+  solveIndexed (FactIndex.build facts) query
 
 /-- Solve a query using the bounded closure of one Lean environment. -/
 def solveEnvironment (env : Lean.Environment) (query : Zil.Query)
