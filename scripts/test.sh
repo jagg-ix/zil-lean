@@ -198,6 +198,8 @@ run_lean_suite() {
     doc:readme viewer user:11
   run_step native-impact 'evaluate native impact graph' 0 \
     bin/zil impact examples/impact/project.zc lean:Parser.parse
+  run_step readme-quick-start 'the README quick start prints the output it shows' 0 \
+    python3 -I tools/check_readme_examples.py
   run_step macro-matrix 'expand, compile and typecheck every macro library of lib/ against its golden' 0 \
     tools/macro_extension_matrix.sh --skip-build
   run_step corpus 'every source compiles or fails as recorded' 0 \

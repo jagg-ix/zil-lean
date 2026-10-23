@@ -257,6 +257,17 @@ run_native_group() {
     "$workdir/FormalizationClaims.lean" Zil.Generated.FormalizationClaims
   run_step claims-elaborate 'elaborate the compiled claims module' 0 \
     lake env lean "$workdir/FormalizationClaims.lean"
+  run_step impact-query-ci 'query CI over the project-impact model' 0 \
+    bin/zil query-ci examples/native-cli/project-impact.zc
+  run_step impact-explain 'explain the affected-by-parser-change query' 0 \
+    bin/zil explain-query examples/native-cli/project-impact.zc affected_by_parser_change
+  run_step impact-change 'change impact of the parser' 0 \
+    bin/zil impact examples/native-cli/project-impact.zc lean:Parser.parse
+  run_step impact-compile 'compile the project-impact model to Lean' 0 \
+    bin/zil compile examples/native-cli/project-impact.zc \
+    "$workdir/ProjectImpact.lean" Zil.Generated.ProjectImpact
+  run_step impact-elaborate 'elaborate the compiled project-impact module' 0 \
+    lake env lean "$workdir/ProjectImpact.lean"
   run_step revision-summary 'summarize the revision log' 0 \
     bin/zil revision-summary examples/revision/release.zilr
   run_step revision-snapshot 'replay the revision log to revision 2' 0 \

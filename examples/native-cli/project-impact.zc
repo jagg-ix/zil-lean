@@ -1,0 +1,27 @@
+MODULE quickstart.project.impact.
+
+// Facts: which declaration implements a requirement, depends on another, or validates another.
+lean:Parser.parse#implements@requirement:parseInput.
+lean:Normalize.normalize#depends_on@lean:Parser.parse.
+lean:Codegen.emit#depends_on@lean:Normalize.normalize.
+lean:Normalize.normalized_sound#validates@lean:Normalize.normalize.
+
+// A change to a declaration affects everything that depends on it, directly or transitively.
+RULE direct_impact:
+IF ?dependent#depends_on@?changed
+THEN ?changed#affects@?dependent.
+
+RULE transitive_impact:
+IF ?source#affects@?middle AND ?target#depends_on@?middle
+THEN ?source#affects@?target.
+
+// A declaration is validated when some theorem validates it.
+RULE validated:
+IF ?theorem#validates@?component
+THEN ?component#has_validation@value:true.
+
+QUERY affected_by_parser_change:
+FIND ?x WHERE lean:Parser.parse#affects@?x.
+
+QUERY unvalidated_dependents:
+FIND ?d WHERE ?d#depends_on@?dependency AND NOT ?d#has_validation@value:true.

@@ -36,6 +36,7 @@ examples/macro-extension/lib/20-service-extension.zc	accepted
 examples/macro-extension/model.zc	rejected	line 3:1: unknown macro SERVICE_EXTENSION
 examples/macros/access.zc	accepted	
 examples/native-cli/formalization-claims.zc	accepted	
+examples/native-cli/project-impact.zc	accepted	
 examples/native-host-wasm-screen-automation.zc	accepted	
 examples/needs-provider-macro-compat.zc	rejected	line 3:1: unknown macro NP_CONTEXT
 examples/needs-provider-macro-layer.zc	accepted	

@@ -4,6 +4,10 @@ This is an optional companion to the direct Lean examples in
 [`../lean/README.md`](../lean/README.md). Every command below is exercised by
 `make examples GROUP=native`.
 
+`project-impact.zc` is the model used by the Quick start in the top-level README: a small Lean project with change-impact rules and
+queries. Its commands are exercised by `make examples GROUP=native`, and the README's output is checked by
+`tools/check_readme_examples.py`.
+
 `formalization-claims.zc` is a small formalization-claims graph: a Lean
 declaration formalizes a claim and requires a requirement; a rule derives
 which requirements each claim rests on.

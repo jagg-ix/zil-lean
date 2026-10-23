@@ -16,7 +16,7 @@ lean.Parser.parse ── implements ──▶ requirement.parseInput
 
 ZIL Lean implements this model inside Lean 4. Lean checks definitions, executable programs, theorem statements, and proofs. ZIL records how those checked declarations relate to requirements, documents, tests, tasks, dependencies, and other parts of a project.
 
-The same project map can answer questions such as:
+The same relationship graph can answer questions such as:
 
 ```text
 which declaration implements this requirement?
@@ -27,6 +27,146 @@ which declarations should be reviewed after this change?
 ```
 
 Developers, review tools, CI, documentation tools, and AI assistants can query the same stored relationships.
+
+## Quick start
+
+The prerequisites are `git` and [`elan`](https://github.com/leanprover/elan), which installs the Lean toolchain named in `lean-toolchain`
+(`leanprover/lean4:v4.31.0`). The commands below need nothing else: no Java, Clojure or database.
+
+```bash
+git clone https://github.com/jagg-ix/zil-lean
+cd zil-lean
+lake build        # the library and its tests
+lake build zil    # the command-line tool used below
+```
+
+The first build compiles the whole library and took about a minute on a laptop. While it builds, Lean prints deprecation warnings for
+the library's source code. They do not affect the result.
+
+### A first model
+
+`examples/native-cli/project-impact.zc` describes a small Lean project in the `.zc` syntax. A line such as
+`lean:Normalize.normalize#depends_on@lean:Parser.parse.` is a *fact*: a subject, a relation and an object. A `RULE` derives new facts from
+existing ones, and a `QUERY` selects the variable bindings that satisfy its conditions.
+
+```zc
+// Facts: which declaration implements a requirement, depends on another, or validates another.
+lean:Parser.parse#implements@requirement:parseInput.
+lean:Normalize.normalize#depends_on@lean:Parser.parse.
+lean:Codegen.emit#depends_on@lean:Normalize.normalize.
+lean:Normalize.normalized_sound#validates@lean:Normalize.normalize.
+
+// A change to a declaration affects everything that depends on it, directly or transitively.
+RULE direct_impact:
+IF ?dependent#depends_on@?changed
+THEN ?changed#affects@?dependent.
+
+RULE transitive_impact:
+IF ?source#affects@?middle AND ?target#depends_on@?middle
+THEN ?source#affects@?target.
+
+// A declaration is validated when some theorem validates it.
+RULE validated:
+IF ?theorem#validates@?component
+THEN ?component#has_validation@value:true.
+
+QUERY affected_by_parser_change:
+FIND ?x WHERE lean:Parser.parse#affects@?x.
+
+QUERY unvalidated_dependents:
+FIND ?d WHERE ?d#depends_on@?dependency AND NOT ?d#has_validation@value:true.
+```
+
+`transitive_impact` is recursive, because `affects` is both its conclusion and one of its premises. The engine applies the rules until no
+new facts appear (a fixed point), so the chain from `Parser.parse` through `Normalize.normalize` to `Codegen.emit` is found. The second
+query uses negation (`NOT`), which is stratified: it is evaluated only after the facts that it depends on are complete.
+
+`bin/zil query-ci` evaluates every query in the model and reports how many results each one has:
+
+```bash
+bin/zil query-ci examples/native-cli/project-impact.zc | grep '^query' | tr '\t' ' '
+```
+
+```text
+query affected_by_parser_change 2
+query unvalidated_dependents 1
+```
+
+To see the results themselves, use `explain-query`, whose output also contains the derivation (provenance) of every derived fact. The
+`grep` and `cut` commands keep only the result lines. The first command prints the two declarations affected by a change to the parser, and
+the second prints the one declaration that depends on something but has no validating theorem:
+
+```bash
+bin/zil explain-query examples/native-cli/project-impact.zc affected_by_parser_change | grep -E '^witness[[:space:]]' | cut -f3
+bin/zil explain-query examples/native-cli/project-impact.zc unvalidated_dependents | grep -E '^witness[[:space:]]' | cut -f3
+```
+
+```text
+x=lean.Normalize.normalize
+x=lean.Codegen.emit
+d=lean.Codegen.emit
+```
+
+The derivation lists each derived fact with its number, the rule that produced it, the numbers of the facts the rule used, and the variable
+bindings. For example, fact 6 (`Parser.parse` affects `Codegen.emit`) comes from `transitive_impact`, applied to facts 4 and 2:
+
+```bash
+bin/zil explain-query examples/native-cli/project-impact.zc affected_by_parser_change \
+  | grep -E '^origin[[:space:]]+[0-9]+[[:space:]]+rule' | cut -f2,4,5,7 | tr '\t' ' '
+```
+
+```text
+4 direct_impact 1 dependent=lean.Normalize.normalize,changed=lean.Parser.parse
+5 direct_impact 2 dependent=lean.Codegen.emit,changed=lean.Normalize.normalize
+6 transitive_impact 4,2 source=lean.Parser.parse,middle=lean.Normalize.normalize,target=lean.Codegen.emit
+7 validated 3 theorem=lean.Normalize.normalized_sound,component=lean.Normalize.normalize
+```
+
+The listing covers every derived fact of the model, so it also includes fact 7, which comes from the `validated` rule.
+
+The built-in `impact` command performs a similar analysis without any rules of your own. It follows `depends_on` and `validates` edges, so
+it also reports the theorem that validates `Normalize.normalize`, which needs review when the parser changes:
+
+```bash
+bin/zil impact examples/native-cli/project-impact.zc lean:Parser.parse | grep -E '^impact[[:space:]]' | cut -f2-4 | tr '\t' ' '
+```
+
+```text
+lean.Normalize.normalize 1 direct
+lean.Codegen.emit 2 transitive
+lean.Normalize.normalized_sound 2 transitive
+```
+
+The same model also compiles to a Lean module, which Lean then type-checks. No output means that Lean accepted the file:
+
+```bash
+bin/zil compile examples/native-cli/project-impact.zc /tmp/ProjectImpact.lean Zil.Generated.ProjectImpact
+lake env lean /tmp/ProjectImpact.lean
+```
+
+### Lean examples
+
+The primary learning path is written directly in Lean and needs no `.zc` files. The examples in `examples/lean/` build on each other, so run
+them in order:
+
+```bash
+lake env lean examples/lean/01_FactsAndRelations.lean
+lake env lean examples/lean/02_TheoremShapedRule.lean
+lake env lean examples/lean/03_TypedRule.lean
+lake env lean examples/lean/04_MultiStepQuery.lean
+lake build KnowledgeBase
+lake env lean examples/lean/05_ImportedKnowledge.lean
+lake env lean examples/lean/06_ProjectVerificationArc.lean
+```
+
+Every documented example group also runs through the Makefile:
+
+```bash
+make examples                 # lean, native, and integration groups
+make examples GROUP=lean      # one group; report in .zil/examples-reports/
+```
+
+See [Validation](#validation) for the full test suite.
 
 ## Relation tuples: from Zanzibar to ZIL
 
@@ -66,7 +206,7 @@ group:eng#member
 
 This userset names everyone related to `group:eng` through `member`. A tuple can therefore refer to another relation, supporting group membership and inherited access.
 
-Standalone ZIL can express the same tuple-shaped facts:
+The `.zc` syntax expresses the same tuples:
 
 ```zc
 doc:readme#owner@user:10.
@@ -75,7 +215,7 @@ doc:readme#viewer@group:eng#member.
 doc:readme#parent@folder:A.
 ```
 
-Native ZIL Lean syntax represents the relations with Lean names:
+The native Lean syntax expresses the same relations as Lean declarations:
 
 ```lean
 import Zil
@@ -136,7 +276,7 @@ doc.readme ─────────── viewer ──▶ group.engineering
 group.engineering ──── member ──▶ user.u11
 ```
 
-repeated rule evaluation adds:
+applying the rule repeatedly (forward chaining) derives:
 
 ```text
 doc.readme ── viewer ──▶ user.u11
@@ -204,16 +344,13 @@ The versioned operational and proof contract is in
 
 ### Certified grounding of a formalization contract
 
-`#zil_formalization_lint` reports a coverage *percentage* over a contract's
-executable requirements. `#zil_horn_grounding` uses the Horn engine to answer a
-sharper, structural question: does the contract's `requires_objects` /
-`witnessed_by` closure actually *bottom out* in the environment? It reads the
-live `zil_file_contract`, emits a `provided(o)` fact only for each `lean:`
-requirement that resolves and a `witnessed(w)` fact only for each witness that
-exists, and asks the SLD engine to derive `grounded(contract)` — accepting the
-answer only after independent proof-tree replay. A dangling requirement or a
-mistyped witness leaves a body atom unprovable, so the check fails and names the
-unmet obligation.
+`#zil_formalization_lint` reports a coverage *percentage* over a contract's executable requirements. `#zil_horn_grounding` uses the Horn
+engine to answer a stricter, structural question: is the closure of the contract's `requires_objects` and `witnessed_by` relations
+actually *grounded* in the environment, meaning that every object it names exists? The command reads the live `zil_file_contract`. It
+emits a `provided(o)` fact only for each `lean:` requirement that resolves, and a `witnessed(w)` fact only for each witness that exists.
+It then asks the SLD engine to derive `grounded(contract)`, and accepts the answer only after the proof tree has been replayed
+independently. A dangling requirement or a mistyped witness leaves a body atom unprovable, so the check fails and names the unmet
+obligation.
 
 ```lean
 import Zil
@@ -245,7 +382,7 @@ zil_fact
   node(lean.Normalize.normalize)
 ```
 
-These facts form a relationship map:
+These facts form a relationship graph:
 
 ```text
 requirement.parseInput
@@ -340,40 +477,6 @@ document.design.section4
 assistant.formalization
 ```
 
-## Quick start
-
-The repository pins Lean to:
-
-```text
-leanprover/lean4:v4.31.0
-```
-
-Build the package and run the Lean tests:
-
-```bash
-lake build
-lake exe zilLeanTests
-```
-
-Progressive native examples are under `examples/lean/`:
-
-```bash
-lake env lean examples/lean/01_FactsAndRelations.lean
-lake env lean examples/lean/02_TheoremShapedRule.lean
-lake env lean examples/lean/03_TypedRule.lean
-lake env lean examples/lean/04_MultiStepQuery.lean
-lake build KnowledgeBase
-lake env lean examples/lean/05_ImportedKnowledge.lean
-lake env lean examples/lean/06_ProjectVerificationArc.lean
-```
-
-All documented example groups are also runnable through the Makefile:
-
-```bash
-make examples                 # lean, native, and integration groups
-make examples GROUP=lean      # one group; report in .zil/examples-reports/
-```
-
 ## Facts, rules, and queries
 
 Register a fact:
@@ -423,7 +526,8 @@ private def coverageQuery : Zil.Query := {
 }
 ```
 
-The engine binds variables, matches several premises, removes repeated results, and applies rules until the result set becomes stable within the configured bound.
+The engine binds variables, joins the premises, removes duplicate results, and applies the rules until a fixed point is reached or the
+configured bound is hit.
 
 ## Relation schemas
 
@@ -439,26 +543,43 @@ member      : group → user
 viewer      : document → user-or-group
 ```
 
-A typed rule declares the type of each variable:
+In Lean, a `Profile` lists the relations and the kind of node at each end, and a `TypedRule` pairs a rule with the kind of each variable
+and the profile that validates it. This excerpt is from `examples/lean/03_TypedRule.lean`, which defines the rule `requirementPropagation`
+and also shows the failing case:
 
 ```lean
-zil_typed_rule typedCoverage using Zil.Profile.research where
-  variables
-    declaration : declaration
-    requirement : requirement
-  premises
-    declaration ⟶[implements] requirement
-  conclusion
-    requirement ⟶[coveredBy] declaration
+private def research : Profile := {
+  name := `profile.research
+  version := "1"
+  relations := #[
+    { relation := `zil.formalizes, subjectKind := .declaration, objectKind := .claim },
+    { relation := `zil.requires, subjectKind := .declaration, objectKind := .requirement },
+    { relation := `zil.requiresClaim, subjectKind := .claim, objectKind := .requirement }
+  ]
+}
 
-#guard typedCoverage.valid
+private def researchKinds : Array VariableKind := #[
+  { «variable» := `declaration, kind := .declaration },
+  { «variable» := `claim, kind := .claim },
+  { «variable» := `requirement, kind := .requirement }
+]
+
+private def typedRequirementPropagation : TypedRule := {
+  profile := research
+  variableKinds := researchKinds
+  rule := requirementPropagation
+}
+
+#guard typedRequirementPropagation.valid
 ```
 
-The schema reports category mistakes while keeping the underlying rule available for messages and tools.
+A rule that uses a relation with the wrong kinds of endpoints, such as `formalizes` pointing at a requirement, is reported as invalid by
+`valid`. The rule value itself stays available for diagnostics and tools.
 
-## Shared project maps for people and tools
+## Sharing the relationship graph between people and tools
 
-ZIL stores selected project facts with the source code. Developers, reviewers, build tools, documentation tools, issue trackers, and AI assistants can use the same map.
+ZIL stores selected project facts with the source code. Developers, reviewers, build tools, documentation tools, issue trackers, and AI
+assistants can use the same graph.
 
 ### Continue work from a previous session
 
@@ -469,7 +590,7 @@ lean.Parser.parse ── implements ─────▶ requirement.parseInput
 
 A developer or assistant can inspect why a file exists and which requirement its declarations serve before editing it.
 
-### Find work that is waiting
+### Find blocked work
 
 ```text
 requirement.totalParser ── blockedBy ──▶ issue.missingTerminationProof
@@ -478,41 +599,48 @@ issue.missingTerminationProof ── assignedTo ──▶ task.proveTermination
 
 Queries can find blocked requirements, tasks awaiting an owner, and capabilities awaiting an implementation link.
 
-### Calculate change impact
+### Compute change impact
 
 ```text
 lean.Normalize.normalize ── dependsOn ──▶ lean.Parser.parse
 lean.Codegen.emit ───────── dependsOn ──▶ lean.Normalize.normalize
 ```
 
-Impact rules return the downstream components that require review when `lean.Parser.parse` changes.
+Impact rules return the downstream components that require review when `lean.Parser.parse` changes. The command `bin/zil impact` does
+the same analysis from the command line (see the Quick start).
 
 ### Check long-running changes
 
-```lean
-zil_checkpoint beforeParserRefactor
-#zil_check_mutation token
-```
+Automated work that runs for a while needs a safeguard against acting on stale information. Three commands provide it:
 
-Change checks compare graph revisions, contracts, stated goals, and rollback checkpoints before automated work continues.
+- `bin/zil action-token` validates the preflight evidence and the intent of an action token;
+- `bin/zil token-lifecycle` replays the binding of the token to a checkpoint and its single use, and checks the revision, expiry, lease,
+  store and the hash of the observed output;
+- `bin/zil recovery-audit` verifies the required postconditions and checks that any recovery used the rollback or compensation that was
+  committed when the token was issued.
 
-### Explain inferred relationships
+The specifications are `spec/action-token-v1.md`, `spec/token-lifecycle-v1.md` and `spec/recovery-audit-v1.md`, and
+`examples/action-token/` and `examples/recovery-audit/` contain models to run them on.
 
-Each inferred relation can record:
+### Explain derived relations
+
+Each derived relation records its provenance:
 
 ```text
-input project facts
-rule name
-variable bindings
-trust level
-input relation identifiers
+the rule that produced it
+the variable bindings
+the identifiers of the input facts
 ```
 
-This gives developers and tools a step-by-step explanation of how the engine reached a result.
+`bin/zil explain-query` prints this derivation step by step, so developers and tools can see how the engine reached a result
+(`spec/derivation-provenance-v1.md`).
 
 ### Share context between tools
 
-`ZILX/1` snapshots and `ZILD/1` deltas allow separate tools to exchange the same project map. One tool may inspect requirements, another implement code, another verify proofs, and another review impact while sharing stable relation names and revision numbers.
+A `ZILR/1` revision log records changes to the graph as numbered revisions with a causal order; `bin/zil revision-summary`, `snapshot` and
+`causal-check` read it. The `ZIL-EXCHANGE/1` protocol (`bin/zil worker`, specified in `spec/exchange-protocol-v1.md`) exposes parsing,
+compiling, expansion, querying, authorization and impact analysis as JSON Lines, so separate tools can use one Lean implementation.
+`bin/zil agent-context` produces the context bundle for a task from the graph (`spec/agent-context-v1.md`).
 
 Authorization-style relations can also describe roles in an automated workflow:
 
@@ -524,30 +652,38 @@ repo.zilLean ── reviewer ───▶ assistant.verifier
 
 The tuple model therefore supports project context and role-based access to project operations.
 
-## Persistence, linting, and contracts
+## Persistence, contracts, and linting
 
-Facts, rules, schemas, contracts, checkpoints, declaration links, and proof-backed rules use Lean environment extensions. Compiled `.olean` imports restore registered entries and collapse repeated diamond imports into one relation.
+Facts, rules, schemas, profiles, declarations, theorem intents and file contracts are stored in Lean environment extensions. Compiled
+`.olean` imports restore the registered entries and collapse repeated diamond imports into one relation (`examples/lean/05_ImportedKnowledge.lean`).
 
-The coverage linter evaluates the stored and inferred relations:
+A file contract records what a Lean file promises: its scope, the objects it requires, the substitutes it forbids, its abstraction level, and
+its completion status. This contract is from `Zil/Test/HornGrounding.lean`:
 
 ```lean
-#zil_lint
-#zil_lint!
+zil_file_contract zil.test.hornGrounding where
+  promises "A grounded test contract exercising the Horn grounding command."
+  at_level bridge_theorem
+  contract_status scaffold
+  requires_objects ["lean:Zil.Test.HornGrounding.groundingWitness"]
+  forbids_substitutes ["none"]
+  witnessed_by [groundingWitness]
 ```
 
-A formalization contract can record required declarations, required relations, advertised scope, completion state, and revision history:
+The lint commands report on a contract:
 
 ```lean
-zil_register_contract contract
-#zil_contract_check
-#zil_contract_check!
+#zil_file_contract zil.test.hornGrounding       -- show the contract
+#zil_missing_requirements zil.test.hornGrounding -- required Lean objects that do not resolve
+#zil_formalization_lint zil.test.hornGrounding   -- coverage percentage and problems
+#zil_formalization_lint_all                      -- the same for every contract in the module
 ```
 
 Contracts give maintainers and tools a shared description of the expected result of a task or file.
 
-## Trust levels and relationship explanations
+## Trust levels
 
-ZIL records three trust levels:
+Each rule has one of three trust classes (`Zil.TrustClass`):
 
 ```text
 asserted
@@ -555,22 +691,18 @@ graphDerived
 certified
 ```
 
-- `asserted` marks a directly registered project fact;
-- `graphDerived` marks an inferred relation;
-- `certified` associates a rule with a Lean proposition and proof term.
+- `graphDerived` marks a relation inferred by a graph rule. Every frontend assigns it today: `zil_rule`, `zil_theorem_rule` and the `.zc`
+  syntax;
+- `asserted` is intended for directly stated information;
+- `certified` is intended for reasoning that the Lean kernel has checked.
 
-```lean
-private theorem certificate : True := True.intro
+No frontend assigns `asserted` or `certified` yet. They exist in the type and in the text codecs, so rules that carry them can be
+exchanged. `spec/lean-native-acceptance-v0.1.md` (section D) states the requirement for `certified`: a graph-derived fact must never
+acquire kernel-checked trust through an ordinary rule.
 
-private def certifiedRule : Zil.Trust.CertifiedRule :=
-  .mkChecked graphRule True certificate
-
-zil_register_certified_rule certifiedRule
-```
-
-Lean checks the proposition and proof term. ZIL records how the checked declaration participates in the project map.
-
-For inferred relationships, the explanation data records the project fact, source, rule name, variable binding, trust level, and input relation identifiers. Developers and tools can use that data to show how a result was reached.
+Lean checks definitions, theorem statements and proofs, and ZIL records how those checked declarations participate in the project graph.
+Claims that need a proof are audited by `bin/zil theorem-audit`, which fails a high-criticality theorem that has no proof evidence
+(`spec/theorem-audit-v1.md`), and `bin/zil proof-obligations` lists the proof obligations for each prover.
 
 ## Native CLI and data exchange
 
@@ -585,7 +717,7 @@ bin/zil snapshot examples/revision/release.zilr 2 -
 
 Supported operations include `compile`, `expand`, `trace`, `query-ci`, `explain-query`, `explain-authorization`, `dependency-graph`, `impact`, `authorize`, `revision-summary`, `snapshot`, and `causal-check` (`bin/zil --help` lists them all). See `examples/native-cli/README.md` for the walkthrough.
 
-Relations and rules have deterministic text codecs:
+Relations and rules have deterministic text codecs in `Zil.Codec`:
 
 ```lean
 Zil.Codec.encodeRelation
@@ -594,22 +726,16 @@ Zil.Codec.encodeRule
 Zil.Codec.decodeRule
 ```
 
-`ZILX/1` stores revisioned snapshots. `ZILD/1` stores incremental updates with base and target revisions, fact changes, rule changes, and schema changes.
+`ZILR/1` revision logs store numbered revisions with a causal order (`spec/revision-causal-v0.1.md`); `bin/zil snapshot` replays a log up
+to a revision.
 
-Facts and rules can be exported to Soufflé Datalog or Prolog:
-
-```lean
-#zil_export_souffle
-#zil_export_prolog
-```
-
-These interfaces let external analysis tools and assistants consume the same relational state used by the Lean implementation.
+These interfaces let external tools and assistants consume the same relational state as the Lean implementation.
 
 ### Operations and exchange tools
 
-Each is a Lean executable behind `bin/zil`; every one has a specification and a test gate that does not need Clojure.
+Each command is a Lean executable behind `bin/zil`. Every one has a specification and a test script, and none of them needs Clojure.
 
-| Command | What it does | Specification | Gate |
+| Command | What it does | Specification | Test script |
 |---|---|---|---|
 | `control` | formal control plane: exchange with the worker, hash-chained control events and receipts in SQLite | `spec/control-event-store-v1.md`, `spec/exchange-protocol-v1.md` | `scripts/test-control-plane.sh` |
 | `plugin` | extension registry for `ZIL-EXTENSION/1` manifests, with quarantine and an external-command adapter | `spec/extension-manifest-v1.md` | `scripts/test-plugins.sh` |
@@ -619,53 +745,59 @@ Each is a Lean executable behind `bin/zil`; every one has a specification and a 
 | `embedded-scan`, `embedded-snapshot`, `embedded-drift-check`, `embedded-native` | ZIL blocks written in comments of Lean, Python, Clojure, Rust and Markdown sources | `spec/embedded-blocks-v1.md` | `scripts/test-embedded.sh` |
 | `ingest`, `import-data`, `convert-data` | `DATASOURCE` declarations to facts, causal edges and a revision log; data files to and from JSON, EDN, text, CSV, a YAML subset and key=value | `spec/datasource-ingest-v1.md` | `scripts/test-ingest.sh` |
 
-Their expected outputs were written by the earlier implementation and are checked byte for byte or as data; the gates run
-the Lean tools alone. The control store needs `sqlite3`, the gates need `python3`, and the REST adapter needs `curl`.
+Their expected outputs were produced by the earlier Clojure implementation and are compared byte for byte, or as data. The test scripts
+run only the Lean tools. The control store needs `sqlite3`, the test scripts need `python3`, and the REST adapter needs `curl`.
 
 ## Use cases
 
 ZIL Lean can support:
 
 - Zanzibar-style authorization and group-membership models;
-- maps connecting informal claims to Lean declarations;
+- links from informal claims to Lean declarations;
 - requirement-to-implementation tracking;
 - theorem and component dependency analysis;
 - change-impact queries across modules;
 - evidence and source tracking;
 - repository coverage checks;
 - explicit task contracts for people and tools;
-- AI assistants continuing work across sessions with revision and checkpoint checks;
+- AI assistants continuing work across sessions, guarded by revision and action-token checks;
 - step-by-step explanations for inferred project relationships;
-- exchange of relation data with Datalog and Prolog tools.
+- interchange with Terraform/OpenTofu and TLA+ models.
 
 ## The `.zc` language
 
-ZIL is Lean. The `.zc` syntax (facts, rules, queries, macros, declarations, embedded annotations) is parsed, expanded, compiled and queried by the native Lean engine: `bin/zil compile`, `expand`, `query-ci`, `conformance` and the audits listed under *Native CLI*. There is no other runtime and nothing here depends on Clojure. An earlier Clojure/DataScript runtime was removed; its control plane, plugin loader, release attestation, placement evaluation, embedded blocks, datasource ingest and HCL, TLA+ and LTS tools were rewritten in Lean (*Operations and exchange tools*), and `spec/clojure-removal.md` says where each part went. `scripts/check-no-clojure.sh` keeps Clojure out.
+ZIL is implemented in Lean. The `.zc` syntax (facts, rules, queries, macros, declarations and embedded annotations) is parsed, expanded,
+compiled and queried by the native Lean engine, through `bin/zil compile`, `expand`, `query-ci`, `conformance` and the audits listed under
+*Native CLI and data exchange*. There is no other runtime, and nothing here depends on Clojure. An earlier Clojure/DataScript runtime was
+removed. Its control plane, plugin loader, release attestation, placement evaluation, embedded blocks, datasource ingest, and its HCL,
+TLA+ and LTS tools were rewritten in Lean (see *Operations and exchange tools*), and `spec/clojure-removal.md` records where each part
+went. `scripts/check-no-clojure.sh` keeps Clojure out of the repository.
 
-### Native macro extension qualification
+### Testing the macro libraries
 
 `spec/macro-extension-matrix.tsv` records each macro library of `lib/` (and each model that defines its macros inline) with a
-representative model that exercises it. Run the full qualification from this directory:
+representative model that exercises it. Run the whole test from the repository root:
 
 ```bash
 ./tools/macro_extension_matrix.sh
 ```
 
-The check runs on the native engine alone. Each row's native expansion must equal its reviewed golden in
-`spec/macro-extension-golden/`, the native frontend must compile the model, and the generated
-Lean module must typecheck. A library column of `-` marks a model that defines its macros
-inline. After an intended change to a library or the expander, run
-`./tools/macro_extension_matrix.sh --update` and review the golden diff. Add a row when
-introducing a macro library or extension to `lib/`.
+The test runs on the native engine alone. For each row, the native expansion must equal the reviewed golden file in
+`spec/macro-extension-golden/`, the native frontend must compile the model, and the generated Lean module must type-check. A library
+column of `-` marks a model that defines its macros inline. After an intended change to a library or the expander, run
+`./tools/macro_extension_matrix.sh --update` and review the diff of the golden files. Add a row when you introduce a macro library or
+extension to `lib/`.
 
-`bin/zil corpus` (`scripts/check-corpus.sh`) compiles every `.zc` file under `lib/` and `examples/` alone and compares the outcome with `spec/corpus-status.tsv`, so a change in what compiles shows up in review. A macro file or a model that needs its library is rejected alone and recorded as such; the matrix covers those with their libraries.
+`bin/zil corpus` (`scripts/check-corpus.sh`) compiles every `.zc` file under `lib/` and `examples/` alone and compares the outcome with
+`spec/corpus-status.tsv`, so any change in what compiles shows up in code review. A macro file, or a model that needs its library, is
+rejected when compiled alone and is recorded as such; the matrix test covers those together with their libraries.
 
 ## Macro libraries
 
-The macro engine and the nearest-`lib/` rule are part of this repository; the opt-in macro libraries (`libsets/`: model substrate,
-process algebra, proof evidence, discovery API, AWS, Souffle compatibility, and the others) live in
-[zil-lib](https://github.com/jagg-ix/zil-lib), which requires this repository at a pinned commit, qualifies each library against its
-reviewed golden output, and keeps a catalog. Use one with `--lib`:
+The macro engine and the nearest-`lib/` rule are part of this repository. The opt-in macro libraries (`libsets/`: model substrate,
+process algebra, proof evidence, discovery API, AWS, Souffle compatibility and others) live in
+[zil-lib](https://github.com/jagg-ix/zil-lib). That repository depends on this one at a pinned commit, tests each library against
+reviewed golden files, and keeps a catalog. Load a library with `--lib`:
 
 ```bash
 bin/zil expand model.zc - --lib <zil-lib>/libsets/process-algebra
@@ -673,32 +805,37 @@ bin/zil expand model.zc - --lib <zil-lib>/libsets/process-algebra
 
 The last commit of this repository that still holds `libsets/` is tagged `last-with-libsets`.
 
-Keyword values written with a leading colon, such as `move=:N`, read as the name without the
-colon, so the Petri-net layer in `examples/petrinet-nd-macro-layer.zc` compiles natively.
+A keyword value written with a leading colon, such as `move=:N`, is read as the name without the colon, so the Petri-net layer in
+`examples/petrinet-nd-macro-layer.zc` compiles natively.
 
 ## Repository layout
 
 ```text
-Zil/                 native Lean library
-Zil/Engine/          Horn-rule evaluation and relationship explanations
-Zil/Horn/            first-order terms, unification, SLD resolution, and parsing
-Zil/Trust/           proof-backed rules
-Zil/Exchange/        snapshots and deltas
-examples/lean/       progressive native examples
-examples/native-cli/ CLI snapshot example
-bin/ scripts/ tools/ commands, test runners and gates (no Clojure)
-spec/                language and runtime specifications
+Zil/                    native Lean library
+Zil/Core/               terms, relations, rules, queries, declarations, macros and revisions
+Zil/Datalog/            the Datalog layer: environment queries, file contracts, linting and grounding
+Zil/Engine/             rule evaluation and the derivation (provenance) of derived facts
+Zil/Horn/               first-order terms, unification, SLD resolution, and parsing
+Zil/Parser/, Syntax/    the .zc parser and the Lean syntax frontends
+Zil/Codec/, Exchange/   text codecs and the exchange protocol
+lib/                    macro libraries that ship with the core
+examples/               example models; examples/lean/ is a progressive tutorial in Lean
+spec/                   specifications, golden files and the corpus status
+bin/ scripts/ tools/    commands, test scripts and helper tools (no Clojure)
 ```
 
 ## Validation
 
-Expected repository validation:
+The expected validation is:
 
 ```bash
 lake build
 lake exe zilLeanTests
 bin/zil test --profile lean
 ```
+
+`bin/zil test --profile lean` includes a check that the commands in the Quick start print the output shown there
+(`tools/check_readme_examples.py`), so the examples in this README cannot drift from the tools.
 
 The Lean toolchain is pinned to `leanprover/lean4:v4.31.0`.
 

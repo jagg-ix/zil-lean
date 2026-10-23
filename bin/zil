@@ -182,7 +182,7 @@ run_native() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zil "$@"
+  exec lake --log-level=error exe zil "$@"
 }
 
 run_worker() {
@@ -192,7 +192,7 @@ run_worker() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilWorker "$@"
+  exec lake --log-level=error exe zilWorker "$@"
 }
 
 run_action_token() {
@@ -202,7 +202,7 @@ run_action_token() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilActionToken "$@"
+  exec lake --log-level=error exe zilActionToken "$@"
 }
 
 run_token_lifecycle() {
@@ -212,7 +212,7 @@ run_token_lifecycle() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilTokenLifecycle "$@"
+  exec lake --log-level=error exe zilTokenLifecycle "$@"
 }
 
 run_recovery_audit() {
@@ -222,7 +222,7 @@ run_recovery_audit() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilRecoveryAudit "$@"
+  exec lake --log-level=error exe zilRecoveryAudit "$@"
 }
 
 run_agent_context() {
@@ -232,7 +232,7 @@ run_agent_context() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilAgentContext "$@"
+  exec lake --log-level=error exe zilAgentContext "$@"
 }
 
 run_proof_obligations() {
@@ -242,7 +242,7 @@ run_proof_obligations() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilProofObligations "$@"
+  exec lake --log-level=error exe zilProofObligations "$@"
 }
 
 run_theorem_audit() {
@@ -252,7 +252,7 @@ run_theorem_audit() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe zilTheoremAudit "$@"
+  exec lake --log-level=error exe zilTheoremAudit "$@"
 }
 
 # Run one of the package's command-line tools: run_tool <purpose> <executable> [arguments...]
@@ -264,7 +264,7 @@ run_tool() {
     exit 2
   fi
   cd "$ZIL_ROOT"
-  exec lake exe "$executable" "$@"
+  exec lake --log-level=error exe "$executable" "$@"
 }
 
 last_clojure_commit="bf130927edd3ecdad959173d1e63d59130864909"
