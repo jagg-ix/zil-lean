@@ -2,6 +2,7 @@ import Zil.Test.Userset
 import Zil.Test.TupleParser
 import Zil.Test.QuotedTerm
 import Zil.Test.Continuation
+import Zil.Test.KeywordTerm
 import Zil.Test.Attributes
 import Zil.Test.ProgramParser
 import Zil.Test.StratifiedNegation

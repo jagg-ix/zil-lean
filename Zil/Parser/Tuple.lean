@@ -134,7 +134,8 @@ def splitOnQuoteAware (aware : Bool) (separator : String) (text : String) : List
   else text.splitOn separator
 
 /-- Parse a ground token or a `?variable` token. A token that parses today keeps exactly the name it has today; only a
-token with a double quote that today is rejected falls back to `quotedNameFromToken`. -/
+token that today is rejected gets a second try: a double-quoted one falls back to `quotedNameFromToken`, and a keyword
+(`:N`) is read as the name without its colon. -/
 def termFromToken (value : String) : Except String Term := do
   let token := value.trim
   if token.startsWith "?" then
@@ -147,7 +148,14 @@ def termFromToken (value : String) : Except String Term := do
     | .error message =>
         match (if token.contains '"' then quotedNameFromToken token else none) with
         | some name => pure (.ground name)
-        | none => throw message
+        | none =>
+            -- A keyword such as `:N` names what it spells without the colon; today it is an empty name segment.
+            if token.startsWith ":" then
+              match nameFromToken (token.drop 1).toString with
+              | .ok name => pure (.ground name)
+              | .error _ => throw message
+            else
+              throw message
 
 def upperFirst (value : String) : String :=
   match value.data with
