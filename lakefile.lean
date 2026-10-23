@@ -55,3 +55,7 @@ lean_exe zilRelease where
 /-- Evidence-driven placement evaluation. -/
 lean_exe zilEvaluate where
   root := `Zil.CLI.EvaluateMain
+
+/-- Extension discovery, inspection, invocation and evidence production. -/
+lean_exe zilPlugin where
+  root := `Zil.CLI.PluginMain

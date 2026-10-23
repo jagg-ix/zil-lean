@@ -1,0 +1,1 @@
+{"schema":"ZIL-EXTENSION/1","id":"extension:sqlite-event-store","version":"1.0.0","runtime":"lean","entrypoint":"sqlite-event-store","capabilities":["control-event-store","snapshot-store"],"requires":["ZIL-EXTENSION/1"],"inputs":["ZIL-CONTROL-EVENT/1"],"outputs":["ZIL-CONTROL-RECEIPT/1","ZIL-WORKFLOW-PROJECTION/1"],"authority":"operational","trusted":false}

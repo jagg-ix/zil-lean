@@ -1,0 +1,1 @@
+{"schema":"ZIL-EXTENSION/1","id":"extension:echo","version":"1.0.0","runtime":"external","entrypoint":"echo-extension.sh","capabilities":["echo-provider","evidence-producer"],"requires":["ZIL-EXTENSION/1"],"inputs":[],"outputs":["ZIL-EVIDENCE/1"],"authority":"external","trusted":false}
