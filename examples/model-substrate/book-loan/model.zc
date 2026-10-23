@@ -1,0 +1,57 @@
+MODULE example.book.lend.
+
+// One small flow modelled once as structure and intent and once as scenarios, then linked.
+//
+//   bin/zil expand examples/model-substrate/book-loan/model.zc OUT.zc --lib libsets/model-substrate
+//   bin/zil query-ci examples/model-substrate/book-loan/model.zc loan_profile REPORT.tsv \
+//     --lib libsets/model-substrate
+//
+// The example leaves two gaps on purpose so the coherence queries have something to find:
+// the use case return_book has no scenario, and the Then step t2 realizes nothing.
+
+// Structure
+USE MODEL_ENTITY(book).
+USE MODEL_ENTITY(loan).
+USE MODEL_OP(book_lend, book).
+USE MODEL_OP(book_return, book).
+USE MODEL_ASSOC(book_loans, book, loan, one, many).
+USE MODEL_STATE(shelved, book).
+USE MODEL_STATE(lent, book).
+USE MODEL_INITIAL(shelved).
+USE MODEL_TRANS(first_loan, shelved, lend, lent).
+USE MODEL_MSG(m_lend, reader_client, book, book_lend).
+
+// Intent
+USE MODEL_ACTOR(reader).
+USE MODEL_USECASE(borrow_book).
+USE MODEL_USECASE(return_book).
+USE MODEL_PARTICIPATES(reader, borrow_book).
+USE MODEL_PARTICIPATES(reader, return_book).
+
+// Scenarios
+USE SCENARIO_FEATURE(f_loan, borrow_book).
+USE SCENARIO_CASE(s_first_loan, f_loan).
+USE SCENARIO_GIVEN(g1, s_first_loan, 1, book_is_shelved).
+USE SCENARIO_WHEN(w1, s_first_loan, 2, reader_borrows).
+USE SCENARIO_THEN(t1, s_first_loan, 3, book_is_lent).
+USE SCENARIO_THEN(t2, s_first_loan, 4, reader_has_a_loan).
+
+// Links between them
+USE MODEL_COVERED_BY(borrow_book, s_first_loan).
+USE SCENARIO_REALIZES(w1, book_lend).
+USE SCENARIO_REALIZES(t1, first_loan).
+
+// Derived facts and the coherence queries, under the prefix c.
+USE MODEL_COHERENCE(c).
+
+QUERY loan_ends:
+FIND ?e WHERE book_loans#model_end@?e.
+
+QUERY loan_steps:
+FIND ?st WHERE s_first_loan#scenario_has_step@?st.
+
+QUERY operations_of_the_client:
+FIND ?op WHERE reader_client#model_can_call@?op.
+
+QUERY_PACK coherence_report [queries=[c_uncovered_usecases c_orphan_scenarios c_unrealized_then_steps loan_ends loan_steps operations_of_the_client], must_return=[loan_ends loan_steps operations_of_the_client]].
+DSL_PROFILE loan_profile [query_pack=coherence_report, planner_hint=high_selectivity_first].

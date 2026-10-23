@@ -1,0 +1,40 @@
+MODULE model.substrate.scenario.
+
+// Shared scenario macros. Contract: spec/model-substrate-v0.1.md.
+//
+// A step carries a key, an opaque token the caller derives from its own wording; free text does not
+// fit in a tuple. Order is the explicit ordinal of a step within its scenario.
+
+MACRO SCENARIO_FEATURE(feature, title):
+EMIT {{feature}}#scenario_kind@entity:scenario_feature.
+EMIT {{feature}}#scenario_title@value:{{title}}.
+ENDMACRO.
+
+MACRO SCENARIO_CASE(scenario, feature):
+EMIT {{scenario}}#scenario_kind@entity:scenario_case.
+EMIT {{feature}}#scenario_has_case@{{scenario}}.
+ENDMACRO.
+
+MACRO SCENARIO_STEP(step, scenario, keyword, ordinal, key):
+EMIT {{step}}#scenario_kind@entity:scenario_step.
+EMIT {{step}}#scenario_keyword@value:{{keyword}}.
+EMIT {{step}}#scenario_ordinal@value:{{ordinal}}.
+EMIT {{step}}#scenario_key@value:{{key}}.
+EMIT {{scenario}}#scenario_has_step@{{step}}.
+ENDMACRO.
+
+MACRO SCENARIO_GIVEN(step, scenario, ordinal, key):
+EMIT USE SCENARIO_STEP({{step}}, {{scenario}}, given, {{ordinal}}, {{key}}).
+ENDMACRO.
+
+MACRO SCENARIO_WHEN(step, scenario, ordinal, key):
+EMIT USE SCENARIO_STEP({{step}}, {{scenario}}, when, {{ordinal}}, {{key}}).
+ENDMACRO.
+
+MACRO SCENARIO_THEN(step, scenario, ordinal, key):
+EMIT USE SCENARIO_STEP({{step}}, {{scenario}}, then, {{ordinal}}, {{key}}).
+ENDMACRO.
+
+MACRO SCENARIO_TAG(entity, tag):
+EMIT {{entity}}#scenario_tag@tag:{{tag}}.
+ENDMACRO.

@@ -1,0 +1,47 @@
+MODULE model.substrate.coherence.
+
+// Derived facts and coherence queries. Contract: spec/model-substrate-v0.1.md.
+//
+// Each macro takes a prefix p; rule and query names start with p_, so a macro is used
+// once per prefix and a model may hold several instances.
+
+MACRO MODEL_RULES(p):
+EMIT RULE {{p}}_assoc_source_end:
+EMIT IF ?a#model_source@?e
+EMIT THEN ?a#model_end@?e.
+EMIT RULE {{p}}_assoc_target_end:
+EMIT IF ?a#model_target@?e
+EMIT THEN ?a#model_end@?e.
+EMIT RULE {{p}}_is_a_base:
+EMIT IF ?c#model_is_a@?a
+EMIT THEN ?c#model_is_a_star@?a.
+EMIT RULE {{p}}_is_a_step:
+EMIT IF ?c#model_is_a@?m AND ?m#model_is_a_star@?a
+EMIT THEN ?c#model_is_a_star@?a.
+EMIT RULE {{p}}_can_call:
+EMIT IF ?m#model_from@?e AND ?m#model_calls@?op
+EMIT THEN ?e#model_can_call@?op.
+EMIT RULE {{p}}_has_coverage:
+EMIT IF ?uc#model_covered_by@?s
+EMIT THEN ?uc#model_has_coverage@value:true.
+EMIT RULE {{p}}_link_by_coverage:
+EMIT IF ?uc#model_covered_by@?s
+EMIT THEN ?s#model_has_link@value:true.
+EMIT RULE {{p}}_link_by_step:
+EMIT IF ?s#scenario_has_step@?st AND ?st#scenario_realizes@?t
+EMIT THEN ?s#model_has_link@value:true.
+EMIT RULE {{p}}_has_realization:
+EMIT IF ?st#scenario_realizes@?t
+EMIT THEN ?st#scenario_has_realization@value:true.
+ENDMACRO.
+
+// Violation queries: each lists what is missing, so zero rows is the healthy answer.
+MACRO MODEL_COHERENCE(p):
+EMIT USE MODEL_RULES({{p}}).
+EMIT QUERY {{p}}_uncovered_usecases:
+EMIT FIND ?uc WHERE ?uc#model_kind@entity:model_usecase AND NOT ?uc#model_has_coverage@value:true.
+EMIT QUERY {{p}}_orphan_scenarios:
+EMIT FIND ?s WHERE ?s#scenario_kind@entity:scenario_case AND NOT ?s#model_has_link@value:true.
+EMIT QUERY {{p}}_unrealized_then_steps:
+EMIT FIND ?st WHERE ?st#scenario_keyword@value:then AND NOT ?st#scenario_has_realization@value:true.
+ENDMACRO.

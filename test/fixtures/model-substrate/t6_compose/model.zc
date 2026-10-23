@@ -1,0 +1,11 @@
+MODULE fixture.t6.compose.
+
+// Composition fixture: a domain library (lib/50-demo-bridge.zc) that EMIT USEs the substrate, plus
+// direct substrate use in the model. Load it with a library directory holding the substrate files
+// and the demo bridge.
+
+USE DEMO_COMPONENT(cpu0, initiator).
+USE DEMO_COMPONENT(mem0, target).
+USE DEMO_STORY(s1, scen_boot, boot_ok).
+USE MODEL_MSG(m1, demo:component:cpu0, demo:component:mem0, mem_read).
+USE MODEL_COVERED_BY(uc_boot, scen_boot).

@@ -1,0 +1,24 @@
+MODULE model.substrate.intent.
+
+// Shared intent macros. Contract: spec/model-substrate-v0.1.md.
+// include and extend are edges only; they carry no tool semantics.
+
+MACRO MODEL_ACTOR(actor):
+EMIT {{actor}}#model_kind@entity:model_actor.
+ENDMACRO.
+
+MACRO MODEL_USECASE(uc):
+EMIT {{uc}}#model_kind@entity:model_usecase.
+ENDMACRO.
+
+MACRO MODEL_PARTICIPATES(actor, uc):
+EMIT {{actor}}#model_participates@{{uc}}.
+ENDMACRO.
+
+MACRO MODEL_INCLUDE(base, included):
+EMIT {{base}}#model_includes@{{included}}.
+ENDMACRO.
+
+MACRO MODEL_EXTEND(extension, base):
+EMIT {{extension}}#model_extends@{{base}}.
+ENDMACRO.

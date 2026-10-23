@@ -6,6 +6,7 @@ import Zil.Test.StratifiedNegation
 import Zil.Test.Macro
 import Zil.Test.MacroLibrary
 import Zil.Test.DatalogMacro
+import Zil.Test.ModelSubstrate
 import Zil.Test.Declarations
 import Zil.Test.RevisionCausal
 import Zil.Test.Conformance
