@@ -1,37 +1,11 @@
 # ZIL Lean
 
-ZIL is a small relational language for describing named objects, the relationships between them, and rules that derive additional relationships.
-
-A relation has three parts:
-
-```text
-subject ── relation ──▶ object
-```
-
-For example:
-
-```text
-lean.Parser.parse ── implements ──▶ requirement.parseInput
-```
-
-ZIL Lean implements this model inside Lean 4. Lean checks definitions, executable programs, theorem statements, and proofs. ZIL records how those checked declarations relate to requirements, documents, tests, tasks, dependencies, and other parts of a project.
-
-The same relationship graph can answer questions such as:
-
-```text
-which declaration implements this requirement?
-which theorem validates this component?
-which modules depend on this declaration?
-which task is waiting for this result?
-which declarations should be reviewed after this change?
-```
+ZIL is a small relational language for describing  objects, the relationships between them, and rules that derive additional relationships.
 
 Developers, review tools, CI, documentation tools, and AI assistants can query the same stored relationships.
 
 ## Quick start
 
-The prerequisites are `git` and [`elan`](https://github.com/leanprover/elan), which installs the Lean toolchain named in `lean-toolchain`
-(`leanprover/lean4:v4.31.0`). The commands below need nothing else: no Java, Clojure or database.
 
 ```bash
 git clone https://github.com/jagg-ix/zil-lean
@@ -43,130 +17,6 @@ lake build zil    # the command-line tool used below
 The first build compiles the whole library and took about a minute on a laptop. While it builds, Lean prints deprecation warnings for
 the library's source code. They do not affect the result.
 
-### A first model
-
-`examples/native-cli/project-impact.zc` describes a small Lean project in the `.zc` syntax. A line such as
-`lean:Normalize.normalize#depends_on@lean:Parser.parse.` is a *fact*: a subject, a relation and an object. A `RULE` derives new facts from
-existing ones, and a `QUERY` selects the variable bindings that satisfy its conditions.
-
-```zc
-// Facts: which declaration implements a requirement, depends on another, or validates another.
-lean:Parser.parse#implements@requirement:parseInput.
-lean:Normalize.normalize#depends_on@lean:Parser.parse.
-lean:Codegen.emit#depends_on@lean:Normalize.normalize.
-lean:Normalize.normalized_sound#validates@lean:Normalize.normalize.
-
-// A change to a declaration affects everything that depends on it, directly or transitively.
-RULE direct_impact:
-IF ?dependent#depends_on@?changed
-THEN ?changed#affects@?dependent.
-
-RULE transitive_impact:
-IF ?source#affects@?middle AND ?target#depends_on@?middle
-THEN ?source#affects@?target.
-
-// A declaration is validated when some theorem validates it.
-RULE validated:
-IF ?theorem#validates@?component
-THEN ?component#has_validation@value:true.
-
-QUERY affected_by_parser_change:
-FIND ?x WHERE lean:Parser.parse#affects@?x.
-
-QUERY unvalidated_dependents:
-FIND ?d WHERE ?d#depends_on@?dependency AND NOT ?d#has_validation@value:true.
-```
-
-`transitive_impact` is recursive, because `affects` is both its conclusion and one of its premises. The engine applies the rules until no
-new facts appear (a fixed point), so the chain from `Parser.parse` through `Normalize.normalize` to `Codegen.emit` is found. The second
-query uses negation (`NOT`), which is stratified: it is evaluated only after the facts that it depends on are complete.
-
-`bin/zil query-ci` evaluates every query in the model and reports how many results each one has:
-
-```bash
-bin/zil query-ci examples/native-cli/project-impact.zc | grep '^query' | tr '\t' ' '
-```
-
-```text
-query affected_by_parser_change 2
-query unvalidated_dependents 1
-```
-
-To see the results themselves, use `explain-query`, whose output also contains the derivation (provenance) of every derived fact. The
-`grep` and `cut` commands keep only the result lines. The first command prints the two declarations affected by a change to the parser, and
-the second prints the one declaration that depends on something but has no validating theorem:
-
-```bash
-bin/zil explain-query examples/native-cli/project-impact.zc affected_by_parser_change | grep -E '^witness[[:space:]]' | cut -f3
-bin/zil explain-query examples/native-cli/project-impact.zc unvalidated_dependents | grep -E '^witness[[:space:]]' | cut -f3
-```
-
-```text
-x=lean.Normalize.normalize
-x=lean.Codegen.emit
-d=lean.Codegen.emit
-```
-
-The derivation lists each derived fact with its number, the rule that produced it, the numbers of the facts the rule used, and the variable
-bindings. For example, fact 6 (`Parser.parse` affects `Codegen.emit`) comes from `transitive_impact`, applied to facts 4 and 2:
-
-```bash
-bin/zil explain-query examples/native-cli/project-impact.zc affected_by_parser_change \
-  | grep -E '^origin[[:space:]]+[0-9]+[[:space:]]+rule' | cut -f2,4,5,7 | tr '\t' ' '
-```
-
-```text
-4 direct_impact 1 dependent=lean.Normalize.normalize,changed=lean.Parser.parse
-5 direct_impact 2 dependent=lean.Codegen.emit,changed=lean.Normalize.normalize
-6 transitive_impact 4,2 source=lean.Parser.parse,middle=lean.Normalize.normalize,target=lean.Codegen.emit
-7 validated 3 theorem=lean.Normalize.normalized_sound,component=lean.Normalize.normalize
-```
-
-The listing covers every derived fact of the model, so it also includes fact 7, which comes from the `validated` rule.
-
-The built-in `impact` command performs a similar analysis without any rules of your own. It follows `depends_on` and `validates` edges, so
-it also reports the theorem that validates `Normalize.normalize`, which needs review when the parser changes:
-
-```bash
-bin/zil impact examples/native-cli/project-impact.zc lean:Parser.parse | grep -E '^impact[[:space:]]' | cut -f2-4 | tr '\t' ' '
-```
-
-```text
-lean.Normalize.normalize 1 direct
-lean.Codegen.emit 2 transitive
-lean.Normalize.normalized_sound 2 transitive
-```
-
-The same model also compiles to a Lean module, which Lean then type-checks. No output means that Lean accepted the file:
-
-```bash
-bin/zil compile examples/native-cli/project-impact.zc /tmp/ProjectImpact.lean Zil.Generated.ProjectImpact
-lake env lean /tmp/ProjectImpact.lean
-```
-
-### Lean examples
-
-The primary learning path is written directly in Lean and needs no `.zc` files. The examples in `examples/lean/` build on each other, so run
-them in order:
-
-```bash
-lake env lean examples/lean/01_FactsAndRelations.lean
-lake env lean examples/lean/02_TheoremShapedRule.lean
-lake env lean examples/lean/03_TypedRule.lean
-lake env lean examples/lean/04_MultiStepQuery.lean
-lake build KnowledgeBase
-lake env lean examples/lean/05_ImportedKnowledge.lean
-lake env lean examples/lean/06_ProjectVerificationArc.lean
-```
-
-Every documented example group also runs through the Makefile:
-
-```bash
-make examples                 # lean, native, and integration groups
-make examples GROUP=lean      # one group; report in .zil/examples-reports/
-```
-
-See [Validation](#validation) for the full test suite.
 
 ## Relation tuples: from Zanzibar to ZIL
 
@@ -286,8 +136,7 @@ The same rule structure can derive project relationships, such as requirement co
 
 ### First-order Horn clauses and HORC compatibility
 
-`Zil.Horn` is the opt-in logic-programming layer for programs that need more
-than finite Datalog terms. It adds:
+`Zil.Horn` is  layer for programs that need:
 
 - nested constructor terms and function symbols;
 - variables with first-order unification and an occurs check;
@@ -302,7 +151,7 @@ than finite Datalog terms. It adds:
 
 The existing `Zil.Datalog` layer remains the default for finite bottom-up
 workloads. Import `Zil.Horn` when constructor trees or top-down proof search are
-required:
+needed:
 
 ```lean
 import Zil.Horn
@@ -342,26 +191,9 @@ silently emulated.
 The versioned operational and proof contract is in
 [`spec/horn-resolution-v0.1.md`](spec/horn-resolution-v0.1.md).
 
-### Certified grounding of a formalization contract
-
-`#zil_formalization_lint` reports a coverage *percentage* over a contract's executable requirements. `#zil_horn_grounding` uses the Horn
-engine to answer a stricter, structural question: is the closure of the contract's `requires_objects` and `witnessed_by` relations
-actually *grounded* in the environment, meaning that every object it names exists? The command reads the live `zil_file_contract`. It
-emits a `provided(o)` fact only for each `lean:` requirement that resolves, and a `witnessed(w)` fact only for each witness that exists.
-It then asks the SLD engine to derive `grounded(contract)`, and accepts the answer only after the proof tree has been replayed
-independently. A dangling requirement or a mistyped witness leaves a body atom unprovable, so the check fails and names the unmet
-obligation.
-
-```lean
-import Zil
-
-#zil_horn_grounding my.contract   -- one contract
-#zil_horn_grounding_all           -- every contract declared in this module
-```
-
 ## A project example
 
-Consider a project containing a parser, a normalization pass, and a theorem about normalized output:
+Consider a project containing a parser
 
 ```lean
 import Zil
@@ -441,7 +273,8 @@ Local dependency facts can therefore support a repository-wide review query.
 
 Lean verifies terms, types, definitions, computation, theorem statements, and proofs.
 
-ZIL stores relationships concerning purpose, coverage, dependencies, evidence, tasks, and review work across the repository.
+ZIL stores relationships concerning purpose, coverage, dependencies, evidence, tasks, and review work across the repository
+it also implements its own macro system that allows you to extend it with your own DSL extensions to the language so you can leverage lean4 powers.
 
 Together they support questions such as:
 
@@ -752,7 +585,6 @@ run only the Lean tools. The control store needs `sqlite3`, the test scripts nee
 
 ZIL Lean can support:
 
-- Zanzibar-style authorization and group-membership models;
 - links from informal claims to Lean declarations;
 - requirement-to-implementation tracking;
 - theorem and component dependency analysis;
