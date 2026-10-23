@@ -11,7 +11,7 @@ declaration_kind#of@self.
 source_span#of@self.
 self#alias@my-self.
 self#alias@self-two.
-self#alias@a.self.b.
+self#alias@p:a.self.b.
 self#alias@a:self:b.
 self#alias@a_self.
 self#alias@file.

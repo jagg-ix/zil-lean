@@ -6,7 +6,7 @@
  "entries": [
   {
    "block_id": "embedded:2b0f3e9f619964b6",
-   "bytes": 4245,
+   "bytes": 4247,
    "declaration_kind": "theorem",
    "end_line": 18,
    "host": "@W@/test/fixtures/embedded/lean/src/Main.lean",
@@ -17,19 +17,19 @@
    "namespace": "lean_namespace:Outer.Inner",
    "ordinal": 0,
    "output": "@W@/gen/Src/Main/Block0.lean",
-   "output-sha256": "54aa0b2eb36ac8687395e7adc561f19350d509f41fdc9632304d3d4d52da958e",
+   "output-sha256": "2d67577c2fa14c715bba9170b55d31c54c6191fbbee9dbe7c3d024b01235885f",
    "project": "project:Src",
    "relative": "Main.lean",
    "root": "@W@/test/fixtures/embedded/lean/src",
    "scan-path": "Src/Main.lean",
-   "source_hash": "sha256:5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8",
+   "source_hash": "sha256:79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97",
    "source_span": "source_span:Src/Main.lean:4-18",
    "start_line": 4,
    "status": "compiled",
    "target": "lean:Outer.Inner.identity",
    "trust": "asserted_annotation",
-   "zc-bytes": 607,
-   "zc-sha256": "afdc5e0236597781368e082a9a0d4ad850e0d272f91a567ca6bd74bcf3321844"
+   "zc-bytes": 609,
+   "zc-sha256": "817a18197176dc95549ebed7954d07327b44092e5ba95c80985776b653d85bad"
   },
   {
    "block_id": "embedded:ec3e2b55c129c6ef",
@@ -49,7 +49,7 @@
    "relative": "Main.lean",
    "root": "@W@/test/fixtures/embedded/lean/src",
    "scan-path": "Src/Main.lean",
-   "source_hash": "sha256:5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8",
+   "source_hash": "sha256:79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97",
    "source_span": "source_span:Src/Main.lean:22-24",
    "start_line": 22,
    "status": "compiled",
@@ -76,7 +76,7 @@
    "relative": "Main.lean",
    "root": "@W@/test/fixtures/embedded/lean/src",
    "scan-path": "Src/Main.lean",
-   "source_hash": "sha256:5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8",
+   "source_hash": "sha256:79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97",
    "source_span": "source_span:Src/Main.lean:27-29",
    "start_line": 27,
    "status": "compiled",
@@ -103,7 +103,7 @@
    "relative": "Main.lean",
    "root": "@W@/test/fixtures/embedded/lean/src",
    "scan-path": "Src/Main.lean",
-   "source_hash": "sha256:5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8",
+   "source_hash": "sha256:79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97",
    "source_span": "source_span:Src/Main.lean:36-38",
    "start_line": 36,
    "status": "compiled",
@@ -130,7 +130,7 @@
    "relative": "Main.lean",
    "root": "@W@/test/fixtures/embedded/lean/src",
    "scan-path": "Src/Main.lean",
-   "source_hash": "sha256:5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8",
+   "source_hash": "sha256:79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97",
    "source_span": "source_span:Src/Main.lean:42-44",
    "start_line": 42,
    "status": "compiled",
@@ -150,7 +150,7 @@
    "relative": "Main.lean",
    "root": "@W@/test/fixtures/embedded/lean/src",
    "scan-path": "Src/Main.lean",
-   "source-hash": "sha256:5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8"
+   "source-hash": "sha256:79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97"
   }
  ],
  "namespace-prefix": "Zil.Embedded",

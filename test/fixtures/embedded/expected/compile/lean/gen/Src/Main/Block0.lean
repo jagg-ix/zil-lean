@@ -37,7 +37,7 @@ private def sourceTuple3 : Zil.TupleExpr :=
 
 private def sourceTuple4 : Zil.TupleExpr :=
   { Zil.TupleExpr.direct
-      (.ground `sha256.n5923e3ba00d27dde181305b31e1c6d14fff731ba15837d1580fbf2452bd5a2d8)
+      (.ground `sha256.n79f696eb4ecb1d74c71b254dace72cdbfd9637068a80d871cf49785efb046a97)
       `zil.of
       (.ground `self) with
     attrs := #[]
@@ -79,7 +79,7 @@ private def sourceTuple9 : Zil.TupleExpr :=
   { Zil.TupleExpr.direct
       (.ground `lean.Outer.Inner.identity)
       `zil.alias
-      (.ground `a.self.b) with
+      (.ground `p.a.self.b) with
     attrs := #[]
     source := { frontend := "zc", file := none, line := some 11 } }
 
