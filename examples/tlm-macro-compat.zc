@@ -1,0 +1,9 @@
+MODULE tlm.macro.compat.
+
+USE TLM_TIMING_PROFILE(bus_timing, loosely_timed, 10000).
+USE TLM_COMPONENT(cpu0, initiator).
+USE TLM_COMPONENT(mem0, target).
+USE TLM_LINK(read_bus, cpu0, mem0, bus_timing).
+USE TLM_TRANSACTION(read_tx, read, addr_1000, payload_none, 8, normal, loosely_timed).
+USE TLM_SEND(read_tx, cpu0, read_bus).
+USE TLM_ACCEPT(read_tx, mem0).

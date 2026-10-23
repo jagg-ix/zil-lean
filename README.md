@@ -643,6 +643,25 @@ clojure -M -m zil.cli examples/it-infra-minimal.zc
 
 The standard exchange layer connects that runtime with the native Lean representation.
 
+### Native macro extension qualification
+
+`spec/macro-extension-matrix.tsv` records each macro library variant and a representative
+model that exercises it. Run the full qualification from this directory:
+
+```bash
+./tools/macro_extension_matrix.sh
+```
+
+Each row must pass exact Clojure/native expansion parity, native ZIL compilation, and
+typechecking of the generated Lean module. Add a row when introducing a macro library or
+extension; keep distinct legacy `lib/` variants represented even when a similarly named
+`libsets/` copy exists.
+
+The Souffle compatibility macros build on the existing Clojure `zil.bridge.souffle`
+runtime; they do not replace it. See `spec/souffle-macro-compat-v1.md` and
+`examples/souffle-transitive-closure.zc` for the currently qualified binary-symbol
+relation subset and its parity test.
+
 ## Repository layout
 
 ```text

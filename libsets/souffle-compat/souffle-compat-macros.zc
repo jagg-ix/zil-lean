@@ -1,0 +1,37 @@
+MODULE souffle.compat.lib.
+
+// Compatibility macros for a deliberate Souffle Datalog subset.
+// The existing ZIL Souffle bridge infers binary .decl/.input schemas from
+// compiled facts and emits .output directives from ZIL queries. These macros
+// provide constructors for binary symbol relations, facts, rules, and outputs.
+
+MACRO SOUFFLE_BINARY_RELATION(name):
+EMIT souffle:relation_{{name}}#kind@entity:souffle_relation.
+EMIT souffle:relation_{{name}}#arity@value:2.
+EMIT souffle:relation_{{name}}#column_0_type@value:symbol.
+EMIT souffle:relation_{{name}}#column_1_type@value:symbol.
+ENDMACRO.
+
+// The bridge serializes each ZIL atom as (object, subject), so swap the
+// Souffle-facing arguments here to retain Souffle's left-to-right column order.
+MACRO SOUFFLE_BINARY_FACT(name, first, second):
+EMIT {{second}}#{{name}}@{{first}}.
+ENDMACRO.
+
+MACRO SOUFFLE_BINARY_RULE1(rule_name, head, head_first, head_second, body, body_first, body_second):
+EMIT RULE {{rule_name}}:
+EMIT IF {{body_second}}#{{body}}@{{body_first}}
+EMIT THEN {{head_second}}#{{head}}@{{head_first}}.
+ENDMACRO.
+
+MACRO SOUFFLE_BINARY_RULE2(rule_name, head, head_first, head_second, body1, body1_first, body1_second, body2, body2_first, body2_second):
+EMIT RULE {{rule_name}}:
+EMIT IF {{body1_second}}#{{body1}}@{{body1_first}} AND {{body2_second}}#{{body2}}@{{body2_first}}
+EMIT THEN {{head_second}}#{{head}}@{{head_first}}.
+ENDMACRO.
+
+// Queries become bridge output relations (.decl + .output IO=stdout).
+MACRO SOUFFLE_OUTPUT2(query_name, relation, first, second):
+EMIT QUERY {{query_name}}:
+EMIT FIND {{first}} {{second}} WHERE {{second}}#{{relation}}@{{first}}.
+ENDMACRO.
