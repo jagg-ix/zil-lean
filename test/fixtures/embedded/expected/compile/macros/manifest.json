@@ -1,0 +1,59 @@
+{
+ "block-count": 1,
+ "check-only": false,
+ "checked": 0,
+ "compiled": 1,
+ "entries": [
+  {
+   "block_id": "embedded:632cf81ac9bab1d2",
+   "bytes": 1613,
+   "declaration_kind": "theorem",
+   "end_line": 6,
+   "host": "@W@/test/fixtures/embedded/macros/src/m.lean",
+   "language": "lean4",
+   "lean-namespace": "Zil.Embedded.Src.M.Block0",
+   "macro_revision": "sha256:9528659da8cef56ee63318e8237f19822d635b029ee4be0c505ca7122513cab4",
+   "module": "lean_module:Src.m",
+   "namespace": "lean_namespace:Macro",
+   "ordinal": 0,
+   "output": "@W@/gen/Src/M/Block0.lean",
+   "output-sha256": "cc0f7a8bcf3a5561aaf5114ff1c3bb54832eedda2af92f4475c2aef45ed996c3",
+   "project": "project:Src",
+   "relative": "m.lean",
+   "root": "@W@/test/fixtures/embedded/macros/src",
+   "scan-path": "Src/m.lean",
+   "source_hash": "sha256:80b756ab576757af8f439c8dff4613b98546633aa98c7882d3a6622c9e7a9a5f",
+   "source_span": "source_span:Src/m.lean:2-6",
+   "start_line": 2,
+   "status": "compiled",
+   "target": "lean:Macro.identity",
+   "trust": "asserted_annotation",
+   "zc-bytes": 263,
+   "zc-sha256": "d5ab5a41e144f3ee177b1b1e4b5f2c893b2a6f57794b4a17ae55b091dcda702d"
+  }
+ ],
+ "failed": 0,
+ "failures": [],
+ "host-count": 1,
+ "hosts": [
+  {
+   "host": "@W@/test/fixtures/embedded/macros/src/m.lean",
+   "language": "lean4",
+   "relative": "m.lean",
+   "root": "@W@/test/fixtures/embedded/macros/src",
+   "scan-path": "Src/m.lean",
+   "source-hash": "sha256:80b756ab576757af8f439c8dff4613b98546633aa98c7882d3a6622c9e7a9a5f"
+  }
+ ],
+ "namespace-prefix": "Zil.Embedded",
+ "ok": true,
+ "output-root": "@W@/gen",
+ "require-blocks": false,
+ "roots": [
+  "@W@/test/fixtures/embedded/macros/src"
+ ],
+ "scan-errors": [],
+ "schema": "ZIL-EMBEDDED-MANIFEST/1",
+ "verified": 0,
+ "verify-generated": false
+}

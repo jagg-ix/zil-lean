@@ -1,0 +1,20 @@
+MODULE embedded.annotations.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:cc04797b60d87cf5"#kind@"embedded_zil_block".
+"embedded:cc04797b60d87cf5"#target@"doc:readme".
+"embedded:cc04797b60d87cf5"#trust@"trust:asserted_annotation".
+"embedded:cc04797b60d87cf5"#source_hash@"sha256:f86bbde04aab9dca5b2de006b62d22f52021b594a62bf8ccea6fa228e23259c5".
+"embedded:cc04797b60d87cf5"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:cc04797b60d87cf5"#start_line@"4".
+"embedded:cc04797b60d87cf5"#end_line@"7".
+doc:readme#kind@documentation.
+doc:readme#describes@product:widget.
+"embedded:ac2360f18209cf34"#kind@"embedded_zil_block".
+"embedded:ac2360f18209cf34"#target@"doc:second".
+"embedded:ac2360f18209cf34"#trust@"trust:asserted_annotation".
+"embedded:ac2360f18209cf34"#source_hash@"sha256:f86bbde04aab9dca5b2de006b62d22f52021b594a62bf8ccea6fa228e23259c5".
+"embedded:ac2360f18209cf34"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:ac2360f18209cf34"#start_line@"12".
+"embedded:ac2360f18209cf34"#end_line@"14".
+doc:second#kind@page.

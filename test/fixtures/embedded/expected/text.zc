@@ -1,0 +1,20 @@
+MODULE embedded.annotations.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:037b40fe2df6c069"#kind@"embedded_zil_block".
+"embedded:037b40fe2df6c069"#target@"slash:a/b".
+"embedded:037b40fe2df6c069"#trust@"trust:asserted_annotation".
+"embedded:037b40fe2df6c069"#source_hash@"sha256:73c1b725b378638d84c1c36adf43a80cdc174d257aca8e41db7a9c19b519cba2".
+"embedded:037b40fe2df6c069"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:037b40fe2df6c069"#start_line@"2".
+"embedded:037b40fe2df6c069"#end_line@"4".
+slash:a/b#path@x/y.
+"embedded:378974c447d908de"#kind@"embedded_zil_block".
+"embedded:378974c447d908de"#target@"u:café".
+"embedded:378974c447d908de"#trust@"trust:asserted_annotation".
+"embedded:378974c447d908de"#source_hash@"sha256:3b0135e7c1447ef85cf48b40e5ee8d3032f614e6e2dcfb23c5d5ec2c0b1e8611".
+"embedded:378974c447d908de"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:378974c447d908de"#start_line@"2".
+"embedded:378974c447d908de"#end_line@"5".
+u:café#kind@résumé.
+u:café#emoji@😀.

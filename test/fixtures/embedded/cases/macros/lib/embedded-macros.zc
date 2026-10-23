@@ -1,0 +1,10 @@
+MODULE embedded.macros.
+
+MACRO FORMAL_CLAIM(theorem, claim):
+EMIT {{theorem}}#formalizes@{{claim}}.
+EMIT {{claim}}#formalized_by@{{theorem}}.
+ENDMACRO.
+
+MACRO OWNED(item, owner):
+EMIT {{item}}#owned_by@{{owner}}.
+ENDMACRO.

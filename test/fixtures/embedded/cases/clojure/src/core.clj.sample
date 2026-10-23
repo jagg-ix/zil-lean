@@ -1,0 +1,19 @@
+;; @zil
+;; self#kind@fn.
+;; @endzil
+(defn compute [x] x)
+
+;; @zil
+;; self#kind@private.
+;; @endzil
+(defn- helper [x] x)
+
+;; @zil
+;; self#kind@macro.
+;; @endzil
+(defmacro unless2 [c & body] nil)
+
+;; @zil
+;; self#kind@var.
+;; @endzil
+(def answer 42)

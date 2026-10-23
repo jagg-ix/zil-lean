@@ -1,0 +1,98 @@
+{
+ "baseline_format": "zil.embedded-snapshot.v0.1",
+ "block_count_after": 4,
+ "block_count_before": 4,
+ "differences": [
+  {
+   "before": {
+    "block_id": "embedded:d551a2acd8f10bb0",
+    "declaration_kind": "theorem",
+    "end_line": 4,
+    "language": "lean4",
+    "macro_revision": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "module": "lean_module:src.gone",
+    "namespace": "lean_namespace:Gone",
+    "path": "src/gone.lean",
+    "project": "project:src",
+    "source_hash": "sha256:474a7547611c4f5944b2e5a58cd9a7b7086b00d4432d0866657aaf989453be8f",
+    "source_span": "source_span:src/gone.lean:2-4",
+    "start_line": 2,
+    "statements": [
+     "lean:Gone.one#kind@gone."
+    ],
+    "target": "lean:Gone.one",
+    "trust": "asserted_annotation"
+   },
+   "block_id": "embedded:d551a2acd8f10bb0",
+   "kind": "block_removed"
+  },
+  {
+   "after": {
+    "block_id": "embedded:765ceca9d8cebb02",
+    "declaration_kind": "theorem",
+    "end_line": 4,
+    "language": "lean4",
+    "macro_revision": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "module": "lean_module:src.new",
+    "namespace": "lean_namespace:New",
+    "path": "src/new.lean",
+    "project": "project:src",
+    "source_hash": "sha256:18545795cc070578ff36da1f383be169ae7ca602fa7f945837190dd9d9040cd9",
+    "source_span": "source_span:src/new.lean:2-4",
+    "start_line": 2,
+    "statements": [
+     "lean:New.one#kind@new."
+    ],
+    "target": "lean:New.one",
+    "trust": "asserted_annotation"
+   },
+   "block_id": "embedded:765ceca9d8cebb02",
+   "kind": "block_added"
+  },
+  {
+   "after": "sha256:8ee116fac495ed3f8c32e25eabe323494df7ace294faac20d7f2e46788e5670e",
+   "before": "sha256:ea236af977f8771dd2a6f7793191ac6b36b0604f3b2951a4c6da101f60f3cac6",
+   "block_id": "embedded:1ef5c453686920d9",
+   "field": "source_hash",
+   "kind": "source_changed"
+  },
+  {
+   "after": "lean:Move.renamed",
+   "before": "lean:Move.old",
+   "block_id": "embedded:1ef5c453686920d9",
+   "field": "target",
+   "kind": "target_changed"
+  },
+  {
+   "after": [
+    "lean:Move.renamed#kind@moved."
+   ],
+   "before": [
+    "lean:Move.old#kind@moved."
+   ],
+   "block_id": "embedded:1ef5c453686920d9",
+   "field": "statements",
+   "kind": "expansion_changed"
+  },
+  {
+   "after": "sha256:0f29c6b7a3b08566b06fa624bcfad80a25e081d6af019ee78352299d954d09ec",
+   "before": "sha256:7c8ad14ba985633be744fc5816e569959b4563eb22c8bac16d61b4e6a903ca8b",
+   "block_id": "embedded:d756e92d138fc12d",
+   "field": "source_hash",
+   "kind": "source_changed"
+  },
+  {
+   "after": [
+    "lean:Edit.one#state@after."
+   ],
+   "before": [
+    "lean:Edit.one#state@before."
+   ],
+   "block_id": "embedded:d756e92d138fc12d",
+   "field": "statements",
+   "kind": "expansion_changed"
+  }
+ ],
+ "drift": true,
+ "ok": false
+}

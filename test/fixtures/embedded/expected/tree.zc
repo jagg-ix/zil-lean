@@ -1,0 +1,35 @@
+MODULE embedded.annotations.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:849ad453c0d2ce62"#kind@"embedded_zil_block".
+"embedded:849ad453c0d2ce62"#target@"python:first".
+"embedded:849ad453c0d2ce62"#trust@"trust:asserted_annotation".
+"embedded:849ad453c0d2ce62"#source_hash@"sha256:9a2ee1eedabb7015522218274ffcd378c89a34da05d9f3b300f5b1f4e0f03b7f".
+"embedded:849ad453c0d2ce62"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:849ad453c0d2ce62"#start_line@"1".
+"embedded:849ad453c0d2ce62"#end_line@"3".
+python:first#kind@first.
+"embedded:98ffbdf790fad9cc"#kind@"embedded_zil_block".
+"embedded:98ffbdf790fad9cc"#target@"python:second".
+"embedded:98ffbdf790fad9cc"#trust@"trust:asserted_annotation".
+"embedded:98ffbdf790fad9cc"#source_hash@"sha256:9a2ee1eedabb7015522218274ffcd378c89a34da05d9f3b300f5b1f4e0f03b7f".
+"embedded:98ffbdf790fad9cc"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:98ffbdf790fad9cc"#start_line@"5".
+"embedded:98ffbdf790fad9cc"#end_line@"7".
+python:second#kind@second.
+"embedded:35021fce4db5c79a"#kind@"embedded_zil_block".
+"embedded:35021fce4db5c79a"#target@"rust:upper".
+"embedded:35021fce4db5c79a"#trust@"trust:asserted_annotation".
+"embedded:35021fce4db5c79a"#source_hash@"sha256:ada364f4104812ca5fb1084878ce12dd1fdd31be67d192788c4c449f3f17c3e8".
+"embedded:35021fce4db5c79a"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:35021fce4db5c79a"#start_line@"1".
+"embedded:35021fce4db5c79a"#end_line@"3".
+rust:upper#kind@upper_extension.
+"embedded:cfd7c6b59d10c4ea"#kind@"embedded_zil_block".
+"embedded:cfd7c6b59d10c4ea"#target@"z:last".
+"embedded:cfd7c6b59d10c4ea"#trust@"trust:asserted_annotation".
+"embedded:cfd7c6b59d10c4ea"#source_hash@"sha256:56ef771f6784bcef923d1ac3e22b58fbee5a2fdfd1561e0b020501416740c034".
+"embedded:cfd7c6b59d10c4ea"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:cfd7c6b59d10c4ea"#start_line@"1".
+"embedded:cfd7c6b59d10c4ea"#end_line@"3".
+z:last#kind@last.

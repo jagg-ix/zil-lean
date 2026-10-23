@@ -1,0 +1,3 @@
+MACRO CLAIM(a, b):
+EMIT {{a}}#claims@{{b}}.
+ENDMACRO.

@@ -1,0 +1,3 @@
+@zil target=ignored:text
+ignored#kind@text.
+@endzil

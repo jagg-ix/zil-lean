@@ -1,0 +1,14 @@
+MODULE custom.module.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:59a95b329626be82"#kind@"embedded_zil_block".
+"embedded:59a95b329626be82"#target@"lean:Macro.identity".
+"embedded:59a95b329626be82"#trust@"trust:asserted_annotation".
+"embedded:59a95b329626be82"#source_hash@"sha256:80b756ab576757af8f439c8dff4613b98546633aa98c7882d3a6622c9e7a9a5f".
+"embedded:59a95b329626be82"#macro_revision@"sha256:9528659da8cef56ee63318e8237f19822d635b029ee4be0c505ca7122513cab4".
+"embedded:59a95b329626be82"#start_line@"2".
+"embedded:59a95b329626be82"#end_line@"6".
+lean:Macro.identity#formalizes@claim:embedded_identity.
+claim:embedded_identity#formalized_by@lean:Macro.identity.
+lean:Macro.identity#owned_by@project:src.
+lean:Macro.identity#requires@assumption:natural_number.

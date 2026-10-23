@@ -407,4 +407,17 @@ def renderExpanded (result : Preprocessed) : String :=
   String.intercalate "\n" (result.lines.toList.map (fun line => line.text)) ++
     (if result.lines.isEmpty then "" else "\n")
 
+/-- The macro definitions in `text`, without expanding any of its other lines. -/
+def collectMacros (text : String) : Except ParseError (Array Zil.MacroDef) := do
+  let (macros, _) ← collectDefinitions (sourceLines text) 0 #[] #[]
+  pure macros
+
+/-- Expand the `USE` statements among `statements` with definitions collected elsewhere; other statements are kept. -/
+def expandStatements
+    (definitions : Array Zil.MacroDef) (statements : Array String) (limit : Nat := 10000) :
+    Except ParseError (Array String) := do
+  let payload := statements.mapIdx fun index text => ({ number := index + 1, text } : ExpandedLine)
+  let (lines, _) ← expandPayload definitions payload limit
+  pure (lines.map (·.text))
+
 end Zil.Parser.Macro

@@ -1,0 +1,35 @@
+{
+ "baseline_format": "zil.embedded-snapshot.v0.1",
+ "block_count_after": 2,
+ "block_count_before": 2,
+ "differences": [
+  {
+   "after": "sha256:f144d45b0552eeb6dabd484525c77a19ccfbc64a5f9151117a31e960186134e8",
+   "before": "sha256:83038d99f364569ef78c215a153ef8104f66cd4dbfb70d1f983bbda474084063",
+   "block_id": "embedded:12f7e1412e422558",
+   "field": "macro_revision",
+   "kind": "macro_changed"
+  },
+  {
+   "after": [
+    "lean:A.one#claims@claim:one.",
+    "claim:one#claimed_by@lean:A.one."
+   ],
+   "before": [
+    "lean:A.one#claims@claim:one."
+   ],
+   "block_id": "embedded:12f7e1412e422558",
+   "field": "statements",
+   "kind": "expansion_changed"
+  },
+  {
+   "after": "sha256:f144d45b0552eeb6dabd484525c77a19ccfbc64a5f9151117a31e960186134e8",
+   "before": "sha256:83038d99f364569ef78c215a153ef8104f66cd4dbfb70d1f983bbda474084063",
+   "block_id": "embedded:409a6ab9617cd0b0",
+   "field": "macro_revision",
+   "kind": "macro_changed"
+  }
+ ],
+ "drift": true,
+ "ok": false
+}

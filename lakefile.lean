@@ -63,3 +63,7 @@ lean_exe zilPlugin where
 /-- Importers and exporters between ZIL and other formats. -/
 lean_exe zilInterop where
   root := `Zil.CLI.InteropMain
+
+/-- Scan, snapshot and drift-check ZIL blocks embedded in host-language sources. -/
+lean_exe zilEmbedded where
+  root := `Zil.CLI.EmbeddedMain
