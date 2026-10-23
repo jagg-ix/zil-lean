@@ -5,12 +5,10 @@ MODULE lean4.integration.category.theory.spec.
 // Content: the free/forgetful adjunction between Set and Grp, with Lean4
 // witnesses naming standard Mathlib declarations.
 //
-// Lean4 path: theorem bridge (the theorem layer contains multi-head status
-// rules, which the v0.2 snapshot exporter does not lower yet — the bridge
-// pipeline is the supported route).
+// Qualified by the `category-theory` row of the macro matrix:
 //
-//   ./bin/zil-legacy theorem-dsl-ci examples/lean4-integration/category-theory-spec.zc /tmp/ct_out
-//   lake env lean /tmp/ct_out/category-theory-spec.dsl.bridge.lean
+//   bin/zil expand examples/lean4-integration/category-theory-spec.zc - --lib libsets/theorem-dsl-ci
+//   lake env lean examples/lean4-integration/generated/CategoryTheoryBridge.lean
 //
 // Expected operator summary: left triangle PROVED (full witness chain),
 // right triangle WEAK (deliberately left as the open formalization target).

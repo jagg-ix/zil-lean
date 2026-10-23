@@ -1,7 +1,6 @@
 # Learn ZIL through Lean examples
 
-These examples use ZIL directly inside Lean. They do not require legacy `.zc`
-files or the Clojure runtime.
+These examples use ZIL directly inside Lean. They do not require `.zc` files.
 
 Run one example with:
 

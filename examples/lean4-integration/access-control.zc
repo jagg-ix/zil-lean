@@ -4,11 +4,11 @@ MODULE lean4.integration.access.control.
 // grant-validity rules, violation detection.
 // Lean4 path: native zil-lean snapshot module (rules included).
 //
-//   ./bin/zil-legacy preprocess examples/lean4-integration/access-control.zc \
-//     /tmp/ac.pre.zc libsets/rbac-dac
-//   ./bin/zil-legacy export-snapshot /tmp/ac.pre.zc \
-//     /tmp/AccessControl.snapshot.json /tmp/AccessControl.lean Zil.Generated.AccessControl
-//   lake env lean /tmp/AccessControl.lean
+//   bin/zil expand examples/lean4-integration/access-control.zc - --lib libsets/rbac-dac
+//   lake env lean examples/lean4-integration/generated/AccessControl.lean
+//
+// The checked-in snapshot module was produced by an exporter that was removed with the
+// Clojure runtime (spec/clojure-removal.md).
 
 // Datasets and their owners.
 dataset:run_2026_04#kind@entity:object.

@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# One-shot formal pipeline for D-MetaVM (evmone-oriented) ZIL models.
+# Formal pipeline for D-MetaVM (evmone-oriented) ZIL models.
 #
 # Steps:
-# 1) LTS profile gate
-# 2) Constraint/Z3 profile gate
-# 3) TLA+ export from ZIL
-# 4) Lean4 export from ZIL
-# 5) Optional TLC run for DistributedL3.tla (if TLA2TOOLS_JAR exists)
+# 1) compile the ZIL model to Lean and typecheck the generated module
+# 2) optional TLC run for DistributedL3.tla (if TLA2TOOLS_JAR exists)
+#
+# The LTS and constraint bundle gates and the TLA+ export from ZIL belonged to the removed
+# Clojure runtime (spec/clojure-removal.md); the TLA+ models under formal/dmetavm are checked on their own.
 #
 # Usage:
-#   ./tools/dmetavm_formal_ci.sh [model.zc] [out_dir] [tla_module] [lean_namespace]
+#   ./tools/dmetavm_formal_ci.sh [model.zc] [out_dir] [lean_namespace]
 #
 # Defaults:
 #   model.zc       = examples/evmone-dmetavm.zc
 #   out_dir        = /tmp
-#   tla_module     = DMetaVMEvmone
 #   lean_namespace = Zil.Generated.DMetaVMEvmone
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -25,12 +24,10 @@ CALLER_DIR="$(pwd)"
 
 MODEL_PATH="${1:-examples/evmone-dmetavm.zc}"
 OUT_DIR="${2:-/tmp}"
-TLA_MODULE="${3:-DMetaVMEvmone}"
-LEAN_NAMESPACE="${4:-Zil.Generated.DMetaVMEvmone}"
+LEAN_NAMESPACE="${3:-Zil.Generated.DMetaVMEvmone}"
 
 mkdir -p "$OUT_DIR"
 
-TLA_OUT="$OUT_DIR/dmetavm_evmone.tla"
 LEAN_OUT="$OUT_DIR/dmetavm_evmone.lean"
 
 if [[ -n "${TLA2TOOLS_JAR:-}" ]]; then
@@ -47,24 +44,15 @@ fi
 
 echo "[dmetavm-ci] model=$MODEL_PATH"
 echo "[dmetavm-ci] out_dir=$OUT_DIR"
-echo "[dmetavm-ci] tla_module=$TLA_MODULE"
 echo "[dmetavm-ci] lean_namespace=$LEAN_NAMESPACE"
 
 cd "$ZIL_ROOT"
 
-echo "[dmetavm-ci] step 1/5: lts gate"
-./bin/zil bundle-check "$MODEL_PATH" lts
+echo "[dmetavm-ci] step 1/2: compile to Lean and typecheck"
+./bin/zil compile "$MODEL_PATH" "$LEAN_OUT" "$LEAN_NAMESPACE"
+lake env lean "$LEAN_OUT"
 
-echo "[dmetavm-ci] step 2/5: constraint gate (z3)"
-./bin/zil bundle-check "$MODEL_PATH" constraint
-
-echo "[dmetavm-ci] step 3/5: export tla"
-./bin/zil export-tla "$MODEL_PATH" "$TLA_OUT" "$TLA_MODULE"
-
-echo "[dmetavm-ci] step 4/5: export lean"
-./bin/zil export-lean "$MODEL_PATH" "$LEAN_OUT" "$LEAN_NAMESPACE"
-
-echo "[dmetavm-ci] step 5/5: optional TLC check (DistributedL3)"
+echo "[dmetavm-ci] step 2/2: optional TLC check (DistributedL3)"
 if [[ -n "$TLA2TOOLS_JAR" && -f "$TLA2TOOLS_JAR" ]]; then
   TLC_META_DIR="$OUT_DIR/tlc_dmetavm_meta"
   mkdir -p "$TLC_META_DIR"
@@ -86,5 +74,4 @@ else
 fi
 
 echo "[dmetavm-ci] complete"
-echo "[dmetavm-ci] tla_out=$TLA_OUT"
 echo "[dmetavm-ci] lean_out=$LEAN_OUT"

@@ -4,7 +4,7 @@
 
 `ZIL-EVIDENCE/1` records an extension-produced artifact without promoting it beyond the authority and assurance of its producer.
 
-The envelope is created and byte-attested by the Clojure control plane. Lean may later audit or consume the referenced evidence through a separate compiled capability.
+The envelope is created and byte-attested by its producer, a program outside Lean. Lean may later audit or consume the referenced evidence through a separate compiled capability.
 
 ## Fields
 
@@ -63,7 +63,7 @@ Permitted assurance labels are:
 - `validated`;
 - `kernel-backed`.
 
-A Clojure extension MUST NOT create `validated` or `kernel-backed` evidence.
+A producer outside Lean MUST NOT create `validated` or `kernel-backed` evidence.
 
 An external-tool adapter normally uses:
 
@@ -75,7 +75,7 @@ assurance = externally-attested
 A repository scanner or report exporter normally uses:
 
 ```text
-authority = clojure
+authority = producer
 assurance = byte-attested
 ```
 
@@ -83,7 +83,7 @@ Lean evidence may carry `validated` or `kernel-backed` only when a configured Le
 
 ## Registry checks
 
-Before evidence is returned to a caller, the extension registry MUST verify:
+Before evidence is returned to a caller, whatever registers its producers MUST verify:
 
 1. schema is exactly `ZIL-EVIDENCE/1`;
 2. evidence ID has the expected form;
@@ -100,7 +100,7 @@ A violation quarantines the extension and fails the invocation.
 The envelope does not:
 
 - prove the semantic truth of an external result;
-- make a Clojure computation Lean-validated;
+- make a computation outside Lean Lean-validated;
 - replace an action token or authorization decision;
 - establish durable transaction ordering;
 - dereference or independently replay the recorded artifact.

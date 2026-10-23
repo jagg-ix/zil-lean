@@ -42,13 +42,13 @@ private def once (stdin stdout : IO.FS.Stream) : IO UInt32 := do
 private def usage : String :=
   "zilWorker [--stdio|--once]"
 
-/-- Native JSON Lines worker for the Clojure operational control plane. -/
+/-- Native JSON Lines worker for the exchange protocol. -/
 def main (args : List String) : IO UInt32 := do
   try
     let stdin ← IO.getStdin
     let stdout ← IO.getStdout
     -- `lake exe zilWorker -- --stdio` passes the `--` through under Lake 5 (Lean 4.31) but not
-    -- under earlier Lake; accept it either way, so the Clojure client works with any toolchain.
+    -- under earlier Lake; accept it either way, so a client works with any toolchain.
     let args := match args with
       | "--" :: rest => rest
       | other => other

@@ -81,4 +81,4 @@ Every feature PR must include:
 1. positive tests;
 2. negative tests;
 3. semantic round-trip tests;
-4. Clojure/Lean cross-boundary parity tests when both implementations apply.
+4. reviewed goldens for generated output (the macro matrix and the corpus record).

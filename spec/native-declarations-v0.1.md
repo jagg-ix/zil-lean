@@ -2,8 +2,7 @@
 
 ## Supported kinds
 
-A conforming native frontend accepts the declaration keywords already recognized
-by the Clojure runtime:
+A conforming native frontend accepts these declaration keywords:
 
 ```text
 SERVICE HOST DATASOURCE METRIC POLICY EVENT PROVIDER

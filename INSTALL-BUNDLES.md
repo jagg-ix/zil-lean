@@ -109,8 +109,8 @@ never deletes the linked checkout.
 
 ## Install without building
 
-Useful for inspecting layout or exercising the installer independently from Lean and
-Clojure dependencies:
+Useful for inspecting layout or exercising the installer independently from the Lean
+build:
 
 ```bash
 bin/zil install \
@@ -121,8 +121,8 @@ bin/zil install \
   --no-build
 ```
 
-`--install-tools` delegates to the existing setup bootstrap and may install Elan or
-the official Clojure CLI in user space. The installer does not invoke `sudo`.
+`--install-tools` delegates to the existing setup bootstrap and may install Elan in
+user space. The installer does not invoke `sudo`.
 
 ## Verify an installation
 
@@ -229,7 +229,7 @@ The lifecycle test creates a temporary directory bundle and prefix, then exercis
 - retention of the prior inactive root;
 - explicit purge and versions-directory cleanup.
 
-It does not download dependencies, run Lean tests, or run the Clojure suite.
+It does not download dependencies or run Lean tests.
 
 ## Reports
 
@@ -242,4 +242,4 @@ ZIL-INSTALL-LIFECYCLE-TEST/1
 ```
 
 Reports separate byte/layout validation from semantic validation. Use the normal
-`smoke`, `lean`, `clojure`, `hybrid`, `durable`, or `all` profiles for runtime tests.
+`smoke`, `lean`, or `all` profiles for runtime tests.

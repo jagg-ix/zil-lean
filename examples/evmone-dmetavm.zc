@@ -2,11 +2,8 @@ MODULE dmetavm.evmone.model.
 
 // D-MetaVM model (ZIL-first) oriented to evmone execution structure.
 // Run:
-//   ./bin/zil examples/evmone-dmetavm.zc
-//   ./bin/zil bundle-check examples/evmone-dmetavm.zc lts
-//   ./bin/zil bundle-check examples/evmone-dmetavm.zc constraint
-//   ./bin/zil export-tla examples/evmone-dmetavm.zc /tmp/dmetavm_evmone.tla DMetaVMEvmone
-//   ./bin/zil export-lean examples/evmone-dmetavm.zc /tmp/dmetavm_evmone.lean Zil.Generated.DMetaVMEvmone
+//   bin/zil compile examples/evmone-dmetavm.zc /tmp/dmetavm_evmone.lean Zil.Generated.DMetaVMEvmone
+//   bin/zil query-ci examples/evmone-dmetavm.zc
 
 // ------------------------------------------------------------------
 // Macro layer

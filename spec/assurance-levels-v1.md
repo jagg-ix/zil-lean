@@ -71,7 +71,7 @@ externally-attested -> kernel-backed
 byte-attested -> validated
 ```
 
-A Clojure client may add byte attestation to a Lean response. It may not change the semantic assurance returned by Lean.
+A client may add byte attestation to a Lean response. It may not change the semantic assurance returned by Lean.
 
 ## Failure behavior
 

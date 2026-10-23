@@ -1,0 +1,6 @@
+# ZIL-TEST-PROFILES/1: id, doctor profile, description, tools required. The default profile is smoke.
+id	doctor_profile	description	requires
+smoke	lean	Fast native checks: build, compile, authorize, and a parse through the exchange worker	lean
+lean	lean	Lean build, native tests, generated module elaboration, the macro matrix, the extension libraries, the corpus, and the no-Clojure check	lean
+all	lean	Complete local validation (the lean profile)	lean
+container	container	Run the complete profile in the pinned Docker test workbench	docker

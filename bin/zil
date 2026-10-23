@@ -17,15 +17,10 @@ Usage:
   bin/zil verify-install [--prefix DIR] [--structural|--smoke]
   bin/zil uninstall [--prefix DIR] [--purge]
   bin/zil test-install [--report FILE] [--keep-workdir]
-  bin/zil compile <input.zc> [output.lean|-] [namespace]
-  bin/zil expand <input.zc> [output.zc|-]
-  bin/zil macro-compile <input.zc> [--output FILE|-] [--namespace NAME] [--lib DIR]
-  bin/zil macro-expand <input.zc> [--output FILE|-] [--lib DIR]
-  bin/zil macro-parity <input.zc> [--output FILE|-] [--lib DIR]
+  bin/zil compile <input.zc> [output.lean|-] [namespace] [--lib DIR]
+  bin/zil expand <input.zc> [output.zc|-] [--lib DIR]
   bin/zil conformance <input.zc> [output.zilc|-]
-  bin/zil conformance-suite [--root DIR]... [--output FILE] [--lib DIR]
-  bin/zil library [--root DIR]... [--out DIR] [--manifest FILE] [--check]
-  bin/zil embedded-native [--root PATH]... [--out DIR] [--manifest FILE] [--check]
+  bin/zil corpus [--update]
   bin/zil query-plan <input.zc> [output.txt|-]
   bin/zil query-ci <input.zc> [profile|-] [output.txt|-]
   bin/zil trace <input.zc> [output.txt|-]
@@ -46,42 +41,23 @@ Usage:
   bin/zil snapshot <input.zilr> <revision> [output.txt|-]
   bin/zil causal-check <input.zilr>
   bin/zil worker [--stdio|--once]
-  bin/zil exchange <operation> <input.zc> [operation-arguments...]
-  bin/zil control <operation> <input.zc> [operation-arguments...]
-  bin/zil control-store status|verify|project <database> <stream>
-  bin/zil control-store invoke <database> <stream> <expected-revision> <actor> <operation> <input.zc> [arguments...]
-  bin/zil control-store record <database> <stream> <expected-revision> <actor> <event-type> <decision-sha256> <payload.edn>
-  bin/zil evaluate-runtime [--model FILE] [--measurements FILE] [--output FILE|-]
-  bin/zil plugin list [ROOT...]
-  bin/zil plugin inspect <extension.json>
-  bin/zil plugin run <extension.json> <command> [arguments...] [--config FILE]
-  bin/zil plugin evidence <extension.json> <request.edn> [--config FILE]
 
-Self-check validates installation scripts and configuration without building Lean or
-running the Clojure suite. Package exports committed source with SHA-256 manifests.
-Install supports immutable copied roots and linked development roots. Verification and
-uninstall protect installer-owned state. Test-install exercises the complete lifecycle
-under a temporary prefix without building Lean or running the Clojure suite.
+Self-check validates installation scripts and configuration without building Lean.
+Package exports committed source with SHA-256 manifests. Install supports immutable
+copied roots and linked development roots. Verification and uninstall protect
+installer-owned state. Test-install exercises the complete lifecycle under a temporary
+prefix without building Lean.
 
-Setup is non-destructive by default. Use --install-tools to install missing Elan and
-the official Clojure CLI in user space. Doctor emits ZIL-DOCTOR/1 reports. Test
-profiles emit ZIL-TEST-REPORT/1 reports, persistent step logs, and isolated generated
-outputs.
+Setup is non-destructive by default. Use --install-tools to install a missing Elan in
+user space. Doctor emits ZIL-DOCTOR/1 reports. Test profiles emit ZIL-TEST-REPORT/1
+reports, persistent step logs, and isolated generated outputs.
 
-Worker exposes the allowlisted ZIL-EXCHANGE/1 JSON Lines protocol. Exchange and
-control use Clojure for supervision, capability ownership, and SHA-256 transport
-attestation while Lean remains authoritative for parse, compile, expand,
-conformance, query, authorize, impact, and recovery-audit.
+Worker exposes the allowlisted ZIL-EXCHANGE/1 JSON Lines protocol. Lean is authoritative
+for parse, compile, expand, conformance, query, authorize, impact, and recovery-audit.
 
-Control-store appends hash-chained ZIL-CONTROL-EVENT/1 observations under an
-expected-revision CAS and emits ZIL-CONTROL-RECEIPT/1 transaction receipts.
-Evaluate-runtime scores Lean, Clojure, and hybrid candidates from supplied
-measurements; it never changes component ownership automatically.
-
-Library, macro, embedded, and conformance-suite preserve Clojure workspace and
-corpus orchestration while routing native semantic work through the formal control
-plane. Plugin commands use ZIL-EXTENSION/1 manifests and forbid shadowing built-in
-commands or authoritative capabilities.
+Corpus compiles every .zc file under lib/, libsets/ and examples/ with the native
+compiler and compares the result with spec/corpus-status.tsv. The macro libraries are
+qualified by tools/macro_extension_matrix.sh.
 
 Action-token validates preflight evidence and token intent. Token-lifecycle replays
 checkpoint binding and single-use execution with revision, expiry, lease, store,
@@ -99,14 +75,9 @@ governance audits evidence and status but does not pretend to execute external s
 Theorem-audit checks theorem non-vacuity, dependencies, guarantees, proof evidence,
 and the external claim boundary. It does not promote graph support to kernel proof.
 
-Macro extension commands compose sorted non-recursive lib/*.zc files before the
-model. Without --lib, the nearest ancestor lib/ directory is discovered.
-
-Legacy integrations remain available explicitly:
-  bin/zil --legacy <legacy-command> [arguments]
-  bin/zil-legacy <legacy-command> [arguments]
-
-Set ZIL_LEGACY_MODE=allow to temporarily route unknown commands to the legacy CLI.
+Without --lib, compile and expand read the file alone. A model that uses macros from a
+library is given that library with --lib DIR (a directory of .zc files, composed in sorted
+order before the model).
 EOF
 }
 
@@ -198,79 +169,6 @@ run_worker() {
   exec lake exe zilWorker "$@"
 }
 
-run_exchange() {
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for exchange supervision and transport attestation" >&2
-    exit 2
-  fi
-  if ! command -v lake >/dev/null 2>&1; then
-    echo "[zil] lake is required for the Lean exchange worker" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure -M:exchange "$@"
-}
-
-run_control() {
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for the formal control plane" >&2
-    exit 2
-  fi
-  if ! command -v lake >/dev/null 2>&1; then
-    echo "[zil] lake is required for Lean-authoritative control-plane operations" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure -M:control "$@"
-}
-
-run_control_store() {
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for durable control-plane storage" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure -M:control-store "$@"
-}
-
-run_evaluation() {
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for runtime architecture evaluation" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure -M:evaluate-runtime "$@"
-}
-
-run_plugins() {
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for extension discovery and execution" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure -M:plugins "$@"
-}
-
-run_hybrid_alias() {
-  local alias_name="$1"
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for operational orchestration" >&2
-    exit 2
-  fi
-  if ! command -v lake >/dev/null 2>&1; then
-    echo "[zil] lake is required for Lean-authoritative semantic operations" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure "-M:$alias_name" "$@"
-}
-
 run_action_token() {
   shift
   if ! command -v lake >/dev/null 2>&1; then
@@ -331,19 +229,21 @@ run_theorem_audit() {
   exec lake exe zilTheoremAudit "$@"
 }
 
-run_macro() {
-  local mode="$1"
-  shift
-  if ! command -v clojure >/dev/null 2>&1; then
-    echo "[zil] clojure is required for lib/*.zc discovery and parity reporting" >&2
-    exit 2
-  fi
-  if ! command -v lake >/dev/null 2>&1; then
-    echo "[zil] lake is required for native macro compilation" >&2
-    exit 2
-  fi
-  cd "$ZIL_ROOT"
-  exec clojure -M:macro-native "$mode" "$@"
+last_clojure_commit="bf130927edd3ecdad959173d1e63d59130864909"
+
+removed_command() {
+  local name="$1" use
+  case "$name" in
+    macro-compile) use="bin/zil compile <input.zc> [output.lean|-] [namespace] --lib DIR" ;;
+    macro-expand) use="bin/zil expand <input.zc> [output.zc|-] --lib DIR" ;;
+    macro-parity) use="tools/macro_extension_matrix.sh (native expansion against reviewed goldens; there is no second frontend to compare with)" ;;
+    library|conformance-suite) use="bin/zil corpus (native compile of every source against spec/corpus-status.tsv)" ;;
+    *) use="nothing: the feature was part of the Clojure runtime and was removed with it" ;;
+  esac
+  echo "[zil] '$name' was removed with the Clojure runtime." >&2
+  echo "      Use: $use" >&2
+  echo "      The last commit that still had it is $last_clojure_commit." >&2
+  exit 2
 }
 
 command_name="${1:-}"
@@ -385,33 +285,6 @@ case "$command_name" in
   worker)
     run_worker "$@"
     ;;
-  exchange)
-    run_exchange "$@"
-    ;;
-  control)
-    run_control "$@"
-    ;;
-  control-store)
-    run_control_store "$@"
-    ;;
-  evaluate-runtime)
-    run_evaluation "$@"
-    ;;
-  plugin)
-    run_plugins "$@"
-    ;;
-  library)
-    shift
-    run_hybrid_alias library "$@"
-    ;;
-  conformance-suite)
-    shift
-    run_hybrid_alias conformance "$@"
-    ;;
-  embedded-native)
-    shift
-    run_hybrid_alias embedded-native "$@"
-    ;;
   action-token)
     run_action_token "$@"
     ;;
@@ -430,21 +303,13 @@ case "$command_name" in
   theorem-audit)
     run_theorem_audit "$@"
     ;;
-  macro-compile)
+  corpus)
     shift
-    run_macro compile "$@"
+    cd "$ZIL_ROOT"
+    exec bash scripts/check-corpus.sh "$@"
     ;;
-  macro-expand)
-    shift
-    run_macro expand "$@"
-    ;;
-  macro-parity)
-    shift
-    run_macro parity "$@"
-    ;;
-  --legacy)
-    shift
-    exec "$SCRIPT_DIR/zil-legacy" "$@"
+  exchange|control|control-store|evaluate-runtime|plugin|embedded-native|library|conformance-suite|macro-compile|macro-expand|macro-parity|--legacy)
+    removed_command "$command_name"
     ;;
   --help|-h)
     native_help
@@ -455,19 +320,7 @@ case "$command_name" in
     exit 2
     ;;
   *)
-    if [[ "${ZIL_LEGACY_MODE:-deny}" == "allow" ]]; then
-      exec "$SCRIPT_DIR/zil-legacy" "$@"
-    fi
-    cat >&2 <<EOF
-[zil] '$command_name' is not a native or registered control-plane command.
-
-Use one of:
-  bin/zil --legacy $*
-  bin/zil-legacy $*
-
-For a source file, use:
-  bin/zil compile <input.zc>
-EOF
+    echo "[zil] '$command_name' is not a command. Run bin/zil --help." >&2
     exit 2
     ;;
 esac

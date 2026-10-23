@@ -4,8 +4,7 @@ MODULE zil.lib.category_theory.
 // =========================================
 // Provides CT vocabulary for the ZIL triple-graph layer.
 //
-// IMPORTANT: This library does NOT compile to Lean4 via `export-lean`.
-// `export-lean` targets LTS_ATOM state-machine declarations only.
+// IMPORTANT: This library emits graph facts and proof obligations, not Lean4 theorems.
 // A corresponding Lean4 file is hand-maintained by the consuming project.
 //
 // Design principles:

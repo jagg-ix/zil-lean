@@ -11,15 +11,16 @@ MODULE diff.patch.demo.
 // Run options
 // -----------
 //   # Path A — static ZIL model (hand-authored or generated with --format zc):
-//   ./bin/zil preprocess examples/diff-patch-demo.zc /tmp/demo.pre.zc libsets/diff-patch
-//   ./bin/zil /tmp/demo.pre.zc
+//   bin/zil expand examples/diff-patch-demo.zc - --lib libsets/diff-patch
+//   bin/zil query-ci examples/diff-patch-demo.zc - - --lib libsets/diff-patch
 //
 //   # Path B — import flat patches JSON, then run a model that USEs the import:
 //   python -m entspotter diff --base examples/data/sftp-v1.html \
 //                             --target examples/data/sftp-v2.html \
 //                             --table-id transfer-list --format flat \
 //                             > /tmp/patches.json
-//   ./bin/zil import-data /tmp/patches.json /tmp/patches.zc diff.patch.import json
+//   (the JSON importer was removed with the Clojure runtime; convert the patches to .zc
+//   with the Python tool, as in Path C)
 //
 //   # Path C — direct .zc from Python (no preprocessing needed):
 //   python -m entspotter diff --base examples/data/sftp-v1.html \

@@ -3,8 +3,8 @@ MODULE aws.namespace.compat.demo.
 // AWS compatibility with namespace-scoped resolution.
 //
 // Run:
-//   ./bin/zil preprocess examples/aws-namespace-compat.zc /tmp/aws_ns.pre.zc libsets/aws-namespace
-//   ./bin/zil /tmp/aws_ns.pre.zc
+//   bin/zil expand examples/aws-namespace-compat.zc - --lib libsets/aws-namespace
+//   bin/zil query-ci examples/aws-namespace-compat.zc - - --lib libsets/aws-namespace
 
 USE NS_DIMENSION(d2_scope, 2).
 USE NS_CONTEXT(root_org, d2_scope, global).

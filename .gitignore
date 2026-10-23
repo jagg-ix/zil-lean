@@ -11,11 +11,6 @@
 .tmp/
 out/
 .lake/
-.cpcache/
-.m2/
 .zil/
-target/
 dist/
-.clj-kondo/
-.lsp/
 __pycache__/

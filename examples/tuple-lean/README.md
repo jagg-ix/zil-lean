@@ -12,16 +12,7 @@ doc:readme#parent@folder:A.
 Generate a Lean module:
 
 ```bash
-clojure -M:tuple-lean \
-  examples/tuple-lean/access.zc \
-  examples/tuple-lean/Access.lean \
-  Zil.Generated.Access
-```
-
-The convenience script calls the same exporter:
-
-```bash
-bash ./bin/zil-tuples-lean \
+bin/zil compile \
   examples/tuple-lean/access.zc \
   examples/tuple-lean/Access.lean \
   Zil.Generated.Access
@@ -30,8 +21,10 @@ bash ./bin/zil-tuples-lean \
 Omit the output path, or pass `-`, to print the generated Lean source:
 
 ```bash
-clojure -M:tuple-lean examples/tuple-lean/access.zc -
+bin/zil compile examples/tuple-lean/access.zc -
 ```
+
+The checked-in `Access.lean` was produced by the tuple exporter that was removed with the Clojure runtime; the native compiler writes the same facts and rules in its own form.
 
 ## Generated names
 
@@ -58,7 +51,7 @@ This tuple contains a userset subject:
 doc:readme#viewer@group:eng#member.
 ```
 
-The exporter emits the base fact:
+The compiler emits the base fact:
 
 ```lean
 zil_fact
@@ -94,4 +87,4 @@ doc.readme ── viewer ──▶ user.u11
 
 ## Current input scope
 
-The exporter accepts an optional `MODULE` declaration followed by tuple facts. It reports rules, queries, standard-library declarations, and tuple attributes as unsupported so their meaning is preserved for later dedicated translations rather than being dropped.
+The compiler accepts an optional `MODULE` declaration followed by tuple facts, rules, queries, macros, and typed declarations.

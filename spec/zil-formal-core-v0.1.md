@@ -16,9 +16,7 @@ This spec defines:
 5. query semantics,
 6. causal-time core constraints.
 
-This spec does not define backend storage layout. Runtime mappings are defined in:
-
-- `spec/runtime-datascript-profile-v0.1.md`
+This spec does not define backend storage layout.
 
 ## 2. Scope and Layering
 

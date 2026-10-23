@@ -4,8 +4,8 @@ MODULE incident.workflow.tool.dsl.analysis.demo.
 // Goal: infer what the tool should include and which DSL constructs are needed.
 //
 // Run:
-//   ./bin/zil preprocess examples/incident-workflow-tool-dsl-analysis.zc /tmp/iwf.pre.zc
-//   ./bin/zil /tmp/iwf.pre.zc
+//   bin/zil expand examples/incident-workflow-tool-dsl-analysis.zc -
+//   bin/zil query-ci examples/incident-workflow-tool-dsl-analysis.zc - -
 
 // Lifecycle states.
 USE IWF_STATE(declared, 1).

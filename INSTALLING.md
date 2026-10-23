@@ -1,21 +1,14 @@
 # Installing and Using ZIL
 
-ZIL is a hybrid Lean 4 and Clojure system:
+ZIL is a Lean 4 system. Lean is the semantic and verification kernel, and the native `bin/zil` commands (compile, expand, query, authorize, impact, audits) are all it takes. An earlier Clojure runtime was removed; see `spec/clojure-removal.md`.
 
-- **Lean 4** is the authoritative semantic and verification kernel.
-- **Clojure/JVM** provides workspace and corpus orchestration, worker supervision, plugins, persistence, and external-tool adapters.
-- A **Lean-only profile** remains supported for native compilation, queries, authorization, provenance, impact, and safety auditing.
-
-This guide covers installation, initial verification, common commands, the formal control plane, extensions, and legacy compatibility.
+This guide covers installation, initial verification, common commands, the exchange worker, macro libraries, and the test gates.
 
 ## Choose an installation profile
 
 | Profile | Install | Typical use |
 |---|---|---|
-| Lean SDK | Git, curl, Elan/Lean | Native library and CLI, direct Lean integration, authorization and safety tools |
-| Full workbench | Lean SDK, Java, official Clojure CLI | Macro libraries, recursive corpus tooling, exchange/control plane, plugins, external tools |
-| Operational extensions | Java, official Clojure CLI | Extensions that do not require Lean, such as repository scanning and report export |
-| Legacy compatibility | Full workbench, or Java plus a built standalone JAR | Explicit use of the older Clojure runtime |
+| Lean SDK | Git, curl, Elan/Lean | Everything: the native library and CLI, macro libraries, authorization, provenance, impact, safety auditing, and the test gates |
 
 External tools such as Z3, TLAPS, and ACL2 are optional and are not installed by ZIL.
 
@@ -26,7 +19,7 @@ External tools such as Z3, TLAPS, and ACL2 are optional and are not installed by
 - **Linux:** use a normal Bash environment.
 - **macOS:** use Terminal; Bash or Zsh can invoke the launcher.
 - **Windows:** WSL 2 is recommended for the complete repository workflow.
-- **Native Windows:** Lean and Clojure can be installed natively, but use direct `lake exe ...` and `clojure -M:...` commands unless a compatible Bash environment is installed.
+- **Native Windows:** Lean can be installed natively; use direct `lake exe zil -- ...` commands unless a compatible Bash environment is installed.
 
 ## 1. Install prerequisites
 
@@ -81,58 +74,6 @@ del elan-init.ps1
 
 Close and reopen the terminal afterward.
 
-### Java for the full workbench
-
-Clojure requires Java. Java 17 or Java 21 is a suitable LTS choice.
-
-```bash
-java --version
-```
-
-A cross-platform OpenJDK distribution is available from:
-
-<https://adoptium.net/>
-
-### Official Clojure CLI
-
-ZIL uses tools.deps aliases such as `-M:test`, `-M:control`, and `-M:plugins`. Install the official Clojure CLI, not only a bare Clojure JAR or a package that lacks `-M` and `-Sdescribe`.
-
-Verify it with:
-
-```bash
-clojure -Sdescribe
-```
-
-Official installation guide:
-
-<https://clojure.org/guides/install_clojure>
-
-#### macOS with Homebrew
-
-Install Java first, then:
-
-```bash
-brew trust clojure/tools
-brew install clojure/tools/clojure
-```
-
-#### Linux
-
-Install Java, Bash, curl, and `rlwrap`, then:
-
-```bash
-curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-chmod +x linux-install.sh
-sudo ./linux-install.sh
-rm linux-install.sh
-```
-
-The official guide also provides `posix-install.sh` for other POSIX environments.
-
-#### Windows
-
-For the full workbench, use WSL 2 and follow the Linux instructions inside WSL. Native Windows users can use the Windows installer documented by Clojure, but `bin/zil` still requires Bash.
-
 ## 2. Clone ZIL
 
 ```bash
@@ -158,16 +99,10 @@ Run the native validation target:
 lake exe zilLeanTests
 ```
 
-For the full workbench, resolve Clojure dependencies:
+Run the complete native test profile (Lean build, tests, the macro matrix, the extension libraries, the corpus record, a worker parse and the no-Clojure guard):
 
 ```bash
-clojure -Spath >/dev/null
-```
-
-Run the Clojure tests when validating a development checkout:
-
-```bash
-clojure -M:test
+bin/zil test --profile lean
 ```
 
 Display the public command surface:
@@ -179,7 +114,7 @@ bin/zil --help
 If executable permissions were lost:
 
 ```bash
-chmod +x bin/zil bin/zil-legacy bin/build-jar
+chmod +x bin/zil
 ```
 
 Verify native compilation:
@@ -329,44 +264,31 @@ Use names declared by the selected source file. An unknown node is a semantic re
 
 ## 8. Macro libraries
 
-These commands require the full workbench. Clojure performs deterministic workspace and `lib/*.zc` discovery; Lean remains authoritative for expansion and compilation.
-
-Without `--lib`, ZIL finds the nearest ancestor `lib/` directory, reads its direct `.zc` children in sorted order, and prepends them to the model.
+A model that uses macros from a library is given that library with `--lib DIR`: the direct `.zc` children of `DIR`, in sorted order, are composed before the model. `compile` and `expand` both take it, and a single library file can be given by putting it alone in a directory.
 
 Expand the checked-in example:
 
 ```bash
-bin/zil macro-expand \
-  examples/macro-extension/model.zc \
-  --output /tmp/macro-expanded.zc
+bin/zil expand examples/macro-extension/model.zc /tmp/macro-expanded.zc --lib examples/macro-extension/lib
 ```
 
 Compile it:
 
 ```bash
-bin/zil macro-compile \
-  examples/macro-extension/model.zc \
-  --output /tmp/MacroExtension.lean \
-  --namespace Example.MacroExtension
+bin/zil compile examples/macro-extension/model.zc /tmp/MacroExtension.lean Example.MacroExtension --lib examples/macro-extension/lib
 ```
 
-Compare Clojure and Lean expansion:
+Qualify every macro library against its reviewed golden expansion, then compile and typecheck the generated Lean:
 
 ```bash
-bin/zil macro-parity \
-  examples/macro-extension/model.zc \
-  --output /tmp/macro-parity.edn
+tools/macro_extension_matrix.sh
+tools/macro_extension_matrix.sh --only tlm       # one row
+tools/macro_extension_matrix.sh --update         # after an intended change; review the golden diff
 ```
 
-Use an explicit library:
+## 9. Exchange worker
 
-```bash
-bin/zil macro-expand model.zc --lib path/to/lib
-```
-
-## 9. Formal control plane and exchange worker
-
-The supervised exchange exposes these Lean-authoritative operations:
+The worker speaks `ZIL-EXCHANGE/1` as JSON Lines and exposes these Lean-authoritative operations:
 
 ```text
 parse
@@ -379,156 +301,32 @@ impact
 recovery-audit
 ```
 
-Use the formal control plane:
+One request on standard input, one response on standard output:
 
 ```bash
-bin/zil control compile examples/authorization/access.zc -
+bin/zil worker --once < examples/exchange/parse-request.json
 ```
 
-For `compile`, `-` selects the namespace derived from the source.
-
-Use the exchange client directly:
-
-```bash
-bin/zil exchange authorize \
-  examples/authorization/access.zc \
-  doc:readme viewer user:11
-```
-
-Start the raw JSON Lines worker:
+Or a stream of requests:
 
 ```bash
 bin/zil worker --stdio
 ```
 
-The raw worker is for integrations implementing `ZIL-EXCHANGE/1`. Normal use should prefer `control`, `exchange`, or the higher-level commands.
+The worker validates the request's `input_sha256` identifier and carries it through; the caller computes it over the exact input bytes.
 
-## 10. Recursive corpus workflows
+## 10. The corpus record
 
-These commands require Lean and Clojure.
-
-Check the complete corpus without writing generated modules:
+Compile every `.zc` file under `lib/`, `libsets/` and `examples/` alone and compare the outcome with `spec/corpus-status.tsv`:
 
 ```bash
-bin/zil library --check \
-  --root lib \
-  --root libsets \
-  --root examples
+bin/zil corpus
+bin/zil corpus --update    # after an intended change; review the diff
 ```
 
-Generate modules and a manifest:
+A macro file, or a model that needs its library, is rejected alone and recorded as such. The macro matrix covers those with their libraries.
 
-```bash
-bin/zil library \
-  --root lib \
-  --root libsets \
-  --root examples \
-  --out generated/zil \
-  --manifest generated/zil/manifest.edn
-```
-
-Run differential conformance:
-
-```bash
-bin/zil conformance-suite \
-  --root lib \
-  --root libsets \
-  --root examples \
-  --output generated/zil/conformance.edn
-```
-
-Check embedded ZIL blocks:
-
-```bash
-bin/zil embedded-native --root examples --check
-```
-
-Generate and verify embedded modules:
-
-```bash
-bin/zil embedded-native \
-  --root examples \
-  --out generated/embedded \
-  --manifest generated/embedded/manifest.edn
-```
-
-## 11. Extensions
-
-Extensions use `ZIL-EXTENSION/1` manifests. The registry prevents command shadowing and reuse of authoritative capability identifiers.
-
-List manifests:
-
-```bash
-bin/zil plugin list extensions
-```
-
-Inspect a manifest and fingerprint:
-
-```bash
-bin/zil plugin inspect \
-  extensions/reference/repository-scanner/extension.json
-```
-
-### Repository scanner
-
-This extension requires Java and Clojure but not Lean.
-
-```bash
-bin/zil plugin run \
-  extensions/reference/repository-scanner/extension.json \
-  repository-scan .
-```
-
-Produce byte-attested evidence:
-
-```bash
-bin/zil plugin evidence \
-  extensions/reference/repository-scanner/extension.json \
-  examples/extensions/repository-scan.edn
-```
-
-### Report exporter
-
-```bash
-bin/zil plugin run \
-  extensions/reference/report-exporter/extension.json \
-  report-export \
-  examples/extensions/sample-report.edn \
-  /tmp/sample-report.json \
-  json
-```
-
-Evidence request:
-
-```bash
-bin/zil plugin evidence \
-  extensions/reference/report-exporter/extension.json \
-  examples/extensions/report-export-request.edn
-```
-
-### External solver adapter
-
-The adapter does not install the solver. The configured executable must already be on `PATH`.
-
-```bash
-bin/zil plugin run \
-  extensions/reference/external-solver/extension.json \
-  solver-run z3 examples/extensions/sample-goal.smt2 \
-  --config examples/extensions/external-solver-config.edn
-```
-
-Produce externally attested evidence:
-
-```bash
-bin/zil plugin evidence \
-  extensions/reference/external-solver/extension.json \
-  examples/extensions/external-solver-request.edn \
-  --config examples/extensions/external-solver-config.edn
-```
-
-External results are evidence, not automatic Lean proofs or authorization decisions.
-
-## 12. Agent and safety commands
+## 11. Agent and safety commands
 
 Agent context using an actual changed node from the example:
 
@@ -589,7 +387,7 @@ Theorem and external-claim audit:
 bin/zil theorem-audit examples/theorem-audit/contracts.zc
 ```
 
-## 13. Revisions and snapshots
+## 12. Revisions and snapshots
 
 For a ZIL revision envelope:
 
@@ -599,43 +397,11 @@ bin/zil snapshot path/to/store.zilr 10 /tmp/revision-10.txt
 bin/zil causal-check path/to/store.zilr
 ```
 
-## 14. Legacy compatibility
+## 13. Removed commands
 
-Legacy commands are explicit:
+The Clojure runtime and everything that ran on it was removed: `exchange`, `control`, `control-store`, `evaluate-runtime`, `plugin`, `library`, `conformance-suite`, `embedded-native`, `macro-compile`, `macro-expand`, `macro-parity`, `--legacy`, and the standalone JAR. Each prints what to use instead, and `spec/clojure-removal.md` lists them with the last commit that had them.
 
-```bash
-bin/zil --legacy <legacy-command> [arguments...]
-```
-
-or:
-
-```bash
-bin/zil-legacy <legacy-command> [arguments...]
-```
-
-The legacy launcher uses either Java plus `dist/zil-standalone.jar`, or the Clojure CLI.
-
-Build the standalone JAR:
-
-```bash
-bin/build-jar
-```
-
-Override its location:
-
-```bash
-export ZIL_JAR=/path/to/zil-standalone.jar
-```
-
-Temporary fallback of unknown commands to the legacy CLI:
-
-```bash
-export ZIL_LEGACY_MODE=allow
-```
-
-Prefer explicit `--legacy` in scripts.
-
-## 15. Exit behavior
+## 14. Exit behavior
 
 Commands generally use:
 
@@ -645,24 +411,23 @@ Commands generally use:
 
 Transport success does not imply authorization allow, known impact, safe recovery, or kernel proof. Inspect the report payload.
 
-## 16. Updating
+## 15. Updating
 
 ```bash
 git pull --ff-only
 lake build
-clojure -Spath >/dev/null
 ```
 
 For development validation:
 
 ```bash
 lake exe zilLeanTests
-clojure -M:test
+bin/zil test --profile lean
 ```
 
-Elan follows `lean-toolchain`; Clojure dependencies follow `deps.edn`.
+Elan follows `lean-toolchain`.
 
-## 17. Cleaning
+## 16. Cleaning
 
 Remove reproducible Lean build caches:
 
@@ -673,12 +438,10 @@ rm -rf .lake
 Review generated outputs before deleting them:
 
 ```text
-generated/zil
-generated/embedded
-dist/zil-standalone.jar
+.zil
 ```
 
-## 18. Troubleshooting
+## 17. Troubleshooting
 
 ### `lake: command not found`
 
@@ -700,43 +463,19 @@ lean --version
 
 Do not modify `lean-toolchain` to solve a local PATH problem.
 
-### `clojure` rejects `-M` or `-Sdescribe`
-
-Install the official Clojure CLI/tools.deps distribution:
-
-<https://clojure.org/guides/install_clojure>
-
-### Java is unavailable
-
-```bash
-java --version
-```
-
-Install an OpenJDK distribution and ensure `java` is on `PATH` or `JAVA_HOME` is configured.
-
 ### `bin/zil: Permission denied`
 
 ```bash
 chmod +x bin/zil
 ```
 
-### A command says Clojure is required
+### A command says it was removed
 
-Lean-only commands include `compile`, `expand`, `authorize`, `trace`, `impact`, and the safety/audit commands.
-
-Commands such as `macro-compile`, `library`, `conformance-suite`, `embedded-native`, `control`, and `plugin` require the Clojure CLI.
-
-### Extension requirement unavailable
-
-A manifest requiring `ZIL-EXCHANGE/1` or a Lean capability needs a live Lean worker pool. Operational extensions requiring only extension or evidence schemas can run without Lean.
-
-```bash
-bin/zil plugin inspect path/to/extension.json
-```
+It belonged to the removed Clojure runtime. The message names the replacement; see `spec/clojure-removal.md`.
 
 ### External solver not found
 
-Install the configured executable, put it on `PATH`, or update its EDN argument-vector configuration. ZIL does not install external proof tools.
+ZIL does not install external proof tools: install the solver you want and put it on `PATH`.
 
 ### Native Windows launcher issues
 
@@ -744,12 +483,10 @@ Use WSL 2 for the complete workflow. In native PowerShell, use direct commands:
 
 ```powershell
 lake exe zil -- compile examples/authorization/access.zc -
-clojure -M:plugins list extensions
 ```
 
 ## Further documentation
 
 - `README.md` — language and project overview
 - `spec/exchange-protocol-v1.md` — `ZIL-EXCHANGE/1`
-- `spec/extension-manifest-v1.md` — `ZIL-EXTENSION/1`
-- `spec/evidence-envelope-v1.md` — `ZIL-EVIDENCE/1`
+- `spec/clojure-removal.md` — what was removed and where each part went

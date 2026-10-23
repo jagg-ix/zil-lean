@@ -23,7 +23,7 @@ headers and READMEs advertise them. Steps whose toolchain is unavailable are
 recorded as skips, never failures.
 
 Options:
-  --group lean|native|integration|legacy|all
+  --group lean|native|integration|all
   --report FILE       ZIL-EXAMPLES-REPORT/1 output path
   --keep-workdir      Preserve temporary generated files
   --skip-build        Skip lake build in groups that normally build
@@ -77,14 +77,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-groups=(lean native integration legacy all)
+groups=(lean native integration all)
 if [[ "$list_only" == true ]]; then
   printf '%s\n' "${groups[@]}"
   exit 0
 fi
 
 case "$group" in
-  lean|native|integration|legacy|all) ;;
+  lean|native|integration|all) ;;
   *) zil_die "unknown examples group: $group" ;;
 esac
 
@@ -200,13 +200,6 @@ have_lake() {
   zil_command_exists lake
 }
 
-have_legacy_runtime() {
-  if zil_command_exists java && [[ -f "$ZIL_ROOT/dist/zil-standalone.jar" ]]; then
-    return 0
-  fi
-  zil_command_exists clojure
-}
-
 run_lean_group() {
   suite=lean
   if ! have_lake; then
@@ -290,71 +283,16 @@ run_integration_group() {
     run_step category-theory 'elaborate the category-theory bridge module' 0 \
       lake env lean examples/lean4-integration/generated/CategoryTheoryBridge.lean
   fi
-  if have_legacy_runtime; then
-    run_step regen-measurement 'regenerate the measurement-protocol module' 0 \
-      bin/zil-legacy export-lean examples/lean4-integration/measurement-protocol-lts.zc \
-      "$workdir/MeasurementProtocol.lean" Zil.Generated.MeasurementProtocol
-    run_step regen-elaborate 'elaborate the regenerated module' 0 \
-      lake env lean "$workdir/MeasurementProtocol.lean"
-    run_step annotated-scan 'scan @zil annotations from Lean source' 0 \
-      bin/zil-legacy embedded-scan examples/lean4-integration \
-      "$workdir/annotated.zc" lean4.integration.annotated
-  else
-    skip_step regen-measurement 'regenerate the measurement-protocol module' \
-      'legacy runtime unavailable' \
-      bin/zil-legacy export-lean examples/lean4-integration/measurement-protocol-lts.zc \
-      "$workdir/MeasurementProtocol.lean" Zil.Generated.MeasurementProtocol
-    skip_step annotated-scan 'scan @zil annotations from Lean source' \
-      'legacy runtime unavailable' \
-      bin/zil-legacy embedded-scan examples/lean4-integration \
-      "$workdir/annotated.zc" lean4.integration.annotated
-  fi
-}
-
-run_legacy_model() {
-  local id="$1" model="$2" libset="${3:-}"
-  local pre="$workdir/$id.pre.zc"
-  if [[ -n "$libset" ]]; then
-    run_step "$id-pre" "preprocess $model" 0 \
-      bin/zil-legacy preprocess "$model" "$pre" "$libset"
-  else
-    run_step "$id-pre" "preprocess $model" 0 \
-      bin/zil-legacy preprocess "$model" "$pre"
-  fi
-  run_step "$id-run" "execute $model" 0 \
-    bin/zil-legacy "$pre"
-}
-
-run_legacy_group() {
-  suite=legacy
-  if ! have_legacy_runtime; then
-    skip_step all 'run the legacy preprocess examples' \
-      'legacy runtime unavailable (needs java + dist/zil-standalone.jar, or clojure)' \
-      bin/zil-legacy preprocess examples/kubernetes-compat.zc \
-      "$workdir/kubernetes_compat.pre.zc" libsets/k8s-helm-compat
-    return 0
-  fi
-  run_legacy_model k8s-pos examples/kubernetes-compat.zc libsets/k8s-helm-compat
-  run_legacy_model k8s-neg examples/kubernetes-compat-negative.zc libsets/k8s-helm-compat
-  run_legacy_model everparse examples/everparse-interop-demo.zc libsets/everparse-interop
-  run_legacy_model config examples/config-declarative-macros.zc libsets/config-declarative
-  run_legacy_model request-form examples/request-form-recursive.zc libsets/request-form
-  run_step thm-arc 'theorem DSL pipeline on the formalization arc' 0 \
-    bin/zil-legacy theorem-dsl-ci examples/formalization-arc-demo.zc "$workdir/thm-arc"
-  run_step thm-incident 'theorem DSL pipeline on the incident demo' 0 \
-    bin/zil-legacy theorem-dsl-ci examples/theorem-dsl-incident.zc "$workdir/thm-incident"
 }
 
 case "$group" in
   lean) run_lean_group ;;
   native) run_native_group ;;
   integration) run_integration_group ;;
-  legacy) run_legacy_group ;;
   all)
     run_lean_group
     run_native_group
     run_integration_group
-    run_legacy_group
     ;;
 esac
 

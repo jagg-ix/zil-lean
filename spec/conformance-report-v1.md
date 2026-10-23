@@ -66,7 +66,7 @@ Query rows encode selected bindings in that same order.
 
 The cross-runtime suite emits EDN:
 
-```clojure
+```text
 {:schema "ZIL-CONFORMANCE/1"
  :roots [...]
  :sections ["closed" "declaration" "fact" "module" "query" "query-row" "rule"]
@@ -76,7 +76,7 @@ The cross-runtime suite emits EDN:
 
 Each entry contains:
 
-```clojure
+```text
 {:source "..."
  :source-sha256 "..."
  :status :pass

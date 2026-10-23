@@ -53,7 +53,7 @@ every action identity is complete
 
 A verified export report contains:
 
-```clojure
+```text
 {:ok true
  :module "Demo"
  :revision "rev:..."

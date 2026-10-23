@@ -5,8 +5,7 @@
 This specification defines source packaging, versioned installation, activation,
 verification, upgrade, and uninstall behavior for ZIL.
 
-It does not change ZIL semantics, Lean proof authority, Clojure operational authority,
-or the existing runtime architecture.
+It does not change ZIL semantics, Lean proof authority, or the runtime architecture.
 
 ## Public commands
 
@@ -72,8 +71,8 @@ source_epoch
 layout
 ```
 
-The v1 layout is `source-complete`: it includes the Lean project, Clojure project,
-launchers, setup and test scripts, examples, extensions, specifications, and tests.
+The v1 layout is `source-complete`: it includes the Lean project,
+launchers, setup and test scripts, examples, specifications, and tests.
 
 ### File manifest
 
@@ -183,9 +182,8 @@ uninstall after ownership validation.
 
 ## Prefix and launcher safety
 
-A custom installation prefix MUST also be passed to the setup bootstrap so any
-user-space Clojure CLI installation and generated environment file refer to the same
-prefix.
+A custom installation prefix MUST also be passed to the installer so the generated
+environment file refers to the same prefix.
 
 The installer MUST refuse to replace:
 
@@ -307,7 +305,7 @@ The test MUST use a temporary prefix and `--no-build`. It exercises:
 9. explicit purge;
 10. absence or emptiness of the managed versions directory.
 
-The test does not resolve project dependencies or execute Lean/Clojure suites.
+The test does not resolve project dependencies or execute the Lean test suite.
 
 ## Report separation
 
@@ -321,6 +319,4 @@ ZIL semantic tests pass.
 - The installer owns filesystem layout, activation, and wrapper state.
 - Verification owns byte/layout checks only.
 - Lean remains authoritative for semantic and proof results.
-- Clojure remains authoritative for operational control-plane decisions and durable
-  transactions.
 - Bundle hashes do not promote external evidence to Lean proof.

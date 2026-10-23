@@ -1,5 +1,7 @@
 # Model Exchange TM Atom Profile v0.1
 
+> **Status.** The commands this document names (`bundle-check`, `commit-check`, `export-tla`, `export-lean`) belonged to the Clojure runtime and were removed with it (`spec/clojure-removal.md`). The declaration semantics below remain the language contract.
+
 This document specifies the `tm.det` profile.
 Other currently supported profile labels in tooling are `lts` and `constraint`.
 

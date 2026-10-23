@@ -2,7 +2,7 @@ MODULE acl2.proof.obligation.log.demo.
 
 // ACL2 log-driven proof obligation demo.
 // Run:
-//   ./bin/zil proof-obligation-check examples/acl2-proof-obligation-log.zc acl2
+//   bin/zil proof-obligations examples/acl2-proof-obligation-log.zc acl2
 // Optional command mode:
 //   PROOF_OBLIGATION ... [tool=acl2, command="acl2 < script.lsp", artifact_out="data/acl2-run.log", ...]
 

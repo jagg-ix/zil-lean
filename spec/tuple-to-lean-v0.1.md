@@ -183,9 +183,3 @@ lake exe zil -- compile input.zc output.lean Project.AccessFacts
 ```
 
 Passing `-` as the output path prints the generated module.
-
-The Clojure compatibility exporter remains available:
-
-```bash
-clojure -M:tuple-lean input.zc output.lean Project.AccessFacts
-```

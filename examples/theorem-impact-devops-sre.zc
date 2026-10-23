@@ -4,8 +4,8 @@ MODULE theorem.impact.devops.sre.demo.
 // This example uses macros from `lib/theorem-impact-macros.zc`.
 //
 // Run:
-//   ./bin/zil preprocess examples/theorem-impact-devops-sre.zc /tmp/theorem_impact.pre.zc
-//   ./bin/zil /tmp/theorem_impact.pre.zc
+//   bin/zil expand examples/theorem-impact-devops-sre.zc -
+//   bin/zil query-ci examples/theorem-impact-devops-sre.zc - -
 
 // Components and live health context.
 USE THM_COMPONENT(etcd_cluster, tier0).

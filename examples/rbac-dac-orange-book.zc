@@ -4,8 +4,8 @@ MODULE rbac.dac.demo.
 // This file uses macros from `lib/rbac-dac-macros.zc`.
 //
 // Run:
-//   ./bin/zil preprocess examples/rbac-dac-orange-book.zc /tmp/rbd.pre.zc
-//   ./bin/zil /tmp/rbd.pre.zc
+//   bin/zil expand examples/rbac-dac-orange-book.zc -
+//   bin/zil query-ci examples/rbac-dac-orange-book.zc - -
 
 // Subjects
 USE RBD_SUBJECT(alice).

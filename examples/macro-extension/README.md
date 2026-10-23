@@ -1,6 +1,6 @@
-# Macro extension parity example
+# Macro extension example
 
-This directory demonstrates the same macro-library workflow supported by the original Clojure implementation.
+This directory demonstrates the macro-library workflow: a model that uses macros, and a `lib/` directory whose files are composed before it.
 
 The model is:
 
@@ -8,7 +8,7 @@ The model is:
 examples/macro-extension/model.zc
 ```
 
-Its nearest ancestor contains:
+Its library is:
 
 ```text
 examples/macro-extension/lib/10-grants.zc
@@ -20,9 +20,8 @@ Library files are loaded non-recursively in filename order before the model.
 ## Expand
 
 ```bash
-bin/zil macro-expand \
-  examples/macro-extension/model.zc \
-  --output /tmp/macro-extension.expanded.zc
+bin/zil expand examples/macro-extension/model.zc /tmp/macro-extension.expanded.zc \
+  --lib examples/macro-extension/lib
 ```
 
 The expansion contains:
@@ -35,20 +34,10 @@ The expansion contains:
 ## Compile
 
 ```bash
-bin/zil macro-compile \
-  examples/macro-extension/model.zc \
-  --output /tmp/MacroExtension.lean \
-  --namespace Zil.Generated.MacroExtension
+bin/zil compile examples/macro-extension/model.zc /tmp/MacroExtension.lean \
+  Zil.Generated.MacroExtension --lib examples/macro-extension/lib
 ```
 
-## Compare frontends
+## Qualify
 
-```bash
-bin/zil macro-parity \
-  examples/macro-extension/model.zc \
-  --output /tmp/macro-parity.edn
-```
-
-The parity command composes the source once, expands it with both the Clojure and native Lean frontends, and requires the ordered expanded statement vectors to be identical.
-
-Use `--lib DIR` to replace nearest-ancestor discovery with an explicit macro library directory.
+`tools/macro_extension_matrix.sh` expands this and every other macro library natively, compares each expansion with its reviewed golden under `spec/macro-extension-golden/`, compiles it, and typechecks the generated Lean.

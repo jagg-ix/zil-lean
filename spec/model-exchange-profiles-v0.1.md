@@ -1,5 +1,7 @@
 # Model Exchange Profiles v0.1
 
+> **Status.** The commands this document names (`bundle-check`, `commit-check`, `export-tla`, `export-lean`) belonged to the Clojure runtime and were removed with it (`spec/clojure-removal.md`). The declaration semantics below remain the language contract.
+
 ## Layer Separation
 
 This profile spec separates concerns:

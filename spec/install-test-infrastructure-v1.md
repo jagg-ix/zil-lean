@@ -37,7 +37,7 @@ Schema:
 ZIL-INSTALL-SELF-CHECK/1
 ```
 
-The self-check MUST NOT build Lean or run the Clojure test suite.
+The self-check MUST NOT build Lean.
 
 It MUST validate:
 
@@ -47,7 +47,6 @@ It MUST validate:
 
 When the corresponding optional parser is available, it MUST also validate:
 
-- EDN profiles and port-gate configuration through Clojure;
 - PowerShell setup and test syntax;
 - Compose configuration;
 - Makefile parsing.
@@ -59,7 +58,7 @@ An unavailable optional parser is reported as `skip`. A parser that is available
 The machine-readable profile inventory is:
 
 ```text
-config/test-profiles.edn
+config/test-profiles.tsv
 ```
 
 Schema:
@@ -72,9 +71,6 @@ Supported environment profiles:
 
 ```text
 lean
-full
-extensions
-legacy
 container
 all
 ```
@@ -84,9 +80,6 @@ Supported executable test profiles:
 ```text
 smoke
 lean
-clojure
-hybrid
-durable
 all
 ```
 
@@ -94,20 +87,18 @@ all
 
 The POSIX bootstrap MAY install missing:
 
-- Elan under the user home;
-- the official Clojure CLI under a user-controlled prefix.
+- Elan under the user home.
 
 It MUST NOT automatically:
 
 - invoke `sudo`;
-- install Java;
 - install Git;
 - install Docker;
 - install Make;
 - install operating-system packages;
 - alter repository semantic or authority configuration.
 
-The native Windows bootstrap MAY install Elan when explicitly requested. Java and the official Clojure CLI remain explicit prerequisites.
+The native Windows bootstrap MAY install Elan when explicitly requested.
 
 ## Doctor report
 
@@ -133,8 +124,6 @@ category	name	required	status	detail
 ```
 
 Required checks fail the doctor unless status is `ok`. Optional checks remain visible but do not fail the selected profile.
-
-The doctor MUST distinguish an official tools.deps Clojure CLI from a `clojure` executable that lacks `-Sdescribe`.
 
 ## Setup report
 
@@ -204,7 +193,7 @@ The `all` profile MUST use unique step identifiers and SHOULD reuse a successful
 
 A nonzero process status may represent an expected semantic or governance outcome rather than infrastructure failure.
 
-For example, runtime evaluation may return `1` when evidence proposes a candidate placement change requiring human review. The selected profile may list `0,1` as accepted for that exact step.
+For example, a step may declare `0,1` as accepted when a nonzero status is its documented semantic result.
 
 No profile may convert:
 
@@ -226,7 +215,6 @@ compose.test.yml
 The container MUST:
 
 - use a versioned base distribution;
-- install a versioned official Clojure CLI;
 - use the repository `lean-toolchain` file for Lean selection;
 - invoke `scripts/test.sh` as its test entry point;
 - support a mounted report and log directory;
@@ -247,9 +235,6 @@ doctor
 test
 test-smoke
 test-lean
-test-clojure
-test-hybrid
-test-durable
 test-all
 container-build
 container-test
@@ -258,7 +243,7 @@ clean-test
 
 ## Windows boundary
 
-`bin/zil` remains a Bash launcher. Native Windows testing uses the direct Lake and Clojure aliases from `scripts/test.ps1`.
+`bin/zil` remains a Bash launcher. Native Windows testing uses the direct Lake commands from `scripts/test.ps1`.
 
 WSL 2 remains a supported route to the POSIX scripts.
 
@@ -270,7 +255,7 @@ The infrastructure surface MUST remain represented by:
 - self-check contract tests;
 - launcher routing tests;
 - Make and container contract tests;
-- `port-gate.edn` evidence files;
+- the no-Clojure guard (`scripts/check-no-clojure.sh`);
 - user-facing testing documentation.
 
 No GitHub Actions workflow is required by this specification.

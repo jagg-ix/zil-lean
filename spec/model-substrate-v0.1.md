@@ -35,8 +35,8 @@ macro. A domain that does not is untouched. The substrate never calls a domain m
    is added to the kernel.
 4. **Stable names.** A released macro never changes its arity or the tuples it emits. A breaking
    change adds a new macro name.
-5. **Both frontends.** Every library file expands identically on the Lean and the Clojure frontend
-   (`bin/zil macro-parity MODEL --lib libsets/model-substrate`).
+5. **Golden expansion.** The worked example expands to a reviewed golden
+   (`bin/zil expand MODEL OUT --lib libsets/model-substrate`, checked by `scripts/test-model-substrate.sh`).
 
 ## Identifier rules
 

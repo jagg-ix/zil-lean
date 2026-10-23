@@ -4,8 +4,8 @@ MODULE kubernetes.compat.negative.demo.
 // Intentionally leaves one required value unset and includes one unmanaged kind
 // to exercise khc_missing_required_values + khc_drift_candidates.
 // Run with:
-//   ./bin/zil-legacy preprocess examples/kubernetes-compat-negative.zc /tmp/kubernetes_compat_negative.pre.zc libsets/k8s-helm-compat
-//   ./bin/zil-legacy /tmp/kubernetes_compat_negative.pre.zc
+//   bin/zil expand examples/kubernetes-compat-negative.zc - --lib libsets/k8s-helm-compat
+//   bin/zil query-ci examples/kubernetes-compat-negative.zc - - --lib libsets/k8s-helm-compat
 
 USE KHC_DOC(kubernetes_compat_negative_demo, kubernetes, staging).
 USE KHC_COMPAT_PROFILE(profile_k8s_staging, true, 300).

@@ -1,5 +1,0 @@
-{:file "HonestScaffold.lean"
- :lean-compiles true
- :formalization-lint true
- :advertised-scope :local-identity-lemma
- :expected-codes []}
