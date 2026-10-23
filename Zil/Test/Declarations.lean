@@ -95,6 +95,8 @@ run_cmd do
       | .ok rendered =>
           unless containsText rendered "sourceDeclaration0" do
             throwError "generated Lean omitted declaration definitions"
+          unless containsText rendered "import Zil.Syntax.Declaration" do
+            throwError "generated Lean omitted declaration command syntax"
           unless containsText rendered "zil_register_declaration" do
             throwError "generated Lean omitted declaration registration"
           unless containsText rendered "completeSourceProgram" do

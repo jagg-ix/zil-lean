@@ -2,6 +2,7 @@ module
 
 public import Zil.Core.Program
 public import Zil.Parser.Tuple
+public import Std.Data.HashSet
 
 @[expose] public section
 
@@ -229,12 +230,18 @@ def fromProgram (program : Zil.Program) : Except String (Array Obligation) := do
     throw "proof obligation IDs must be unique"
   pure out
 
-def relationKnown (program : Zil.Program) (relation : Name) : Bool :=
-  program.facts.any (·.relation == relation) ||
-  program.allRules.any fun rule => rule.conclusion.relation == relation
+/-- Every relation the program states a fact for or derives. `Program.facts` lowers the whole program, so a
+    report computes this once instead of once per obligation (which made a report grow with the number of
+    obligations times the cost of lowering: 352 graph-link obligations took minutes). -/
+def knownRelations (program : Zil.Program) : Std.HashSet Name :=
+  let fromFacts := program.facts.foldl (init := {}) fun known fact => known.insert fact.relation
+  program.allRules.foldl (init := fromFacts) fun known rule => known.insert rule.conclusion.relation
 
-def evaluate (program : Zil.Program) (obligation : Obligation) : Result :=
-  let known := relationKnown program obligation.relation
+def relationKnown (program : Zil.Program) (relation : Name) : Bool :=
+  (knownRelations program).contains relation
+
+def evaluateWith (knownSet : Std.HashSet Name) (obligation : Obligation) : Result :=
+  let known := knownSet.contains obligation.relation
   let hasEvidence := !obligation.evidence.isEmpty
   let waiverPresent := obligation.waiverReason.map nonempty? |>.getD false
   let decision : Verdict × Array String :=
@@ -263,6 +270,9 @@ def evaluate (program : Zil.Program) (obligation : Obligation) : Result :=
     reasons := decision.2
   }
 
+def evaluate (program : Zil.Program) (obligation : Obligation) : Result :=
+  evaluateWith (knownRelations program) obligation
+
 /-- Audit proof obligations without pretending to execute unavailable backends. -/
 def audit
     (program : Zil.Program)
@@ -275,7 +285,8 @@ def audit
   let selected := match toolFilter with
     | none => obligations
     | some tool => obligations.filter fun obligation => obligation.tool == tool
-  let results := selected.map (evaluate program)
+  let knownSet := knownRelations program
+  let results := selected.map (evaluateWith knownSet)
   let satisfied := (results.filter fun result => result.verdict == .satisfied).size
   let violated := (results.filter fun result => result.verdict == .violated).size
   let blocked := (results.filter fun result => result.verdict == .blocked).size

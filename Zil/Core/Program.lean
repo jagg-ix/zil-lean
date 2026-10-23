@@ -4,6 +4,7 @@ public import Zil.Core.Userset
 public import Zil.Core.Query
 public import Zil.Core.Macro
 public import Zil.Core.DeclarationSet
+public import Std.Data.HashMap
 
 @[expose] public section
 
@@ -32,8 +33,18 @@ def facts (program : Program) : Array RelExpr :=
   let tupleFacts := program.tupleProgram.lower.facts
   match Zil.DeclarationSet.lower program.declarations with
   | .ok declarationFacts =>
-      declarationFacts.foldl (init := tupleFacts) fun out fact =>
-        if out.any (fun current => current.semanticallyEqual fact) then out else out.push fact
+      if declarationFacts.isEmpty then tupleFacts
+      else
+        -- Semantic equality needs the same relation and subject, so a declaration fact is compared only with
+        -- that bucket; scanning every fact made a program with many declarations quadratic to lower.
+        let bucketOf := fun (index : Std.HashMap (Name × Term) (Array RelExpr)) (fact : RelExpr) =>
+          index.getD (fact.relation, fact.subject) #[]
+        let index := tupleFacts.foldl (init := ({} : Std.HashMap (Name × Term) (Array RelExpr)))
+          fun index fact => index.insert (fact.relation, fact.subject) ((bucketOf index fact).push fact)
+        (declarationFacts.foldl (init := (tupleFacts, index)) fun (out, index) fact =>
+          let bucket := bucketOf index fact
+          if bucket.any (·.semanticallyEqual fact) then (out, index)
+          else (out.push fact, index.insert (fact.relation, fact.subject) (bucket.push fact))).1
   | .error _ => tupleFacts
 
 /-- Source rules plus userset traversal rules emitted by tuple lowering. -/

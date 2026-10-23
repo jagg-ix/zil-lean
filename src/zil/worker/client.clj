@@ -12,7 +12,7 @@
            (java.util UUID)
            (java.util.concurrent TimeUnit)))
 
-(def default-command ["lake" "exe" "zilWorker" "--" "--stdio"])
+(def default-command ["lake" "exe" "zilWorker" "--stdio"])
 (def default-timeout-ms 30000)
 (def ^:private timeout-marker (Object.))
 

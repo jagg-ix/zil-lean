@@ -9,6 +9,7 @@
             [zil.bridge-proof-token-test]
             [zil.bridge-theorem-lock-test]
             [zil.bridge-souffle-test]
+            [zil.bridge-souffle-ci-test]
             [zil.bridge-theorem-ci-test]
             [zil.bridge-theorem-dsl-ci-test]
             [zil.bridge-theorem-test]
@@ -59,6 +60,7 @@
                                          'zil.bridge-proof-token-test
                                          'zil.bridge-theorem-lock-test
                                          'zil.bridge-souffle-test
+                                         'zil.bridge-souffle-ci-test
                                          'zil.bridge-theorem-ci-test
                                          'zil.bridge-theorem-dsl-ci-test
                                          'zil.bridge-theorem-test

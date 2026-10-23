@@ -132,9 +132,10 @@ private def semanticLines (program : Zil.Program) : Array String := Id.run do
   let closed := Zil.Engine.closure program.facts program.allRules
   for fact in closed do
     out := out.push ("closed\t" ++ escape (encodeRelation fact))
+  let closedIndex := Zil.Engine.FactIndex.build closed
   for query in program.queries do
     out := out.push (encodeQuery query)
-    for binding in Zil.Engine.solve closed query do
+    for binding in Zil.Engine.solveIndexed closedIndex query do
       out := out.push <| String.intercalate "\t" [
         "query-row", query.name.toString, escape (encodeBinding query binding)]
   return out

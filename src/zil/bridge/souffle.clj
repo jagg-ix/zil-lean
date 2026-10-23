@@ -10,16 +10,17 @@
     the .dl file so Souffle's analysis pipeline (SubsumptionQualifier,
     SemanticChecker, MinimiseProgramTransformer) only sees the rule clauses.
     On large fact-heavy models this drops execution time from ~85s to ~1-2s.
-  - The attrs column is omitted from every relation (.decl uses 2 columns).
-    Every ZIL rule body already wildcards attrs, so the third column is dead
-    weight that doubles the join search space.
+  - Object/subject stay in compact binary relations. Named ZIL tuple attributes
+    are preserved in a normalized five-column relation so rules can constrain
+    them without multiplying the arity of every relation.
 
   Wire format:
   - .dl file: .decl, .input (base), .decl (derived), rules, .decl/.output (queries)
-  - .facts files: raw tab-separated  object TAB subject  (one row per fact)
+  - .facts files: object TAB subject per relation, plus normalized attribute rows
   - Souffle invoked: souffle -D- -F <facts-dir> -j<N> <schema.dl>
   - Results parsed from Souffle's sectioned stdout TSV format."
   (:require [clojure.java.io :as io]
+            [clojure.set :as set]
             [clojure.string :as str]))
 
 ;; ---------------------------------------------------------------------------
@@ -69,13 +70,22 @@
   [t]
   (if (zil-var? t) (var->souffle t) (souffle-val t)))
 
+(def ^:private attr-input-rel "zillang_attribute_input")
+(def ^:private attr-rel "zillang_attribute")
+
+(defn- attribute-rows
+  [facts]
+  (for [{:keys [object relation subject attrs]} facts
+        [attribute value] (sort-by (comp str key) attrs)]
+    [(souffle-rel-name relation) object subject (name attribute) value]))
+
 ;; ---------------------------------------------------------------------------
 ;; Fact TSV files  (facts → one .facts file per relation)
 ;; ---------------------------------------------------------------------------
 
 (defn write-facts-dir!
-  "Write one <relation>.facts TSV file per distinct relation in `facts`.
-  Each file: one line per fact, two tab-separated columns: object TAB subject.
+  "Write one <relation>.facts TSV file per distinct relation in `facts`, plus
+  normalized named-attribute rows in zillang_attribute_input.facts.
   Returns the facts directory path (string)."
   ([facts] (write-facts-dir! facts nil))
   ([facts dir-path]
@@ -89,6 +99,9 @@
          (with-open [w (io/writer f)]
            (doseq [{:keys [object subject]} rows]
              (.write w (str (tsv-escape object) "\t" (tsv-escape subject) "\n"))))))
+     (with-open [w (io/writer (io/file dir (str attr-input-rel ".facts")))]
+       (doseq [row (attribute-rows facts)]
+         (.write w (str (str/join "\t" (map tsv-escape row)) "\n"))))
      (.getAbsolutePath dir))))
 
 ;; ---------------------------------------------------------------------------
@@ -123,15 +136,24 @@
 
 (defn- literal->souffle
   "Translate a ZIL literal to a Souffle body clause.
-  All relations use 2-arg form (object, subject) — attrs column is omitted.
+  Attribute constraints join the normalized relation by relation/object/subject.
   bound-vars: set of ZIL variable strings bound by preceding positive literals;
   used to replace unbound vars in negated literals with Souffle wildcard _."
   ([lit derived-rels] (literal->souffle lit derived-rels nil))
-  ([{:keys [object relation subject neg?]} _derived-rels bound-vars]
+  ([{:keys [object relation subject attrs neg?]} _derived-rels bound-vars]
+   (when (and neg? (seq attrs))
+     (throw (ex-info "Souffle bridge does not support negated ZIL tuple attributes; refusing lossy lowering"
+                     {:relation relation :attributes (keys attrs)})))
    (let [obj-t (if (and neg? bound-vars) (term->souffle-safe object bound-vars) (term->souffle object))
          sub-t (if (and neg? bound-vars) (term->souffle-safe subject bound-vars) (term->souffle subject))
-         body  (str (souffle-rel-name relation) "(" obj-t ", " sub-t ")")]
-     (if neg? (str "!" body) body))))
+         body  (str (souffle-rel-name relation) "(" obj-t ", " sub-t ")")
+         attr-clauses (for [[attribute value] (sort-by (comp str key) attrs)]
+                        (str attr-rel "(" (souffle-val (souffle-rel-name relation)) ", "
+                             obj-t ", " sub-t ", " (souffle-val (name attribute)) ", "
+                             (term->souffle value) ")"))]
+     (if neg?
+       (str "!" body)
+       (str/join ",\n  " (cons body attr-clauses))))))
 
 ;; ---------------------------------------------------------------------------
 ;; Rules → .decl + :- lines
@@ -142,9 +164,9 @@
   (into #{} (mapcat #(map :relation (:then %)) rules)))
 
 (defn- lit-vars
-  "Return the set of ZIL variable strings appearing in a literal's object and subject."
-  [{:keys [object subject]}]
-  (into #{} (filter zil-var? [object subject])))
+  "Return the set of ZIL variables appearing in a literal's terms and attributes."
+  [{:keys [object subject attrs]}]
+  (into #{} (filter zil-var? (concat [object subject] (vals attrs)))))
 
 (defn- rule-souffle-safe?
   "True when every variable in the THEN head is bound by a positive IF body literal.
@@ -152,14 +174,14 @@
   [{:keys [if then]}]
   (let [pos-vars  (into #{} (mapcat lit-vars) (remove :neg? if))
         head-vars (into #{} (mapcat lit-vars) then)]
-    (clojure.set/subset? head-vars pos-vars)))
+    (set/subset? head-vars pos-vars)))
 
 (defn- query-souffle-safe?
   "True when every FIND variable is bound by a positive WHERE literal."
   [{:keys [find where]}]
   (let [pos-vars  (into #{} (mapcat lit-vars) (remove :neg? where))
         find-vars (set find)]
-    (clojure.set/subset? find-vars pos-vars)))
+    (set/subset? find-vars pos-vars)))
 
 ;; ---------------------------------------------------------------------------
 ;; Self-negation cycle breaker
@@ -271,9 +293,7 @@
             (if-not (rule-souffle-safe? rule)
               []  ;; skip rules whose head vars are not bound in the body
               (let [pos-lits   (remove :neg? if)
-                    bound-vars (into #{} (mapcat (fn [{:keys [object subject]}]
-                                                   (filter zil-var? [object subject]))
-                                                 pos-lits))
+                    bound-vars (into #{} (mapcat lit-vars) pos-lits)
                     body-terms (map #(literal->souffle % derived-rels bound-vars) if)
                     body-str   (str/join ",\n  " body-terms)]
                 (mapv (fn [{:keys [object relation subject]}]
@@ -300,9 +320,7 @@
                      rule-str
                      (when (query-souffle-safe? q)
                        (let [pos-lits   (remove :neg? where)
-                             bound-vars (into #{} (mapcat (fn [{:keys [object subject]}]
-                                                            (filter zil-var? [object subject]))
-                                                          pos-lits))
+                             bound-vars (into #{} (mapcat lit-vars) pos-lits)
                              body-terms (map #(literal->souffle % derived-rels bound-vars) where)
                              body-str   (str/join ",\n  " body-terms)]
                          (str name "(" (str/join ", " find-vars) ") :-\n"
@@ -324,12 +342,32 @@
         (concat (mapcat #(map :relation (:if %)) rules)
                 (mapcat #(map :relation (:where %)) queries))))
 
+(defn- validate-attribute-lowering!
+  [{:keys [facts rules queries]}]
+  (let [body-literals (concat (mapcat :if rules) (mapcat :where queries))
+        attributed-negation (some #(and (:neg? %) (seq (:attrs %))) body-literals)
+        attributed-head (some #(seq (:attrs %)) (mapcat :then rules))
+        rels (concat (map :relation facts)
+                     (mapcat #(map :relation (:then %)) rules)
+                     (mapcat #(map :relation (:if %)) rules)
+                     (mapcat #(map :relation (:where %)) queries))
+        collision (some #(contains? #{attr-input-rel attr-rel} (souffle-rel-name %)) rels)]
+    (when attributed-negation
+      (throw (ex-info "Souffle bridge cannot lower negated ZIL tuple attributes; refusing lossy translation" {})))
+    (when attributed-head
+      (throw (ex-info "Souffle bridge currently supports attributes on facts and body literals, not rule heads" {})))
+    (when collision
+      (throw (ex-info "ZIL relation name collides with a reserved Souffle bridge relation"
+                      {:relation collision})))
+    true))
+
 (defn emit-souffle-schema
   "Emit the .dl schema string for `compiled`.
   Contains .decl+.input for base relations, .decl for derived relations,
   rule :- clauses, and .decl+.output for query relations.
   Ground facts are NOT included — they live in separate .facts TSV files."
   [{:keys [facts rules queries]}]
+  (validate-attribute-lowering! {:facts facts :rules rules :queries queries})
   (let [base-rels    (into #{} (map :relation facts))
         derived-rels (collect-rule-derived-rels rules)
         body-rels    (collect-body-rels rules queries)
@@ -344,10 +382,16 @@
                                          "(IO=file, filename=\"" (souffle-rel-name rel) ".facts\""
                                          ", delimiter=\"\\t\")")])
                                  undeclared)
+        attribute-decls [(str ".decl " attr-input-rel "(relation:symbol, object:symbol, subject:symbol, attribute:symbol, value:symbol)")
+                         (str ".input " attr-input-rel "(IO=file, filename=\"" attr-input-rel ".facts\", delimiter=\"\\t\")")]
+        attribute-union (str ".decl " attr-rel "(relation:symbol, object:symbol, subject:symbol, attribute:symbol, value:symbol)\n"
+                             attr-rel "(R, O, S, A, V) :- " attr-input-rel "(R, O, S, A, V).")
         sections
         (cond-> []
           true
-          (conj (str/join "\n" (concat (base-rel-input-decls facts) undeclared-decls)))
+          (conj (str/join "\n" (concat (base-rel-input-decls facts) undeclared-decls attribute-decls)))
+          true
+          (conj attribute-union)
           (seq rules)
           (conj (rules->souffle rules base-rels))
           (seq queries)
@@ -359,6 +403,7 @@
   Suitable for inspection or offline sharing; NOT used by execute-with-souffle
   (which uses the faster facts-dir path via emit-souffle-schema)."
   [{:keys [facts rules queries] :as compiled}]
+  (validate-attribute-lowering! compiled)
   (let [derived-rels (collect-rule-derived-rels rules)
         fact-decls (->> facts
                         (map :relation)
@@ -372,10 +417,15 @@
                                 (str (souffle-rel-name relation)
                                      "(" (souffle-val object) ", "
                                      (souffle-val subject) ")."))))
+        attr-lines (for [[relation object subject attribute value] (attribute-rows facts)]
+                     (str attr-rel "(" (souffle-val relation) ", "
+                          (souffle-val object) ", " (souffle-val subject) ", "
+                          (souffle-val attribute) ", " (souffle-val value) ")."))
+        attr-decls [(str ".decl " attr-rel "(relation:symbol, object:symbol, subject:symbol, attribute:symbol, value:symbol)")]
         sections
         (cond-> []
-          (seq facts)
-          (conj (str/join "\n" (concat fact-decls [""] fact-lines)))
+          true
+          (conj (str/join "\n" (concat fact-decls attr-decls [""] fact-lines attr-lines)))
           (seq rules)
           (conj (rules->souffle rules))
           (seq queries)
@@ -430,7 +480,7 @@
 ;; TSV output parser
 ;; ---------------------------------------------------------------------------
 
-(defn- parse-souffle-stdout
+(defn parse-souffle-stdout
   "Parse Souffle -D- stdout into {relation-name -> [[row...]...]}.
 
   Format per relation:
@@ -442,8 +492,10 @@
     ===============          <- data end"
   [stdout]
   (let [lines (str/split-lines (or stdout ""))
-        dash-sep?  #(str/starts-with? % "---------------")
-        equal-sep? #(str/starts-with? % "===============")]
+        ;; Diagnostics underline source with a longer run of dashes. Only the
+        ;; exact section marker is a delimiter.
+        dash-sep?  #(= "---------------" (str/trim %))
+        equal-sep? #(= "===============" (str/trim %))]
     (loop [remaining lines
            state     :idle
            current-rel nil
@@ -479,7 +531,10 @@
               (recur rest* :data current-rel current-rows acc)
               :else
               (recur rest* :data current-rel
-                     (conj current-rows (str/split line #"\t" -1)) acc))))))))
+                     (conj current-rows
+                           (mapv #(.replace ^String % "\\\\" "\\")
+                                 (str/split line #"\t" -1)))
+                     acc))))))))
 
 ;; ---------------------------------------------------------------------------
 ;; Main entry point

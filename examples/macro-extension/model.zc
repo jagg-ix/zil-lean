@@ -1,3 +1,16 @@
 MODULE macro.extension.demo.
 
 USE SERVICE_EXTENSION(service:api, team:platform).
+
+// Raw spelling is part of macro identity. These names intentionally normalize
+// to the same legacy Lean `Name` while remaining distinct source identifiers.
+MACRO grant-platform(item-id):
+  EMIT marker#hyphen@{{item-id}}.
+ENDMACRO.
+
+MACRO grant_platform(item_id):
+  EMIT marker#underscore@{{item_id}}.
+ENDMACRO.
+
+USE grant-platform(doc:hyphen).
+USE grant_platform(doc:underscore).

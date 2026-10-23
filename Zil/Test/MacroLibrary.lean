@@ -5,6 +5,7 @@ open Zil
 private def extensionLibrary : Zil.Parser.MacroProgram.LibrarySource := {
   label := "lib/20-service-extension.zc"
   text :=
+    "MODULE macro.library.definitions.\n" ++
     "mAcRo SERVICE_EXTENSION(service, team):\n" ++
     "eMiT SERVICE {{service}} [env=prod, criticality=high].\n" ++
     "eMiT {{service}}#owner@{{team}}.\n" ++
@@ -37,6 +38,17 @@ private def modelSource : String :=
             !(Zil.Engine.solve closed query).isEmpty
       | _, _ => false
   | .error _ => false
+
+#guard match Zil.Parser.DeclarationProgram.parseTextWithLibraries
+    #[extensionLibrary] "model.zc" (modelSource ++ "MODULE duplicate.model.\n") with
+  | .ok _ => false
+  | .error _ => true
+
+#guard match Zil.Parser.DeclarationProgram.parseTextWithLibraries
+    #[{ extensionLibrary with text := extensionLibrary.text ++ "MODULE duplicate.library.\n" }]
+    "model.zc" modelSource with
+  | .ok _ => false
+  | .error _ => true
 
 #guard match Zil.Parser.MacroProgram.expandTextWithLibraries
     #[extensionLibrary] "model.zc" modelSource with

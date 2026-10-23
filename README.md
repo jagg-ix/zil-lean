@@ -621,6 +621,18 @@ ZIL Lean can support:
 - step-by-step explanations for inferred project relationships;
 - exchange of relation data with Datalog and Prolog tools.
 
+## Shared model substrate (macro library)
+
+`libsets/model-substrate` is an opt-in macro library that gives domain macros one shared vocabulary for structure (entities, associations, states, messages), intent (actors, use cases), scenarios (feature, case, given/when/then steps with explicit order) and the coverage links between them, plus coherence queries that list use cases without a scenario, scenarios without a use case, and `then` steps that realize nothing. It adds no relation kind or syntax; a model that does not load it is unchanged.
+
+```bash
+bin/zil expand examples/model-substrate/book-loan/model.zc - --lib libsets/model-substrate
+bin/zil query-ci examples/model-substrate/book-loan/model.zc loan_profile - --lib libsets/model-substrate
+scripts/test-model-substrate.sh
+```
+
+The contract is `spec/model-substrate-v0.1.md`; the targets and test inventory are `spec/model-substrate-targets-v0.md`. See `examples/model-substrate/README.md`.
+
 ## Existing `.zc` runtime
 
 The repository also contains the standalone ZIL syntax and Clojure/DataScript runtime. It supports `.zc` files, macros, import/export tools, embedded annotations, and adapters.
@@ -641,6 +653,7 @@ Zil/Trust/           proof-backed rules
 Zil/Exchange/        snapshots and deltas
 examples/lean/       progressive native examples
 examples/native-cli/ CLI snapshot example
+libsets/             opt-in macro libraries, selected with --lib (model-substrate, aws-model, ...)
 src/zil/             Clojure runtime and tools
 spec/                language and runtime specifications
 ```

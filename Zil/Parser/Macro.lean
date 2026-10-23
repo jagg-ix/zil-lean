@@ -9,6 +9,7 @@ structure ExpandedLine where
   number : Nat
   text : String
   stack : Array Name := #[]
+  rawStack : Array String := #[]
   deriving Repr, Inhabited
 
 /-- Result of collecting definitions and expanding source-level macro uses. -/
@@ -18,18 +19,37 @@ structure Preprocessed where
   lines : Array ExpandedLine := #[]
   deriving Repr, Inhabited
 
-private def stackSuffix (stack : Array Name) : String :=
-  if stack.isEmpty then ""
+private def stackSuffix (stack : Array Name) (rawStack : Array String := #[]) : String :=
+  if !rawStack.isEmpty then
+    " (macro stack: " ++ String.intercalate " -> " rawStack.toList ++ ")"
+  else if stack.isEmpty then ""
   else " (macro stack: " ++ String.intercalate " -> " (stack.toList.map toString) ++ ")"
+
+private def lineStackSuffix (line : ExpandedLine) : String :=
+  stackSuffix line.stack line.rawStack
 
 private def containsText (value needle : String) : Bool :=
   (value.splitOn needle).length > 1
 
-private def startsWithCI (value pre : String) : Bool :=
-  value.toLower.startsWith pre.toLower
-
 private def equalsCI (left right : String) : Bool :=
   left.toLower == right.toLower
+
+private def whitespace (char : Char) : Bool :=
+  let code := char.toNat
+  char == ' ' || (9 <= code && code <= 13)
+
+/-- Consume a control keyword followed by one or more whitespace characters.
+This matches the source grammar's `\\s+` separator while preserving the
+original token text that follows it. -/
+private def keywordRemainder? (value keyword : String) : Option String :=
+  let chars := value.toList
+  let headText := String.ofList (chars.take keyword.length)
+  if !equalsCI headText keyword then none
+  else
+    match chars.drop keyword.length with
+    | first :: rest =>
+        if whitespace first then (String.ofList rest).trimAscii.toString else none
+    | [] => none
 
 /-- Remove `//` comments outside quoted strings. Escaped quotes and `//` inside a
 string are preserved. This matches the lexical behavior of the Clojure parser. -/
@@ -139,39 +159,57 @@ private def parseNameAt (line : ExpandedLine) (value : String) : Except ParseErr
     sourceLine := line.text
   }
 
-private def parseHeader (line : ExpandedLine) : Except ParseError (Name × Array Name) := do
+private def parseHeader (line : ExpandedLine) : Except ParseError (String × Array String) := do
   let text := line.text.trim
-  unless startsWithCI text "MACRO " && text.endsWith ":" do
+  let some headerText := keywordRemainder? text "MACRO"
+    | throw {
+        line := line.number
+        message := "invalid MACRO header" ++ lineStackSuffix line
+        sourceLine := line.text
+      }
+  unless text.endsWith ":" do
     throw {
       line := line.number
-      message := "invalid MACRO header" ++ stackSuffix line.stack
+      message := "invalid MACRO header" ++ lineStackSuffix line
       sourceLine := line.text
     }
-  let body := (text.drop 6).dropRight 1 |>.trim.toString
+  let body := (headerText.dropEnd 1).trimAscii.toString
   let (nameText, tail) ← (splitFirstChar body '(').toExcept {
     line := line.number
-    message := "MACRO header requires a parameter list" ++ stackSuffix line.stack
+    message := "MACRO header requires a parameter list" ++ lineStackSuffix line
     sourceLine := line.text
   }
   unless tail.endsWith ")" do
     throw {
       line := line.number
-      message := "MACRO parameter list must end with ')'" ++ stackSuffix line.stack
+      message := "MACRO parameter list must end with ')'" ++ lineStackSuffix line
       sourceLine := line.text
     }
-  let name ← parseNameAt line nameText.trim
+  let name := nameText.trimAscii.toString
+  unless Zil.MacroIdent.validName name do
+    throw {
+      line := line.number
+      message := s!"invalid macro identifier {name}" ++ lineStackSuffix line
+      sourceLine := line.text
+    }
   let rawParams ← (splitTopLevelComma (tail.dropRight 1)).mapError fun message => {
     line := line.number
-    message := message ++ stackSuffix line.stack
+    message := message ++ lineStackSuffix line
     sourceLine := line.text
   }
-  let mut params : Array Name := #[]
+  let mut params : Array String := #[]
   for raw in rawParams do
-    let param ← parseNameAt line raw
+    let param := raw.trimAscii.toString
+    unless Zil.MacroIdent.validParameter param do
+      throw {
+        line := line.number
+        message := s!"invalid macro parameter {param}" ++ lineStackSuffix line
+        sourceLine := line.text
+      }
     if params.contains param then
       throw {
         line := line.number
-        message := s!"duplicate macro parameter {param}" ++ stackSuffix line.stack
+        message := s!"duplicate macro parameter {param}" ++ lineStackSuffix line
         sourceLine := line.text
       }
     params := params.push param
@@ -193,8 +231,7 @@ private partial def collectBody
   if equalsCI text "ENDMACRO." then
     if emitted.isEmpty then failAt header "macro definition must emit at least one statement"
     else pure (index + 1, emitted)
-  else if startsWithCI text "EMIT " then
-    let statement := text.drop 5 |>.trim.toString
+  else if let some statement := keywordRemainder? text "EMIT" then
     if statement.isEmpty then failAt line "EMIT requires a source statement"
     else collectBody lines (index + 1) header (emitted.push statement)
   else
@@ -208,56 +245,70 @@ private partial def collectDefinitions
   if index >= lines.size then return (definitions, payload)
   let line := lines[index]!
   let text := line.text.trim
-  if startsWithCI text "MACRO " then
-    let (name, parameters) ← parseHeader line
-    if definitions.any (fun definition => definition.name == name) then
+  if (keywordRemainder? text "MACRO").isSome then
+    let (rawName, rawParameters) ← parseHeader line
+    if definitions.any (fun definition => Zil.MacroDef.sourceName definition == rawName) then
       throw {
         line := line.number
-        message := s!"duplicate macro definition {name}"
+        message := s!"duplicate macro definition {rawName}"
         sourceLine := line.text
       }
     let (nextIndex, emit) ← collectBody lines (index + 1) line #[]
+    let name ← parseNameAt line rawName
+    let mut parameters : Array Name := #[]
+    for rawParameter in rawParameters do
+      parameters := parameters.push (← parseNameAt line rawParameter)
     let definition : Zil.MacroDef := {
       name, parameters, emit
+      rawName := { raw := rawName }
+      rawParameters := rawParameters.map fun parameter => { raw := parameter }
       source := { frontend := "zc", line := some line.number }
     }
     unless definition.valid do
       throw {
         line := line.number
-        message := s!"invalid macro definition {name}"
+        message := s!"invalid macro definition {rawName}"
         sourceLine := line.text
       }
     collectDefinitions lines nextIndex (definitions.push definition) payload
-  else if equalsCI text "ENDMACRO." || startsWithCI text "EMIT " then
+  else if equalsCI text "ENDMACRO." || (keywordRemainder? text "EMIT").isSome then
     failAt line "macro body statement appears outside a MACRO definition"
   else
     collectDefinitions lines (index + 1) definitions (payload.push line)
 
-private def parseUse? (line : ExpandedLine) : Except ParseError (Option (Name × Array String)) := do
+private def parseUse? (line : ExpandedLine) : Except ParseError (Option (String × Array String)) := do
   let text := line.text.trim
-  if !startsWithCI text "USE " then return none
+  let useText ← match keywordRemainder? text "USE" with
+    | some value => pure value
+    | none => return none
   unless text.endsWith "." do
     throw {
       line := line.number
-      message := "USE statement must end with '.'" ++ stackSuffix line.stack
+      message := "USE statement must end with '.'" ++ lineStackSuffix line
       sourceLine := line.text
     }
-  let body := (text.drop 4).dropRight 1 |>.trim.toString
+  let body := (useText.dropEnd 1).trimAscii.toString
   let (nameText, tail) ← (splitFirstChar body '(').toExcept {
     line := line.number
-    message := "USE requires an argument list" ++ stackSuffix line.stack
+    message := "USE requires an argument list" ++ lineStackSuffix line
     sourceLine := line.text
   }
   unless tail.endsWith ")" do
     throw {
       line := line.number
-      message := "USE argument list must end with ')'" ++ stackSuffix line.stack
+      message := "USE argument list must end with ')'" ++ lineStackSuffix line
       sourceLine := line.text
     }
-  let name ← parseNameAt line nameText.trim
+  let name := nameText.trimAscii.toString
+  unless Zil.MacroIdent.validName name do
+    throw {
+      line := line.number
+      message := s!"invalid macro identifier {name}" ++ lineStackSuffix line
+      sourceLine := line.text
+    }
   let args ← (splitTopLevelComma (tail.dropRight 1)).mapError fun message => {
     line := line.number
-    message := message ++ stackSuffix line.stack
+    message := message ++ lineStackSuffix line
     sourceLine := line.text
   }
   pure (some (name, args))
@@ -269,19 +320,20 @@ private def instantiate
   unless arguments.size == definition.parameters.size do
     throw {
       line := line.number
-      message := s!"macro {definition.name} expects {definition.parameters.size} arguments, got {arguments.size}" ++
-        stackSuffix line.stack
+      message := s!"macro {Zil.MacroDef.sourceName definition} expects {definition.parameters.size} arguments, got {arguments.size}" ++
+        lineStackSuffix line
       sourceLine := line.text
     }
-  let bindings := Array.zip definition.parameters arguments
+  let bindings := Array.zip (Zil.MacroDef.sourceParameters definition) arguments
   let instantiated := definition.emit.map fun statement =>
     bindings.foldl (init := statement) fun current binding =>
-      current.replace ("{{" ++ toString binding.1 ++ "}}") binding.2
+      current.replace ("{{" ++ binding.1 ++ "}}") binding.2
   for statement in instantiated do
     if containsText statement "{{" || containsText statement "}}" then
       throw {
         line := line.number
-        message := s!"macro {definition.name} emitted an unresolved placeholder" ++ stackSuffix line.stack
+        message := s!"macro {Zil.MacroDef.sourceName definition} emitted an unresolved placeholder" ++
+          lineStackSuffix line
         sourceLine := statement
       }
   pure instantiated
@@ -292,33 +344,35 @@ private partial def expandLine
     (fuel : Nat) : Except ParseError (Array ExpandedLine × Array Zil.MacroExpansion × Nat) := do
   match ← parseUse? line with
   | none => pure (#[line], #[], fuel)
-  | some (name, arguments) =>
+  | some (rawName, arguments) =>
       if fuel == 0 then failAt line "macro expansion limit exceeded"
-      let definition ← (definitions.find? fun candidate => candidate.name == name).toExcept {
+      let definition ← (definitions.find? fun candidate => Zil.MacroDef.sourceName candidate == rawName).toExcept {
         line := line.number
-        message := s!"unknown macro {name}" ++ stackSuffix line.stack
+        message := s!"unknown macro {rawName}" ++ lineStackSuffix line
         sourceLine := line.text
       }
-      if line.stack.contains name then
+      if line.rawStack.contains rawName then
         throw {
           line := line.number
-          message := s!"recursive macro cycle at {name}" ++ stackSuffix line.stack
+          message := s!"recursive macro cycle at {rawName}" ++ lineStackSuffix line
           sourceLine := line.text
         }
       let emitted ← instantiate line definition arguments
-      let stack := line.stack.push name
+      let stack := line.stack.push definition.name
       let record : Zil.MacroExpansion := {
-        macroName := name
+        macroName := definition.name
         arguments
         emitted
         stack
+        rawName
         source := { frontend := "zc", line := some line.number }
       }
       let mut output : Array ExpandedLine := #[]
       let mut records : Array Zil.MacroExpansion := #[record]
       let mut remaining := fuel - 1
       for statement in emitted do
-        let child : ExpandedLine := { number := line.number, text := statement, stack }
+        let rawStack := line.rawStack.push rawName
+        let child : ExpandedLine := { number := line.number, text := statement, stack, rawStack }
         let (childLines, childRecords, nextFuel) ← expandLine definitions child remaining
         output := output ++ childLines
         records := records ++ childRecords

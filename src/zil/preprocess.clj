@@ -20,6 +20,13 @@
        (when-not (str/ends-with? text "\n") "\n")
        "// ---- end " label " ----\n"))
 
+(defn- strip-library-module [text]
+  ;; A library MODULE names its standalone source. In a composed compilation
+  ;; unit, the model's MODULE is authoritative and must be the only one kept.
+  (->> (str/split-lines text)
+       (remove #(re-find #"(?i)^\s*MODULE\s+" %))
+       (str/join "\n")))
+
 (defn resolve-lib-dir
   "Resolve lib dir.
   Priority:
@@ -62,7 +69,7 @@
                          (map (fn [^java.io.File f]
                                 (render-block
                                  (str "lib/" (.getName f))
-                                 (slurp f))))
+                                 (strip-library-module (slurp f)))))
                          (str/join "\n"))
           model-text (render-block (.getName mf) (slurp mf))
           text (if (str/blank? libs-text)

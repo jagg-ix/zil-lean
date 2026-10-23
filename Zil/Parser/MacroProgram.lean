@@ -15,14 +15,32 @@ private def renderBlock (label text : String) : String :=
   text ++ (if text.endsWith "\n" then "" else "\n") ++
   "// ---- end " ++ label ++ " ----\n"
 
+private def libraryBody (text : String) : String := Id.run do
+  -- A library contributes macros and declarations to the model's module; its
+  -- own MODULE header must not become a second header in the compiled unit.
+  -- Suppress only its first valid header: a duplicate remains a parse error.
+  -- Keep the empty line so diagnostics retain their source-line offsets.
+  let mut seenHeader := false
+  let mut lines := []
+  for line in text.splitOn "\n" do
+    let trimmed := line.trimAscii.toString
+    if !seenHeader && trimmed.startsWith "MODULE " && trimmed.endsWith "." then
+      lines := "" :: lines
+      seenHeader := true
+    else
+      lines := line :: lines
+  return String.intercalate "\n" lines.reverse
+
 /-- Compose ordered extension libraries before one model source. This mirrors
 `zil.preprocess/preprocess-model`: callers provide deterministically sorted,
-non-recursive `lib/*.zc` sources and the model is appended last. -/
+non-recursive `lib/*.zc` sources and the model is appended last. Library MODULE
+headers identify standalone files and are omitted from the composed unit; the
+model's MODULE remains authoritative. -/
 def composeLibraries
     (libraries : Array LibrarySource)
     (modelLabel modelText : String) : String :=
   let libraryText := String.intercalate "\n" <|
-    libraries.toList.map fun source => renderBlock source.label source.text
+    libraries.toList.map fun source => renderBlock source.label (libraryBody source.text)
   let modelBlock := renderBlock modelLabel modelText
   if libraryText.isEmpty then modelBlock else libraryText ++ "\n" ++ modelBlock
 

@@ -118,7 +118,7 @@ private def renderDeclaration (index : Nat) (declaration : Declaration) : String
 
 /-- Render declarations beside the ordinary generated tuple/rule/query module. -/
 def renderLeanModule (program : Zil.Program) (namespaceName : Name) : Except String String := do
-  let base ← Zil.Parser.Program.renderLeanModule program namespaceName
+  let renderedBase ← Zil.Parser.Program.renderLeanModule program namespaceName
   let mut definitions : Array String := #[]
   let mut names : Array String := #[]
   let mut registrations : Array String := #[]
@@ -141,6 +141,12 @@ def renderLeanModule (program : Zil.Program) (namespaceName : Name) : Except Str
       "  declarations := sourceDeclarations\n" ++
       "}\n\n" ++
       s!"end {namespaceName}\n"
+  -- The declarations above are checked and registered with commands that live in Zil.Syntax.Declaration, which the base module does not import.
+  let base :=
+    if definitions.isEmpty then renderedBase
+    else renderedBase.replace
+      "import Zil.Syntax.Environment"
+      "import Zil.Syntax.Environment\nimport Zil.Syntax.Declaration"
   pure (base ++ extension)
 
 /-- Namespace derived from the source module. -/

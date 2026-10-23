@@ -149,6 +149,18 @@
     (is (= (.getCanonicalPath library-file)
            (source-path (first @calls))))))
 
+(deftest libset-sources-are-not-composed-with-unrelated-default-library-test
+  (let [workspace (temp-dir)
+        root (io/file workspace "project")
+        _ (write! root "lib/aws-model.zc"
+                  "MACRO shared(value):\nEMIT a#b@{{value}}.\nENDMACRO.\n")
+        source (write! root "libsets/aws-model/macros.zc"
+                       "MODULE aws.model.lib.\nMACRO shared(value):\nEMIT x#y@{{value}}.\nENDMACRO.\n")
+        prepared (zil.port.native-macro/prepare-source (.getPath source) {})]
+    (is (false? (:composed prepared)))
+    (is (= [] (:lib_files prepared)))
+    (is (str/includes? (:text prepared) "MODULE aws.model.lib."))))
+
 (deftest check-only-does-not-write-generated-module-test
   (let [workspace (temp-dir)
         root (io/file workspace "libsets")

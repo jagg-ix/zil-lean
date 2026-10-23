@@ -1,0 +1,12 @@
+MODULE tlm.only.
+
+// Uses only the existing transaction-level modeling macros. Its expansion must not change when the
+// model substrate is loaded beside lib/tlm-macros.zc.
+
+USE TLM_COMPONENT(cpu0, initiator).
+USE TLM_COMPONENT(mem0, target).
+USE TLM_TIMING_PROFILE(fast, approximately_timed, 10).
+USE TLM_LINK(bus0, cpu0, mem0, fast).
+USE TLM_TRANSACTION(tx1, read, addr_10, none, 4, 1, approximately_timed).
+USE TLM_SEND(tx1, cpu0, bus0).
+USE TLM_ACCEPT(tx1, mem0).
