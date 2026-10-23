@@ -18,9 +18,17 @@ echo "[info] running aws+namespace scoped-compat smoke..."
 
 PRE="${TMP_DIR}/aws_ns.pre.zc"
 OUT="${TMP_DIR}/aws_ns.out"
+LEAN_OUT="${TMP_DIR}/aws_ns.lean"
 
-"${ZIL_BIN}" preprocess "${MODEL}" "${PRE}" "${LIBSET_DIR}" >/dev/null
-"${ZIL_BIN}" "${PRE}" > "${OUT}"
+"${ZIL_BIN}" macro-parity "${MODEL}" --lib "${LIBSET_DIR}" > "${TMP_DIR}/macro-parity.edn"
+rg -Fq ':exact true' "${TMP_DIR}/macro-parity.edn" || fail "native macro expansion differs from Clojure compatibility expansion"
+"${ZIL_BIN}" macro-compile "${MODEL}" --lib "${LIBSET_DIR}" --output "${LEAN_OUT}" >/dev/null
+(cd "${ROOT_DIR}" && lake env lean "${LEAN_OUT}")
+
+# Preserve the historical runtime query smoke, but invoke it explicitly through
+# the legacy adapter; the native CLI accepts command names, not source paths.
+"${ZIL_BIN}" --legacy preprocess "${MODEL}" "${PRE}" "${LIBSET_DIR}" >/dev/null
+"${ZIL_BIN}" --legacy "${PRE}" > "${OUT}"
 
 rg -Fq '"aws_ns_scoped_missing_services"' "${OUT}" || fail "missing aws_ns_scoped_missing_services query output"
 rg -Fq '"aws_ns_scoped_missing_regions"' "${OUT}" || fail "missing aws_ns_scoped_missing_regions query output"

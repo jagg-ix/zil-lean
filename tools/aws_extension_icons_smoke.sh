@@ -31,6 +31,16 @@ python3 "${ROOT_DIR}/tools/index_aws_icon_package.py" >/dev/null
 COMBINED_ZC="${TMP_DIR}/aws_extension_icons_combined.zc"
 PRE_ZC="${TMP_DIR}/aws_extension_icons_combined.pre.zc"
 OUT_TXT="${TMP_DIR}/aws_extension_icons_combined.out"
+LEAN_OUT="${TMP_DIR}/aws_model_extension_icons.lean"
+
+# Qualify the existing source extension on the native Lean macro path. Keep
+# the generated full-catalog query smoke below on the explicit legacy runtime
+# until that query evaluator is ported to Lean.
+"${ZIL_BIN}" macro-parity "${DEMO_ZC}" --lib "${ROOT_DIR}/libsets/aws-model" > "${TMP_DIR}/macro-parity.edn"
+rg -Fq ':exact true' "${TMP_DIR}/macro-parity.edn" || fail "native AWS macro expansion differs from compatibility expansion"
+"${ZIL_BIN}" macro-compile "${DEMO_ZC}" --lib "${ROOT_DIR}/libsets/aws-model" --output "${LEAN_OUT}" >/dev/null
+(cd "${ROOT_DIR}" && lake env lean "${LEAN_OUT}")
+
 if [[ "${MODE}" == "full" ]]; then
   cat "${BASE_ZC}" "${ICON_CATALOG_ZC}" "${ICON_LINKS_ZC}" "${DEMO_ZC}" > "${COMBINED_ZC}"
 else
@@ -38,8 +48,8 @@ else
   cat "${BASE_ZC}" "${ICON_LINKS_ZC}" "${DEMO_ZC}" > "${COMBINED_ZC}"
 fi
 
-"${ZIL_BIN}" preprocess "${COMBINED_ZC}" "${PRE_ZC}" "${ROOT_DIR}/libsets/aws-model" >/dev/null
-"${ZIL_BIN}" "${PRE_ZC}" > "${OUT_TXT}"
+"${ZIL_BIN}" --legacy preprocess "${COMBINED_ZC}" "${PRE_ZC}" "${ROOT_DIR}/libsets/aws-model" >/dev/null
+"${ZIL_BIN}" --legacy "${PRE_ZC}" > "${OUT_TXT}"
 
 rg -Fq "\"aws_compat_ready_models\"" "${OUT_TXT}" || fail "missing aws_compat_ready_models query output"
 rg -Fq "aws:model:prod_extension" "${OUT_TXT}" || fail "expected prod_extension ready model"

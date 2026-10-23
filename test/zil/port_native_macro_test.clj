@@ -17,12 +17,14 @@
     file))
 
 (def library-a
-  (str "mAcRo grant(object, subject): // mixed-case control\n"
+  (str "MODULE library.grants.\n"
+       "mAcRo grant(object, subject): // mixed-case control\n"
        "eMiT {{object}}#viewer@{{subject}}. // extension fact\n"
        "eNdMaCrO.\n"))
 
 (def library-b
-  (str "MACRO grant_platform(object):\n"
+  (str "MODULE library.wrappers.\n"
+       "MACRO grant_platform(object):\n"
        "EMIT USE grant({{object}}, team:platform).\n"
        "ENDMACRO.\n"))
 
@@ -64,6 +66,13 @@
              (.indexOf upper "MACRO GRANT_PLATFORM("))))
     (is (< (.indexOf (:text composition) "MACRO grant_platform")
            (.indexOf (:text composition) "MODULE macro.parity")))))
+
+(deftest imported-library-module-metadata-is-not-composed-test
+  (let [{:keys [model]} (fixture)
+        composition (native-macro/compose-model (.getPath model) {})]
+    (is (not (str/includes? (:text composition) "MODULE library.grants.")))
+    (is (not (str/includes? (:text composition) "MODULE library.wrappers.")))
+    (is (str/includes? (:text composition) "MODULE macro.parity."))))
 
 (deftest explicit-library-directory-overrides-nearest-test
   (let [{:keys [root model]} (fixture)

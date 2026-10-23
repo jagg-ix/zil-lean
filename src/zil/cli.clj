@@ -10,6 +10,7 @@
             [zil.bridge.snapshot :as bsnap]
             [zil.bridge.workflow-lean :as workflow]
             [zil.bridge.souffle :as bs]
+            [zil.bridge.souffle-ci :as bsci]
             [zil.bridge.tla :as bt]
             [zil.bridge.theorem :as bth]
             [zil.bridge.theorem-ci :as btci]
@@ -668,7 +669,9 @@
           (System/exit 2))
         (try
           (let [remaining (rest cmd-args)
-                flag-pairs (partition-all 2 (filter #(str/starts-with? % "--") remaining))
+                flag-pairs (filter #(and (= 2 (count %))
+                                         (str/starts-with? (first %) "--"))
+                                   (partition-all 2 remaining))
                 flags (into {} (for [[k v] flag-pairs] [(str/replace k "--" "") v]))
                 souffle-bin (get flags "bin" "souffle")
                 parallel (Integer/parseInt (get flags "j" "1"))
@@ -680,6 +683,34 @@
                           (:queries compiled))
                 result (bs/execute-with-souffle (assoc compiled :queries queries) souffle-opts)]
             (pp/pprint (dissoc result :dl :stdout)))
+          (catch clojure.lang.ExceptionInfo e
+            (binding [*out* *err*]
+              (println (.getMessage e))
+              (pp/pprint (ex-data e)))
+            (System/exit 2))))
+
+      (= cmd "souffle-parity")
+      (do
+        (when-not arg
+          (binding [*out* *err*]
+            (println "Missing model path for souffle-parity"))
+          (System/exit 2))
+        (try
+          (let [remaining (rest cmd-args)
+                flag-pairs (filter #(and (= 2 (count %))
+                                         (str/starts-with? (first %) "--"))
+                                   (partition-all 2 remaining))
+                flags (into {} (for [[k v] flag-pairs] [(str/replace k "--" "") v]))
+                souffle-bin (get flags "bin" "souffle")
+                parallel (Integer/parseInt (get flags "j" "1"))
+                compiled (core/compile-file arg)
+                report (bsci/execute-parity compiled
+                                            {:souffle-bin souffle-bin :parallel parallel})]
+            (if (:ok report)
+              (println (str "Souffle agrees with ZIL on " (:query_count report) " query row sets"))
+              (do
+                (pp/pprint report)
+                (System/exit 1))))
           (catch clojure.lang.ExceptionInfo e
             (binding [*out* *err*]
               (println (.getMessage e))

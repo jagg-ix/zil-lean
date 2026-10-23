@@ -23,6 +23,10 @@
 (defn- path-string [^Path path]
   (str/replace (.toString path) "\\" "/"))
 
+(defn- inside-libsets? [^java.io.File source]
+  (some #(= "libsets" (.getName ^java.io.File %))
+        (take-while some? (iterate #(.getParentFile ^java.io.File %) source))))
+
 (defn- sha256 [text]
   (let [digest (.digest (MessageDigest/getInstance "SHA-256")
                         (.getBytes (str text) StandardCharsets/UTF_8))]
@@ -74,7 +78,7 @@
         direct-library-member?
         (and resolved-file
              (= resolved-file (.getCanonicalFile (.getParentFile source-file))))]
-    (if (or (nil? resolved-file) direct-library-member?)
+    (if (or (nil? resolved-file) direct-library-member? (inside-libsets? source-file))
       (raw-source source-file resolved-file)
       (let [composition (compose-model source-path options)]
         (if (seq (:lib_files composition))

@@ -35,6 +35,11 @@
       (finally
         (Files/deleteIfExists path)))))
 
+(deftest default-worker-command-passes-stdio-flag-directly-to-lake
+  ;; Lake consumes the executable selection itself; an extra `--` is forwarded
+  ;; to zilWorker and makes it reject the following --stdio option.
+  (is (= ["lake" "exe" "zilWorker" "--stdio"] client/default-command)))
+
 (deftest operations-fail-closed
   (let [base (protocol/canonical-request
               {:request-id "request:test"

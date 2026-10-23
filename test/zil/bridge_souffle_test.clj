@@ -1,7 +1,8 @@
 (ns zil.bridge-souffle-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
-            [zil.bridge.souffle :as bs]))
+            [zil.bridge.souffle :as bs]
+            [zil.core :as core]))
 
 ;; ---------------------------------------------------------------------------
 ;; Unit tests — no Souffle binary required
@@ -34,6 +35,25 @@
         text (bs/rules->souffle rules)]
     (testing "negated literal becomes !rel(...)"
       (is (str/includes? text "!zil_flag(X, \"value:ok\")")))))
+
+(deftest attributed-literal-lowering-test
+  (let [queries [{:name "clock_components"
+                  :find ["?EVENT" "?ACTOR" "?COUNTER"]
+                  :where [{:object "?EVENT" :relation :vc_component :subject "?ACTOR"
+                           :attrs {:counter "?COUNTER"}}]}]
+        text (first (bs/queries->souffle queries #{}))]
+    (is (str/includes? text "zil_vc_component(EVENT, ACTOR)"))
+    (is (str/includes? text
+                       "zillang_attribute(\"zil_vc_component\", EVENT, ACTOR, \"counter\", COUNTER)"))))
+
+(deftest attributed-negation-refuses-lossy-lowering-test
+  (let [compiled {:facts [] :rules []
+                  :queries [{:name "missing_clock" :find ["?EVENT"]
+                             :where [{:object "?EVENT" :relation :vc_component :subject "?ACTOR"
+                                      :attrs {:counter "?COUNTER"} :neg? true}]}]}]
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"negated ZIL tuple attributes"
+                          (bs/emit-souffle-schema compiled)))))
 
 (deftest queries->souffle-test
   (let [derived-rels #{:member_of}
@@ -91,10 +111,13 @@
 (deftest write-facts-dir-test
   (let [facts [{:object "a:1" :relation :rel1 :subject "value:x" :attrs {}}
                {:object "a:2" :relation :rel1 :subject "value:y" :attrs {}}
-               {:object "b:1" :relation :rel2 :subject "value:z" :attrs {}}]
+               {:object "b:1" :relation :rel2 :subject "value:z" :attrs {}}
+               {:object "event:sign" :relation :vc_component :subject "actor:page"
+                :attrs {:counter "counter:1"}}]
         dir (bs/write-facts-dir! facts)
         rel1-file (java.io.File. dir "zil_rel1.facts")
-        rel2-file (java.io.File. dir "zil_rel2.facts")]
+        rel2-file (java.io.File. dir "zil_rel2.facts")
+        attrs-file (java.io.File. dir "zillang_attribute_input.facts")]
     (testing "fact files created"
       (is (.exists rel1-file))
       (is (.exists rel2-file)))
@@ -107,6 +130,9 @@
       (let [lines (str/split-lines (slurp rel2-file))]
         (is (= 1 (count lines)))
         (is (= "b:1\tvalue:z" (first lines)))))
+    (testing "named attributes survive as normalized five-column rows"
+      (is (= ["zil_vc_component\tevent:sign\tactor:page\tcounter\tcounter:1"]
+             (str/split-lines (slurp attrs-file)))))
     ;; cleanup
     (doseq [f (.listFiles (java.io.File. dir))] (.delete f))
     (.delete (java.io.File. dir))))
@@ -120,6 +146,18 @@
         text (bs/emit-souffle-schema compiled)]
     (is (str/includes? text ".decl q1(P:symbol, G:symbol)"))
     (is (str/includes? text ".decl q2(X:symbol)"))))
+
+(deftest parse-souffle-output-ignores-compiler-underline-test
+  (let [output (str "Warning: generated.dl at line 53\n"
+                    "  derived(X) :- source(X).\n"
+                    "---------------------^------------\n"
+                    "---------------\n"
+                    "reachable\nX\tY\n"
+                    "===============\n"
+                    "a\tb\n"
+                    "===============\n")]
+    (is (= {"reachable" [["a" "b"]]}
+           (bs/parse-souffle-stdout output)))))
 
 ;; ---------------------------------------------------------------------------
 ;; Integration test — only runs when Souffle is on PATH
@@ -148,3 +186,23 @@
         (is (some #(= ["p:1" "g:1"] %) rows))
         (is (some #(= ["p:3" "g:1"] %) rows))
         (is (some #(= ["p:2" "g:2"] %) rows))))))
+
+(deftest souffle-attributed-vector-clock-integration-test
+  (if-not (bs/souffle-available?)
+    (println "  [skip] souffle binary not found — skipping attributed tuple integration test")
+    (let [source (str "MODULE vector_clock.\n"
+                      "event:sign#vc_component@actor:page [counter=c1].\n"
+                      "event:sign#vc_component@actor:service [counter=c0].\n"
+                      "event:click#vc_component@actor:page [counter=c2].\n"
+                      "c0#lt@c1.\n"
+                      "c1#lt@c2.\n\n"
+                      "QUERY page_order:\n"
+                      "FIND ?EARLIER ?LATER WHERE ?EARLIER#vc_component@actor:page [counter=?LOW] AND "
+                      "?LATER#vc_component@actor:page [counter=?HIGH] AND ?LOW#lt@?HIGH.\n")
+          compiled (core/compile-program source)
+          direct (set (get-in (core/execute-compiled compiled)
+                              [:queries "page_order" :rows]))
+          souffle (set (get-in (bs/execute-with-souffle compiled {})
+                               [:query-results "page_order" :rows]))]
+      (is (= #{["event:sign" "event:click"]} direct))
+      (is (= direct souffle)))))
