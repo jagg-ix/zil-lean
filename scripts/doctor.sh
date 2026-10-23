@@ -96,6 +96,9 @@ check_file() {
 check_lean() {
   check_command git yes git --version
   check_command curl yes curl --version
+  # not needed to build or to run the smoke profile; the lean profile's gates use them
+  check_command python3 no python3 --version
+  check_command sqlite3 no sqlite3 --version
   check_command elan yes elan --version
   check_command lean yes lean --version
   check_command lake yes lake --version

@@ -206,6 +206,22 @@ run_lean_suite() {
     scripts/test-model-substrate.sh --skip-build
   run_step corpus 'every source compiles or fails as recorded' 0 \
     scripts/check-corpus.sh --skip-build
+  run_step lean-tools 'build the command-line tools' 0 \
+    lake build zil zilWorker zilControl zilRelease zilEvaluate zilPlugin zilInterop zilEmbedded zilIngest
+  run_step control-plane 'control events, receipts, the SQLite store and worker supervision' 0 \
+    scripts/test-control-plane.sh --skip-build
+  run_step release-attestation 'release attestation against the earlier implementation' 0 \
+    scripts/test-release-attestation.sh --skip-build
+  run_step runtime-evaluation 'placement evaluation against the earlier implementation' 0 \
+    scripts/test-evaluation.sh --skip-build
+  run_step plugins 'extension registry, reference extensions and refusals' 0 \
+    scripts/test-plugins.sh --skip-build
+  run_step interop 'HCL import and TLA+/Lean export against the earlier implementation' 0 \
+    scripts/test-interop.sh --skip-build
+  run_step embedded-blocks 'embedded ZIL blocks against the earlier implementation' 0 \
+    scripts/test-embedded.sh --skip-build
+  run_step datasource-ingest 'datasource ingest and data conversion against the earlier implementation' 0 \
+    scripts/test-ingest.sh --skip-build
   run_step worker-parse 'parse through the native exchange worker' 0 \
     bash -c 'bin/zil worker --once < examples/exchange/parse-request.json | grep -q "\"status\":\"ok\""'
   run_step no-clojure 'no Clojure source, tool or call anywhere' 0 \

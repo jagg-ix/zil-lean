@@ -605,6 +605,23 @@ Facts and rules can be exported to Soufflé Datalog or Prolog:
 
 These interfaces let external analysis tools and assistants consume the same relational state used by the Lean implementation.
 
+### Operations and exchange tools
+
+Each is a Lean executable behind `bin/zil`; every one has a specification and a test gate that does not need Clojure.
+
+| Command | What it does | Specification | Gate |
+|---|---|---|---|
+| `control` | formal control plane: exchange with the worker, hash-chained control events and receipts in SQLite | `spec/control-event-store-v1.md`, `spec/exchange-protocol-v1.md` | `scripts/test-control-plane.sh` |
+| `plugin` | extension registry for `ZIL-EXTENSION/1` manifests, with quarantine and an external-command adapter | `spec/extension-manifest-v1.md` | `scripts/test-plugins.sh` |
+| `evaluate-runtime` | scores where a component is best implemented, with exact arithmetic | `spec/runtime-evaluation-v1.md` | `scripts/test-evaluation.sh` |
+| `release-attest` | binds a release request to its evidence | `spec/release-attestation-v1.md` | `scripts/test-release-attestation.sh` |
+| `import-hcl`, `export-tla`, `export-lean` | Terraform/OpenTofu to ZIL; `LTS_ATOM` to TLA+ and to Lean | `spec/interop-v1.md` | `scripts/test-interop.sh` |
+| `embedded-scan`, `embedded-snapshot`, `embedded-drift-check`, `embedded-native` | ZIL blocks written in comments of Lean, Python, Clojure, Rust and Markdown sources | `spec/embedded-blocks-v1.md` | `scripts/test-embedded.sh` |
+| `ingest`, `import-data`, `convert-data` | `DATASOURCE` declarations to facts, causal edges and a revision log; data files to and from JSON, EDN, text, CSV, a YAML subset and key=value | `spec/datasource-ingest-v1.md` | `scripts/test-ingest.sh` |
+
+Their expected outputs were written by the earlier implementation and are checked byte for byte or as data; the gates run
+the Lean tools alone. The control store needs `sqlite3`, the gates need `python3`, and the REST adapter needs `curl`.
+
 ## Use cases
 
 ZIL Lean can support:
@@ -635,7 +652,7 @@ The contract is `spec/model-substrate-v0.1.md`; the targets and test inventory a
 
 ## The `.zc` language
 
-ZIL is Lean. The `.zc` syntax (facts, rules, queries, macros, declarations, embedded annotations) is parsed, expanded, compiled and queried by the native Lean engine: `bin/zil compile`, `expand`, `query-ci`, `conformance` and the audits listed under *Native CLI*. There is no other runtime. An earlier Clojure/DataScript runtime, with its import and export tools, control plane and plugin loader, was removed; `spec/clojure-removal.md` says what it did and where each part went. `scripts/check-no-clojure.sh` keeps it removed.
+ZIL is Lean. The `.zc` syntax (facts, rules, queries, macros, declarations, embedded annotations) is parsed, expanded, compiled and queried by the native Lean engine: `bin/zil compile`, `expand`, `query-ci`, `conformance` and the audits listed under *Native CLI*. There is no other runtime and nothing here depends on Clojure. An earlier Clojure/DataScript runtime was removed; its control plane, plugin loader, release attestation, placement evaluation, embedded blocks, datasource ingest and HCL, TLA+ and LTS tools were rewritten in Lean (*Operations and exchange tools*), and `spec/clojure-removal.md` says where each part went. `scripts/check-no-clojure.sh` keeps Clojure out.
 
 ### Native macro extension qualification
 

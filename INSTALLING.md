@@ -399,7 +399,7 @@ bin/zil causal-check path/to/store.zilr
 
 ## 13. Removed commands
 
-The Clojure runtime and everything that ran on it was removed: `exchange`, `control`, `control-store`, `evaluate-runtime`, `plugin`, `library`, `conformance-suite`, `embedded-native`, `macro-compile`, `macro-expand`, `macro-parity`, `--legacy`, and the standalone JAR. Each prints what to use instead, and `spec/clojure-removal.md` lists them with the last commit that had them.
+The Clojure runtime was removed. Its control plane, plugin loader, release attestation, placement evaluation, embedded blocks, datasource ingest and HCL/TLA+/LTS tools are now Lean executables behind `bin/zil control`, `plugin`, `release-attest`, `evaluate-runtime`, `embedded-*`, `ingest`, `import-data`, `convert-data`, `import-hcl`, `export-tla` and `export-lean`. These stay removed and print what to use instead: `exchange` (use `control exchange`), `control-store` (use `control store`), `export-data`, `library`, `conformance-suite`, `macro-compile`, `macro-expand`, `macro-parity`, `--legacy`, and the standalone JAR. `spec/clojure-removal.md` lists them with the last commit that had them.
 
 ## 14. Exit behavior
 
