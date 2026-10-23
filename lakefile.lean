@@ -3,6 +3,8 @@ open Lake DSL
 
 package «zil-lean» where
   version := v!"0.1.0"
+  license := "Apache-2.0"
+  licenseFiles := #["LICENSE"]
 
 @[default_target] lean_lib Zil where
   roots := #[`Zil, `Zil.Native]
