@@ -5,7 +5,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 
-profile="full"
+profile="lean"
 report=""
 quiet=false
 
@@ -15,11 +15,8 @@ Usage: bash scripts/doctor.sh [--profile PROFILE] [--report FILE] [--quiet]
 
 Profiles:
   lean        Lean SDK and native commands
-  full        Lean + Java + official Clojure CLI
-  extensions  Java + official Clojure CLI
   container   Docker with Compose support
-  legacy      Java/JAR or Clojure legacy runtime
-  all         Full workbench plus Make and Docker
+  all         Lean workbench plus Make and Docker
 
 The report uses the deterministic tab-separated schema ZIL-DOCTOR/1.
 EOF
@@ -52,7 +49,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$profile" in
-  lean|full|extensions|container|legacy|all) ;;
+  lean|container|all) ;;
   *) zil_die "unknown doctor profile: $profile" ;;
 esac
 
@@ -108,19 +105,6 @@ check_lean() {
   fi
 }
 
-check_clojure() {
-  local detail
-  check_command java yes java --version
-  if ! zil_command_exists clojure; then
-    record tool clojure yes missing 'official Clojure CLI not found on PATH'
-  elif detail="$(clojure -Sdescribe 2>&1 | sed -n '1p')"; then
-    record tool clojure yes ok "tools.deps CLI: $detail"
-  else
-    record tool clojure yes invalid 'clojure exists but does not support -Sdescribe; install the official Clojure CLI'
-  fi
-  check_file deps.edn yes
-}
-
 check_docker() {
   local detail
   check_command docker yes docker --version
@@ -135,31 +119,10 @@ check_docker() {
   check_file compose.test.yml yes
 }
 
-check_legacy() {
-  local has_runtime=false
-  if zil_command_exists java && [[ -f "$ZIL_ROOT/dist/zil-standalone.jar" ]]; then
-    record runtime legacy-java no ok 'Java and dist/zil-standalone.jar are available'
-    has_runtime=true
-  else
-    record runtime legacy-java no unavailable 'standalone JAR path is not ready'
-  fi
-  if zil_command_exists clojure && clojure -Sdescribe >/dev/null 2>&1; then
-    record runtime legacy-clojure no ok 'official Clojure CLI is available'
-    has_runtime=true
-  else
-    record runtime legacy-clojure no unavailable 'official Clojure CLI is unavailable'
-  fi
-  if [[ "$has_runtime" == true ]]; then
-    record runtime legacy-any yes ok 'at least one legacy runtime is available'
-  else
-    record runtime legacy-any yes missing 'build the standalone JAR or install the official Clojure CLI'
-  fi
-}
-
 check_common_repository() {
   check_file lakefile.lean yes
   check_file bin/zil yes
-  check_file config/test-profiles.edn yes
+  check_file config/test-profiles.tsv yes
   check_file INSTALLING.md yes
   mkdir -p "$ZIL_ROOT/.zil" 2>/dev/null || true
   if [[ -d "$ZIL_ROOT/.zil" && -w "$ZIL_ROOT/.zil" ]]; then
@@ -181,25 +144,13 @@ case "$profile" in
   lean)
     check_lean
     ;;
-  full)
-    check_lean
-    check_clojure
-    ;;
-  extensions)
-    check_clojure
-    ;;
   container)
     check_docker
     ;;
-  legacy)
-    check_legacy
-    ;;
   all)
     check_lean
-    check_clojure
     check_command make yes make --version
     check_docker
-    check_legacy
     ;;
 esac
 

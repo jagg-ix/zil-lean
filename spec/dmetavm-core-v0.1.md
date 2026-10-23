@@ -136,6 +136,6 @@ A model conforms to D-MetaVM Core v0.1 when:
    lowered to equivalent facts).
 2. It encodes core + meta + distributed layers.
 3. It includes required LTS and POLICY declarations.
-4. It can be evaluated by ZIL runtime and exported to at least one formal
-   backend (`export-tla` or `export-lean`) without schema loss.
+4. It can be evaluated by the ZIL engine and compiled to Lean (`bin/zil compile`)
+   without schema loss.
 

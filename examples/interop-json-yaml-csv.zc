@@ -1,8 +1,8 @@
 MODULE interop.json_yaml_csv.demo.
 
 // Use with preprocess to load lib/interop-macros.zc:
-//   ./bin/zil preprocess examples/interop-json-yaml-csv.zc /tmp/interop.pre.zc
-//   ./bin/zil /tmp/interop.pre.zc
+//   bin/zil expand examples/interop-json-yaml-csv.zc -
+//   bin/zil query-ci examples/interop-json-yaml-csv.zc - -
 //
 // For runtime ingest:
 // - DATASOURCE declarations describe consume side.

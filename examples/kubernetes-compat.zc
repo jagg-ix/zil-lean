@@ -2,8 +2,8 @@ MODULE kubernetes.compat.demo.
 
 // Kubernetes-focused equivalent to examples/k8s-helm-compat.zc.
 // Run with:
-//   ./bin/zil-legacy preprocess examples/kubernetes-compat.zc /tmp/kubernetes_compat.pre.zc libsets/k8s-helm-compat
-//   ./bin/zil-legacy /tmp/kubernetes_compat.pre.zc
+//   bin/zil expand examples/kubernetes-compat.zc - --lib libsets/k8s-helm-compat
+//   bin/zil query-ci examples/kubernetes-compat.zc - - --lib libsets/k8s-helm-compat
 
 USE KHC_DOC(kubernetes_compat_demo, kubernetes, prod).
 USE KHC_COMPAT_PROFILE(profile_k8s_prod, true, 600).

@@ -12,9 +12,8 @@ usage() {
   cat <<'EOF'
 Usage: bash scripts/self-check.sh [--report FILE] [--quiet]
 
-Checks the installation, packaging, and test infrastructure without building Lean or
-running the Clojure test suite. Optional parsers are used when Clojure, PowerShell,
-Docker, or Make are available. If an optional parser is present, rejection is a
+Checks the installation, packaging, and test infrastructure without building Lean.
+Optional parsers are used when PowerShell, Docker, or Make are available. If an optional parser is present, rejection is a
 failure. The tracked-content privacy audit is always required.
 EOF
 }
@@ -61,7 +60,9 @@ record() {
 }
 
 required_files=(
-  config/test-profiles.edn
+  config/test-profiles.tsv
+  scripts/check-no-clojure.sh
+  scripts/check-corpus.sh
   scripts/lib/common.sh
   scripts/self-check.sh
   scripts/public-content-audit.sh
@@ -94,11 +95,11 @@ for path in "${required_files[@]}"; do
 done
 
 bash_files=(
-  bin/zil bin/zil-legacy bin/build-jar
+  bin/zil
   scripts/lib/common.sh scripts/public-content-audit.sh scripts/doctor.sh
   scripts/setup.sh scripts/test.sh scripts/self-check.sh scripts/package.sh
   scripts/install.sh scripts/verify-install.sh scripts/uninstall.sh
-  scripts/install-lifecycle-test.sh
+  scripts/install-lifecycle-test.sh scripts/check-no-clojure.sh scripts/check-corpus.sh
 )
 for path in "${bash_files[@]}"; do
   if bash -n "$path"; then
@@ -113,19 +114,6 @@ if bash scripts/public-content-audit.sh --quiet --report "$privacy_report"; then
   record public-content yes pass "$privacy_report"
 else
   record public-content yes fail "$privacy_report"
-fi
-
-if zil_command_exists clojure && clojure -Sdescribe >/dev/null 2>&1; then
-  if (cd "${TMPDIR:-/tmp}" && ZIL_ROOT="$ZIL_ROOT" \
-      clojure -Sdeps '{:deps {}}' -M -e \
-      '(require (quote clojure.edn)) (let [root (System/getenv "ZIL_ROOT")] (doseq [p ["config/test-profiles.edn" "port-gate.edn"]] (clojure.edn/read-string (slurp (str root "/" p)))))' \
-      >/dev/null 2>&1); then
-    record edn yes pass 'profile and port-gate EDN parsed'
-  else
-    record edn yes fail 'available Clojure EDN parser rejected a file'
-  fi
-else
-  record edn optional skip 'official Clojure CLI unavailable'
 fi
 
 powershell_command=""

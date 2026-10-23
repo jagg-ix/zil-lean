@@ -2,7 +2,7 @@ MODULE theorem.dsl.incident.demo.
 
 // Demonstrates optional high-level theorem DSL macros layered over canonical core.
 // Run with:
-//   ./bin/zil-legacy theorem-dsl-ci examples/theorem-dsl-incident.zc /tmp
+//   bin/zil expand examples/theorem-dsl-incident.zc - --lib libsets/theorem-dsl-ci
 
 // Baseline components/signals.
 USE THM_COMPONENT(control_plane, tier0).

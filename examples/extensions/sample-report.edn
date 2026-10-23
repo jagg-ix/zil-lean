@@ -1,3 +1,0 @@
-{:status :ok
- :components #{:worker :control-plane :extension-registry}
- :counts {:extensions 3 :operations 8}}

@@ -3,8 +3,7 @@ MODULE lean4.integration.knowledge.core.
 // Level 1 (simple): core facts + one rule, no macro library.
 // Lean4 path: native zil-lean snapshot module.
 //
-//   ./bin/zil-legacy export-snapshot examples/lean4-integration/knowledge-core.zc \
-//     /tmp/KnowledgeCore.snapshot.json /tmp/KnowledgeCore.lean Zil.Generated.KnowledgeCore
+//   bin/zil compile examples/lean4-integration/knowledge-core.zc /tmp/KnowledgeCore.lean Zil.Generated.KnowledgeCore
 //   lake env lean /tmp/KnowledgeCore.lean
 //
 // The generated module elaborates the facts and the rule inside Lean's kernel

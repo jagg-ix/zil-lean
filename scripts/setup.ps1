@@ -1,11 +1,11 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('lean', 'full', 'extensions', 'legacy')]
-  [string]$Profile = 'full',
+  [ValidateSet('lean')]
+  [string]$Profile = 'lean',
   [switch]$InstallTools,
   [switch]$NoBuild,
   [switch]$Test,
-  [ValidateSet('smoke', 'lean', 'clojure', 'hybrid', 'durable', 'all')]
+  [ValidateSet('smoke', 'lean', 'all')]
   [string]$TestProfile,
   [string]$Report = '.zil/setup-report-windows.tsv'
 )
@@ -42,7 +42,7 @@ if (-not (Test-Command 'elan') -and $InstallTools) {
   $env:Path = "$HOME\.elan\bin;$env:Path"
 }
 
-if ($Profile -in @('lean', 'full')) {
+if ($Profile -eq 'lean') {
   Require-Command 'git' 'Install Git for Windows.'
   Require-Command 'curl' 'Install curl or use a current Windows release.'
   Require-Command 'elan' 'Run this script with -InstallTools or install Elan manually.'
@@ -50,40 +50,9 @@ if ($Profile -in @('lean', 'full')) {
   Require-Command 'lake' 'Ensure $HOME\.elan\bin is on PATH.'
 }
 
-if ($Profile -in @('full', 'extensions', 'legacy')) {
-  Require-Command 'java' 'Install a supported Java LTS runtime.'
-  if (-not (Test-Command 'clojure')) {
-    throw 'The official Clojure CLI is required. Install clj-msi from the official Clojure installation guide, or use WSL 2.'
-  }
-  & clojure -Sdescribe *> $null
-  if ($LASTEXITCODE -ne 0) {
-    throw 'clojure exists but does not support -Sdescribe. Install the official tools.deps Clojure CLI.'
-  }
-}
-
 if (-not $NoBuild) {
-  switch ($Profile) {
-    'lean' {
-      & lake build
-      if ($LASTEXITCODE -ne 0) { throw 'lake build failed' }
-    }
-    'full' {
-      & clojure -Spath *> $null
-      if ($LASTEXITCODE -ne 0) { throw 'Clojure dependency resolution failed' }
-      & lake build
-      if ($LASTEXITCODE -ne 0) { throw 'lake build failed' }
-    }
-    'extensions' {
-      & clojure -Spath *> $null
-      if ($LASTEXITCODE -ne 0) { throw 'Clojure dependency resolution failed' }
-    }
-    'legacy' {
-      & clojure -Spath *> $null
-      if ($LASTEXITCODE -ne 0) { throw 'Clojure dependency resolution failed' }
-      & clojure -T:build uber
-      if ($LASTEXITCODE -ne 0) { throw 'standalone JAR build failed' }
-    }
-  }
+  & lake build
+  if ($LASTEXITCODE -ne 0) { throw 'lake build failed' }
 }
 
 $ReportPath = if ([System.IO.Path]::IsPathRooted($Report)) { $Report } else { Join-Path $Root $Report }
@@ -98,8 +67,6 @@ $Rows.Add("build`t$(-not $NoBuild)")
 if (Test-Command 'elan') { $Rows.Add("elan`t$(Get-FirstLine { elan --version })") }
 if (Test-Command 'lean') { $Rows.Add("lean`t$(Get-FirstLine { lean --version })") }
 if (Test-Command 'lake') { $Rows.Add("lake`t$(Get-FirstLine { lake --version })") }
-if (Test-Command 'java') { $Rows.Add("java`t$(Get-FirstLine { java --version })") }
-if (Test-Command 'clojure') { $Rows.Add('clojure-cli`tavailable') }
 $Rows.Add('result`tpass')
 [System.IO.File]::WriteAllLines($ReportPath, $Rows)
 
@@ -113,14 +80,7 @@ Write-Host "[zil] setup report: $ReportPath"
 Write-Host "[zil] environment file: $EnvPath"
 
 if ($Test) {
-  if (-not $TestProfile) {
-    $TestProfile = switch ($Profile) {
-      'lean' { 'lean' }
-      'extensions' { 'clojure' }
-      'legacy' { 'clojure' }
-      default { 'smoke' }
-    }
-  }
+  if (-not $TestProfile) { $TestProfile = 'lean' }
   & (Join-Path $PSScriptRoot 'test.ps1') -Profile $TestProfile
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }

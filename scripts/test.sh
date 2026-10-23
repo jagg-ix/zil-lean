@@ -19,7 +19,7 @@ usage() {
 Usage: bash scripts/test.sh [options]
 
 Options:
-  --profile smoke|lean|clojure|hybrid|durable|all
+  --profile smoke|lean|all
   --report FILE       ZIL-TEST-REPORT/1 output path
   --keep-workdir      Preserve temporary generated files
   --skip-build        Skip lake build in profiles that normally build
@@ -73,14 +73,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-profiles=(smoke lean clojure hybrid durable all)
+profiles=(smoke lean all)
 if [[ "$list_only" == true ]]; then
   printf '%s\n' "${profiles[@]}"
   exit 0
 fi
 
 case "$profile" in
-  smoke|lean|clojure|hybrid|durable|all) ;;
+  smoke|lean|all) ;;
   *) zil_die "unknown test profile: $profile" ;;
 esac
 
@@ -202,115 +202,32 @@ run_lean_suite() {
     tools/macro_extension_matrix.sh --skip-build
   run_step extension-libraries 'row counts and evidence checks of the extension libraries' 0 \
     scripts/test-extension-libraries.sh --skip-build
-  run_step clojure-boundary 'no new call of Clojure from the scripts' 0 \
-    scripts/check-clojure-boundary.sh
-}
-
-run_clojure_suite() {
-  suite=clojure
-  run_doctor extensions
-  run_step clojure-deps 'resolve Clojure dependency graph' 0 clojure -Spath
-  run_step clojure-tests 'run Clojure test suite' 0 clojure -M:test
-  run_step plugin-list 'discover extension manifests' 0 \
-    bin/zil plugin list extensions
-  run_step plugin-scan 'run repository scanner extension' 0 \
-    bin/zil plugin run \
-    extensions/reference/repository-scanner/extension.json \
-    repository-scan examples
-  run_step plugin-export 'run deterministic report exporter' 0 \
-    bin/zil plugin run \
-    extensions/reference/report-exporter/extension.json \
-    report-export examples/extensions/sample-report.edn \
-    "$workdir/sample-report.json" json
-  run_step evaluation-empty 'evaluate architecture without measurements' 0 \
-    bin/zil evaluate-runtime --output "$workdir/evaluation-empty.edn"
-  run_step evaluation-sample 'evaluate architecture with sample measurements' 0,1 \
-    bin/zil evaluate-runtime \
-    --measurements examples/evaluation/runtime-measurements.edn \
-    --output "$workdir/evaluation-sample.edn"
-}
-
-run_hybrid_suite() {
-  suite=hybrid
-  run_doctor full
-  run_build
-  run_step exchange-parse 'parse through supervised Lean worker' 0 \
-    bin/zil exchange parse examples/authorization/access.zc
-  run_step control-authorize 'authorize through formal control plane' 0 \
-    bin/zil control authorize examples/authorization/access.zc \
-    doc:readme viewer user:11
-  run_step macro-parity 'compare Clojure and Lean macro expansion' 0 \
-    bin/zil macro-parity examples/macro-extension/model.zc \
-    --output "$workdir/macro-parity.edn"
-  run_step library-check 'check recursive source corpus' 0 \
-    bin/zil library --check \
-    --root lib --root libsets --root examples \
-    --out "$workdir/generated-zil" \
-    --manifest "$workdir/library-manifest.edn"
-  run_step conformance-suite 'compare legacy and Lean semantic reports' 0 \
-    bin/zil conformance-suite \
-    --root lib --root libsets --root examples \
-    --output "$workdir/conformance.edn"
-  run_step embedded-check 'check embedded ZIL blocks' 0 \
-    bin/zil embedded-native --root examples --check \
-    --out "$workdir/generated-embedded" \
-    --manifest "$workdir/embedded-manifest.edn"
-}
-
-run_durable_suite() {
-  suite=durable
-  run_doctor full
-  run_build
-  local database="$workdir/control.sqlite"
-  local stream='workflow:install-test'
-  run_step durable-invoke 'record a Lean authorization decision' 0 \
-    bin/zil control-store invoke "$database" "$stream" 0 agent:tester \
-    authorize examples/authorization/access.zc \
-    doc:readme viewer user:11
-  run_step durable-record 'append a workflow observation with CAS' 0 \
-    bin/zil control-store record "$database" "$stream" 1 agent:tester \
-    action-consumed \
-    sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-    examples/control-store/action-consumed.edn
-  run_step durable-verify 'verify event chain, payloads, and receipts' 0 \
-    bin/zil control-store verify "$database" "$stream"
-  run_step durable-project 'materialize immutable workflow snapshot' 0 \
-    bin/zil control-store project "$database" "$stream"
-  run_step event-store-extension 'verify reference StoreBackend extension' 0 \
-    bin/zil plugin run \
-    extensions/reference/sqlite-event-store/extension.json \
-    event-store-status "$database" "$stream"
+  run_step model-substrate 'model substrate names, golden expansion and coherence counts' 0 \
+    scripts/test-model-substrate.sh --skip-build
+  run_step corpus 'every source compiles or fails as recorded' 0 \
+    scripts/check-corpus.sh --skip-build
+  run_step worker-parse 'parse through the native exchange worker' 0 \
+    bash -c 'bin/zil worker --once < examples/exchange/parse-request.json | grep -q "\"status\":\"ok\""'
+  run_step no-clojure 'no Clojure source, tool or call anywhere' 0 \
+    scripts/check-no-clojure.sh
 }
 
 run_smoke_suite() {
   suite=smoke
-  run_doctor full
+  run_doctor lean
   run_build
   run_step smoke-compile 'compile checked-in source' 0 \
     bin/zil compile examples/authorization/access.zc "$workdir/Smoke.lean" Test.Smoke
   run_step smoke-authorize 'run native authorization' 0 \
     bin/zil authorize examples/authorization/access.zc \
     doc:readme viewer user:11
-  run_step smoke-plugin 'load extension registry' 0 \
-    bin/zil plugin list extensions
-  run_step smoke-exchange 'invoke supervised parse' 0 \
-    bin/zil exchange parse examples/authorization/access.zc
-  run_step smoke-evaluator 'validate runtime evaluation model' 0 \
-    bin/zil evaluate-runtime --output "$workdir/smoke-evaluation.edn"
+  run_step smoke-worker 'parse through the native exchange worker' 0 \
+    bash -c 'bin/zil worker --once < examples/exchange/parse-request.json | grep -q "\"status\":\"ok\""'
 }
 
 case "$profile" in
   smoke) run_smoke_suite ;;
-  lean) run_lean_suite ;;
-  clojure) run_clojure_suite ;;
-  hybrid) run_hybrid_suite ;;
-  durable) run_durable_suite ;;
-  all)
-    run_lean_suite
-    run_clojure_suite
-    run_hybrid_suite
-    run_durable_suite
-    ;;
+  lean|all) run_lean_suite ;;
 esac
 
 finished="$(zil_epoch)"

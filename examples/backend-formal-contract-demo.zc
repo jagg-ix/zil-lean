@@ -2,8 +2,8 @@ MODULE backend.formal.contract.demo.
 
 // Concrete BackendCapabilities + FormalFeedbackSchema contract demo.
 // Run:
-//   ./bin/zil preprocess examples/backend-formal-contract-demo.zc /tmp/bfc.pre.zc
-//   ./bin/zil /tmp/bfc.pre.zc
+//   bin/zil expand examples/backend-formal-contract-demo.zc -
+//   bin/zil query-ci examples/backend-formal-contract-demo.zc - -
 
 // ------------------------------------------------------------------
 // Backends

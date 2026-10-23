@@ -1,43 +1,40 @@
 # Local setup and testing
 
-ZIL provides host and container setup paths. These scripts do not change the Lean/Clojure authority model: they install or diagnose runtimes, invoke existing commands, isolate generated files, and collect reports.
+ZIL provides host and container setup paths. The scripts install or diagnose the Lean toolchain, invoke the native commands, isolate generated files, and collect reports. Nothing in them needs Clojure; `scripts/check-no-clojure.sh` keeps it that way.
 
 ## Quick start
 
 From the repository root:
 
 ```bash
-bin/zil doctor --profile full
-bin/zil setup --profile full
+bin/zil doctor --profile lean
+bin/zil setup --profile lean
 bin/zil test --profile smoke
 ```
 
-Install missing Elan and the official Clojure CLI in user space:
+Install a missing Elan in user space:
 
 ```bash
-bin/zil setup --profile full --install-tools
+bin/zil setup --profile lean --install-tools
 ```
 
-The setup script does not install Java, Git, Docker, Make, or system packages and does not invoke `sudo`.
+The setup script does not install Git, Docker, Make, or system packages and does not invoke `sudo`.
 
 ## Installation profiles
 
 | Profile | Required runtime | Purpose |
 |---|---|---|
-| `lean` | Git, curl, Elan, Lean, Lake | Native library and CLI |
-| `full` | Lean profile, Java, official Clojure CLI | Complete workbench |
-| `extensions` | Java, official Clojure CLI | Operational extensions without Lean |
-| `legacy` | Clojure CLI or Java plus standalone JAR | Explicit legacy runtime |
+| `lean` | Git, curl, Elan, Lean, Lake | The native library, CLI and all gates |
 | `container` | Docker with Compose | Reproducible test workbench |
-| `all` | Full profile, Make, Docker | Complete developer environment |
+| `all` | Lean profile, Make, Docker | Complete developer environment |
 
-The authoritative machine-readable list is `config/test-profiles.edn`.
+The machine-readable list of test profiles is `config/test-profiles.tsv`.
 
 ## Environment doctor
 
 ```bash
 bin/zil doctor --profile lean
-bin/zil doctor --profile full --report .zil/doctor-full.tsv
+bin/zil doctor --profile lean --report .zil/doctor-lean.tsv
 bin/zil doctor --profile container
 ```
 
@@ -47,19 +44,16 @@ The report schema is:
 ZIL-DOCTOR/1
 ```
 
-Required and optional checks remain separate. A missing optional legacy path does not fail a full profile when another supported path exists.
-
 ## POSIX setup
 
 ```bash
-bash scripts/setup.sh --profile full
+bash scripts/setup.sh --profile lean
 ```
 
 Useful options:
 
 ```text
 --install-tools
---prefix DIR
 --no-build
 --test
 --test-profile PROFILE
@@ -67,12 +61,7 @@ Useful options:
 --report FILE
 ```
 
-`--install-tools` may install:
-
-- Elan under `~/.elan`;
-- the official Clojure CLI under `~/.local` or the supplied prefix.
-
-The script creates:
+`--install-tools` may install Elan under `~/.elan`. The script creates:
 
 ```text
 .zil/setup-report.tsv
@@ -80,40 +69,30 @@ The script creates:
 .zil/doctor-<profile>.tsv
 ```
 
-Source the generated environment file when a user prefix is not already on `PATH`:
-
-```bash
-source .zil/setup.env
-```
-
 ## Native Windows setup
 
 From PowerShell:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/setup.ps1 -Profile full
+powershell -ExecutionPolicy Bypass -File scripts/setup.ps1 -Profile lean
 ```
 
-Elan may be installed with `-InstallTools`. Java and the official Clojure CLI must be installed explicitly. WSL 2 remains the closest match to the complete POSIX workflow.
+Elan may be installed with `-InstallTools`. WSL 2 remains the closest match to the complete POSIX workflow; the PowerShell runner covers the Lean build, tests, compilation, authorization and impact.
 
 ## Test profiles
 
 ```bash
 bin/zil test --profile smoke
 bin/zil test --profile lean
-bin/zil test --profile clojure
-bin/zil test --profile hybrid
-bin/zil test --profile durable
 bin/zil test --profile all
 ```
 
 The runner:
 
 - validates the selected environment first;
-- isolates generated modules, SQLite stores, and intermediate artifacts in a temporary directory;
+- isolates generated modules and intermediate artifacts in a temporary directory;
 - writes the report and one persistent log per step outside that temporary directory;
 - continues after individual failures;
-- accepts explicitly documented nonzero semantic outcomes where appropriate;
 - emits `ZIL-TEST-REPORT/1`.
 
 Default reports are written under:
@@ -131,13 +110,13 @@ smoke-latest.tsv.logs/
 Preserve temporary generated files as well as the persistent report and logs:
 
 ```bash
-bin/zil test --profile hybrid --keep-workdir --verbose
+bin/zil test --profile lean --keep-workdir --verbose
 ```
 
 Skip a repeated Lean build when the checkout is already built:
 
 ```bash
-bin/zil test --profile durable --skip-build
+bin/zil test --profile lean --skip-build
 ```
 
 ### Smoke
@@ -147,23 +126,21 @@ Covers:
 - environment diagnostics;
 - Lean package build;
 - native compilation and authorization;
-- extension discovery;
-- supervised exchange parsing;
-- runtime-evaluation model validation.
+- a parse through the native exchange worker.
 
 ### Lean
 
 Covers:
 
 - `lake build`;
-- `zilLeanTests`;
-- first-order Horn parsing, occurs-check unification, recursive SLD resolution,
-  backtracking, cutoff reporting, iterative deepening, proof-tree replay,
-  tamper rejection, declarative/certificate completeness, `horn_solve`, and
-  `horn_certify`;
-- `.zc` to Lean generation;
-- elaboration of generated Lean;
-- native authorization and impact.
+- `zilLeanTests`, including first-order Horn parsing, occurs-check unification, recursive SLD resolution, backtracking, cutoff reporting, iterative deepening, proof-tree replay, tamper rejection, declarative/certificate completeness, `horn_solve`, and `horn_certify`;
+- `.zc` to Lean generation and elaboration of the generated Lean;
+- native authorization and impact;
+- the macro matrix (`tools/macro_extension_matrix.sh`): every macro library expanded natively, compared with its reviewed golden, compiled, and typechecked;
+- the extension libraries gate (`scripts/test-extension-libraries.sh`) and the model substrate gate (`scripts/test-model-substrate.sh`);
+- the corpus record (`bin/zil corpus`);
+- a parse through the native exchange worker;
+- the no-Clojure guard (`scripts/check-no-clojure.sh`).
 
 Run compatibility smoke tests against a HORC checkout with:
 
@@ -178,62 +155,31 @@ lake exe zilHorc "$HORC_ROOT/src/horn/horn.hn" \
   'variable(form_variable(empty_word))' 8
 ```
 
-These commands exercise the original model syntax without modifying the HORC
-sources. A successful answer exits with status 0; finite failure or a runtime
-error exits with status 1; invalid command usage exits with status 2.
-
-### Clojure
-
-Covers:
-
-- tools.deps resolution;
-- the Clojure test suite;
-- extension discovery;
-- repository scanner;
-- report exporter;
-- architecture evaluation with empty and sample measurements.
-
-### Hybrid
-
-Covers:
-
-- exchange and control-plane calls;
-- macro parity;
-- recursive library checks;
-- differential conformance;
-- embedded ZIL compilation checks.
-
-### Durable
-
-Covers:
-
-- durable Lean decision recording;
-- expected-revision workflow append;
-- event, payload, and receipt verification;
-- workflow projection;
-- the SQLite `StoreBackend` reference extension.
+These commands exercise the original model syntax without modifying the HORC sources. A successful answer exits with status 0; finite failure or a runtime error exits with status 1; invalid command usage exits with status 2.
 
 ### All
 
-Runs the Lean, Clojure, hybrid, and durable suites. Build completion is reused within the same runner process, and suite prefixes keep every report row and log name unique.
+The same as `lean`.
 
 ## PowerShell tests
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/test.ps1 -Profile smoke
-powershell -ExecutionPolicy Bypass -File scripts/test.ps1 -Profile all -KeepWorkdir
+powershell -ExecutionPolicy Bypass -File scripts/test.ps1 -Profile lean -KeepWorkdir
 ```
 
-The PowerShell runner calls Lake and Clojure aliases directly because `bin/zil` is a Bash launcher. It emits the same report schema and stores logs beside the report.
+The PowerShell runner calls Lake directly because `bin/zil` is a Bash launcher. It emits the same report schema and stores logs beside the report.
 
 ## Make targets
 
 ```bash
-make doctor SETUP_PROFILE=full
-make setup SETUP_PROFILE=full
-make bootstrap SETUP_PROFILE=full
+make doctor
+make setup
+make bootstrap
 make test PROFILE=smoke
 make test-all
+make corpus
+make matrix
 make container-test PROFILE=all
 ```
 
@@ -256,18 +202,7 @@ ZIL_TEST_PROFILE=all docker compose -f compose.test.yml run --rm zil-test
 
 Compose mounts the container's `.zil/test-reports` directory to `.zil/container-reports` on the host. This preserves reports and step logs even when custom test arguments replace the service's default command.
 
-The image pins:
-
-- Ubuntu 24.04;
-- OpenJDK 21 from the distribution;
-- a versioned official Clojure CLI installer;
-- the Lean version selected by the repository `lean-toolchain` file.
-
-Override the Clojure CLI version when testing an upgrade:
-
-```bash
-CLOJURE_TOOLS_VERSION=<version> make container-test PROFILE=smoke
-```
+The image pins Ubuntu 24.04 and the Lean version selected by the repository `lean-toolchain` file.
 
 ## Report interpretation
 
@@ -279,7 +214,7 @@ step	description	expected	exit	status	duration_seconds	log	command
 
 The final rows contain total duration, step count, failure count, and overall result.
 
-A test process exit code and a ZIL semantic outcome are not interchangeable. For example, the architecture evaluator may return `1` when evidence proposes a human-reviewed candidate change; the profile declares that expected result explicitly.
+A test process exit code and a ZIL semantic outcome are not interchangeable: a step may declare a nonzero exit as its expected semantic result.
 
 ## Cleaning local outputs
 
@@ -291,9 +226,4 @@ The generated `.zil/` directory is ignored by Git.
 
 ## Validation boundary
 
-The scripts are execution infrastructure, not semantic authorities:
-
-- Lean remains authoritative for ZIL semantic results;
-- Clojure remains authoritative for operational orchestration and durable transactions;
-- Docker and Make only reproduce command execution;
-- a passing transport or setup check does not promote external evidence to Lean proof.
+The scripts are execution infrastructure, not semantic authorities: Lean is authoritative for ZIL semantic results, Docker and Make only reproduce command execution, and a passing setup check does not promote external evidence to a Lean proof.

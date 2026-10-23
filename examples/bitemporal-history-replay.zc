@@ -3,8 +3,8 @@ MODULE bitemporal.history.replay.demo.
 // Bitemporal history + correction + replay example.
 //
 // Run:
-//   ./bin/zil preprocess examples/bitemporal-history-replay.zc /tmp/bt.pre.zc libsets/bitemporal
-//   ./bin/zil /tmp/bt.pre.zc
+//   bin/zil expand examples/bitemporal-history-replay.zc - --lib libsets/bitemporal
+//   bin/zil query-ci examples/bitemporal-history-replay.zc - - --lib libsets/bitemporal
 
 // Timepoints for valid-time and tx-time axes.
 USE BT_TIMEPOINT(v_20260301, valid, 2026_03_01T00_00_00Z).

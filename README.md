@@ -370,7 +370,7 @@ lake env lean examples/lean/06_ProjectVerificationArc.lean
 All documented example groups are also runnable through the Makefile:
 
 ```bash
-make examples                 # lean, native, integration, and legacy groups
+make examples                 # lean, native, and integration groups
 make examples GROUP=lean      # one group; report in .zil/examples-reports/
 ```
 
@@ -633,15 +633,9 @@ scripts/test-model-substrate.sh
 
 The contract is `spec/model-substrate-v0.1.md`; the targets and test inventory are `spec/model-substrate-targets-v0.md`. See `examples/model-substrate/README.md`.
 
-## Existing `.zc` runtime
+## The `.zc` language
 
-The repository also contains the standalone ZIL syntax and Clojure/DataScript runtime. It supports `.zc` files, macros, import/export tools, embedded annotations, and adapters.
-
-```bash
-clojure -M -m zil.cli examples/it-infra-minimal.zc
-```
-
-The standard exchange layer connects that runtime with the native Lean representation.
+ZIL is Lean. The `.zc` syntax (facts, rules, queries, macros, declarations, embedded annotations) is parsed, expanded, compiled and queried by the native Lean engine: `bin/zil compile`, `expand`, `query-ci`, `conformance` and the audits listed under *Native CLI*. There is no other runtime. An earlier Clojure/DataScript runtime, with its import and export tools, control plane and plugin loader, was removed; `spec/clojure-removal.md` says what it did and where each part went. `scripts/check-no-clojure.sh` keeps it removed.
 
 ### Native macro extension qualification
 
@@ -652,7 +646,7 @@ model that exercises it. Run the full qualification from this directory:
 ./tools/macro_extension_matrix.sh
 ```
 
-The check needs no Clojure. Each row's native expansion must equal its reviewed golden in
+The check runs on the native engine alone. Each row's native expansion must equal its reviewed golden in
 `spec/macro-extension-golden/`, the native frontend must compile the model, and the generated
 Lean module must typecheck. A library column of `-` marks a model that defines its macros
 inline. After an intended change to a library or the expander, run
@@ -660,19 +654,13 @@ inline. After an intended change to a library or the expander, run
 introducing a macro library or extension; keep distinct legacy `lib/` variants represented even
 when a similarly named `libsets/` copy exists.
 
-`./tools/macro_extension_matrix.sh --legacy-parity` keeps the old check, which needs Clojure
-and requires the legacy and native expansions to be identical (rows with library `-` are
-skipped). `scripts/check-clojure-boundary.sh` lists the scripts that still call Clojure and
-refuses any new or changed call, so that list can only shrink.
+The Souffle compatibility macros (`libsets/souffle-compat`) declare relations and facts in the form a Souffle program uses. They are qualified by the same matrix; the bridge that ran Souffle from ZIL belonged to the removed runtime. See `spec/souffle-macro-compat-v1.md`.
 
-The Souffle compatibility macros build on the existing Clojure `zil.bridge.souffle`
-runtime; they do not replace it. See `spec/souffle-macro-compat-v1.md` and
-`examples/souffle-transitive-closure.zc` for the currently qualified binary-symbol
-relation subset and its parity test.
+`bin/zil corpus` (`scripts/check-corpus.sh`) compiles every `.zc` file under `lib/`, `libsets/` and `examples/` alone and compares the outcome with `spec/corpus-status.tsv`, so a change in what compiles shows up in review. A macro file or a model that needs its library is rejected alone and recorded as such; the matrix covers those with their libraries.
 
 ## Extension libraries
 
-Opt-in macro libraries, each selected with `--lib` and qualified by the macro matrix. None of them needs Clojure.
+Opt-in macro libraries, each selected with `--lib` and qualified by the macro matrix.
 
 | Library | Adds | Example |
 |---|---|---|
@@ -699,7 +687,7 @@ Zil/Exchange/        snapshots and deltas
 examples/lean/       progressive native examples
 examples/native-cli/ CLI snapshot example
 libsets/             opt-in macro libraries, selected with --lib (model-substrate, aws-model, ...)
-src/zil/             Clojure runtime and tools
+bin/ scripts/ tools/ commands, test runners and gates (no Clojure)
 spec/                language and runtime specifications
 ```
 
@@ -710,7 +698,7 @@ Expected repository validation:
 ```bash
 lake build
 lake exe zilLeanTests
-clojure -M:test
+bin/zil test --profile lean
 ```
 
 The Lean toolchain is pinned to `leanprover/lean4:v4.31.0`.

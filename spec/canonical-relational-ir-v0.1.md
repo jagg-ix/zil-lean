@@ -18,7 +18,7 @@ The following source forms must become equivalent:
 declaration ⟶[formalizes] claim
 ```
 
-```clojure
+```text
 {:subject "?declaration"
  :relation :formalizes
  :object "?claim"}
@@ -26,7 +26,7 @@ declaration ⟶[formalizes] claim
 
 ## Canonical relation expression
 
-```clojure
+```text
 {:ir/kind :relation
  :subject {:term/kind :var|:node ...}
  :relation :zil/formalizes
@@ -66,7 +66,7 @@ Profile-qualified relations preserve their namespace.
 
 ## Canonical rule
 
-```clojure
+```text
 {:ir/kind :rule
  :rule/name "declarationClaimRequirement"
  :rule/variables ["claim" "requirement" "declaration"]

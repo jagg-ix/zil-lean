@@ -3,15 +3,15 @@
 Every documented example group is runnable through the Makefile:
 
 ```bash
-make examples                 # lean, native, integration, and legacy groups
+make examples                 # lean, native, and integration groups
 make examples GROUP=lean      # or: make examples-lean, examples-native,
-                              #     examples-integration, examples-legacy
+                              #     examples-integration
 ```
 
 The runner executes exactly the commands documented in each example's header,
 writes a `ZIL-EXAMPLES-REPORT/1` TSV to `.zil/examples-reports/<group>-latest.tsv`
 with per-step logs beside it, and records steps whose toolchain is missing
-(for example the legacy Clojure runtime) as skips rather than failures.
+as skips rather than failures.
 Assertion-level checks for several of the same models live in the standalone
 `tools/*_smoke.sh` scripts.
 
@@ -39,7 +39,7 @@ See [`lean/README.md`](lean/README.md) for the complete guide.
 
 ## Original tuple syntax to Lean
 
-The tuple exporter accepts the original ZIL syntax directly:
+The native compiler accepts the original ZIL syntax directly:
 
 ```zc
 doc:readme#owner@user:10.
@@ -50,10 +50,7 @@ doc:readme#viewer@group:eng#member.
 Generate native `zil_fact` declarations and userset rules with:
 
 ```bash
-clojure -M:tuple-lean \
-  examples/tuple-lean/access.zc \
-  examples/tuple-lean/Access.lean \
-  Zil.Generated.Access
+bin/zil compile examples/tuple-lean/access.zc examples/tuple-lean/Access.lean Zil.Generated.Access
 ```
 
 See [`tuple-lean/README.md`](tuple-lean/README.md).
@@ -82,5 +79,5 @@ See [`provenance/README.md`](provenance/README.md).
 ```bash
 lake build
 lake exe zilLeanTests
-clojure -M:test
+bin/zil test --profile lean
 ```

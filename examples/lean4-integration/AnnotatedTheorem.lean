@@ -1,12 +1,10 @@
 /-
 Reverse direction: ZIL annotations embedded in ordinary Lean4 source.
-The scanner reads the comment block without touching the code:
-
-  ./bin/zil-legacy embedded-scan examples/lean4-integration /tmp/annotated.zc lean4.integration.annotated
-
-Output is canonical `.zc` with the claim link attached to the first
-declaration after the block (`lean:AnnotatedExample.add_comm`), plus source
-hashes, line spans, and `trust:asserted_annotation`.
+A scanner read the comment block without touching the code and emitted canonical
+`.zc` with the claim link attached to the first declaration after the block
+(`lean:AnnotatedExample.add_comm`), plus source hashes, line spans, and
+`trust:asserted_annotation`. That scanner was removed with the Clojure runtime
+(spec/clojure-removal.md); the annotation format is kept as documentation.
 -/
 
 /-

@@ -2,8 +2,8 @@ MODULE request.form.demo.
 
 // This example relies on RF_* macros defined in `lib/request-form-macros.zc`.
 // Run with:
-//   ./bin/zil-legacy preprocess examples/request-form-recursive.zc /tmp/request.pre.zc libsets/request-form
-//   ./bin/zil-legacy /tmp/request.pre.zc
+//   bin/zil expand examples/request-form-recursive.zc - --lib libsets/request-form
+//   bin/zil query-ci examples/request-form-recursive.zc - - --lib libsets/request-form
 
 USE RF_REQUEST(deploy_request, operator, dry_run).
 USE RF_COMPOUND(root_plan, seq).

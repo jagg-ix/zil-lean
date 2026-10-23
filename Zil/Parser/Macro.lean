@@ -52,7 +52,7 @@ private def keywordRemainder? (value keyword : String) : Option String :=
     | [] => none
 
 /-- Remove `//` comments outside quoted strings. Escaped quotes and `//` inside a
-string are preserved. This matches the lexical behavior of the Clojure parser. -/
+string are preserved. This is the lexical behavior the macro libraries rely on. -/
 private def stripLineComment (value : String) : String :=
   let rec loop
       (remaining : List Char)
@@ -394,8 +394,8 @@ private def expandPayload
   pure (output, records)
 
 /-- Collect all macro definitions, remove them from the parser payload, and
-recursively expand `USE` statements. The default limit matches the existing
-Clojure implementation. Macro control keywords are case-insensitive and inline
+recursively expand `USE` statements. The default expansion limit is 10000. Macro
+control keywords are case-insensitive and inline
 `//` comments outside strings are removed for lexical parity. -/
 def preprocess (text : String) (limit : Nat := 10000) : Except ParseError Preprocessed := do
   let (macros, payload) ← collectDefinitions (sourceLines text) 0 #[] #[]

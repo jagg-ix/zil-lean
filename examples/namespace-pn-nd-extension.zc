@@ -3,8 +3,8 @@ MODULE namespace.pn.nd.extension.demo.
 // Namespace hierarchy + N-dimensional products + Petri resolution flow.
 //
 // Run:
-//   ./bin/zil preprocess examples/namespace-pn-nd-extension.zc /tmp/namespace_pn_nd.pre.zc libsets/namespace-pn-nd
-//   ./bin/zil /tmp/namespace_pn_nd.pre.zc
+//   bin/zil expand examples/namespace-pn-nd-extension.zc - --lib libsets/namespace-pn-nd
+//   bin/zil query-ci examples/namespace-pn-nd-extension.zc - - --lib libsets/namespace-pn-nd
 
 // Dimensions (local -> scoped -> composite).
 USE NS_DIMENSION(d1_local, 1).

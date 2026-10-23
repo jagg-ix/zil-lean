@@ -8,7 +8,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 prefix="${ZIL_INSTALL_PREFIX:-$HOME/.local}"
 source_root="$ZIL_ROOT"
 mode="copy"
-profile="full"
+profile="lean"
 version=""
 build=true
 install_tools=false
@@ -56,10 +56,10 @@ Options:
   --prefix DIR          Installation prefix (default: ~/.local)
   --source DIR          Checkout or extracted bundle root (default: repository root)
   --mode copy|link      Copy a versioned root or link a development checkout
-  --profile PROFILE     lean|full|extensions|legacy (default: full)
+  --profile PROFILE     lean (default: lean)
   --version VERSION     Override version from bundle metadata or lakefile.lean
   --no-build            Activate without resolving dependencies or building
-  --install-tools       Allow setup to install Elan/Clojure CLI in user space
+  --install-tools       Allow setup to install Elan in user space
   --no-verify           Skip post-install structural verification
   --force               Install another immutable root for the same source identifier
   --prune-old           Remove inactive copied versions after activation
@@ -134,7 +134,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$mode" in copy|link) ;; *) zil_die "unsupported install mode: $mode" ;; esac
-case "$profile" in lean|full|extensions|legacy) ;; *) zil_die "unsupported install profile: $profile" ;; esac
+case "$profile" in lean) ;; *) zil_die "unsupported install profile: $profile" ;; esac
 
 prefix="$(zil_abs_path "$prefix")"
 source_root="$(zil_abs_path "$source_root")"
@@ -239,10 +239,10 @@ EOF
 prepare_root() {
   local root="$1"
   write_install_metadata "$root"
-  chmod +x "$root/bin/"zil* "$root/bin/build-jar" \
+  chmod +x "$root/bin/"zil* \
     "$root/scripts/"*.sh "$root/scripts/lib/"*.sh 2>/dev/null || true
   if [[ "$build" == true ]]; then
-    local args=(--profile "$profile" --prefix "$prefix")
+    local args=(--profile "$profile")
     [[ "$install_tools" == true ]] && args+=(--install-tools)
     bash "$root/scripts/setup.sh" "${args[@]}"
   fi

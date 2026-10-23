@@ -11,7 +11,7 @@ Tests lent in `Zil/Test/ModelSubstrate.lean`. They read the real library files f
 
 - `lake build zilLeanTests` passes, including the existing `Zil.Test.Macro`, `MacroLibrary`,
   `DatalogMacro` and `Declarations`.
-- `bin/zil macro-parity examples/macro-extension/model.zc` reports `:exact true`.
+- `tools/macro_extension_matrix.sh` passes: every macro library expands to its reviewed golden, compiles, and typechecks.
 - `scripts/check-model-substrate-names.sh`: no existing library defines a `MODEL_*` or `SCENARIO_*`
   macro, and none uses a `model_` or `scenario_` relation.
 
@@ -26,7 +26,7 @@ Tests lent in `Zil/Test/ModelSubstrate.lean`. They read the real library files f
 | T4 | Scenario core | Feature, case, given/when/then with ordinals, tags expand; steps of a scenario queryable | done |
 | T5 | Coverage bridges | `MODEL_COVERED_BY`, `SCENARIO_REALIZES`; uncovered and orphan queries | done |
 | T6 | Composition | Ordered load; a domain stub `EMIT USE`s the substrate; nesting and cycles | done |
-| T7 | Compatibility and parity | Old macros unchanged; Lean and Clojure expansions equal | done |
+| T7 | Compatibility | Old macros unchanged; the matrix goldens hold | done |
 | T8 | Ingest alignment (optional) | A scenario step key can be matched to a Cucumber report step name | not started |
 
 T0 to T7 are the shippable spine and are done. T8 is thin and optional; it is not started because it
@@ -34,8 +34,7 @@ needs a step-name slug convention that the substrate does not define, and the Cu
 unchanged either way.
 
 `scripts/test-model-substrate.sh` runs the whole gate: the Lean tests (including every existing macro
-suite), the prefix check, the example golden and row counts, and Lean/Clojure expansion parity for the
-legacy example, the worked example and the composition fixture.
+suite), the prefix check, and the example golden and row counts. The macro matrix covers the legacy example.
 
 ## Test inventory
 
@@ -98,7 +97,7 @@ Names are the Lean test names in `Zil/Test/ModelSubstrate.lean`.
 | `nested_emit_use` | substrate macros nested three deep expand within the depth limit; a cyclic domain stub is rejected |
 | `module_header_dropped` | each library's own `MODULE` header is dropped from the composed unit |
 
-### T7 compatibility and parity
+### T7 compatibility
 
 | Test / check | Asserts |
 |---|---|
@@ -106,8 +105,7 @@ Names are the Lean test names in `Zil/Test/ModelSubstrate.lean`.
 | `no_lib_noop` | a model expanded with an empty library list equals its golden expansion |
 | `name_no_shadow` | the expansion of a TLM-only snippet is byte-equal with and without the substrate loaded |
 | `names_disjoint` | `scripts/check-model-substrate-names.sh` |
-| `frontend_parity` | `bin/zil macro-parity` reports `:exact true` for each fixture and example with `--lib libsets/model-substrate` |
-| `legacy_example_parity` | `bin/zil macro-parity examples/macro-extension/model.zc` is exact |
+| `legacy_example_golden` | the macro-extension example expands to its golden in `spec/macro-extension-golden/` (the matrix) |
 
 ### T8 ingest alignment (optional)
 
@@ -122,5 +120,5 @@ libsets/model-substrate/        shipped library (00, 05, 10, 20, 30)
 examples/model-substrate/       a neutral worked example and its expanded golden
 test/fixtures/model-substrate/  T6 and T7 inputs
 scripts/check-model-substrate-names.sh
-scripts/test-model-substrate.sh   gate: Lean tests, golden diff, parity, name check
+scripts/test-model-substrate.sh   gate: Lean tests, golden diff, name check
 ```

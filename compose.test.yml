@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
-      args:
-        CLOJURE_TOOLS_VERSION: ${CLOJURE_TOOLS_VERSION:-1.12.5.1654}
     command:
       - --profile
       - ${ZIL_TEST_PROFILE:-all}

@@ -1,28 +1,29 @@
 SHELL := /bin/bash
 
-SETUP_PROFILE ?= full
+SETUP_PROFILE ?= lean
 PROFILE ?= smoke
 GROUP ?= all
 REPORT ?=
 PREFIX ?= $(HOME)/.local
 INSTALL_MODE ?= copy
-CLOJURE_TOOLS_VERSION ?= 1.12.5.1654
 
-.PHONY: help self-check setup bootstrap doctor test test-smoke test-lean test-clojure \
-        test-hybrid test-durable test-all examples examples-lean examples-native \
-        examples-integration examples-legacy package package-dir install install-link \
-        verify-install uninstall test-install container-build container-test clean-test
+.PHONY: help self-check setup bootstrap doctor test test-smoke test-lean test-all \
+        examples examples-lean examples-native examples-integration corpus matrix \
+        package package-dir install install-link verify-install uninstall test-install \
+        container-build container-test clean-test
 
 help:
 	@printf '%s\n' \
 	  'ZIL setup, testing, packaging, and installation' \
 	  '' \
 	  '  make self-check                     validate setup files without building' \
-	  '  make setup SETUP_PROFILE=full       diagnose, resolve, and build' \
-	  '  make bootstrap SETUP_PROFILE=full   install missing Elan/Clojure in user space' \
-	  '  make doctor SETUP_PROFILE=full      inspect required tools' \
+	  '  make setup                          diagnose and build' \
+	  '  make bootstrap                      install a missing Elan in user space' \
+	  '  make doctor                         inspect required tools' \
 	  '  make test PROFILE=smoke             run one test profile' \
-	  '  make test-all                       run all host profiles' \
+	  '  make test-all                       run the complete host profile' \
+  '  make corpus                         compile every source and compare with the record' \
+  '  make matrix                         qualify every macro library against its golden' \
 	  '  make examples GROUP=all             run the documented example groups' \
 	  '  make package                        build a versioned source tarball' \
 	  '  make install PREFIX=~/.local        copy and activate the current checkout' \
@@ -55,15 +56,6 @@ test-smoke:
 test-lean:
 	$(MAKE) test PROFILE=lean
 
-test-clojure:
-	$(MAKE) test PROFILE=clojure
-
-test-hybrid:
-	$(MAKE) test PROFILE=hybrid
-
-test-durable:
-	$(MAKE) test PROFILE=durable
-
 test-all:
 	$(MAKE) test PROFILE=all
 
@@ -79,8 +71,11 @@ examples-native:
 examples-integration:
 	$(MAKE) examples GROUP=integration
 
-examples-legacy:
-	$(MAKE) examples GROUP=legacy
+corpus:
+	bash scripts/check-corpus.sh
+
+matrix:
+	bash tools/macro_extension_matrix.sh
 
 package:
 	bash scripts/package.sh --format tar.gz --output dist
@@ -108,13 +103,11 @@ test-install:
 
 container-build:
 	docker build \
-	  --build-arg CLOJURE_TOOLS_VERSION="$(CLOJURE_TOOLS_VERSION)" \
 	  -f Dockerfile.test -t zil-lean-test:local .
 
 container-test:
 	mkdir -p .zil/container-reports
 	ZIL_TEST_PROFILE="$(PROFILE)" \
-	CLOJURE_TOOLS_VERSION="$(CLOJURE_TOOLS_VERSION)" \
 	  docker compose -f compose.test.yml run --rm zil-test
 
 clean-test:

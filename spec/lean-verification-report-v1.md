@@ -37,7 +37,7 @@ Aggregate elaboration runs only after every individual module is verified. The g
 
 ## Output
 
-```clojure
+```text
 {:schema "ZIL-LEAN-VERIFY/1"
  :manifest "/absolute/manifest.edn"
  :output-root "/absolute/generated/zil"

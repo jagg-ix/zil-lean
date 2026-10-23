@@ -2,9 +2,9 @@ MODULE config.declarative.demo.
 
 // Declarative config demo.
 //
-// Run with preprocess using the focused libset:
-//   ./bin/zil-legacy preprocess examples/config-declarative-macros.zc /tmp/config.pre.zc libsets/config-declarative
-//   ./bin/zil-legacy /tmp/config.pre.zc
+// Run with the focused libset:
+//   bin/zil expand examples/config-declarative-macros.zc - --lib libsets/config-declarative
+//   bin/zil query-ci examples/config-declarative-macros.zc - - --lib libsets/config-declarative
 
 USE CFG_DOC(base_defaults, yaml, "configs/base-defaults.yaml").
 USE CFG_PROFILE(base_defaults, shared).

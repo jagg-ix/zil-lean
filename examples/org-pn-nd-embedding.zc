@@ -3,8 +3,8 @@ MODULE org.pn.nd.embedding.demo.
 // Organization + Petri-net + N-dimensional embedding demo.
 //
 // Run:
-//   ./bin/zil preprocess examples/org-pn-nd-embedding.zc /tmp/org_pn_nd.pre.zc libsets/org-pn-nd
-//   ./bin/zil /tmp/org_pn_nd.pre.zc
+//   bin/zil expand examples/org-pn-nd-embedding.zc - --lib libsets/org-pn-nd
+//   bin/zil query-ci examples/org-pn-nd-embedding.zc - - --lib libsets/org-pn-nd
 
 // Organization and Petri-net profile.
 USE ORG(acme_ops, enterprise).

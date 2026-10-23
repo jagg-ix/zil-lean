@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('smoke', 'lean', 'clojure', 'hybrid', 'durable', 'all')]
+  [ValidateSet('smoke', 'lean', 'all')]
   [string]$Profile = 'smoke',
   [string]$Report,
   [switch]$KeepWorkdir,
@@ -122,79 +122,9 @@ function Invoke-LeanSuite {
   )
 }
 
-function Invoke-ClojureSuite {
-  $script:Suite = 'clojure'
-  Invoke-Doctor 'extensions'
-  Invoke-TestStep 'deps' 'resolve Clojure dependencies' @(0) 'clojure' @('-Spath')
-  Invoke-TestStep 'tests' 'run Clojure tests' @(0) 'clojure' @('-M:test')
-  Invoke-TestStep 'plugins' 'discover extension manifests' @(0) 'clojure' @('-M:plugins', 'list', 'extensions')
-  Invoke-TestStep 'scan' 'run repository scanner' @(0) 'clojure' @(
-    '-M:plugins', 'run', 'extensions/reference/repository-scanner/extension.json',
-    'repository-scan', 'examples'
-  )
-  $Export = Join-Path $Workdir 'sample-report.json'
-  Invoke-TestStep 'export' 'run report exporter' @(0) 'clojure' @(
-    '-M:plugins', 'run', 'extensions/reference/report-exporter/extension.json',
-    'report-export', 'examples/extensions/sample-report.edn', $Export, 'json'
-  )
-  Invoke-TestStep 'evaluation' 'validate architecture evaluation model' @(0) 'clojure' @(
-    '-M:evaluate-runtime', '--output', (Join-Path $Workdir 'evaluation.edn')
-  )
-}
-
-function Invoke-HybridSuite {
-  $script:Suite = 'hybrid'
-  Invoke-Doctor 'full'
-  Invoke-Build
-  Invoke-TestStep 'exchange' 'parse through supervised Lean worker' @(0) 'clojure' @(
-    '-M:exchange', 'parse', 'examples/authorization/access.zc'
-  )
-  Invoke-TestStep 'control' 'authorize through formal control plane' @(0) 'clojure' @(
-    '-M:control', 'authorize', 'examples/authorization/access.zc',
-    'doc:readme', 'viewer', 'user:11'
-  )
-  Invoke-TestStep 'macro' 'compare macro frontends' @(0) 'clojure' @(
-    '-M:macro-native', 'parity', 'examples/macro-extension/model.zc',
-    '--output', (Join-Path $Workdir 'macro-parity.edn')
-  )
-  Invoke-TestStep 'library' 'check recursive corpus' @(0) 'clojure' @(
-    '-M:library', '--check', '--root', 'lib', '--root', 'libsets', '--root', 'examples',
-    '--out', (Join-Path $Workdir 'generated-zil'),
-    '--manifest', (Join-Path $Workdir 'library-manifest.edn')
-  )
-  Invoke-TestStep 'conformance' 'run differential conformance' @(0) 'clojure' @(
-    '-M:conformance', '--root', 'lib', '--root', 'libsets', '--root', 'examples',
-    '--output', (Join-Path $Workdir 'conformance.edn')
-  )
-}
-
-function Invoke-DurableSuite {
-  $script:Suite = 'durable'
-  Invoke-Doctor 'full'
-  Invoke-Build
-  $Database = Join-Path $Workdir 'control.sqlite'
-  $Stream = 'workflow:install-test'
-  Invoke-TestStep 'invoke' 'record Lean authorization decision' @(0) 'clojure' @(
-    '-M:control-store', 'invoke', $Database, $Stream, '0', 'agent:tester',
-    'authorize', 'examples/authorization/access.zc', 'doc:readme', 'viewer', 'user:11'
-  )
-  Invoke-TestStep 'record' 'append workflow observation' @(0) 'clojure' @(
-    '-M:control-store', 'record', $Database, $Stream, '1', 'agent:tester',
-    'action-consumed',
-    'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-    'examples/control-store/action-consumed.edn'
-  )
-  Invoke-TestStep 'verify' 'verify event stream and receipts' @(0) 'clojure' @(
-    '-M:control-store', 'verify', $Database, $Stream
-  )
-  Invoke-TestStep 'project' 'materialize workflow projection' @(0) 'clojure' @(
-    '-M:control-store', 'project', $Database, $Stream
-  )
-}
-
 function Invoke-SmokeSuite {
   $script:Suite = 'smoke'
-  Invoke-Doctor 'full'
+  Invoke-Doctor 'lean'
   Invoke-Build
   Invoke-TestStep 'compile' 'compile checked-in source' @(0) 'lake' @(
     'exe', 'zil', '--', 'compile', 'examples/authorization/access.zc',
@@ -204,27 +134,12 @@ function Invoke-SmokeSuite {
     'exe', 'zil', '--', 'authorize', 'examples/authorization/access.zc',
     'doc:readme', 'viewer', 'user:11'
   )
-  Invoke-TestStep 'plugins' 'load extension registry' @(0) 'clojure' @('-M:plugins', 'list', 'extensions')
-  Invoke-TestStep 'exchange' 'invoke supervised parse' @(0) 'clojure' @(
-    '-M:exchange', 'parse', 'examples/authorization/access.zc'
-  )
-  Invoke-TestStep 'evaluate' 'validate runtime model' @(0) 'clojure' @(
-    '-M:evaluate-runtime', '--output', (Join-Path $Workdir 'smoke-evaluation.edn')
-  )
 }
 
 switch ($Profile) {
   'smoke' { Invoke-SmokeSuite }
   'lean' { Invoke-LeanSuite }
-  'clojure' { Invoke-ClojureSuite }
-  'hybrid' { Invoke-HybridSuite }
-  'durable' { Invoke-DurableSuite }
-  'all' {
-    Invoke-LeanSuite
-    Invoke-ClojureSuite
-    Invoke-HybridSuite
-    Invoke-DurableSuite
-  }
+  'all' { Invoke-LeanSuite }
 }
 
 $Finished = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()

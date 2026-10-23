@@ -4,7 +4,7 @@ namespace Zil.Exchange
 
 open Lean
 
-/-- Stable protocol identifier shared by the Lean worker and Clojure control plane. -/
+/-- Stable protocol identifier of the Lean exchange worker. -/
 def schema : String := "ZIL-EXCHANGE/1"
 
 /-- Current exchange protocol version. -/
@@ -23,7 +23,7 @@ structure Request where
   arguments : Array String
   deriving Repr, Inhabited
 
-/-- One deterministic worker response. The Clojure client adds result SHA-256. -/
+/-- One deterministic worker response. The caller computes the result SHA-256. -/
 structure Response where
   schema : String := Zil.Exchange.schema
   requestId : String

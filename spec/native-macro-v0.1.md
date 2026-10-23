@@ -60,7 +60,7 @@ does not rename the macros or alter the model's source-language API.
 This preserves the current Lean parser and command macro APIs while extending
 the source macro path. New macro-generated extension forms must be parsed into
 typed Lean IR and pass the same validators as handwritten forms. This contract
-does not execute arbitrary Clojure macro code.
+does not execute arbitrary macro code.
 
 ## Program data
 

@@ -1,17 +1,16 @@
 # ZIL ⇄ Lean4 integration examples
 
-Graded, runnable examples showing every mechanism by which ZIL models are used
-within Lean4. Each generated artifact in `generated/` compiles under the
-`zil-lean` package (Lean v4.31.0) with `lake env lean <file>`; regeneration
-commands are in each source header.
+Graded examples showing the mechanisms by which ZIL models are used within Lean4. Each artifact in `generated/` compiles under the `zil-lean` package (Lean v4.31.0) with `lake env lean <file>`.
 
-| Example | Layer | Lean4 mechanism | Generated artifact |
+The artifacts in `generated/` were produced by exporters that were removed with the Clojure runtime (`spec/clojure-removal.md`); they are kept as written. `bin/zil compile` produces a native module from any of the sources that need no library.
+
+| Example | Layer | Lean4 mechanism | Artifact |
 |---|---|---|---|
-| `knowledge-core.zc` | core facts + rules | `export-snapshot` → native zil-lean module (`zil_fact`/`zil_rule`, kernel-elaborated) | `generated/KnowledgeCore.lean` |
-| `measurement-protocol-lts.zc` | `LTS_ATOM` + `POLICY` | `export-lean` → dependency-free state-machine module | `generated/MeasurementProtocol.lean` |
-| `access-control.zc` | RBAC/DAC macro layer (stratified negation) | preprocess with `libsets/rbac-dac` → `export-snapshot` | `generated/AccessControl.lean` |
-| `category-theory-spec.zc` | category-theory layer over the theorem layer | `theorem-dsl-ci` → theorem bridge → Lean | `generated/CategoryTheoryBridge.lean` |
-| `AnnotatedTheorem.lean` | embedded annotations | `embedded-scan` (Lean source → canonical ZIL facts) | `generated/annotated-scan.zc` |
+| `knowledge-core.zc` | core facts + rules | native zil-lean module (`zil_fact`/`zil_rule`, kernel-elaborated); `bin/zil compile` | `generated/KnowledgeCore.lean` |
+| `measurement-protocol-lts.zc` | `LTS_ATOM` + `POLICY` | dependency-free state-machine module | `generated/MeasurementProtocol.lean` |
+| `access-control.zc` | RBAC/DAC macro layer (stratified negation) | `bin/zil compile ... --lib libsets/rbac-dac` | `generated/AccessControl.lean` |
+| `category-theory-spec.zc` | category-theory layer over the theorem layer | theorem bridge → Lean; the `category-theory` row of the macro matrix | `generated/CategoryTheoryBridge.lean` |
+| `AnnotatedTheorem.lean` | embedded annotations | Lean source → canonical ZIL facts (scanner removed) | `generated/annotated-scan.zc` |
 
 The category-theory example encodes the free/forgetful adjunction between Set
 and Grp; the layer expands each construct into proof obligations, and the
@@ -20,11 +19,9 @@ chain names Mathlib declarations) and the right triangle WEAK (the open
 target). Witness tokens are bookkeeping — the Lean kernel remains the sole
 proof authority.
 
-Known layer/exporter limits (as of snapshot format v0.2):
+Known limits:
 
-- Rules with multiple heads (the theorem layer's status rules) are not yet
-  lowered by `export-snapshot`; the theorem bridge is the supported route.
-- Snapshot export requires a stratifiable program; preprocess against a scoped
-  libset, not all of `lib/` at once.
 - A relation literally named `version` collides with zil-lean's grammar
   (see the bitemporal layer); prefer prefixed relation names.
+- A program with negation must be stratifiable; compose it with a scoped libset,
+  not all of `lib/` at once.

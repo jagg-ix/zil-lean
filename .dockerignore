@@ -1,16 +1,11 @@
 .git
 .github
 .lake
-.cpcache
-.m2
 .zil
 .tmp
-.clj-kondo
-.lsp
 .idea
 .vscode
 dist
-target
 out
 generated
 *.log

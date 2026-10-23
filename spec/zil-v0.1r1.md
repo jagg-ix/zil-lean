@@ -45,4 +45,3 @@ An implementation is conformant if it:
 4. Preserves snapshot semantics at specified frontiers/revisions.
 
 Concrete backend conformance profiles may define operational mappings.
-First profile: `spec/runtime-datascript-profile-v0.1.md`.
