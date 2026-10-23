@@ -4,7 +4,7 @@ MODULE lean4.integration.access.control.
 // grant-validity rules, violation detection.
 // Lean4 path: native zil-lean snapshot module (rules included).
 //
-//   bin/zil expand examples/lean4-integration/access-control.zc - --lib libsets/rbac-dac
+//   bin/zil expand examples/lean4-integration/access-control.zc - --lib <zil-lib>/libsets/rbac-dac
 //   lake env lean examples/lean4-integration/generated/AccessControl.lean
 //
 // The checked-in snapshot module was produced by an exporter that was removed with the

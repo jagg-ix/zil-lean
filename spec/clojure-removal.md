@@ -18,7 +18,7 @@ Lean already owned every semantic result (parse, compile, expand, conformance, q
 | `clojure -M:test` and the Clojure test profiles | `bin/zil test --profile lean`, including `scripts/check-no-clojure.sh` |
 | the tuple exporter (`tuple-lean`) | `bin/zil compile` |
 | `export-snapshot` of a model | none; `bin/zil snapshot` still replays an existing `.zilr` revision log |
-| the Soufflé bridge and Soufflé parity | none; `libsets/souffle-compat` keeps the macros |
+| the Soufflé bridge and Soufflé parity | none; `libsets/souffle-compat` in zil-lib keeps the macros |
 
 ## Rewritten in Lean
 

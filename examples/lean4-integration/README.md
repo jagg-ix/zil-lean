@@ -8,7 +8,7 @@ The artifacts in `generated/` were produced by exporters that were removed with 
 |---|---|---|---|
 | `knowledge-core.zc` | core facts + rules | native zil-lean module (`zil_fact`/`zil_rule`, kernel-elaborated); `bin/zil compile` | `generated/KnowledgeCore.lean` |
 | `measurement-protocol-lts.zc` | `LTS_ATOM` + `POLICY` | dependency-free state-machine module | `generated/MeasurementProtocol.lean` |
-| `access-control.zc` | RBAC/DAC macro layer (stratified negation) | `bin/zil compile ... --lib libsets/rbac-dac` | `generated/AccessControl.lean` |
+| `access-control.zc` | RBAC/DAC macro layer (stratified negation) | `bin/zil compile ... --lib <zil-lib>/libsets/rbac-dac` | `generated/AccessControl.lean` |
 | `category-theory-spec.zc` | category-theory layer over the theorem layer | theorem bridge → Lean; the `category-theory` row of the macro matrix | `generated/CategoryTheoryBridge.lean` |
 | `AnnotatedTheorem.lean` | embedded annotations | Lean source → canonical ZIL facts (scanner removed) | `generated/annotated-scan.zc` |
 

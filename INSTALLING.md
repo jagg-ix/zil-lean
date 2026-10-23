@@ -317,7 +317,7 @@ The worker validates the request's `input_sha256` identifier and carries it thro
 
 ## 10. The corpus record
 
-Compile every `.zc` file under `lib/`, `libsets/` and `examples/` alone and compare the outcome with `spec/corpus-status.tsv`:
+Compile every `.zc` file under `lib/` and `examples/` alone and compare the outcome with `spec/corpus-status.tsv`:
 
 ```bash
 bin/zil corpus

@@ -7,7 +7,7 @@ MODULE lean4.integration.category.theory.spec.
 //
 // Qualified by the `category-theory` row of the macro matrix:
 //
-//   bin/zil expand examples/lean4-integration/category-theory-spec.zc - --lib libsets/theorem-dsl-ci
+//   bin/zil expand examples/lean4-integration/category-theory-spec.zc - --lib <zil-lib>/libsets/theorem-dsl-ci
 //   lake env lean examples/lean4-integration/generated/CategoryTheoryBridge.lean
 //
 // Expected operator summary: left triangle PROVED (full witness chain),

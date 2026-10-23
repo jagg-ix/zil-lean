@@ -1,13 +1,13 @@
 MODULE aws.model.extension.icons.demo.
 
-// Use with preprocess against libsets/aws-model, then concatenate generated inputs:
+// Use with preprocess against <zil-lib>/libsets/aws-model, then concatenate generated inputs:
 //   cat examples/generated/aws-overview-model-inputs.zc \
 //       examples/generated/aws-icon-catalog.zc \
 //       examples/generated/aws-service-icon-links.zc \
 //       examples/aws-model-extension-with-icons.zc > /tmp/aws_extension_icons_combined.zc
 //   (tools/aws_extension_icons_smoke.sh builds the combined model)
-//   bin/zil expand /tmp/aws_extension_icons_combined.zc - --lib libsets/aws-model
-//   bin/zil query-ci /tmp/aws_extension_icons_combined.zc - - --lib libsets/aws-model
+//   bin/zil expand /tmp/aws_extension_icons_combined.zc - --lib <zil-lib>/libsets/aws-model
+//   bin/zil query-ci /tmp/aws_extension_icons_combined.zc - - --lib <zil-lib>/libsets/aws-model
 
 USE AWS_PROVIDER(aws, amazon_web_services).
 USE AWS_TARGET(prod_extension, strict).

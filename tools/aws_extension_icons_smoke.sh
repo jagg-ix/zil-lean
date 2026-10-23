@@ -31,7 +31,7 @@ python3 "${ROOT_DIR}/tools/index_aws_icon_package.py" >/dev/null
 COMBINED_ZC="${TMP_DIR}/aws_extension_icons_combined.zc"
 EXPANDED_ZC="${TMP_DIR}/aws_extension_icons_combined.expanded.zc"
 LEAN_OUT="${TMP_DIR}/aws_model_extension_icons.lean"
-LIB="${ROOT_DIR}/libsets/aws-model"
+LIB="${ZIL_LIB_HOME:?set ZIL_LIB_HOME to a checkout of the zil-lib repository (it holds libsets/aws-model)}/libsets/aws-model"
 
 # The source extension expands and compiles on the native macro path, and the generated Lean typechecks.
 "${ZIL_BIN}" compile "${DEMO_ZC}" "${LEAN_OUT}" Zil.Smoke.AwsModel --lib "${LIB}" >/dev/null

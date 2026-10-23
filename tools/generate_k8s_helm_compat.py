@@ -3,7 +3,6 @@
 
 This tool emits:
 - lib/k8s-helm-compat-macros.zc
-- libsets/k8s-helm-compat/k8s-helm-compat-macros.zc
 - examples/k8s-helm-compat.zc
 
 It can optionally ingest:
@@ -331,8 +330,8 @@ def build_example_model(
     lines.append("")
     lines.append("// Run with:")
     lines.append("//   ./tools/generate_k8s_helm_compat.py")
-    lines.append("//   bin/zil expand examples/k8s-helm-compat.zc - --lib libsets/k8s-helm-compat")
-    lines.append("//   bin/zil query-ci examples/k8s-helm-compat.zc - - --lib libsets/k8s-helm-compat")
+    lines.append("//   bin/zil expand examples/k8s-helm-compat.zc - --lib <zil-lib>/libsets/k8s-helm-compat")
+    lines.append("//   bin/zil query-ci examples/k8s-helm-compat.zc - - --lib <zil-lib>/libsets/k8s-helm-compat")
     lines.append("")
     lines.append("USE KHC_DOC(k8s_helm_generated, generator, dev).")
     lines.append(f"USE KHC_COMPAT_PROFILE({profile_id}, true, 300).")
@@ -445,8 +444,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--out-libset",
-        default="libsets/k8s-helm-compat/k8s-helm-compat-macros.zc",
-        help="Focused libset copy output path relative to zil/",
+        default="",
+        help="Optional second copy of the macro library, relative to this repository (the libsets copy lives in zil-lib)",
     )
     parser.add_argument(
         "--out-example",
@@ -518,20 +517,22 @@ def main() -> int:
     )
 
     out_lib = repo_root / args.out_lib
-    out_libset = repo_root / args.out_libset
+    out_libset = repo_root / args.out_libset if args.out_libset else None
     out_example = repo_root / args.out_example
 
     out_lib.parent.mkdir(parents=True, exist_ok=True)
     out_lib.write_text(macro_text, encoding="utf-8")
 
-    out_libset.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(out_lib, out_libset)
+    if out_libset is not None:
+        out_libset.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(out_lib, out_libset)
 
     out_example.parent.mkdir(parents=True, exist_ok=True)
     out_example.write_text(example_text, encoding="utf-8")
 
     print(f"[ok] generated {out_lib.relative_to(repo_root)}")
-    print(f"[ok] generated {out_libset.relative_to(repo_root)}")
+    if out_libset is not None:
+        print(f"[ok] generated {out_libset.relative_to(repo_root)}")
     print(f"[ok] generated {out_example.relative_to(repo_root)}")
 
     if args.chart:
