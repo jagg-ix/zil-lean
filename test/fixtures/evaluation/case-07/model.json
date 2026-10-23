@@ -1,0 +1,50 @@
+{
+ "schema": "ZIL-RUNTIME-EVALUATION/1",
+ "components": [
+  {
+   "id": "c0",
+   "description": "d",
+   "current": "hybrid",
+   "candidates": [
+    "hybrid"
+   ],
+   "constraints": {}
+  },
+  {
+   "id": "c1",
+   "description": "d",
+   "current": "clojure",
+   "candidates": [
+    "hybrid",
+    "clojure",
+    "lean"
+   ],
+   "constraints": {
+    "requires-dynamic-plugins": true,
+    "requires-lean-only-profile": true
+   }
+  },
+  {
+   "id": "c2",
+   "description": "d",
+   "current": "clojure",
+   "candidates": [
+    "clojure"
+   ],
+   "constraints": {
+    "requires-lean-only-profile": true
+   }
+  },
+  {
+   "id": "c3",
+   "description": "d",
+   "current": "lean",
+   "candidates": [
+    "hybrid",
+    "lean",
+    "clojure"
+   ],
+   "constraints": {}
+  }
+ ]
+}

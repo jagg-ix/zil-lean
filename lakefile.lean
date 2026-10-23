@@ -47,3 +47,11 @@ lean_exe zilTheoremAudit where
 /-- Exchange client, control plane and durable control store. Needs the `sqlite3` shell for `store`. -/
 lean_exe zilControl where
   root := `Zil.CLI.ControlMain
+
+/-- Release evidence attestation. -/
+lean_exe zilRelease where
+  root := `Zil.CLI.ReleaseMain
+
+/-- Evidence-driven placement evaluation. -/
+lean_exe zilEvaluate where
+  root := `Zil.CLI.EvaluateMain
