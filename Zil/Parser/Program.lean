@@ -37,11 +37,12 @@ private def parseAttrValue (value : String) : Except String AttrValue := do
   else
     pure (.term (← termFromToken token))
 
-private def parseAttributes (line : SourceLine) (text : String) : Except ParseError (Array Attribute) := do
+private def parseAttributes (line : SourceLine) (text : String) (aware : Bool := false) :
+    Except ParseError (Array Attribute) := do
   if text.trim.isEmpty then return #[]
   let mut attrs : Array Attribute := #[]
-  for rawEntry in text.splitOn "," do
-    let (keyText, valueText) ← match rawEntry.splitOn "=" with
+  for rawEntry in splitOnQuoteAware aware "," text do
+    let (keyText, valueText) ← match splitOnQuoteAware aware "=" rawEntry with
       | key :: rest@(_ :: _) => pure (key.trim, (String.intercalate "=" rest).trim)
       | _ => failAt line s!"invalid attribute entry: {rawEntry.trim}"
     if keyText.isEmpty || valueText.isEmpty then
@@ -56,26 +57,28 @@ private def parseAttributes (line : SourceLine) (text : String) : Except ParseEr
   pure attrs
 
 private def splitAtomAndAttributes
-    (line : SourceLine) (text : String) : Except ParseError (String × Array Attribute) := do
-  match text.trim.splitOn "[" with
+    (line : SourceLine) (text : String) (aware : Bool := false) :
+    Except ParseError (String × Array Attribute) := do
+  match splitOnQuoteAware aware "[" text.trim with
   | [atom] => pure (atom.trim, #[])
   | [atom, attrs] =>
       unless attrs.trim.endsWith "]" do
         throw { line := line.number, message := "attribute list must end with ']'", sourceLine := line.text }
-      pure (atom.trim, ← parseAttributes line (attrs.trim.dropRight 1))
+      pure (atom.trim, ← parseAttributes line (attrs.trim.dropRight 1) aware)
   | _ => failAt line "relation atom contains more than one attribute list"
 
-private def parseRelationAtom (line : SourceLine) (text : String) : Except ParseError RelExpr := do
+private def parseRelationAtomWith
+    (aware : Bool) (line : SourceLine) (text : String) : Except ParseError RelExpr := do
   let raw := text.trim
   let body := if raw.endsWith "." then raw.dropRight 1 |>.trim else raw
-  let (atomText, attrs) ← splitAtomAndAttributes line body
-  let (left, objectText) ← match atomText.splitOn "@" with
+  let (atomText, attrs) ← splitAtomAndAttributes line body aware
+  let (left, objectText) ← match splitOnQuoteAware aware "@" atomText with
     | [left, object] => pure (left, object)
     | _ => failAt line "relation atom requires exactly one '@' separator"
-  let (subjectText, relationText) ← match left.splitOn "#" with
+  let (subjectText, relationText) ← match splitOnQuoteAware aware "#" left with
     | [subject, relation] => pure (subject, relation)
     | _ => failAt line "relation atom requires one subject/relation '#' separator"
-  if objectText.contains '#' then
+  if (splitOnQuoteAware aware "#" objectText).length > 1 then
     throw { line := line.number, message := "userset selectors are accepted on stored tuples, not rule/query atoms", sourceLine := line.text }
   let subject ← (termFromToken subjectText).mapError fun message =>
     { line := line.number, message, sourceLine := line.text }
@@ -84,6 +87,19 @@ private def parseRelationAtom (line : SourceLine) (text : String) : Except Parse
   let relation ← (relationNameFromToken relationText).mapError fun message =>
     { line := line.number, message, sourceLine := line.text }
   pure { subject, relation, object, attrs, source := sourceOf line }
+
+/-- Parse one rule or query atom. An atom that parses today parses exactly as it does today; only an atom with a double
+quote that today is rejected is retried with separators inside quotes ignored, and today's error is reported if the retry
+fails too. -/
+private def parseRelationAtom (line : SourceLine) (text : String) : Except ParseError RelExpr :=
+  match parseRelationAtomWith false line text with
+  | .ok atom => .ok atom
+  | .error today =>
+      if text.contains '"' then
+        match parseRelationAtomWith true line text with
+        | .ok atom => .ok atom
+        | .error _ => .error today
+      else .error today
 
 /-- Parse one rule/query relation atom with source location information. -/
 def parseRelationText
@@ -283,7 +299,7 @@ private def leanString (value : String) : String :=
 
 private def renderTerm : Term → String
   | .var name => s!".variable `{name}"
-  | .node node => s!".ground `{node.name}"
+  | .node node => s!".ground {Zil.Parser.leanNameLiteral node.name}"
 
 private def renderAttrValue : AttrValue → String
   | .text value => s!".text {leanString value}"

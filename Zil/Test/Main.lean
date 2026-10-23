@@ -1,5 +1,6 @@
 import Zil.Test.Userset
 import Zil.Test.TupleParser
+import Zil.Test.QuotedTerm
 import Zil.Test.Attributes
 import Zil.Test.ProgramParser
 import Zil.Test.StratifiedNegation

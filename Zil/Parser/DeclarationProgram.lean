@@ -64,7 +64,7 @@ private def leanString (value : String) : String :=
 
 private def renderTerm : Term → String
   | .var name => s!".variable `{name}"
-  | .node node => s!".ground `{node.name}"
+  | .node node => s!".ground {Zil.Parser.leanNameLiteral node.name}"
 
 private def renderAttrValue : AttrValue → String
   | .text value => s!".text {leanString value}"

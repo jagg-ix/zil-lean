@@ -1,12 +1,12 @@
 # name<TAB>library directory<TAB>model source
-# Not listed yet: libsets/diff-patch (its queries continue over several lines, which the native parser does not accept) and
-# libsets/config-declarative (its models use a quoted string, such as a URL, as a term, which the native parser does not accept).
-# Add a row when they pass.
+# Not listed yet: libsets/diff-patch (its queries continue over several lines, which the native parser does not accept).
+# Add a row when it passes.
 aws-model	libsets/aws-model	examples/aws-model-extension-with-icons.zc
 aws-model-legacy-lib	@lib/aws-model-macros.zc	examples/aws-model-extension-with-icons.zc
 aws-namespace	libsets/aws-namespace	examples/aws-namespace-compat.zc
 aws-transfer-family	libsets/aws-transfer-family	examples/generated/tf_api_model.zc
 bitemporal	libsets/bitemporal	examples/bitemporal-history-replay.zc
+config-declarative	libsets/config-declarative	examples/config-declarative-macros.zc
 everparse-interop	libsets/everparse-interop	examples/everparse-interop-demo.zc
 k8s-helm-compat	libsets/k8s-helm-compat	examples/k8s-helm-compat.zc
 namespace-pn-nd	libsets/namespace-pn-nd	examples/namespace-pn-nd-extension.zc

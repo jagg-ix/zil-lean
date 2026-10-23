@@ -52,7 +52,89 @@ def nameFromToken (value : String) : Except String Name := do
     previous := some safe
   pure result
 
-/-- Parse a ground token or a `?variable` token. -/
+/-- Split a token at `:`, `/` and `.` outside double quotes. A double-quoted run stays in one segment together with its
+quotes, and a backslash inside it escapes the next character (`\n`, `\r` and `\t` decode to the control character).
+`none` means a quote or an escape is left open. -/
+def splitOutsideQuotes (value : String) : Option (List String) := Id.run do
+  let mut segments : Array String := #[]
+  let mut current : String := ""
+  let mut inQuote := false
+  let mut escaped := false
+  for char in value.toList do
+    if inQuote then
+      if escaped then
+        let decoded := match char with
+          | 'n' => '\n'
+          | 'r' => '\r'
+          | 't' => '\t'
+          | other => other
+        current := current.push decoded
+        escaped := false
+      else if char == '\\' then
+        escaped := true
+      else if char == '"' then
+        current := current.push char
+        inQuote := false
+      else
+        current := current.push char
+    else if char == '"' then
+      current := current.push char
+      inQuote := true
+    else if char == ':' || char == '/' || char == '.' then
+      segments := segments.push current
+      current := ""
+    else
+      current := current.push char
+  if inQuote || escaped then return none
+  return some (segments.push current).toList
+
+/-- The name of a token that contains a double quote and that the ordinary rules above reject, usually because a quoted run
+holds a separator (a URL has `//`). Quoted runs keep their text exactly and their quotes, as an accepted quoted token
+already does (`value:"4456"` is `value.«"4456"»`), so two different strings never share a name. Unquoted segments follow
+`cleanSegment`. -/
+def quotedNameFromToken (value : String) : Option Name := do
+  let parts ← splitOutsideQuotes value
+  let mut result := Name.anonymous
+  let mut previous : Option String := none
+  for part in parts do
+    let safe ←
+      if part.contains '"' then some part
+      else (cleanSegment previous part).toOption
+    result := if result == Name.anonymous then Name.mkSimple safe else Name.str result safe
+    previous := some safe
+  some result
+
+/-- Split `text` at `separator` where it is outside double quotes; the pieces keep their text exactly, quotes and
+backslashes included. A backslash inside a quoted run escapes the next character, so `\"` does not end the run. -/
+def splitOnOutsideQuotes (separator : Char) (text : String) : List String := Id.run do
+  let mut pieces : Array String := #[]
+  let mut current : String := ""
+  let mut inQuote := false
+  let mut escaped := false
+  for char in text.toList do
+    if inQuote then
+      current := current.push char
+      if escaped then escaped := false
+      else if char == '\\' then escaped := true
+      else if char == '"' then inQuote := false
+    else if char == '"' then
+      current := current.push char
+      inQuote := true
+    else if char == separator then
+      pieces := pieces.push current
+      current := ""
+    else
+      current := current.push char
+  return (pieces.push current).toList
+
+/-- `String.splitOn` for a one-character separator, or the same split that ignores separators inside double quotes. The
+second is only used to retry a line that the first could not parse. -/
+def splitOnQuoteAware (aware : Bool) (separator : String) (text : String) : List String :=
+  if aware && separator.length == 1 then splitOnOutsideQuotes (separator.get 0) text
+  else text.splitOn separator
+
+/-- Parse a ground token or a `?variable` token. A token that parses today keeps exactly the name it has today; only a
+token with a double quote that today is rejected falls back to `quotedNameFromToken`. -/
 def termFromToken (value : String) : Except String Term := do
   let token := value.trim
   if token.startsWith "?" then
@@ -60,7 +142,12 @@ def termFromToken (value : String) : Except String Term := do
     if nameText.isEmpty then throw "empty variable name"
     pure (.variable (← nameFromToken nameText.toString))
   else
-    pure (.ground (← nameFromToken token))
+    match nameFromToken token with
+    | .ok name => pure (.ground name)
+    | .error message =>
+        match (if token.contains '"' then quotedNameFromToken token else none) with
+        | some name => pure (.ground name)
+        | none => throw message
 
 def upperFirst (value : String) : String :=
   match value.data with
@@ -92,11 +179,12 @@ def parseAttrValue (value : String) : Except String AttrValue := do
     pure (.term (← termFromToken token))
 
 def parseAttributes
-    (lineNumber : Nat) (sourceLine text : String) : Except ParseError (Array Attribute) := do
+    (lineNumber : Nat) (sourceLine text : String) (aware : Bool := false) :
+    Except ParseError (Array Attribute) := do
   if text.trim.isEmpty then return #[]
   let mut attrs : Array Attribute := #[]
-  for rawEntry in text.splitOn "," do
-    let (keyText, valueText) ← match rawEntry.splitOn "=" with
+  for rawEntry in splitOnQuoteAware aware "," text do
+    let (keyText, valueText) ← match splitOnQuoteAware aware "=" rawEntry with
       | key :: rest@(_ :: _) => pure (key.trim, (String.intercalate "=" rest).trim)
       | _ => failAt lineNumber sourceLine s!"invalid attribute entry: {rawEntry.trim}"
     if keyText.isEmpty || valueText.isEmpty then
@@ -111,20 +199,22 @@ def parseAttributes
   pure attrs
 
 def splitTupleAndAttributes
-    (lineNumber : Nat) (sourceLine body : String) : Except ParseError (String × Array Attribute) := do
-  match body.splitOn "[" with
+    (lineNumber : Nat) (sourceLine body : String) (aware : Bool := false) :
+    Except ParseError (String × Array Attribute) := do
+  match splitOnQuoteAware aware "[" body with
   | [tupleText] => pure (tupleText.trim, #[])
   | [tupleText, attrsText] =>
       unless attrsText.trim.endsWith "]" do
         throw { line := lineNumber, message := "attribute list must end with ']'", sourceLine }
       let content := attrsText.trim.dropRight 1
-      pure (tupleText.trim, ← parseAttributes lineNumber sourceLine content)
+      pure (tupleText.trim, ← parseAttributes lineNumber sourceLine content aware)
   | _ => failAt lineNumber sourceLine "tuple contains more than one attribute list"
 
 def parseDirectOrUserset
     (lineNumber : Nat) (line subjectText : String)
-    (object : Term) (relation : Name) (attrs : Array Attribute) : Except ParseError TupleExpr := do
-  let subjectParts := subjectText.trim.splitOn "#"
+    (object : Term) (relation : Name) (attrs : Array Attribute) (aware : Bool := false) :
+    Except ParseError TupleExpr := do
+  let subjectParts := splitOnQuoteAware aware "#" subjectText.trim
   let source : Source := { frontend := "zc", line := some lineNumber }
   match subjectParts with
   | [subject] =>
@@ -145,18 +235,18 @@ def parseDirectOrUserset
       pure { TupleExpr.withUserset object relation ⟨usersetName⟩ usersetRelationName attrs with source }
   | _ => failAt lineNumber line "tuple subjects support at most one userset selector"
 
-/-- Parse one tuple fact, including attributes and a userset subject. -/
-def parseTupleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError TupleExpr := do
+/-- Parse one tuple fact, optionally treating `@`, `#`, `[`, `,` and `=` inside double quotes as text. -/
+def parseTupleLineWith (aware : Bool) (lineNumber : Nat) (sourceLine : String) : Except ParseError TupleExpr := do
   let line := sourceLine.trim
   unless line.endsWith "." do
     throw { line := lineNumber, message := "tuple fact must end with '.'", sourceLine }
   let body := line.dropRight 1 |>.trim
-  let (tupleText, attrs) ← splitTupleAndAttributes lineNumber sourceLine body
-  let atParts := tupleText.splitOn "@"
+  let (tupleText, attrs) ← splitTupleAndAttributes lineNumber sourceLine body aware
+  let atParts := splitOnQuoteAware aware "@" tupleText
   let (left, subjectText) ← match atParts with
     | [left, subject] => pure (left, subject)
     | _ => failAt lineNumber sourceLine "tuple fact requires exactly one '@' separator"
-  let leftParts := left.splitOn "#"
+  let leftParts := splitOnQuoteAware aware "#" left
   let (objectText, relationText) ← match leftParts with
     | [object, relation] => pure (object, relation)
     | _ => failAt lineNumber sourceLine "tuple fact requires one object/relation '#' separator"
@@ -168,10 +258,23 @@ def parseTupleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError 
   let relation ←
     (relationNameFromToken relationText).mapError fun message =>
       { line := lineNumber, message, sourceLine }
-  let tuple ← parseDirectOrUserset lineNumber sourceLine subjectText object relation attrs
+  let tuple ← parseDirectOrUserset lineNumber sourceLine subjectText object relation attrs aware
   unless tuple.isGround do
     throw { line := lineNumber, message := "top-level tuple facts must be ground", sourceLine }
   pure tuple
+
+/-- Parse one tuple fact, including attributes and a userset subject. A line that parses today parses exactly as it does
+today. Only a line with a double quote that today is rejected is retried with separators inside quotes ignored, and if the
+retry fails too, today's error is the one reported. -/
+def parseTupleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError TupleExpr :=
+  match parseTupleLineWith false lineNumber sourceLine with
+  | .ok tuple => .ok tuple
+  | .error today =>
+      if sourceLine.contains '"' then
+        match parseTupleLineWith true lineNumber sourceLine with
+        | .ok tuple => .ok tuple
+        | .error _ => .error today
+      else .error today
 
 def parseModuleLine (lineNumber : Nat) (sourceLine : String) : Except ParseError Name := do
   let line := sourceLine.trim
@@ -219,13 +322,49 @@ def leanString (value : String) : String :=
     |>.replace "\t" "\\t"
   "\"" ++ escaped ++ "\""
 
+/-- A Lean string literal for any text: control characters and quotes are escaped. -/
+def leanStringAnyText (value : String) : String :=
+  let escaped := value.toList.foldl (init := "") fun out char =>
+    out ++ (match char with
+      | '\\' => "\\\\"
+      | '"' => "\\\""
+      | '\n' => "\\n"
+      | '\r' => "\\r"
+      | '\t' => "\\t"
+      | other =>
+          if other.val < 32 then
+            let hex := Nat.toDigits 16 other.val.toNat
+            "\\x" ++ String.ofList (if hex.length < 2 then '0' :: hex else hex)
+          else String.singleton other)
+  "\"" ++ escaped ++ "\""
+
+/-- A segment that the backtick name literal cannot carry: `«` `»` quoting has no escape for `»`, and a raw control character
+would break the line. -/
+def segmentNeedsConstructor (segment : String) : Bool :=
+  segment.toList.any fun char => char == '»' || char.val < 32
+
+def nameNeedsConstructor : Name → Bool
+  | .anonymous => false
+  | .str parent segment => segmentNeedsConstructor segment || nameNeedsConstructor parent
+  | .num parent _ => nameNeedsConstructor parent
+
+partial def nameConstructor : Name → String
+  | .anonymous => "Lean.Name.anonymous"
+  | .str parent segment => s!"(Lean.Name.str {nameConstructor parent} {leanStringAnyText segment})"
+  | .num parent index => s!"(Lean.Name.num {nameConstructor parent} {index})"
+
+/-- How a ground name is written into generated Lean. Every name that was writable before is written exactly as before
+(`` `a.b ``); only a name with a character the literal cannot hold is built from its parts. -/
+def leanNameLiteral (name : Name) : String :=
+  if nameNeedsConstructor name then nameConstructor name else s!"`{name}"
+
 def renderAttrValue : AttrValue → String
   | .text value => s!".text {leanString value}"
   | .integer value => s!".integer {value}"
   | .decimal value => s!".decimal {leanString value}"
   | .boolean value => if value then ".boolean true" else ".boolean false"
   | .term (.var name) => s!".term (.variable `{name})"
-  | .term (.node node) => s!".term (.ground `{node.name})"
+  | .term (.node node) => s!".term (.ground {leanNameLiteral node.name})"
 
 def renderAttributes (attrs : Array Attribute) : String :=
   if attrs.isEmpty then "#[]"
@@ -248,12 +387,12 @@ def renderTupleDefinition (index : Nat) (tuple : TupleExpr) : Except String Stri
     | .direct subject =>
         let subjectName ← groundName subject
         pure <| "Zil.TupleExpr.direct\n" ++
-          s!"      (.ground `{objectName})\n" ++
+          s!"      (.ground {leanNameLiteral objectName})\n" ++
           s!"      `{tuple.relation}\n" ++
-          s!"      (.ground `{subjectName})"
+          s!"      (.ground {leanNameLiteral subjectName})"
     | .userset userset =>
         pure <| "Zil.TupleExpr.withUserset\n" ++
-          s!"      (.ground `{objectName})\n" ++
+          s!"      (.ground {leanNameLiteral objectName})\n" ++
           s!"      `{tuple.relation}\n" ++
           s!"      ⟨`{userset.object.name}⟩\n" ++
           s!"      `{userset.relation}"
