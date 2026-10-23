@@ -1,0 +1,5 @@
+MODULE ingest.yaml.
+DATASOURCE y_list [type=file, path="list.yaml", format=yaml].
+DATASOURCE y_map [type=file, path="map.yaml", format=yaml].
+DATASOURCE y_json [type=file, path="json.yaml", format=yaml].
+DATASOURCE y_leading [type=file, path="leading.yaml", format=yaml].

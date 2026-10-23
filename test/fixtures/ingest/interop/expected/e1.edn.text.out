@@ -1,0 +1,1 @@
+[{:metric "m1", :value 41, :tag "hot"} {:metric "m2", :value 42.5, :nested {:a [1 2 3]}, :s "q\"t"}]

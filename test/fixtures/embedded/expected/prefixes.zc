@@ -1,0 +1,33 @@
+MODULE embedded.annotations.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:130d73bedda9a293"#kind@"embedded_zil_block".
+"embedded:130d73bedda9a293"#target@"t:one".
+"embedded:130d73bedda9a293"#trust@"trust:asserted_annotation".
+"embedded:130d73bedda9a293"#source_hash@"sha256:f309d7008562f15a9df8b2723e02a0b36da20d094f8cc0e6f921e42c7335852d".
+"embedded:130d73bedda9a293"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:130d73bedda9a293"#start_line@"2".
+"embedded:130d73bedda9a293"#end_line@"5".
+t:one#kind@star.
+t:one#kind@again.
+"embedded:d73654366d7d5121"#kind@"embedded_zil_block".
+"embedded:d73654366d7d5121"#target@"t:two".
+"embedded:d73654366d7d5121"#trust@"trust:asserted_annotation".
+"embedded:d73654366d7d5121"#source_hash@"sha256:f309d7008562f15a9df8b2723e02a0b36da20d094f8cc0e6f921e42c7335852d".
+"embedded:d73654366d7d5121"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:d73654366d7d5121"#start_line@"7".
+"embedded:d73654366d7d5121"#end_line@"10".
+t:two#kind@opener.
+t:two#kind@closer.
+"embedded:c80224a705d16604"#kind@"embedded_zil_block".
+"embedded:c80224a705d16604"#target@"t:three".
+"embedded:c80224a705d16604"#trust@"trust:asserted_annotation".
+"embedded:c80224a705d16604"#source_hash@"sha256:f309d7008562f15a9df8b2723e02a0b36da20d094f8cc0e6f921e42c7335852d".
+"embedded:c80224a705d16604"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:c80224a705d16604"#start_line@"11".
+"embedded:c80224a705d16604"#end_line@"17".
+t:three#kind@slashes.
+t:three#kind@tripleslash.
+t:three#kind@semicolons.
+t:three#kind@hashes.
+t:three#kind@indented.

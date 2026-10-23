@@ -1,0 +1,30 @@
+{
+ "block-count": 0,
+ "check-only": false,
+ "checked": 0,
+ "compiled": 0,
+ "entries": [],
+ "failed": 0,
+ "failures": [
+  {
+   "kind": "no-embedded-blocks"
+  }
+ ],
+ "host-count": 0,
+ "hosts": [],
+ "namespace-prefix": "Zil.Embedded",
+ "ok": false,
+ "output-root": "@W@/gen",
+ "require-blocks": true,
+ "roots": [
+  "@W@/test/fixtures/embedded/err-nofact/src"
+ ],
+ "scan-errors": [
+  {
+   "host": "@W@/test/fixtures/embedded/err-nofact/src/a.lean"
+  }
+ ],
+ "schema": "ZIL-EMBEDDED-MANIFEST/1",
+ "verified": 0,
+ "verify-generated": false
+}

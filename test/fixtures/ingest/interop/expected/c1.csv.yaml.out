@@ -1,0 +1,9 @@
+- label: x, y
+  metric: "metric:a"
+  value: 31
+- label: plain
+  metric: "metric:b"
+  value: 2.5
+- label: ""
+  metric: "metric:c"
+  value: ""

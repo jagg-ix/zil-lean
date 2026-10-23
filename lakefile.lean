@@ -43,3 +43,31 @@ lean_exe zilProofObligations where
 
 lean_exe zilTheoremAudit where
   root := `Zil.CLI.TheoremAuditMain
+
+/-- Exchange client, control plane and durable control store. Needs the `sqlite3` shell for `store`. -/
+lean_exe zilControl where
+  root := `Zil.CLI.ControlMain
+
+/-- Release evidence attestation. -/
+lean_exe zilRelease where
+  root := `Zil.CLI.ReleaseMain
+
+/-- Evidence-driven placement evaluation. -/
+lean_exe zilEvaluate where
+  root := `Zil.CLI.EvaluateMain
+
+/-- Extension discovery, inspection, invocation and evidence production. -/
+lean_exe zilPlugin where
+  root := `Zil.CLI.PluginMain
+
+/-- Importers and exporters between ZIL and other formats. -/
+lean_exe zilInterop where
+  root := `Zil.CLI.InteropMain
+
+/-- Scan, snapshot and drift-check ZIL blocks embedded in host-language sources. -/
+lean_exe zilEmbedded where
+  root := `Zil.CLI.EmbeddedMain
+
+/-- Ingest datasources into facts and a revision log; convert data files. -/
+lean_exe zilIngest where
+  root := `Zil.CLI.IngestMain

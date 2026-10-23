@@ -1,0 +1,3 @@
+MODULE ingest.events.
+DATASOURCE ev [type=file, path="e.json", format=json].
+DATASOURCE ev_named [type=file, path="e.json", format=json].

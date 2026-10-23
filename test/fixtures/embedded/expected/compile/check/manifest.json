@@ -1,0 +1,92 @@
+{
+ "block-count": 2,
+ "check-only": true,
+ "checked": 2,
+ "compiled": 0,
+ "entries": [
+  {
+   "block_id": "embedded:2bf829dacf6daf76",
+   "bytes": 685,
+   "end_line": 4,
+   "host": "@W@/test/fixtures/embedded/text/src/slash.lean",
+   "language": "lean4",
+   "lean-namespace": "Zil.Embedded.Src.Slash.Block0",
+   "macro_revision": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "lean_module:Src.slash",
+   "namespace": "lean_namespace:root",
+   "ordinal": 0,
+   "output": "@W@/gen/Src/Slash/Block0.lean",
+   "output-sha256": "90f1a14ac5e72c00927ca914eaf246014423177327890c3838e230c81d9c4758",
+   "project": "project:Src",
+   "relative": "slash.lean",
+   "root": "@W@/test/fixtures/embedded/text/src",
+   "scan-path": "Src/slash.lean",
+   "source_hash": "sha256:73c1b725b378638d84c1c36adf43a80cdc174d257aca8e41db7a9c19b519cba2",
+   "source_span": "source_span:Src/slash.lean:2-4",
+   "start_line": 2,
+   "status": "checked",
+   "target": "slash:a/b",
+   "trust": "asserted_annotation",
+   "zc-bytes": 70,
+   "zc-sha256": "c827cd72b089be65db32a1098519965b580e5a3cdaf5e8c3a1e476fe5a7c1c46"
+  },
+  {
+   "block_id": "embedded:cf4ac2976a470576",
+   "bytes": 947,
+   "end_line": 5,
+   "host": "@W@/test/fixtures/embedded/text/src/u.lean",
+   "language": "lean4",
+   "lean-namespace": "Zil.Embedded.Src.U.Block0",
+   "macro_revision": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "lean_module:Src.u",
+   "namespace": "lean_namespace:root",
+   "ordinal": 0,
+   "output": "@W@/gen/Src/U/Block0.lean",
+   "output-sha256": "b477192d31b1d882a2a862808062c0e6f61cc35018a4c246083e47386c4aa787",
+   "project": "project:Src",
+   "relative": "u.lean",
+   "root": "@W@/test/fixtures/embedded/text/src",
+   "scan-path": "Src/u.lean",
+   "source_hash": "sha256:3b0135e7c1447ef85cf48b40e5ee8d3032f614e6e2dcfb23c5d5ec2c0b1e8611",
+   "source_span": "source_span:Src/u.lean:2-5",
+   "start_line": 2,
+   "status": "checked",
+   "target": "u:caf\u00e9",
+   "trust": "asserted_annotation",
+   "zc-bytes": 93,
+   "zc-sha256": "8f89ee5752073f383bbba50f81a342f16113dd6b0ddaa02c1349fe6837d26d48"
+  }
+ ],
+ "failed": 0,
+ "failures": [],
+ "host-count": 2,
+ "hosts": [
+  {
+   "host": "@W@/test/fixtures/embedded/text/src/slash.lean",
+   "language": "lean4",
+   "relative": "slash.lean",
+   "root": "@W@/test/fixtures/embedded/text/src",
+   "scan-path": "Src/slash.lean",
+   "source-hash": "sha256:73c1b725b378638d84c1c36adf43a80cdc174d257aca8e41db7a9c19b519cba2"
+  },
+  {
+   "host": "@W@/test/fixtures/embedded/text/src/u.lean",
+   "language": "lean4",
+   "relative": "u.lean",
+   "root": "@W@/test/fixtures/embedded/text/src",
+   "scan-path": "Src/u.lean",
+   "source-hash": "sha256:3b0135e7c1447ef85cf48b40e5ee8d3032f614e6e2dcfb23c5d5ec2c0b1e8611"
+  }
+ ],
+ "namespace-prefix": "Zil.Embedded",
+ "ok": true,
+ "output-root": "@W@/gen",
+ "require-blocks": false,
+ "roots": [
+  "@W@/test/fixtures/embedded/text/src"
+ ],
+ "scan-errors": [],
+ "schema": "ZIL-EMBEDDED-MANIFEST/1",
+ "verified": 0,
+ "verify-generated": false
+}

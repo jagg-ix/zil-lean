@@ -1,0 +1,1 @@
+[{:host "web1", :state "up", :load 0.5} {:host "web2", :state "down", :load 7}]

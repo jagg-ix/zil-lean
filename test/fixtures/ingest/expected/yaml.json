@@ -1,0 +1,234 @@
+{
+ "edges": [],
+ "facts": [
+  {
+   "attrs": {
+    "payload": {
+     "child": "indented",
+     "count": 7,
+     "flag": true,
+     "ratio": 1.5,
+     "service": "api",
+     "url": "http://host:80/path",
+     "version": "1.2"
+    }
+   },
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:json_in_yaml",
+     "value": 5
+    }
+   },
+   "event": "ingest_datasource_y_json",
+   "object": "datasource:y_json",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "name": "duplicated",
+     "nested": "ignored line? no, it is a key too"
+    }
+   },
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "value": 1
+    }
+   },
+   "event": "ingest_datasource_y_leading",
+   "object": "datasource:y_leading",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "value": 5
+   },
+   "event": "ingest_datasource_y_json",
+   "object": "metric:json_in_yaml",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:y_json"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "empty",
+   "revision": 7,
+   "subject": "value:nil"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:duplicated"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:first"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:second"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "nested",
+   "revision": 7,
+   "subject": "value:ignored line? no, it is a key too"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "note",
+   "revision": 7,
+   "subject": "quoted: text"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "nothing",
+   "revision": 7,
+   "subject": "value:nil"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_list",
+   "object": "datasource:y_list",
+   "relation": "tab",
+   "revision": 7,
+   "subject": "value:tabbed"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "child",
+   "revision": 7,
+   "subject": "value:indented"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "count",
+   "revision": 7,
+   "subject": "value:7"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "flag",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "ratio",
+   "revision": 7,
+   "subject": "value:1.5"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "service",
+   "revision": 7,
+   "subject": "value:api"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "url",
+   "revision": 7,
+   "subject": "http://host:80/path"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_y_map",
+   "object": "datasource:y_map",
+   "relation": "version",
+   "revision": 7,
+   "subject": "value:1.2"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:y_list",
+    "facts": 12,
+    "records": 4,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:y_map",
+    "facts": 8,
+    "records": 1,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:y_json",
+    "facts": 2,
+    "records": 1,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:y_leading",
+    "facts": 1,
+    "records": 1,
+    "type": "file"
+   }
+  ],
+  "facts": 23,
+  "records": 7,
+  "sources": 4
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "schema": "ZIL-RUNTIME-EVALUATION/1",
+ "components": [
+  {
+   "id": "c0",
+   "description": "d",
+   "current": "clojure",
+   "candidates": [
+    "lean",
+    "clojure",
+    "hybrid"
+   ],
+   "constraints": {}
+  },
+  {
+   "id": "c1",
+   "description": "d",
+   "current": "clojure",
+   "candidates": [
+    "clojure"
+   ],
+   "constraints": {
+    "requires-lean-only-profile": true
+   }
+  }
+ ]
+}

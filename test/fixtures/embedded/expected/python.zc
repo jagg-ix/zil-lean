@@ -1,0 +1,28 @@
+MODULE embedded.annotations.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:cd2e400306a101e4"#kind@"embedded_zil_block".
+"embedded:cd2e400306a101e4"#target@"python:run".
+"embedded:cd2e400306a101e4"#trust@"trust:asserted_annotation".
+"embedded:cd2e400306a101e4"#source_hash@"sha256:c0720319c72053cb53be0c8c0db078bdda0bb362b4152d3d73aac8f1425965f8".
+"embedded:cd2e400306a101e4"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:cd2e400306a101e4"#start_line@"1".
+"embedded:cd2e400306a101e4"#end_line@"4".
+python:run#kind@function.
+python:run#in@module.
+"embedded:41f53cfdca40eb95"#kind@"embedded_zil_block".
+"embedded:41f53cfdca40eb95"#target@"python:Runner".
+"embedded:41f53cfdca40eb95"#trust@"trust:asserted_annotation".
+"embedded:41f53cfdca40eb95"#source_hash@"sha256:c0720319c72053cb53be0c8c0db078bdda0bb362b4152d3d73aac8f1425965f8".
+"embedded:41f53cfdca40eb95"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:41f53cfdca40eb95"#start_line@"8".
+"embedded:41f53cfdca40eb95"#end_line@"10".
+python:Runner#kind@class.
+"embedded:8b820b33e821e6b5"#kind@"embedded_zil_block".
+"embedded:8b820b33e821e6b5"#target@"python:fetch".
+"embedded:8b820b33e821e6b5"#trust@"trust:asserted_annotation".
+"embedded:8b820b33e821e6b5"#source_hash@"sha256:c0720319c72053cb53be0c8c0db078bdda0bb362b4152d3d73aac8f1425965f8".
+"embedded:8b820b33e821e6b5"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:8b820b33e821e6b5"#start_line@"14".
+"embedded:8b820b33e821e6b5"#end_line@"16".
+python:fetch#kind@async.

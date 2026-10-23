@@ -1,0 +1,3 @@
+# a leading comment makes the whole file a flat document
+- Name: first
+  value: 1

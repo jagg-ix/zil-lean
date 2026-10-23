@@ -1,0 +1,9 @@
+[{"uri":"features/auth.feature","id":"auth_feature","name":"Auth feature",
+  "elements":[
+   {"id":"login_ok","type":"scenario","name":"Login ok","steps":[
+     {"keyword":"Given ","name":"user opens page","result":{"status":"passed","duration":1000}},
+     {"keyword":"When ","name":"user enters password","result":{"status":"PASSED","duration":"1200"}},
+     {"keyword":"Then ","name":"dashboard is shown","result":{"status":"failed","duration":1400}}]},
+   {"type":"background","name":"Background","steps":[{"keyword":"Given ","name":"ignored"}]},
+   {"type":"scenario_outline","name":"Outline One","steps":[{"keyword":"Given ","name":"first"},{"name":"second","result":{}}]}]},
+ {"name":"Second feature","scenarios":[{"name":"No type here","steps":[{"keyword":"Given ","name":"only step","result":{"status":"skipped","duration":7}}]}]}]

@@ -1,0 +1,3 @@
+metric,nested,s,tag,value
+m1,,,hot,41
+m2,{:a [1 2 3]},"q""t",,42.5

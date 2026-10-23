@@ -1,0 +1,6 @@
+enabled: true
+name: web
+note: ""
+ratio: 0.5
+replicas: 3
+state: up

@@ -1,0 +1,11 @@
+{
+ "tools": {
+  "z3": {
+   "command": [
+    "z3",
+    "{input}"
+   ],
+   "timeout-ms": 30000
+  }
+ }
+}

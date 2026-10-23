@@ -1,0 +1,3 @@
+cpu,name,ok,ratio,state
+3,web,true,0.5,up
+12,db,false,1.0E-4,down

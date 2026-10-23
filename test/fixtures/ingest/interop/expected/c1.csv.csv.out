@@ -1,0 +1,4 @@
+label,metric,value
+"x, y",metric:a,31
+plain,metric:b,2.5
+,metric:c,

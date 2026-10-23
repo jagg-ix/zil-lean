@@ -1,0 +1,188 @@
+{
+ "edges": [],
+ "facts": [
+  {
+   "attrs": {
+    "payload": {
+     "exit": 0,
+     "stderr": "",
+     "stdout": "hello-from-cmd"
+    }
+   },
+   "event": "ingest_datasource_ds_cmd",
+   "object": "datasource:ds_cmd",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "line": "gamma",
+     "line_number": 4
+    }
+   },
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metrics": {
+      "error_rate": 0.01
+     }
+    }
+   },
+   "event": "ingest_datasource_ds_rest",
+   "object": "datasource:ds_rest",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "value": 0.01
+   },
+   "event": "ingest_datasource_ds_rest",
+   "object": "metric:error_rate",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_rest"
+  },
+  {
+   "attrs": {
+    "value": 123
+   },
+   "event": "ingest_datasource_ds_rest",
+   "object": "metric:latency",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_rest"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_cmd",
+   "object": "datasource:ds_cmd",
+   "relation": "exit",
+   "revision": 7,
+   "subject": "value:0"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_cmd",
+   "object": "datasource:ds_cmd",
+   "relation": "stderr",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_cmd",
+   "object": "datasource:ds_cmd",
+   "relation": "stdout",
+   "revision": 7,
+   "subject": "value:hello-from-cmd"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line",
+   "revision": 7,
+   "subject": "value:alpha"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line",
+   "revision": 7,
+   "subject": "value:beta"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line",
+   "revision": 7,
+   "subject": "value:gamma"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line_number",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line_number",
+   "revision": 7,
+   "subject": "value:2"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line_number",
+   "revision": 7,
+   "subject": "value:3"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_file",
+   "object": "datasource:ds_file",
+   "relation": "line_number",
+   "revision": 7,
+   "subject": "value:4"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_rest",
+    "facts": 4,
+    "records": 2,
+    "type": "rest"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_file",
+    "facts": 12,
+    "records": 4,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_cmd",
+    "facts": 4,
+    "records": 1,
+    "type": "command"
+   }
+  ],
+  "facts": 20,
+  "records": 7,
+  "sources": 3
+ }
+}

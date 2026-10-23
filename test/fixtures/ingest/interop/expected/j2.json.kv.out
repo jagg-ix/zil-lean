@@ -1,0 +1,7 @@
+flag=true
+nested={:a [1 2 {:b nil}]}
+ratio=0.5
+replicas=3
+s= padded 
+service=api
+state=up

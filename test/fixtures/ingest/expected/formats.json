@@ -1,0 +1,564 @@
+{
+ "edges": [],
+ "facts": [
+  {
+   "attrs": {
+    "payload": {
+     "a": "2",
+     "b": "q;r",
+     "c": "false"
+    }
+   },
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "alpha": 1,
+     "beta": "two",
+     "empty": "",
+     "eq": "a=b=c",
+     "flag": true
+    }
+   },
+   "event": "ingest_datasource_ds_kv",
+   "object": "datasource:ds_kv",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "col_1": 2,
+     "col_2": "q;r",
+     "col_3": false
+    }
+   },
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "command_exit": 0,
+     "metric": "metric:cmd_json",
+     "value": 55
+    }
+   },
+   "event": "ingest_datasource_ds_cmd_json",
+   "object": "datasource:ds_cmd_json",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "enabled": true,
+     "name": "web",
+     "note": null,
+     "ratio": 0.5,
+     "replicas": 3,
+     "state": "up"
+    }
+   },
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:csv_b",
+     "value": 32
+    }
+   },
+   "event": "ingest_datasource_ds_csv",
+   "object": "datasource:ds_csv",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:edn_b",
+     "tag": "hot",
+     "value": 42.5
+    }
+   },
+   "event": "ingest_datasource_ds_edn",
+   "object": "datasource:ds_edn",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:json_b",
+     "value": 12
+    }
+   },
+   "event": "ingest_datasource_ds_json",
+   "object": "datasource:ds_json",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:yaml_b",
+     "value": 22
+    }
+   },
+   "event": "ingest_datasource_ds_yaml",
+   "object": "datasource:ds_yaml",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "text": "just some text\nsecond line\n"
+    }
+   },
+   "event": "ingest_datasource_ds_text",
+   "object": "datasource:ds_text",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "value": 11
+   },
+   "event": "ingest_datasource_ds_json",
+   "object": "metric:json_a",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_json"
+  },
+  {
+   "attrs": {
+    "value": 12
+   },
+   "event": "ingest_datasource_ds_json",
+   "object": "metric:json_b",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_json"
+  },
+  {
+   "attrs": {
+    "value": 21
+   },
+   "event": "ingest_datasource_ds_yaml",
+   "object": "metric:yaml_a",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_yaml"
+  },
+  {
+   "attrs": {
+    "value": 22
+   },
+   "event": "ingest_datasource_ds_yaml",
+   "object": "metric:yaml_b",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_yaml"
+  },
+  {
+   "attrs": {
+    "value": 31
+   },
+   "event": "ingest_datasource_ds_csv",
+   "object": "metric:csv_a",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_csv"
+  },
+  {
+   "attrs": {
+    "value": 32
+   },
+   "event": "ingest_datasource_ds_csv",
+   "object": "metric:csv_b",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_csv"
+  },
+  {
+   "attrs": {
+    "value": 41
+   },
+   "event": "ingest_datasource_ds_edn",
+   "object": "metric:edn_a",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_edn"
+  },
+  {
+   "attrs": {
+    "value": 42.5
+   },
+   "event": "ingest_datasource_ds_edn",
+   "object": "metric:edn_b",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_edn"
+  },
+  {
+   "attrs": {
+    "value": 55
+   },
+   "event": "ingest_datasource_ds_cmd_json",
+   "object": "metric:cmd_json",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ds_cmd_json"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_cmd_json",
+   "object": "datasource:ds_cmd_json",
+   "relation": "command_exit",
+   "revision": 7,
+   "subject": "value:0"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_edn",
+   "object": "datasource:ds_edn",
+   "relation": "tag",
+   "revision": 7,
+   "subject": "value:hot"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "enabled",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:web"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "note",
+   "revision": 7,
+   "subject": "value:nil"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "ratio",
+   "revision": 7,
+   "subject": "value:0.5"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "replicas",
+   "revision": 7,
+   "subject": "value:3"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_flat",
+   "object": "datasource:ds_flat",
+   "relation": "state",
+   "revision": 7,
+   "subject": "value:up"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_kv",
+   "object": "datasource:ds_kv",
+   "relation": "alpha",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_kv",
+   "object": "datasource:ds_kv",
+   "relation": "beta",
+   "revision": 7,
+   "subject": "value:two"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_kv",
+   "object": "datasource:ds_kv",
+   "relation": "empty",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_kv",
+   "object": "datasource:ds_kv",
+   "relation": "eq",
+   "revision": 7,
+   "subject": "value:a=b=c"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_kv",
+   "object": "datasource:ds_kv",
+   "relation": "flag",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_1",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_1",
+   "revision": 7,
+   "subject": "value:2"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_1",
+   "revision": 7,
+   "subject": "value:a"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_2",
+   "revision": 7,
+   "subject": "value:b"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_2",
+   "revision": 7,
+   "subject": "value:q;r"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_2",
+   "revision": 7,
+   "subject": "value:x y"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_3",
+   "revision": 7,
+   "subject": "value:c"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_3",
+   "revision": 7,
+   "subject": "value:false"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_nohead",
+   "object": "datasource:ds_nohead",
+   "relation": "col_3",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "a",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "a",
+   "revision": 7,
+   "subject": "value:2"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "b",
+   "revision": 7,
+   "subject": "value:q;r"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "b",
+   "revision": 7,
+   "subject": "value:x y"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "c",
+   "revision": 7,
+   "subject": "value:false"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_semi",
+   "object": "datasource:ds_semi",
+   "relation": "c",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ds_text",
+   "object": "datasource:ds_text",
+   "relation": "text",
+   "revision": 7,
+   "subject": "value:just some text\nsecond line\n"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_json",
+    "facts": 4,
+    "records": 2,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_yaml",
+    "facts": 4,
+    "records": 2,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_csv",
+    "facts": 4,
+    "records": 2,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_flat",
+    "facts": 7,
+    "records": 1,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_kv",
+    "facts": 6,
+    "records": 1,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_text",
+    "facts": 2,
+    "records": 1,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_edn",
+    "facts": 5,
+    "records": 2,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_semi",
+    "facts": 8,
+    "records": 2,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_nohead",
+    "facts": 12,
+    "records": 3,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:ds_cmd_json",
+    "facts": 3,
+    "records": 1,
+    "type": "command"
+   }
+  ],
+  "facts": 55,
+  "records": 17,
+  "sources": 10
+ }
+}

@@ -1,0 +1,5 @@
+MODULE ingest.rest.
+DATASOURCE r_one [type=rest, mock_response={:metric "metric:single", :value 9}].
+DATASOURCE r_path [type=rest, path="p.csv", format=csv].
+DATASOURCE r_empty [type=rest].
+DATASOURCE r_many [type=rest, mock_responses=[{:a 1} {:b "two"}]].

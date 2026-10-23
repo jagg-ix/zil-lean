@@ -1,0 +1,182 @@
+[
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "correctness",
+  "value": 0.5,
+  "confidence": 0.29,
+  "samples": 1,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "latency",
+  "value": 0.91,
+  "confidence": 0.85,
+  "samples": 2,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "latency",
+  "value": 0.97,
+  "confidence": 0.12,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "throughput",
+  "value": 0.77,
+  "confidence": 0.05,
+  "samples": 2,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "maintenance",
+  "value": 0.73,
+  "confidence": 0.05,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "extensibility",
+  "value": 1.0,
+  "confidence": 0.31,
+  "samples": 2,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "proof-coverage",
+  "value": 0.63,
+  "confidence": 0.86,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "deployment-simplicity",
+  "value": 0.05,
+  "confidence": 0.0,
+  "samples": 2,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "deployment-simplicity",
+  "value": 0.6,
+  "confidence": 0.05,
+  "samples": 3,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "correctness",
+  "value": 0.92,
+  "confidence": 0.66,
+  "samples": 4,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "latency",
+  "value": 0.48,
+  "confidence": 0.5,
+  "samples": 5,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "latency",
+  "value": 0.34,
+  "confidence": 0.99,
+  "samples": 2,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "throughput",
+  "value": 0.68,
+  "confidence": 0.9,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "maintenance",
+  "value": 0.66,
+  "confidence": 0.8,
+  "samples": 1,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 0.12,
+  "confidence": 0.39,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 0.5,
+  "confidence": 0.6,
+  "samples": 3,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "proof-coverage",
+  "value": 0.0,
+  "confidence": 0.56,
+  "samples": 2,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "proof-coverage",
+  "value": 0.39,
+  "confidence": 0.14,
+  "samples": 1,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "reliability",
+  "value": 0.0,
+  "confidence": 0.39,
+  "samples": 1,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "deployment-simplicity",
+  "value": 0.22,
+  "confidence": 0.05,
+  "samples": 1,
+  "source": "s3"
+ }
+]

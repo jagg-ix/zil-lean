@@ -1,0 +1,470 @@
+[
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "correctness",
+  "value": 0.5,
+  "confidence": 0.73,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "latency",
+  "value": 0.6,
+  "confidence": 0.05,
+  "samples": 1,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "latency",
+  "value": 0.09,
+  "confidence": 0.05,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "maintenance",
+  "value": 0.47,
+  "confidence": 0.48,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "proof-coverage",
+  "value": 0.21,
+  "confidence": 0.21,
+  "samples": 1,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "reliability",
+  "value": 0.3,
+  "confidence": 0.0,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "correctness",
+  "value": 0.78,
+  "confidence": 0.84,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "correctness",
+  "value": 0.28,
+  "confidence": 0.0,
+  "samples": 2,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "latency",
+  "value": 0.63,
+  "confidence": 0.7,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "throughput",
+  "value": 0.6,
+  "confidence": 0.05,
+  "samples": 4,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "maintenance",
+  "value": 0.98,
+  "confidence": 0.05,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "extensibility",
+  "value": 0.05,
+  "confidence": 0.81,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "proof-coverage",
+  "value": 0.95,
+  "confidence": 0.37,
+  "samples": 1,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "correctness",
+  "value": 0.11,
+  "confidence": 0.96,
+  "samples": 2,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "correctness",
+  "value": 1.0,
+  "confidence": 0.6,
+  "samples": 3,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "throughput",
+  "value": 0.4,
+  "confidence": 0.89,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "maintenance",
+  "value": 0.21,
+  "confidence": 0.5,
+  "samples": 1,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "maintenance",
+  "value": 0.05,
+  "confidence": 0.81,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 0.17,
+  "confidence": 0.61,
+  "samples": 2,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 0.72,
+  "confidence": 1.0,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "proof-coverage",
+  "value": 0.79,
+  "confidence": 0.43,
+  "samples": 4,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "reliability",
+  "value": 0.08,
+  "confidence": 0.38,
+  "samples": 4,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "deployment-simplicity",
+  "value": 0.0,
+  "confidence": 0.6,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "lean",
+  "metric": "deployment-simplicity",
+  "value": 0.96,
+  "confidence": 0.0,
+  "samples": 2,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "correctness",
+  "value": 1.0,
+  "confidence": 0.6,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "throughput",
+  "value": 0.44,
+  "confidence": 0.22,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "throughput",
+  "value": 0.31,
+  "confidence": 0.13,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "maintenance",
+  "value": 0.0,
+  "confidence": 0.94,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "maintenance",
+  "value": 0.0,
+  "confidence": 0.89,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "extensibility",
+  "value": 0.69,
+  "confidence": 0.84,
+  "samples": 3,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "reliability",
+  "value": 0.21,
+  "confidence": 0.35,
+  "samples": 4,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "hybrid",
+  "metric": "reliability",
+  "value": 0.09,
+  "confidence": 0.05,
+  "samples": 5,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "correctness",
+  "value": 0.71,
+  "confidence": 0.42,
+  "samples": 2,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "latency",
+  "value": 0.0,
+  "confidence": 0.71,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "throughput",
+  "value": 0.92,
+  "confidence": 0.0,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "maintenance",
+  "value": 0.88,
+  "confidence": 0.0,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "extensibility",
+  "value": 0.02,
+  "confidence": 0.51,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "proof-coverage",
+  "value": 0.56,
+  "confidence": 0.56,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "reliability",
+  "value": 0.0,
+  "confidence": 0.08,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "reliability",
+  "value": 0.61,
+  "confidence": 0.0,
+  "samples": 4,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "deployment-simplicity",
+  "value": 0.58,
+  "confidence": 0.05,
+  "samples": 2,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "clojure",
+  "metric": "deployment-simplicity",
+  "value": 0.49,
+  "confidence": 0.64,
+  "samples": 1,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "correctness",
+  "value": 0.81,
+  "confidence": 0.88,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "correctness",
+  "value": 0.36,
+  "confidence": 0.73,
+  "samples": 1,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "latency",
+  "value": 0.0,
+  "confidence": 0.32,
+  "samples": 3,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "latency",
+  "value": 0.12,
+  "confidence": 1.0,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "throughput",
+  "value": 1.0,
+  "confidence": 0.5,
+  "samples": 3,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "maintenance",
+  "value": 1.0,
+  "confidence": 0.05,
+  "samples": 5,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "maintenance",
+  "value": 0.6,
+  "confidence": 0.06,
+  "samples": 3,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 0.01,
+  "confidence": 0.93,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "proof-coverage",
+  "value": 0.22,
+  "confidence": 0.79,
+  "samples": 5,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "reliability",
+  "value": 0.28,
+  "confidence": 0.37,
+  "samples": 3,
+  "source": "s1"
+ }
+]

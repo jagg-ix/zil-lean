@@ -1,0 +1,11 @@
+MODULE embedded.annotations.
+
+// Generated read-only from explicit @zil/@endzil source annotations.
+"embedded:4b820a7e807d803c"#kind@"embedded_zil_block".
+"embedded:4b820a7e807d803c"#target@"raw:data".
+"embedded:4b820a7e807d803c"#trust@"trust:asserted_annotation".
+"embedded:4b820a7e807d803c"#source_hash@"sha256:8950f1446ceca3451a129b99fb58fa821910e397000863767af1d7f5699c36ab".
+"embedded:4b820a7e807d803c"#macro_revision@"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".
+"embedded:4b820a7e807d803c"#start_line@"1".
+"embedded:4b820a7e807d803c"#end_line@"3".
+raw:data#kind@single.

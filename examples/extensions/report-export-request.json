@@ -1,0 +1,6 @@
+{
+ "input-path": "examples/extensions/sample-report.json",
+ "output-path": "generated/examples/sample-report.out.json",
+ "format": "json",
+ "subject": "artifact:sample-report"
+}

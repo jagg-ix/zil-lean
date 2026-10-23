@@ -1,0 +1,4 @@
+- metric: metric:yaml_a
+  value: 21
+- metric: metric:yaml_b
+  value: 22

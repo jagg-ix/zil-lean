@@ -28,6 +28,11 @@ import Zil.Test.RecoveryAudit
 import Zil.Test.Exchange
 import Zil.Test.Horn
 import Zil.Test.HornGrounding
+import Zil.Test.Sha256
+import Zil.Test.JsonOrdered
+import Zil.Test.Ingest
+import Zil.Test.EdnReader
+import Zil.Test.ControlEvent
 
 /-- Executable validation target for native safety and hybrid exchange contracts. -/
 def main : IO Unit := do

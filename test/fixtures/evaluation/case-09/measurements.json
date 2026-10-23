@@ -1,0 +1,254 @@
+[
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "correctness",
+  "value": 0.09,
+  "confidence": 0.64,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "latency",
+  "value": 1.0,
+  "confidence": 0.48,
+  "samples": 5,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "latency",
+  "value": 0.53,
+  "confidence": 0.5,
+  "samples": 4,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "throughput",
+  "value": 0.92,
+  "confidence": 0.0,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "throughput",
+  "value": 0.16,
+  "confidence": 0.62,
+  "samples": 2,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "maintenance",
+  "value": 1.0,
+  "confidence": 0.06,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "extensibility",
+  "value": 0.3,
+  "confidence": 0.1,
+  "samples": 2,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "proof-coverage",
+  "value": 0.9,
+  "confidence": 0.88,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "reliability",
+  "value": 0.57,
+  "confidence": 0.55,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "hybrid",
+  "metric": "deployment-simplicity",
+  "value": 0.37,
+  "confidence": 1.0,
+  "samples": 5,
+  "source": "s3"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "correctness",
+  "value": 0.48,
+  "confidence": 0.82,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "correctness",
+  "value": 0.0,
+  "confidence": 0.75,
+  "samples": 4,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "latency",
+  "value": 0.03,
+  "confidence": 0.42,
+  "samples": 2,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "latency",
+  "value": 0.5,
+  "confidence": 0.6,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "throughput",
+  "value": 0.64,
+  "confidence": 0.25,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "maintenance",
+  "value": 0.68,
+  "confidence": 0.05,
+  "samples": 1,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "maintenance",
+  "value": 0.92,
+  "confidence": 0.01,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "proof-coverage",
+  "value": 0.06,
+  "confidence": 0.15,
+  "samples": 1,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "reliability",
+  "value": 0.5,
+  "confidence": 0.5,
+  "samples": 4,
+  "source": "s2"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "reliability",
+  "value": 0.77,
+  "confidence": 0.31,
+  "samples": 3,
+  "source": "s1"
+ },
+ {
+  "component": "c0",
+  "candidate": "clojure",
+  "metric": "deployment-simplicity",
+  "value": 0.5,
+  "confidence": 0.5,
+  "samples": 3,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "correctness",
+  "value": 0.14,
+  "confidence": 0.47,
+  "samples": 4,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "throughput",
+  "value": 0.27,
+  "confidence": 0.83,
+  "samples": 3,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "maintenance",
+  "value": 0.05,
+  "confidence": 0.5,
+  "samples": 2,
+  "source": "s2"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 0.48,
+  "confidence": 0.39,
+  "samples": 4,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "extensibility",
+  "value": 1.0,
+  "confidence": 0.35,
+  "samples": 2,
+  "source": "s3"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "proof-coverage",
+  "value": 0.59,
+  "confidence": 0.68,
+  "samples": 5,
+  "source": "s1"
+ },
+ {
+  "component": "c1",
+  "candidate": "lean",
+  "metric": "deployment-simplicity",
+  "value": 0.13,
+  "confidence": 0.5,
+  "samples": 5,
+  "source": "s3"
+ }
+]

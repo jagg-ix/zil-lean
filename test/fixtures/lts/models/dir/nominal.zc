@@ -1,0 +1,3 @@
+MODULE 9nine.module.
+
+LTS_ATOM lone [states=#{only other}, initial=only, transitions={[only loop] [only loop_effect]}].

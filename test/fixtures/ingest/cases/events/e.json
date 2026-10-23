@@ -1,0 +1,12 @@
+[{"event_id":"a1","vector_clock":{"A":1},"metric":"latency","value":0.25,"host":"web 1","tags":["x","y"],"nested":{"k":1,"j":[1,2.5,null]}},
+ {"event_id":"a2","vector_clock":{"A":2},"before":["a1"],"ok":true,"none":null,"big":12345678901,"exp":1e3,"neg":-7},
+ {"event_id":"b1","vector_clock":{"B":"1"},"metrics":{"cpu":0.5,"mem:used":10},"Mixed Case":"v","url":"http://x/y","q":"?var"},
+ {"event-id":"evt:join","vector_clock":{"A":2,"B":1.9},"before":["a2","b1","unknown"],"metric":"m:joined"},
+ {"event":"  padded  ","value":1},
+ {"event_id":"","value":2},
+ {"metric":false,"value":3,"metrics":{"fallback":4}},
+ {"event_id":"dup1","vector_clock":{"D":9}},
+ {"event_id":"dup2","vector_clock":{"D":9}},
+ {"vector_clock":{"Z":3},"plain":"no event id so no components"},
+ "bare string",
+ 42]

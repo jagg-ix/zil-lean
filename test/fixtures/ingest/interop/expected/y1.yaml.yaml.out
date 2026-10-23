@@ -1,0 +1,6 @@
+- label: "a: b"
+  metric: m1
+  value: 21
+- flag: true
+  metric: m2
+  value: null

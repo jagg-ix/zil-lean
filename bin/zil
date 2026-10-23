@@ -41,6 +41,20 @@ Usage:
   bin/zil snapshot <input.zilr> <revision> [output.txt|-]
   bin/zil causal-check <input.zilr>
   bin/zil worker [--stdio|--once]
+  bin/zil control exchange|run|capabilities|store ...
+  bin/zil plugin list|inspect|run|evidence ...
+  bin/zil evaluate-runtime --model FILE [--measurements FILE] [--output FILE|-]
+  bin/zil release-attest <release-request.json> <attestation.json>
+  bin/zil import-hcl <file-or-dir> [output.zc|-] [module]
+  bin/zil export-tla <file-or-dir> [output.tla|-] [module]
+  bin/zil export-lean <file-or-dir> [output.lean|-] [namespace]
+  bin/zil embedded-scan <file-or-dir> [output.zc|-] [module] [lib_dir]
+  bin/zil embedded-snapshot <file-or-dir> <baseline.json> [lib_dir]
+  bin/zil embedded-drift-check <file-or-dir> <baseline.json> [lib_dir]
+  bin/zil embedded-native [--root PATH]... [--out DIR] [--manifest FILE] [--namespace NAME] [--lib DIR] [--check] [--no-verify] [--require-blocks]
+  bin/zil ingest <model.zc> [--source NAME]... [--revision N] [--polls N] [--json FILE|-] [--zc FILE] [--zilr FILE]
+  bin/zil import-data <input> [output.zc|-] [module] [format] [record_prefix]
+  bin/zil convert-data <input> <format> [output|-] [--from FORMAT]
 
 Self-check validates installation scripts and configuration without building Lean.
 Package exports committed source with SHA-256 manifests. Install supports immutable
@@ -54,6 +68,18 @@ reports, persistent step logs, and isolated generated outputs.
 
 Worker exposes the allowlisted ZIL-EXCHANGE/1 JSON Lines protocol. Lean is authoritative
 for parse, compile, expand, conformance, query, authorize, impact, and recovery-audit.
+
+Control runs the formal control plane: exchange and run call the worker, store keeps the
+hash-chained control events and receipts in SQLite (spec/control-event-store-v1.md). Plugin
+registers extensions from ZIL-EXTENSION/1 manifests (spec/extension-manifest-v1.md).
+Evaluate-runtime scores component placements from measurements (spec/runtime-evaluation-v1.md)
+and release-attest binds a release request to its evidence (spec/release-attestation-v1.md).
+
+Import-hcl, export-tla and export-lean move models between ZIL, Terraform/OpenTofu and TLA+/Lean
+(spec/interop-v1.md). The embedded-* commands read ZIL blocks written in comments of Lean, Python,
+Clojure, Rust and Markdown sources (spec/embedded-blocks-v1.md). Ingest reads DATASOURCE
+declarations into facts, causal edges and a ZILR/1 revision log; import-data and convert-data move
+data files between JSON, EDN, text, CSV, a YAML subset and key=value (spec/datasource-ingest-v1.md).
 
 Corpus compiles every .zc file under lib/, libsets/ and examples/ with the native
 compiler and compares the result with spec/corpus-status.tsv. The macro libraries are
@@ -229,6 +255,18 @@ run_theorem_audit() {
   exec lake exe zilTheoremAudit "$@"
 }
 
+# Run one of the package's command-line tools: run_tool <purpose> <executable> [arguments...]
+run_tool() {
+  local purpose="$1" executable="$2"
+  shift 2
+  if ! command -v lake >/dev/null 2>&1; then
+    echo "[zil] lake is required for $purpose" >&2
+    exit 2
+  fi
+  cd "$ZIL_ROOT"
+  exec lake exe "$executable" "$@"
+}
+
 last_clojure_commit="bf130927edd3ecdad959173d1e63d59130864909"
 
 removed_command() {
@@ -238,6 +276,9 @@ removed_command() {
     macro-expand) use="bin/zil expand <input.zc> [output.zc|-] --lib DIR" ;;
     macro-parity) use="tools/macro_extension_matrix.sh (native expansion against reviewed goldens; there is no second frontend to compare with)" ;;
     library|conformance-suite) use="bin/zil corpus (native compile of every source against spec/corpus-status.tsv)" ;;
+    export-data) use="bin/zil query-ci for query results; bin/zil convert-data to write a data file in another format" ;;
+    control-store) use="bin/zil control store ..." ;;
+    exchange) use="bin/zil control exchange ..." ;;
     *) use="nothing: the feature was part of the Clojure runtime and was removed with it" ;;
   esac
   echo "[zil] '$name' was removed with the Clojure runtime." >&2
@@ -308,7 +349,53 @@ case "$command_name" in
     cd "$ZIL_ROOT"
     exec bash scripts/check-corpus.sh "$@"
     ;;
-  exchange|control|control-store|evaluate-runtime|plugin|embedded-native|library|conformance-suite|macro-compile|macro-expand|macro-parity|--legacy)
+  control)
+    shift
+    run_tool "the formal control plane" zilControl "$@"
+    ;;
+  plugin)
+    shift
+    run_tool "the extension registry" zilPlugin "$@"
+    ;;
+  evaluate-runtime)
+    shift
+    run_tool "runtime placement evaluation" zilEvaluate "$@"
+    ;;
+  release-attest)
+    shift
+    run_tool "release attestation" zilRelease attest "$@"
+    ;;
+  import-hcl|export-tla|export-lean)
+    run_tool "the HCL and TLA+ interop tools" zilInterop "$@"
+    ;;
+  embedded-scan)
+    shift
+    run_tool "embedded ZIL blocks" zilEmbedded scan "$@"
+    ;;
+  embedded-snapshot)
+    shift
+    run_tool "embedded ZIL blocks" zilEmbedded snapshot "$@"
+    ;;
+  embedded-drift-check)
+    shift
+    run_tool "embedded ZIL blocks" zilEmbedded drift-check "$@"
+    ;;
+  embedded-native)
+    shift
+    run_tool "embedded ZIL blocks" zilEmbedded compile "$@"
+    ;;
+  ingest)
+    shift
+    run_tool "datasource ingest" zilIngest run "$@"
+    ;;
+  import-data)
+    run_tool "data import" zilIngest "$@"
+    ;;
+  convert-data)
+    shift
+    run_tool "data conversion" zilIngest convert "$@"
+    ;;
+  exchange|control-store|export-data|library|conformance-suite|macro-compile|macro-expand|macro-parity|--legacy)
     removed_command "$command_name"
     ;;
   --help|-h)

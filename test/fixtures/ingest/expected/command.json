@@ -1,0 +1,192 @@
+{
+ "edges": [],
+ "facts": [
+  {
+   "attrs": {
+    "payload": {
+     "a": 1,
+     "b": "hello",
+     "command_exit": 0
+    }
+   },
+   "event": "ingest_datasource_c_kv",
+   "object": "datasource:c_kv",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "command_exit": 0,
+     "command_stderr": "",
+     "value": "x y z"
+    }
+   },
+   "event": "ingest_datasource_c_text",
+   "object": "datasource:c_text",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "command_exit": 0,
+     "command_stderr": "oops\n",
+     "value": 5
+    }
+   },
+   "event": "ingest_datasource_c_json_err",
+   "object": "datasource:c_json_err",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "exit": 3,
+     "stderr": "err\n",
+     "stdout": "out\n"
+    }
+   },
+   "event": "ingest_datasource_c_plain",
+   "object": "datasource:c_plain",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_json_err",
+   "object": "datasource:c_json_err",
+   "relation": "a",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_json_err",
+   "object": "datasource:c_json_err",
+   "relation": "command_exit",
+   "revision": 7,
+   "subject": "value:0"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_json_err",
+   "object": "datasource:c_json_err",
+   "relation": "command_stderr",
+   "revision": 7,
+   "subject": "value:oops\n"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_kv",
+   "object": "datasource:c_kv",
+   "relation": "a",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_kv",
+   "object": "datasource:c_kv",
+   "relation": "b",
+   "revision": 7,
+   "subject": "value:hello"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_kv",
+   "object": "datasource:c_kv",
+   "relation": "command_exit",
+   "revision": 7,
+   "subject": "value:0"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_plain",
+   "object": "datasource:c_plain",
+   "relation": "exit",
+   "revision": 7,
+   "subject": "value:3"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_plain",
+   "object": "datasource:c_plain",
+   "relation": "stderr",
+   "revision": 7,
+   "subject": "value:err\n"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_plain",
+   "object": "datasource:c_plain",
+   "relation": "stdout",
+   "revision": 7,
+   "subject": "value:out\n"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_text",
+   "object": "datasource:c_text",
+   "relation": "command_exit",
+   "revision": 7,
+   "subject": "value:0"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_c_text",
+   "object": "datasource:c_text",
+   "relation": "command_stderr",
+   "revision": 7,
+   "subject": "value:"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:c_plain",
+    "facts": 4,
+    "records": 1,
+    "type": "command"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:c_json_err",
+    "facts": 7,
+    "records": 2,
+    "type": "command"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:c_text",
+    "facts": 3,
+    "records": 1,
+    "type": "command"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:c_kv",
+    "facts": 4,
+    "records": 1,
+    "type": "command"
+   }
+  ],
+  "facts": 18,
+  "records": 5,
+  "sources": 4
+ }
+}

@@ -1,0 +1,1 @@
+[{:metric "metric:edn_a" :value 41} {:metric "metric:edn_b" :value 42.5 :tag :hot}]

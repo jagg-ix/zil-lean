@@ -1,0 +1,21 @@
+{
+ "schema": "ZIL-RUNTIME-EVALUATION/1",
+ "policy": {
+  "minimum-metrics": 5,
+  "minimum-confidence": 0.15,
+  "minimum-samples": 3,
+  "decision-margin": 0.01
+ },
+ "components": [
+  {
+   "id": "c0",
+   "description": "d",
+   "current": "lean",
+   "candidates": [
+    "clojure",
+    "lean"
+   ],
+   "constraints": {}
+  }
+ ]
+}

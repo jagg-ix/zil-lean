@@ -1,0 +1,39 @@
+{
+ "schema": "ZIL-RUNTIME-EVALUATION/1",
+ "policy": {
+  "minimum-metrics": 7,
+  "minimum-confidence": 0.08,
+  "minimum-samples": 1,
+  "decision-margin": 0.01
+ },
+ "components": [
+  {
+   "id": "c0",
+   "description": "d",
+   "current": "lean",
+   "candidates": [
+    "hybrid",
+    "clojure",
+    "lean"
+   ],
+   "constraints": {
+    "requires-kernel-evidence": true,
+    "requires-dynamic-plugins": true
+   }
+  },
+  {
+   "id": "c1",
+   "description": "d",
+   "current": "lean",
+   "candidates": [
+    "hybrid",
+    "clojure",
+    "lean"
+   ],
+   "constraints": {
+    "requires-kernel-evidence": true,
+    "requires-lean-only-profile": true
+   }
+  }
+ ]
+}

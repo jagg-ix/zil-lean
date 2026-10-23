@@ -1,0 +1,5 @@
+MODULE ingest.command.
+DATASOURCE c_plain [type=command, command="echo out; echo err 1>&2; exit 3"].
+DATASOURCE c_json_err [type=command, format=json, command="echo '[{\"a\":1},5]'; echo oops 1>&2"].
+DATASOURCE c_text [type=command, format=text, command="printf 'x y z'"].
+DATASOURCE c_kv [type=command, format=kv, command="printf 'A=1\nb=hello\n'"].

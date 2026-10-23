@@ -1,0 +1,430 @@
+{
+ "edges": [
+  [
+   "evt:auth_feature_scenario_3_outline_one__step_001",
+   "evt:auth_feature_scenario_3_outline_one__step_002"
+  ],
+  [
+   "evt:login_ok__step_001",
+   "evt:login_ok__step_002"
+  ],
+  [
+   "evt:login_ok__step_001",
+   "evt:login_ok__step_003"
+  ],
+  [
+   "evt:login_ok__step_002",
+   "evt:login_ok__step_003"
+  ]
+ ],
+ "facts": [
+  {
+   "attrs": {
+    "counter": 1
+   },
+   "event": "evt:auth_feature_scenario_3_outline_one__step_001",
+   "object": "evt:auth_feature_scenario_3_outline_one__step_001",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:auth_feature__scenario_3_outline_one"
+  },
+  {
+   "attrs": {
+    "counter": 1
+   },
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:feature_2_second_feature__scenario_1_no_type_here"
+  },
+  {
+   "attrs": {
+    "counter": 1
+   },
+   "event": "evt:login_ok__step_001",
+   "object": "evt:login_ok__step_001",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:login_ok"
+  },
+  {
+   "attrs": {
+    "counter": 2
+   },
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:auth_feature__scenario_3_outline_one"
+  },
+  {
+   "attrs": {
+    "counter": 2
+   },
+   "event": "evt:login_ok__step_002",
+   "object": "evt:login_ok__step_002",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:login_ok"
+  },
+  {
+   "attrs": {
+    "counter": 3
+   },
+   "event": "evt:login_ok__step_003",
+   "object": "evt:login_ok__step_003",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:login_ok"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "actor": "feature_2_second_feature__scenario_1_no_type_here",
+     "before": [],
+     "duration_ns": 7,
+     "event_id": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+     "feature": "Second feature",
+     "feature_id": "feature_2_second_feature",
+     "record_kind": "cucumber_step",
+     "scenario": "No type here",
+     "scenario_id": "feature_2_second_feature__scenario_1_no_type_here",
+     "status": "skipped",
+     "step": "only step",
+     "step_index": 1,
+     "step_keyword": "Given",
+     "uri": "unknown",
+     "vector_clock": {
+      "feature_2_second_feature__scenario_1_no_type_here": 1
+     }
+    }
+   },
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "step",
+   "revision": 7,
+   "subject": "value:first"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "actor",
+   "revision": 7,
+   "subject": "value:auth_feature__scenario_3_outline_one"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "duration_ns",
+   "revision": 7,
+   "subject": "value:0"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "feature",
+   "revision": 7,
+   "subject": "value:Auth feature"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "feature_id",
+   "revision": 7,
+   "subject": "value:auth_feature"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "scenario",
+   "revision": 7,
+   "subject": "value:Outline One"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "scenario_id",
+   "revision": 7,
+   "subject": "value:auth_feature__scenario_3_outline_one"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "status",
+   "revision": 7,
+   "subject": "value:unknown"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "step",
+   "revision": 7,
+   "subject": "value:second"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "step_index",
+   "revision": 7,
+   "subject": "value:2"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "step_keyword",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "evt:auth_feature_scenario_3_outline_one__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "uri",
+   "revision": 7,
+   "subject": "value:features/auth.feature"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "actor",
+   "revision": 7,
+   "subject": "value:feature_2_second_feature__scenario_1_no_type_here"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "duration_ns",
+   "revision": 7,
+   "subject": "value:7"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "feature",
+   "revision": 7,
+   "subject": "value:Second feature"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "feature_id",
+   "revision": 7,
+   "subject": "value:feature_2_second_feature"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "record_kind",
+   "revision": 7,
+   "subject": "value:cucumber_step"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "scenario",
+   "revision": 7,
+   "subject": "value:No type here"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "scenario_id",
+   "revision": 7,
+   "subject": "value:feature_2_second_feature__scenario_1_no_type_here"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "status",
+   "revision": 7,
+   "subject": "value:skipped"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "step",
+   "revision": 7,
+   "subject": "value:only step"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "step_index",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "step_keyword",
+   "revision": 7,
+   "subject": "value:Given"
+  },
+  {
+   "attrs": {},
+   "event": "evt:feature_2_second_feature_scenario_1_no_type_here__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "uri",
+   "revision": 7,
+   "subject": "value:unknown"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "duration_ns",
+   "revision": 7,
+   "subject": "value:1000"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_001",
+   "object": "datasource:cuc_run",
+   "relation": "step",
+   "revision": 7,
+   "subject": "value:user opens page"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "duration_ns",
+   "revision": 7,
+   "subject": "value:1200"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "status",
+   "revision": 7,
+   "subject": "value:passed"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "step",
+   "revision": 7,
+   "subject": "value:user enters password"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_002",
+   "object": "datasource:cuc_run",
+   "relation": "step_keyword",
+   "revision": 7,
+   "subject": "value:When"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "actor",
+   "revision": 7,
+   "subject": "value:login_ok"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "duration_ns",
+   "revision": 7,
+   "subject": "value:1400"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "scenario",
+   "revision": 7,
+   "subject": "value:Login ok"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "scenario_id",
+   "revision": 7,
+   "subject": "value:login_ok"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "status",
+   "revision": 7,
+   "subject": "value:failed"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "step",
+   "revision": 7,
+   "subject": "value:dashboard is shown"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "step_index",
+   "revision": 7,
+   "subject": "value:3"
+  },
+  {
+   "attrs": {},
+   "event": "evt:login_ok__step_003",
+   "object": "datasource:cuc_run",
+   "relation": "step_keyword",
+   "revision": 7,
+   "subject": "value:Then"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 4,
+    "before_edges_derived": 4,
+    "before_edges_explicit": 3,
+    "datasource": "datasource:cuc_run",
+    "facts": 84,
+    "records": 6,
+    "type": "cucumber"
+   }
+  ],
+  "facts": 84,
+  "records": 6,
+  "sources": 1
+ }
+}

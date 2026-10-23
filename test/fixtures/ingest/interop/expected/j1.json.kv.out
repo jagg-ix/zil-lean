@@ -1,0 +1,1 @@
+value=[{:name "web-1", :tags ["a" "b"], :cpu 0.75, :ok true, :note nil, :n 3, :msg "he said \"hi\": #1"} {:name "db", :tags [], :cpu 1, :ok false, :extra "x,y", :msg "line1\nline2"}]

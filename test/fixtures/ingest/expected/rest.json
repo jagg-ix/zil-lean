@@ -1,0 +1,132 @@
+{
+ "edges": [],
+ "facts": [
+  {
+   "attrs": {
+    "payload": {
+     "b": "two"
+    }
+   },
+   "event": "ingest_datasource_r_many",
+   "object": "datasource:r_many",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:r2",
+     "value": 2
+    }
+   },
+   "event": "ingest_datasource_r_path",
+   "object": "datasource:r_path",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "metric": "metric:single",
+     "value": 9
+    }
+   },
+   "event": "ingest_datasource_r_one",
+   "object": "datasource:r_one",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "value": 1
+   },
+   "event": "ingest_datasource_r_path",
+   "object": "metric:r1",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:r_path"
+  },
+  {
+   "attrs": {
+    "value": 2
+   },
+   "event": "ingest_datasource_r_path",
+   "object": "metric:r2",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:r_path"
+  },
+  {
+   "attrs": {
+    "value": 9
+   },
+   "event": "ingest_datasource_r_one",
+   "object": "metric:single",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:r_one"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_r_many",
+   "object": "datasource:r_many",
+   "relation": "a",
+   "revision": 7,
+   "subject": "value:1"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_r_many",
+   "object": "datasource:r_many",
+   "relation": "b",
+   "revision": 7,
+   "subject": "value:two"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:r_one",
+    "facts": 2,
+    "records": 1,
+    "type": "rest"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:r_path",
+    "facts": 4,
+    "records": 2,
+    "type": "rest"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:r_empty",
+    "facts": 0,
+    "records": 0,
+    "type": "rest"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:r_many",
+    "facts": 4,
+    "records": 2,
+    "type": "rest"
+   }
+  ],
+  "facts": 10,
+  "records": 5,
+  "sources": 4
+ }
+}
