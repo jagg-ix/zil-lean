@@ -29,10 +29,17 @@ Three places, and the dependency runs one way: the toolkit uses ZIL, ZIL never u
 |---|---|---|
 | ZIL core (`Zil/`, `bin/zil`, the language specs) | nothing new | No Apalache code, no `bin/zil apalache`, no `#zil_apalache_*` command, no change to the parser or the declaration kinds. The default profile never knows the tool exists. |
 | A macro extension in `libsets/` | the vocabulary for saying what to check: domain bounds, invariants, public projections, operations | Opt-in like `libsets/model-substrate`. It adds no relation kind and no syntax: every macro expands to ordinary tuples, rules and queries. It is qualified by `tools/macro_extension_matrix.sh` against a reviewed golden, and means nothing to the engine; the toolkit gives it meaning. |
-| A toolkit (its own Lake package, with its own executable and gate, depending on `zil-lean` at a pinned commit) | the IR types and printer, the lowering, the runner, the trace reader, replay, evidence, the commands, the experiments | Reads a model after `bin/zil expand` (or the `Zil` library's `Program`). Replays every counterexample with the `Zil` evaluator. Optional JVM tool found at run time. |
+| A toolkit, **in a repository of its own** (decided 2026-10-23: a clean architecture), a Lake package with its own executable and gate that depends on `zil-lean` at a pinned commit | the IR types and printer, the lowering, the runner, the trace reader, replay, evidence, the commands, the experiments | Reads a model after `bin/zil expand` (or the `Zil` library's `Program`). Replays every counterexample with the `Zil` evaluator. Optional JVM tool found at run time. |
 
-Whether the toolkit is a directory of this repository or a repository of its own is open (see *Open questions*). Either way
-the rows above hold: nothing of it is built or tested by the core profile.
+The toolkit is a repository of its own, so the one-way dependency is enforced by the layout and not by discipline: this
+repository cannot import it, build it or test it by accident. It requires `zil-lean` at a pinned commit and moves the pin
+deliberately, running its own gate on every move, the way other consumers of this repository do.
+
+The macro extension stays here, in `libsets/`, because that is where every macro library and the tool that qualifies them
+live, and because libraries that only give vocabulary to an outside tool already live here (`souffle-compat`,
+`acl2-interop`, `everparse-interop`). A library is data: it depends on nothing, and nothing in this repository depends on the
+toolkit. The toolkit's own documentation and examples are its business; this file is the seed of its work list and moves
+there when the repository exists, leaving a pointer here.
 
 Existing libraries already cover part of the vocabulary and are reused, not copied: `MODEL_STATE`, `MODEL_INITIAL`,
 `MODEL_TRANS` (transitions), `TIME_TICK`, `TIME_LT`, `TIME_AGE` (time), `VC_*` (vector clocks), `RBD_*` (subjects, roles,
@@ -104,6 +111,7 @@ Strategic targets are S1 to S3. The others are the steps that lead to them, and 
 |---|---|---|---|---|
 | APL-00 | Lowering contract | `spec/apalache-lowering-v0.1.md` states: the sort scheme, the state variables, how facts, rules, negation, usersets and attributes are lowered, the closure depth bound, the invariant language, what is out of scope, and the assurance rule. The questions under *Open questions* are answered. | none | not started |
 | APL-01 | Tool spike | With Apalache installed by hand, three hand-written IR modules (a fact, a join, a negation) type-check and check, and `spec/apalache-tool-notes.md` records the version, the exact commands, whether `check` accepts the JSON, where counterexamples and traces are written, the exit codes, and how the domain size of an uninterpreted sort is fixed. | none | not started |
+| APL-02 | Toolkit repository | A clean clone of the new repository builds on a machine with only `lake` and `git`, depends on `zil-lean` through `require` at a pinned commit recorded in one file, and has an executable that reads a model, expands it with the `Zil` library and prints its fact count; its gate passes with failing `java` and `apalache-mc` shims; `zil-lean` has no change; a pin move runs the gate and a scan that nothing private entered the public history | APL-00; the maintainer's word to create it | not started |
 | APL-05 | Check vocabulary (macro extension) | `libsets/<name>` with macros for domain bounds (`CHECK_BOUND`), invariants as queries that must return nothing (`CHECK_INVARIANT`), public projections for non-interference (`CHECK_PUBLIC`), and operations (`CHECK_OPERATION`: guard, adds, removes), all expanding to ordinary tuples, rules and queries; a matrix row with reviewed goldens; two invented examples expand and compile; the existing `MODEL_*`, `TIME_*`, `VC_*` and `RBD_*` macros are reused | APL-00 | not started |
 | APL-10 | IR types and JSON | toolkit `Apalache/IR.lean`: inductive types for the module, declarations, expressions and operators of Apalache's JSON IR (ADR-005) and for its types (ADR-002); emission through `Zil.Json`; a reader; 12 hand-written modules round-trip and match golden bytes; when the tool is present each also type-checks | APL-00, APL-01 | not started |
 | APL-11 | Printer | the toolkit's `show` command prints the IR as TLA+ text for review, with golden tests; the printed text of the APL-01 modules is accepted by the tool's own parser when present | APL-10 | not started |
@@ -127,7 +135,7 @@ Strategic targets are S1 to S3. The others are the steps that lead to them, and 
 | APL-45 | Composition | Assume-guarantee: a policy module with a stated interface (assumptions, guarantees) checked alone, and the composition rule written and tested on two modules | APL-30 | not started |
 | APL-46 | Repair hints | From a replayed counterexample, name the rule instance that fired and print candidate patches (a missing negative premise, a guard). It only suggests; it never edits a file | APL-40 | not started |
 
-Order that keeps something useful at every step: APL-00, APL-01, APL-05, APL-10, APL-11, APL-12, APL-13, APL-14 (the lowering
+Order that keeps something useful at every step: APL-00, APL-01 and APL-02 (in parallel), APL-05, APL-10, APL-11, APL-12, APL-13, APL-14 (the lowering
 exists and agrees with the evaluator), then APL-20 to APL-24 (the tool is usable), then S1. APL-31 can start as soon as
 APL-05 is accepted and runs in parallel with APL-10 to APL-14. S2 and S3 follow.
 
@@ -135,10 +143,8 @@ APL-05 is accepted and runs in parallel with APL-10 to APL-14. S2 and S3 follow.
 
 Answer these in the contract before writing code.
 
-0. **Location of the toolkit.** A directory of this repository with its own `lakefile`, or a repository of its own that pins
-   `zil-lean`? A separate repository keeps the core clean by construction; a directory shares the macro matrix and the
-   release. Decide before APL-10; the macro extension stays in `libsets/` either way.
-
+0. **Location of the toolkit.** Decided: a repository of its own (see *Where the work lives*). Its name, and whether it is
+   public, are for the maintainer; APL-02 does not start before they are chosen.
 1. **Sorts.** ZIL terms are untyped nodes. Use one uninterpreted sort for all nodes, or add optional signatures for
    relations (so a domain can be N users and M objects)? Signatures shrink the search a lot and also document policies;
    they are a language addition and need their own spec.
@@ -163,6 +169,7 @@ Starting points:
 | Target | Tests |
 |---|---|
 | APL-05 | `expand_check_bound`, `expand_check_invariant`, `expand_check_operation`, `expand_check_public`, `matrix_row_golden`, `reuses_model_trans`, `unknown_macro_fails`, `arity_fails` |
+| APL-02 | `clean_clone_builds`, `pin_is_one_file`, `core_has_no_diff`, `gate_passes_with_failing_shims`, `pin_move_runs_gate` |
 | APL-10 | `ir_roundtrip`, `ir_golden_bytes`, `ir_type_strings`, `ir_rejects_untyped_operator` |
 | APL-13 | `lower_refuses_unsafe_rule`, `lower_negation_follows_strata`, `lower_userset_chain`, `closure_depth_reaches_fixpoint`, `differential_corpus_subset`, `differential_generated_200` |
 | APL-21 | `itf_roundtrip_recorded`, `itf_bigint`, `itf_map_and_set`, `itf_loop_marker`, `itf_rejects_missing_var` |
@@ -179,6 +186,8 @@ Starting points:
   failure, *tool unavailable* when the tool is missing. Never *proved*.
 - Record tool versions and exact commands in `spec/apalache-tool-notes.md`. A result without them cannot be reproduced.
 - Do not vendor the tool or its jar. The repository finds it on the machine and says so when it is not there.
+- Toolkit targets are worked in the toolkit repository once APL-02 exists, macro-extension targets in this one. A target
+  never edits both in one pull request.
 - Do not merge to the main branch without the maintainer's word.
 
 ## Non-goals
