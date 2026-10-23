@@ -198,12 +198,8 @@ run_lean_suite() {
     doc:readme viewer user:11
   run_step native-impact 'evaluate native impact graph' 0 \
     bin/zil impact examples/impact/project.zc lean:Parser.parse
-  run_step macro-matrix 'expand, compile and typecheck every macro library against its golden' 0 \
+  run_step macro-matrix 'expand, compile and typecheck every macro library of lib/ against its golden' 0 \
     tools/macro_extension_matrix.sh --skip-build
-  run_step extension-libraries 'row counts and evidence checks of the extension libraries' 0 \
-    scripts/test-extension-libraries.sh --skip-build
-  run_step model-substrate 'model substrate names, golden expansion and coherence counts' 0 \
-    scripts/test-model-substrate.sh --skip-build
   run_step corpus 'every source compiles or fails as recorded' 0 \
     scripts/check-corpus.sh --skip-build
   run_step lean-tools 'build the command-line tools' 0 \

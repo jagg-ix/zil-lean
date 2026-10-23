@@ -2,8 +2,8 @@ MODULE k8s.helm.compat.generated.
 
 // Run with:
 //   ./tools/generate_k8s_helm_compat.py
-//   bin/zil expand examples/k8s-helm-compat.zc - --lib libsets/k8s-helm-compat
-//   bin/zil query-ci examples/k8s-helm-compat.zc - - --lib libsets/k8s-helm-compat
+//   bin/zil expand examples/k8s-helm-compat.zc - --lib <zil-lib>/libsets/k8s-helm-compat
+//   bin/zil query-ci examples/k8s-helm-compat.zc - - --lib <zil-lib>/libsets/k8s-helm-compat
 
 USE KHC_DOC(k8s_helm_generated, generator, dev).
 USE KHC_COMPAT_PROFILE(profile_default, true, 300).

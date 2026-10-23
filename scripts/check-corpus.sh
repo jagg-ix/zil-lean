@@ -3,7 +3,7 @@
 #
 #   scripts/check-corpus.sh [--update] [--skip-build] [--jobs N]
 #
-# Every .zc file under lib/, libsets/ and examples/ is compiled alone by the native compiler. spec/corpus-status.tsv
+# Every .zc file under lib/ and examples/ is compiled alone by the native compiler. spec/corpus-status.tsv
 # records, per file, whether that is accepted or rejected, and for a rejected file the first line of the error (a macro
 # file or a model that needs its library is rejected alone; the macro matrix covers those with their libraries).
 # The check fails when a file changes status. --update rewrites the record: review the diff before committing it.
@@ -45,7 +45,7 @@ export -f one
 export zil
 
 mkdir -p "$work/out"
-git ls-files 'lib/*.zc' 'libsets/*.zc' 'examples/*.zc' | LC_ALL=C sort >"$work/files.txt"
+git ls-files 'lib/*.zc' 'examples/*.zc' | LC_ALL=C sort >"$work/files.txt"
 n=0
 while IFS= read -r file; do
   n=$((n + 1))

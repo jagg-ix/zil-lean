@@ -3,8 +3,8 @@ MODULE everparse.paper.p2505_17335.extension.
 // Generated automatically from arXiv:2505.17335v2.
 // Coverage model for PulseParse / EverCBOR / EverCDDL / COSE / DPE claims.
 // Run with:
-//   bin/zil expand examples/generated/everparse-2505-17335-extension.zc - --lib libsets/everparse-interop
-//   bin/zil query-ci examples/generated/everparse-2505-17335-extension.zc - - --lib libsets/everparse-interop
+//   bin/zil expand examples/generated/everparse-2505-17335-extension.zc - --lib <zil-lib>/libsets/everparse-interop
+//   bin/zil query-ci examples/generated/everparse-2505-17335-extension.zc - - --lib <zil-lib>/libsets/everparse-interop
 
 paper:2505_17335v2#kind@entity:research_paper.
 paper:2505_17335v2#title@value:secure_parsing_serializing_separation_logic_cbor_cddl_cose.

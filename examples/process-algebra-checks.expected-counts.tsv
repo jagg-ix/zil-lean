@@ -1,8 +1,0 @@
-internal_steps_that_may_stall	2
-external_steps_that_hold_time_up	1
-handoffs_with_no_partner	1
-handoffs_that_can_step	1
-orders_kept	1
-orders_broken	1
-quotes_within_window	2
-quotes_past_window	2

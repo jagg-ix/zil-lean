@@ -137,7 +137,6 @@ Covers:
 - `.zc` to Lean generation and elaboration of the generated Lean;
 - native authorization and impact;
 - the macro matrix (`tools/macro_extension_matrix.sh`): every macro library expanded natively, compared with its reviewed golden, compiled, and typechecked;
-- the extension libraries gate (`scripts/test-extension-libraries.sh`) and the model substrate gate (`scripts/test-model-substrate.sh`);
 - the corpus record (`bin/zil corpus`);
 - a parse through the native exchange worker;
 - the operations and exchange tool gates, each comparing a Lean tool with outputs the earlier implementation wrote: `scripts/test-control-plane.sh`, `test-release-attestation.sh`, `test-evaluation.sh`, `test-plugins.sh`, `test-interop.sh`, `test-embedded.sh` and `test-ingest.sh`. They need `sqlite3` (the control store), `python3` (comparisons and a throw-away HTTP server) and `curl`;

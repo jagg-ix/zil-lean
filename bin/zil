@@ -81,7 +81,7 @@ Clojure, Rust and Markdown sources (spec/embedded-blocks-v1.md). Ingest reads DA
 declarations into facts, causal edges and a ZILR/1 revision log; import-data and convert-data move
 data files between JSON, EDN, text, CSV, a YAML subset and key=value (spec/datasource-ingest-v1.md).
 
-Corpus compiles every .zc file under lib/, libsets/ and examples/ with the native
+Corpus compiles every .zc file under lib/ and examples/ with the native
 compiler and compares the result with spec/corpus-status.tsv. The macro libraries are
 qualified by tools/macro_extension_matrix.sh.
 
