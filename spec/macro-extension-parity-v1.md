@@ -9,7 +9,9 @@ ENDMACRO.
 USE <name>(<arguments>).
 ```
 
-`MACRO`, `EMIT`, `ENDMACRO`, and `USE` are ASCII case-insensitive. Macro and parameter identifiers remain case-sensitive.
+`MACRO`, `EMIT`, `ENDMACRO`, and `USE` are ASCII case-insensitive. One or more whitespace characters separate a control keyword from its payload. Macro and parameter identifiers remain case-sensitive source strings; parsing them must not apply tuple-name normalization (`-` to `_`, `:` or `/` to namespace separators, or numeric-prefix rewriting).
+
+Macro names use `[A-Za-z0-9_.:-]+`. Parameter names use `[A-Za-z_][A-Za-z0-9_:\-.]*`. These are source-language identifiers, not Lean identifiers. The native implementation retains its historical `Name` fields for existing Lean callers and stores the raw source spelling alongside them. Raw spelling is authoritative for macro lookup, duplicate detection, recursion detection, parameter binding, and placeholder substitution.
 
 ## Parameters and arguments
 
@@ -28,6 +30,10 @@ USE <name>(<arguments>).
 - At most 10,000 macro invocations may be expanded per source unit.
 - The native frontend rejects direct or indirect recursive cycles and records the expansion stack.
 - Expansion occurs before tuple, declaration, rule, and query parsing.
+
+Expansion is a source transformation, not a second runtime. It may emit any statement accepted by the ZIL parser, including tuples, usersets, rules, queries, typed declarations, and nested macro uses. Each emitted statement then passes through the ordinary Lean parser and validators. New statement extensions are ported by adding their typed parser/IR and conformance cases; macro expansion itself does not grant an extension execution or authority capability.
+
+When a model imports a macro library, the library's `MODULE` header is standalone-file metadata and is omitted during composition; the model's own `MODULE` is retained as the sole compilation-unit name. Macro library directories are selected explicitly with `--lib DIR` (for example `libsets/aws-model` or `libsets/theorem-dsl-ci`) or discovered through the documented nearest `lib/` rule. A libset is not implicitly mixed with unrelated root libraries. This allows existing algebra/theorem and AWS macro sources to run through the native Lean expander without changing their source spelling or the model's identity.
 
 Therefore macros may generate:
 
@@ -127,3 +133,7 @@ The native implementation intentionally adds checks that do not reduce valid ext
 - immediate recursive-cycle diagnostics;
 - source line and expansion-stack retention;
 - native program validation after expansion.
+
+This is an additive port contract, not a requirement to reproduce Clojure implementation details. Existing Lean APIs and command forms remain source-compatible. In particular, `MacroDef.name`, `MacroDef.parameters`, and `MacroExpansion.macroName` continue to expose their existing normalized `Name` values; raw source names are additive metadata. The separate Lean command-level `zil_macro` / `zil_use` elaborator remains supported and is not silently reinterpreted as the `.zc` macro language.
+
+Future macro extensions should use the same pipeline: define a versioned source form, lower it into typed Lean syntax or ZIL IR, validate it with the existing kernel/parser boundary, and add positive and negative conformance cases. Arbitrary Clojure code evaluation is not implied by a `.zc` macro and is outside this language contract.

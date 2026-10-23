@@ -11,11 +11,11 @@ namespace Zil.CLI
 
 /-- Native command-line usage. -/
 def usage : String :=
-  "zil compile <input.zc> [output.lean|-] [namespace]\n" ++
-  "zil expand <input.zc> [output.zc|-]\n" ++
+  "zil compile <input.zc> [output.lean|-] [namespace] [--lib DIR]\n" ++
+  "zil expand <input.zc> [output.zc|-] [--lib DIR]\n" ++
   "zil conformance <input.zc> [output.zilc|-]\n" ++
   "zil query-plan <input.zc> [output.txt|-]\n" ++
-  "zil query-ci <input.zc> [profile|-] [output.txt|-]\n" ++
+  "zil query-ci <input.zc> [profile|-] [output.txt|-] [--lib DIR [--append FAULT.zc]]\n" ++
   "zil trace <input.zc> [output.txt|-]\n" ++
   "zil explain-query <input.zc> <query> [output.txt|-]\n" ++
   "zil explain-authorization <input.zc> <object> <relation> <subject> [output.txt|-]\n" ++
@@ -54,8 +54,35 @@ private def parseNatIO (value message : String) : IO Nat :=
   | some number => pure number
   | none => throw <| IO.userError message
 
-private def loadProgram (inputPath : String) : IO Zil.Program := do
-  let parsed ← Zil.Parser.DeclarationProgram.parseFile inputPath
+private def loadLibraries (directory : String) : IO (Array Zil.Parser.MacroProgram.LibrarySource) := do
+  let entries ← System.FilePath.readDir (System.FilePath.mk directory)
+  let files := (entries.filter fun entry => entry.fileName.endsWith ".zc")
+    |>.qsort (fun left right => left.fileName < right.fileName)
+  let mut libraries := #[]
+  for entry in files do
+    libraries := libraries.push {
+      label := "lib/" ++ entry.fileName
+      text := ← IO.FS.readFile entry.path
+    }
+  pure libraries
+
+private def loadProgram
+    (inputPath : String)
+    (libDir : Option String := none)
+    (appendPath : Option String := none) : IO Zil.Program := do
+  let parsed ← match libDir, appendPath with
+    | none, none => Zil.Parser.DeclarationProgram.parseFile inputPath
+    | _, _ => do
+        let modelText ← IO.FS.readFile inputPath
+        let sourceText ← match appendPath with
+          | none => pure modelText
+          | some path => pure <| modelText ++ "\n" ++ (← IO.FS.readFile path)
+        match libDir with
+        | none => pure <| Zil.Parser.DeclarationProgram.parseText sourceText
+        | some directory => do
+            let libraries ← loadLibraries directory
+            pure <| Zil.Parser.DeclarationProgram.parseTextWithLibraries
+              libraries inputPath sourceText
   match parsed with
   | .ok value => pure value
   | .error error => throw <| IO.userError error.render
@@ -83,8 +110,9 @@ private def authorizationRequest
 def compileFile
     (inputPath : String)
     (outputPath : Option String := none)
-    (namespaceText : Option String := none) : IO Unit := do
-  let program ← loadProgram inputPath
+    (namespaceText : Option String := none)
+    (libDir : Option String := none) : IO Unit := do
+  let program ← loadProgram inputPath libDir
   let namespaceName ← namespaceFromArgument program namespaceText
   let source ← match Zil.Parser.DeclarationProgram.renderLeanModule program namespaceName with
     | .ok value => pure value
@@ -94,8 +122,15 @@ def compileFile
 /-- Expand source macros without compiling the resulting statements. -/
 def expandFile
     (inputPath : String)
-    (outputPath : Option String := none) : IO Unit := do
-  let expanded ← Zil.Parser.MacroProgram.expandFile inputPath
+    (outputPath : Option String := none)
+    (libDir : Option String := none) : IO Unit := do
+  let expanded ← match libDir with
+    | none => Zil.Parser.MacroProgram.expandFile inputPath
+    | some directory => do
+        let libraries ← loadLibraries directory
+        let modelText ← IO.FS.readFile inputPath
+        pure <| Zil.Parser.MacroProgram.expandTextWithLibraries
+          libraries inputPath modelText
   let source ← match expanded with
     | .ok value => pure value
     | .error error => throw <| IO.userError error.render
@@ -125,8 +160,10 @@ def queryPlanFile
 def queryCiFile
     (inputPath : String)
     (profile : Option Name := none)
-    (outputPath : Option String := none) : IO Bool := do
-  let program ← loadProgram inputPath
+    (outputPath : Option String := none)
+    (libDir : Option String := none)
+    (appendPath : Option String := none) : IO Bool := do
+  let program ← loadProgram inputPath libDir appendPath
   let report ← match Zil.QueryGovernance.checkProgram program profile with
     | .ok value => pure value
     | .error error => throw <| IO.userError error
@@ -257,8 +294,12 @@ def main (args : List String) : IO UInt32 := do
     | ["compile", input, output] => Zil.CLI.compileFile input (some output); pure 0
     | ["compile", input, output, namespaceName] =>
         Zil.CLI.compileFile input (some output) (some namespaceName); pure 0
+    | ["compile", input, output, namespaceName, "--lib", directory] =>
+        Zil.CLI.compileFile input (some output) (some namespaceName) (some directory); pure 0
     | ["expand", input] => Zil.CLI.expandFile input; pure 0
     | ["expand", input, output] => Zil.CLI.expandFile input (some output); pure 0
+    | ["expand", input, output, "--lib", directory] =>
+        Zil.CLI.expandFile input (some output) (some directory); pure 0
     | ["conformance", input] => Zil.CLI.conformanceFile input; pure 0
     | ["conformance", input, output] => Zil.CLI.conformanceFile input (some output); pure 0
     | ["query-plan", input] => Zil.CLI.queryPlanFile input; pure 0
@@ -273,6 +314,14 @@ def main (args : List String) : IO UInt32 := do
     | ["query-ci", input, profile, output] =>
         let selected ← Zil.CLI.profileFromArgument profile
         let ok ← Zil.CLI.queryCiFile input selected (some output)
+        pure (if ok then 0 else 1)
+    | ["query-ci", input, profile, output, "--lib", directory] =>
+        let selected ← Zil.CLI.profileFromArgument profile
+        let ok ← Zil.CLI.queryCiFile input selected (some output) (some directory)
+        pure (if ok then 0 else 1)
+    | ["query-ci", input, profile, output, "--lib", directory, "--append", fault] =>
+        let selected ← Zil.CLI.profileFromArgument profile
+        let ok ← Zil.CLI.queryCiFile input selected (some output) (some directory) (some fault)
         pure (if ok then 0 else 1)
     | ["trace", input] => Zil.CLI.traceFile input; pure 0
     | ["trace", input, output] => Zil.CLI.traceFile input (some output); pure 0

@@ -37,6 +37,22 @@ private def caseInsensitiveCommentSource : String :=
   "eNdMaCrO.\n" ++
   "uSe annotate(doc:readme). // invocation comment\n"
 
+private def rawIdentifierSource : String :=
+  "MACRO grant-platform(item-id):\n" ++
+  "EMIT marker#hyphen@{{item-id}}.\n" ++
+  "ENDMACRO.\n" ++
+  "MACRO grant_platform(item_id):\n" ++
+  "EMIT marker#underscore@{{item_id}}.\n" ++
+  "ENDMACRO.\n" ++
+  "USE grant-platform(doc:hyphen).\n" ++
+  "USE grant_platform(doc:underscore).\n"
+
+private def whitespaceMacroSource : String :=
+  "mAcRo\tspacing(name):\n" ++
+  "eMiT\t{{name}}#tag@value.\n" ++
+  "eNdMaCrO.\n" ++
+  "uSe\tspacing(doc:readme).\n"
+
 private def extensionSource : String :=
   "MACRO SERVICE_EXTENSION(service, team):\n" ++
   "EMIT SERVICE {{service}} [env=prod, criticality=high].\n" ++
@@ -52,6 +68,7 @@ private def extensionSource : String :=
 private def grantLibrary : Zil.Parser.MacroProgram.LibrarySource := {
   label := "lib/10-grants.zc"
   text :=
+    "MODULE library.grants.\n" ++
     "mAcRo grant(object, subject):\n" ++
     "eMiT {{object}}#viewer@{{subject}}.\n" ++
     "eNdMaCrO.\n"
@@ -60,6 +77,7 @@ private def grantLibrary : Zil.Parser.MacroProgram.LibrarySource := {
 private def wrapperLibrary : Zil.Parser.MacroProgram.LibrarySource := {
   label := "lib/20-wrapper.zc"
   text :=
+    "MODULE library.wrappers.\n" ++
     "MACRO grant_platform(object):\n" ++
     "EMIT USE grant({{object}}, team:platform).\n" ++
     "ENDMACRO.\n"
@@ -108,6 +126,38 @@ private def libraryModel : String :=
       | none => false
   | .error _ => false
 
+#guard match Zil.Parser.Macro.preprocess rawIdentifierSource with
+  | .ok result =>
+      result.macros.size == 2 &&
+      match result.macros[0]?, result.macros[1]?, result.lines[0]?, result.lines[1]? with
+      | some hyphen, some underscore, some hyphenLine, some underscoreLine =>
+          hyphen.rawName.raw == "grant-platform" &&
+          underscore.rawName.raw == "grant_platform" &&
+          hyphen.rawParameters.map (·.raw) == #["item-id"] &&
+          underscore.rawParameters.map (·.raw) == #["item_id"] &&
+          hyphen.name == underscore.name &&
+          hyphenLine.text == "marker#hyphen@doc:hyphen." &&
+          underscoreLine.text == "marker#underscore@doc:underscore."
+      | _, _, _, _ => false
+  | .error _ => false
+
+#guard match Zil.Parser.MacroProgram.parseText rawIdentifierSource with
+  | .ok program =>
+      program.macros.size == 2 &&
+      program.tuples.size == 2 &&
+      program.macros[0]!.name == program.macros[1]!.name &&
+      program.macros[0]!.rawName.raw != program.macros[1]!.rawName.raw
+  | .error _ => false
+
+#guard match Zil.Parser.Macro.preprocess whitespaceMacroSource with
+  | .ok result =>
+      result.macros.size == 1 &&
+      result.expansions.size == 1 &&
+      match result.lines[0]? with
+      | some line => line.text == "doc:readme#tag@value."
+      | none => false
+  | .error _ => false
+
 #guard match Zil.Parser.DeclarationProgram.parseText caseInsensitiveCommentSource with
   | .ok program =>
       program.tuples.size == 1 &&
@@ -146,7 +196,8 @@ private def libraryModel : String :=
   | .ok program =>
       program.macros.size == 2 &&
       program.expansions.size == 2 &&
-      program.tuples.size == 1
+      program.tuples.size == 1 &&
+      program.moduleName == some `macro.library
   | .error _ => false
 
 #guard match Zil.Parser.Macro.preprocess recursiveSource with
