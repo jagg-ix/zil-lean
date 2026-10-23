@@ -1,0 +1,9 @@
+MODULE needs.provider.macro.compat.
+
+USE NP_CONTEXT(os, linux).
+USE NP_NEED(package_lwt, pkg:lwt).
+USE NP_NEED_POLICY(package_lwt, exactly_one).
+USE NP_CRITERION(lwt_version, version).
+USE NP_CRITERION_VERSION(lwt_version, gte, 5_2).
+USE NP_PROVIDER(lwt_system, pkg:lwt, 5_2_0).
+USE NP_PROVIDER_MEETS_IF_CONTEXT(lwt_system, lwt_version).

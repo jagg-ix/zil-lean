@@ -1,0 +1,14 @@
+MODULE souffle.compat.transitive_closure.
+
+// Same binary-symbol-relation pattern as Souffle's transitive-closure tutorial.
+USE SOUFFLE_BINARY_RELATION(edge).
+USE SOUFFLE_BINARY_RELATION(path).
+
+USE SOUFFLE_BINARY_FACT(edge, a, b).
+USE SOUFFLE_BINARY_FACT(edge, b, c).
+USE SOUFFLE_BINARY_FACT(edge, c, d).
+
+USE SOUFFLE_BINARY_RULE1(path_base, path, ?x, ?y, edge, ?x, ?y).
+USE SOUFFLE_BINARY_RULE2(path_recursive, path, ?x, ?z, edge, ?x, ?y, path, ?y, ?z).
+
+USE SOUFFLE_OUTPUT2(reachable_pairs, path, ?x, ?y).

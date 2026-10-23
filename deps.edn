@@ -17,6 +17,7 @@
            :theorem-locks {:main-opts ["-m" "zil.bridge.theorem-lock"]}
            :release-attest {:main-opts ["-m" "zil.release.attestation"]}
            :macro-native {:main-opts ["-m" "zil.control.adapters" "macro"]}
+           :macro-matrix {:main-opts ["-m" "zil.control.adapters" "macro-matrix"]}
            :exchange {:main-opts ["-m" "zil.worker.client"]}
            :control {:main-opts ["-m" "zil.control.cli"]}
            :control-store {:main-opts ["-m" "zil.control.store-cli"]}
