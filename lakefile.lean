@@ -43,3 +43,7 @@ lean_exe zilProofObligations where
 
 lean_exe zilTheoremAudit where
   root := `Zil.CLI.TheoremAuditMain
+
+/-- Exchange client, control plane and durable control store. Needs the `sqlite3` shell for `store`. -/
+lean_exe zilControl where
+  root := `Zil.CLI.ControlMain
