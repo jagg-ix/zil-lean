@@ -1,0 +1,14 @@
+- cpu: 0.75
+  msg: "he said \"hi\": #1"
+  n: 3
+  name: web-1
+  note: null
+  ok: true
+  tags: "[\"a\" \"b\"]"
+- cpu: 1
+  extra: x,y
+  msg: "line1
+line2"
+  name: db
+  ok: false
+  tags: []

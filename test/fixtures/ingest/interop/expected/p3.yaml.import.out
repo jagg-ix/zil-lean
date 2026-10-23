@@ -1,0 +1,6 @@
+MODULE interop.t.
+
+interop:record:1#kind@entity:interop_record.
+interop:record:1#name@value:web.
+interop:record:1#state@value:up.
+interop:record:1#replicas@value:3.

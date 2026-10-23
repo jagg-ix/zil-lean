@@ -1,0 +1,3 @@
+MODULE ingest.csv.
+DATASOURCE q [type=file, path="q.csv", format=csv].
+DATASOURCE q_raw [type=file, path="q.csv", format=csv, csv_typed=false].

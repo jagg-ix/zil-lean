@@ -1,0 +1,300 @@
+{
+ "edges": [],
+ "facts": [
+  {
+   "attrs": {
+    "payload": {
+     "col_4": "true",
+     "name": "false",
+     "price": "-0.5",
+     "qty": "07"
+    }
+   },
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "col_4": true,
+     "name": false,
+     "price": -0.5,
+     "qty": 7
+    }
+   },
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:x"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:y"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:dup"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:false"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:-0.5"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:1e2"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:2.5"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:3"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:4"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:5"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q",
+   "object": "datasource:q",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:7"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:x"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "col_4",
+   "revision": 7,
+   "subject": "value:y"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:dup"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "name",
+   "revision": 7,
+   "subject": "value:false"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:-0.5"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:1e2"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "price",
+   "revision": 7,
+   "subject": "value:2.50"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:07"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:3"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:4"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_q_raw",
+   "object": "datasource:q_raw",
+   "relation": "qty",
+   "revision": 7,
+   "subject": "value:5"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:q",
+    "facts": 20,
+    "records": 4,
+    "type": "file"
+   },
+   {
+    "before_edges": 0,
+    "before_edges_derived": 0,
+    "before_edges_explicit": 0,
+    "datasource": "datasource:q_raw",
+    "facts": 20,
+    "records": 4,
+    "type": "file"
+   }
+  ],
+  "facts": 40,
+  "records": 8,
+  "sources": 2
+ }
+}

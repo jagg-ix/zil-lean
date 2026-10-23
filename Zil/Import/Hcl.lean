@@ -1,4 +1,5 @@
 import Zil.Json.Ordered
+import Zil.Util.JavaText
 
 /-!
 # HCL / OpenTofu import
@@ -10,7 +11,7 @@ a `PROVIDER` declaration per provider and one fact group per block. Nested objec
 
 namespace Zil.Import.Hcl
 
-open Zil.Json
+open Zil.Json Zil.JavaText
 
 /-! ## Text helpers -/
 
@@ -75,30 +76,6 @@ inductive Scalar where
   | long (value : Int)
   /-- A decimal written as Java prints a double. -/
   | double (text : String)
-
-/-- `Double.toString` of the double nearest to a plain decimal of at most 15 significant digits. -/
-def javaDouble (text : String) : String :=
-  let negative := text.startsWith "-"
-  let body := if negative then String.ofList text.toList.tail! else text
-  let (whole, fraction) := match body.splitOn "." with | [w, f] => (w, f) | _ => (body, "")
-  let wholeTrimmed := String.ofList (whole.toList.dropWhile (· == '0'))
-  let fractionTrimmed := String.ofList (fraction.toList.reverse.dropWhile (· == '0')).reverse
-  let digits := wholeTrimmed ++ fractionTrimmed
-  let sign := if negative then "-" else ""
-  if digits.all (· == '0') then sign ++ "0.0"
-  else
-    -- decimal exponent of the first significant digit
-    let leadingZerosInFraction := if wholeTrimmed.isEmpty then fractionTrimmed.length - (String.ofList (fractionTrimmed.toList.dropWhile (· == '0'))).length else 0
-    let exponent : Int := if wholeTrimmed.isEmpty then -(leadingZerosInFraction : Int) - 1 else wholeTrimmed.length - 1
-    let significant := String.ofList ((if wholeTrimmed.isEmpty then (fractionTrimmed.toList.dropWhile (· == '0')) else digits.toList).reverse.dropWhile (· == '0')).reverse
-    if exponent ≥ -3 && exponent < 7 then
-      let w := if wholeTrimmed.isEmpty then "0" else wholeTrimmed
-      let f := if fractionTrimmed.isEmpty then "0" else fractionTrimmed
-      sign ++ w ++ "." ++ f
-    else
-      let first := String.ofList (significant.toList.take 1)
-      let rest := String.ofList (significant.toList.drop 1)
-      sign ++ first ++ "." ++ (if rest.isEmpty then "0" else rest) ++ "E" ++ toString exponent
 
 /-- The text of a string literal the way EDN reads it, or none when EDN would refuse an escape. -/
 private def unescapeEdn (inner : List Char) : Option String := Id.run do

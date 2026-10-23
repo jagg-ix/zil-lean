@@ -1,0 +1,4 @@
+MODULE ingest.demo.
+DATASOURCE ds_rest [type=rest, mock_responses=[{:metric "metric:latency", :value 123}, {:metrics {:error_rate 0.01}}]].
+DATASOURCE ds_file [type=file, path="f.txt", mode=lines].
+DATASOURCE ds_cmd [type=command, command="printf 'hello-from-cmd'"].

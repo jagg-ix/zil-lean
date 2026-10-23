@@ -1,0 +1,3 @@
+flag,label,metric,value
+,a: b,m1,21
+true,,m2,

@@ -1,0 +1,11 @@
+MODULE ingest.formats.demo.
+DATASOURCE ds_json [type=file, path="a.json", format=json].
+DATASOURCE ds_yaml [type=file, path="a.yaml", format=yaml].
+DATASOURCE ds_csv [type=file, path="a.csv", format=csv].
+DATASOURCE ds_flat [type=file, path="flat.yaml", format=yml].
+DATASOURCE ds_kv [type=file, path="a.kv", format=kv].
+DATASOURCE ds_text [type=file, path="a.txt", mode=text].
+DATASOURCE ds_edn [type=file, path="a.edn", mode=edn].
+DATASOURCE ds_semi [type=file, path="semi.csv", format=csv, csv-delimiter=";", csv_typed=false].
+DATASOURCE ds_nohead [type=file, path="semi.csv", format=csv, csv-delimiter=";", csv_header=false].
+DATASOURCE ds_cmd_json [type=command, format=json, command="printf '{\"metric\":\"metric:cmd_json\",\"value\":55}'"].

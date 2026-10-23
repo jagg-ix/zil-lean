@@ -1,0 +1,7 @@
+service: api
+  child: indented
+Version: "1.2"
+count: 007
+flag: TRUE
+ratio: 1.50
+url: http://host:80/path

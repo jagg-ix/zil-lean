@@ -1,0 +1,2 @@
+MODULE e.
+DATASOURCE s [type=file, path="f.txt", mode=nonsense].

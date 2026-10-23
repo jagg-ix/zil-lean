@@ -1,5 +1,6 @@
 import Zil.Crypto.Sha256
 import Zil.Json.Ordered
+import Zil.Util.JavaText
 import Zil.Parser.MacroProgram
 
 /-!
@@ -22,7 +23,7 @@ tests compare the two byte for byte.
 
 namespace Zil.Embedded
 
-open Zil.Json
+open Zil.Json Zil.JavaText
 
 structure ScanError where
   message : String
@@ -39,36 +40,6 @@ private def failM {α : Type} (message : String) (data : Array (String × J) := 
 private def liftE {α : Type} (value : Except ScanError α) : ScanM α := ExceptT.mk (pure value)
 
 /-! ## Java text rules the scan was defined with -/
-
-/-- `java.lang.Character.isWhitespace`, which `clojure.string/trim` uses. -/
-def isJavaWs (c : Char) : Bool :=
-  let n := c.toNat
-  n == 0x20 || (0x09 ≤ n && n ≤ 0x0D) || (0x1C ≤ n && n ≤ 0x1F) || n == 0x1680 ||
-    (0x2000 ≤ n && n ≤ 0x2006) || (0x2008 ≤ n && n ≤ 0x200A) || n == 0x2028 || n == 0x2029 ||
-    n == 0x205F || n == 0x3000
-
-/-- The regular expression class `\s`. -/
-def isReSpace (c : Char) : Bool := c == ' ' || (0x09 ≤ c.toNat && c.toNat ≤ 0x0D)
-
-def jtrim (text : String) : String :=
-  String.ofList ((text.toList.dropWhile isJavaWs).reverse.dropWhile isJavaWs).reverse
-
-/-- `clojure.string/split-lines`: split on `\r?\n` and drop trailing empty strings (a text with no newline is one line). -/
-def splitLines (text : String) : Array String := Id.run do
-  let mut lines : Array String := #[]
-  let mut current : List Char := []
-  let mut sawNewline := false
-  for c in text.toList do
-    if c == '\n' then
-      sawNewline := true
-      let line := match current with | '\r' :: rest => rest | other => other
-      lines := lines.push (String.ofList line.reverse)
-      current := []
-    else current := c :: current
-  lines := lines.push (String.ofList current.reverse)
-  if !sawNewline then return lines
-  while !lines.isEmpty && lines.back!.isEmpty do lines := lines.pop
-  return lines
 
 private def startsWithList : List Char → List Char → Bool
   | _, [] => true
@@ -428,27 +399,18 @@ def scanText (path text : String) (macroText : String := "") (project : Option S
 
 /-! ## Facts -/
 
-/-- A Clojure `pr-str` of a string. -/
-private def quote (value : String) : String := Id.run do
-  let mut out := "\""
-  for c in value.toList do
-    out := out ++ match c with
-      | '"' => "\\\"" | '\\' => "\\\\" | '\n' => "\\n" | '\t' => "\\t" | '\r' => "\\r"
-      | '\x0C' => "\\f" | '\x08' => "\\b" | other => other.toString
-  return out ++ "\""
-
 def renderZil (reports : Array Report) (moduleName : String) : String :=
   let facts := reports.foldl (init := (#[] : Array String)) fun facts report =>
     report.blocks.foldl (init := facts) fun facts block =>
-      let id := quote block.blockId
+      let id := prString block.blockId
       facts ++ #[
-        s!"{id}#kind@{quote "embedded_zil_block"}.",
-        s!"{id}#target@{quote block.target}.",
-        s!"{id}#trust@{quote "trust:asserted_annotation"}.",
-        s!"{id}#source_hash@{quote block.sourceHash}.",
-        s!"{id}#macro_revision@{quote block.macroRevision}.",
-        s!"{id}#start_line@{quote (toString block.startLine)}.",
-        s!"{id}#end_line@{quote (toString block.endLine)}."] ++ block.statements
+        s!"{id}#kind@{prString "embedded_zil_block"}.",
+        s!"{id}#target@{prString block.target}.",
+        s!"{id}#trust@{prString "trust:asserted_annotation"}.",
+        s!"{id}#source_hash@{prString block.sourceHash}.",
+        s!"{id}#macro_revision@{prString block.macroRevision}.",
+        s!"{id}#start_line@{prString (toString block.startLine)}.",
+        s!"{id}#end_line@{prString (toString block.endLine)}."] ++ block.statements
   s!"MODULE {moduleName}.\n\n// Generated read-only from explicit @zil/@endzil source annotations.\n" ++
     "\n".intercalate facts.toList ++ (if facts.isEmpty then "" else "\n")
 

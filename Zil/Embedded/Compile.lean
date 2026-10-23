@@ -15,7 +15,7 @@ not compile or typecheck fails only itself.
 
 namespace Zil.Embedded
 
-open Zil.Json
+open Zil.Json Zil.JavaText
 
 structure Options where
   roots : Array String := #["."]

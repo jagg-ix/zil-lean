@@ -1,0 +1,6 @@
+- host: web1
+  load: 0.5
+  state: up
+- host: web2
+  load: 7
+  state: down

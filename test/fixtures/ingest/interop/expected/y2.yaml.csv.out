@@ -1,0 +1,2 @@
+enabled,name,note,ratio,replicas,state
+true,web,,0.5,3,up

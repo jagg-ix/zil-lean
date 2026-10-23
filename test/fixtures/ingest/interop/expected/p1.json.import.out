@@ -1,0 +1,14 @@
+MODULE interop.t.
+
+interop:record:1#kind@entity:interop_record.
+interop:record:1#name@value:web.
+interop:record:1#cpu@value:3.
+interop:record:1#state@value:up.
+interop:record:1#ratio@value:0.5.
+interop:record:1#ok@value:true.
+interop:record:2#kind@entity:interop_record.
+interop:record:2#name@value:db.
+interop:record:2#cpu@value:12.
+interop:record:2#state@value:down.
+interop:record:2#ratio@value:1.0E-4.
+interop:record:2#ok@value:false.

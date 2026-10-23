@@ -67,3 +67,7 @@ lean_exe zilInterop where
 /-- Scan, snapshot and drift-check ZIL blocks embedded in host-language sources. -/
 lean_exe zilEmbedded where
   root := `Zil.CLI.EmbeddedMain
+
+/-- Ingest datasources into facts and a revision log; convert data files. -/
+lean_exe zilIngest where
+  root := `Zil.CLI.IngestMain

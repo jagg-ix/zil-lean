@@ -1,0 +1,6 @@
+Name, Qty ,Price!,,name
+"Widget, large",3,2.50,x,dup
+"say ""hi""",4,1e2,y
+
+short,5
+last,"07",-0.5,true,"false"

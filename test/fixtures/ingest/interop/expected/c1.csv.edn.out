@@ -1,0 +1,1 @@
+[{:metric "metric:a", :value 31, :label "x, y"} {:metric "metric:b", :value 2.5, :label "plain"} {:metric "metric:c", :value "", :label ""}]

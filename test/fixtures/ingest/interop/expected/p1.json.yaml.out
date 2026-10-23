@@ -1,0 +1,10 @@
+- cpu: 3
+  name: web
+  ok: true
+  ratio: 0.5
+  state: up
+- cpu: 12
+  name: db
+  ok: false
+  ratio: 1.0E-4
+  state: down

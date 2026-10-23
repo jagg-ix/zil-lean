@@ -1,0 +1,6 @@
+alpha: 1
+beta: two words
+empty: ""
+flag: true
+ratio: 0.25
+url: "http://h/p?a=1&b=2"

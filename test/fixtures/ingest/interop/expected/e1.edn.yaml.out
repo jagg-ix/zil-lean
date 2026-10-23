@@ -1,0 +1,7 @@
+- metric: m1
+  tag: hot
+  value: 41
+- metric: m2
+  nested: "{:a [1 2 3]}"
+  s: "q\"t"
+  value: 42.5

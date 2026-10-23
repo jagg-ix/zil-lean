@@ -1,0 +1,433 @@
+{
+ "edges": [
+  [
+   "event:a1",
+   "event:a2"
+  ],
+  [
+   "event:a1",
+   "evt:join"
+  ],
+  [
+   "event:a2",
+   "evt:join"
+  ],
+  [
+   "event:b1",
+   "evt:join"
+  ],
+  [
+   "event:unknown",
+   "evt:join"
+  ]
+ ],
+ "facts": [
+  {
+   "attrs": {
+    "counter": 1
+   },
+   "event": "event:a1",
+   "object": "event:a1",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:A"
+  },
+  {
+   "attrs": {
+    "counter": 1
+   },
+   "event": "event:b1",
+   "object": "event:b1",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:B"
+  },
+  {
+   "attrs": {
+    "counter": 1
+   },
+   "event": "evt:join",
+   "object": "evt:join",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:B"
+  },
+  {
+   "attrs": {
+    "counter": 2
+   },
+   "event": "event:a2",
+   "object": "event:a2",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:A"
+  },
+  {
+   "attrs": {
+    "counter": 2
+   },
+   "event": "evt:join",
+   "object": "evt:join",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:A"
+  },
+  {
+   "attrs": {
+    "counter": 9
+   },
+   "event": "event:dup1",
+   "object": "event:dup1",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:D"
+  },
+  {
+   "attrs": {
+    "counter": 9
+   },
+   "event": "event:dup2",
+   "object": "event:dup2",
+   "relation": "vc_component",
+   "revision": 7,
+   "subject": "actor:D"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "value": 42
+    }
+   },
+   "event": "ingest_datasource_ev",
+   "object": "datasource:ev",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "payload": {
+     "value": 42
+    }
+   },
+   "event": "ingest_datasource_ev_named",
+   "object": "datasource:ev_named",
+   "relation": "ingested_record",
+   "revision": 7,
+   "subject": "value:record"
+  },
+  {
+   "attrs": {
+    "value": 0.25
+   },
+   "event": "event:a1",
+   "object": "metric:latency",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev"
+  },
+  {
+   "attrs": {
+    "value": 0.25
+   },
+   "event": "event:a1",
+   "object": "metric:latency",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev_named"
+  },
+  {
+   "attrs": {
+    "value": 0.5
+   },
+   "event": "event:b1",
+   "object": "metric:cpu",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev"
+  },
+  {
+   "attrs": {
+    "value": 0.5
+   },
+   "event": "event:b1",
+   "object": "metric:cpu",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev_named"
+  },
+  {
+   "attrs": {
+    "value": 10
+   },
+   "event": "event:b1",
+   "object": "mem:used",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev"
+  },
+  {
+   "attrs": {
+    "value": 10
+   },
+   "event": "event:b1",
+   "object": "mem:used",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev_named"
+  },
+  {
+   "attrs": {
+    "value": 4
+   },
+   "event": "ingest_datasource_ev",
+   "object": "metric:fallback",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev"
+  },
+  {
+   "attrs": {
+    "value": 4
+   },
+   "event": "ingest_datasource_ev_named",
+   "object": "metric:fallback",
+   "relation": "observed_from",
+   "revision": 7,
+   "subject": "datasource:ev_named"
+  },
+  {
+   "attrs": {},
+   "event": "event:a1",
+   "object": "datasource:ev",
+   "relation": "host",
+   "revision": 7,
+   "subject": "value:web 1"
+  },
+  {
+   "attrs": {},
+   "event": "event:a1",
+   "object": "datasource:ev",
+   "relation": "nested",
+   "revision": 7,
+   "subject": "value:{:k 1, :j [1 2.5 nil]}"
+  },
+  {
+   "attrs": {},
+   "event": "event:a1",
+   "object": "datasource:ev",
+   "relation": "tags",
+   "revision": 7,
+   "subject": "value:[\"x\" \"y\"]"
+  },
+  {
+   "attrs": {},
+   "event": "event:a1",
+   "object": "datasource:ev_named",
+   "relation": "host",
+   "revision": 7,
+   "subject": "value:web 1"
+  },
+  {
+   "attrs": {},
+   "event": "event:a1",
+   "object": "datasource:ev_named",
+   "relation": "nested",
+   "revision": 7,
+   "subject": "value:{:k 1, :j [1 2.5 nil]}"
+  },
+  {
+   "attrs": {},
+   "event": "event:a1",
+   "object": "datasource:ev_named",
+   "relation": "tags",
+   "revision": 7,
+   "subject": "value:[\"x\" \"y\"]"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev",
+   "relation": "big",
+   "revision": 7,
+   "subject": "value:12345678901"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev",
+   "relation": "exp",
+   "revision": 7,
+   "subject": "value:1000.0"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev",
+   "relation": "neg",
+   "revision": 7,
+   "subject": "value:-7"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev",
+   "relation": "none",
+   "revision": 7,
+   "subject": "value:nil"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev",
+   "relation": "ok",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev_named",
+   "relation": "big",
+   "revision": 7,
+   "subject": "value:12345678901"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev_named",
+   "relation": "exp",
+   "revision": 7,
+   "subject": "value:1000.0"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev_named",
+   "relation": "neg",
+   "revision": 7,
+   "subject": "value:-7"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev_named",
+   "relation": "none",
+   "revision": 7,
+   "subject": "value:nil"
+  },
+  {
+   "attrs": {},
+   "event": "event:a2",
+   "object": "datasource:ev_named",
+   "relation": "ok",
+   "revision": 7,
+   "subject": "value:true"
+  },
+  {
+   "attrs": {},
+   "event": "event:b1",
+   "object": "datasource:ev",
+   "relation": "Mixed Case",
+   "revision": 7,
+   "subject": "value:v"
+  },
+  {
+   "attrs": {},
+   "event": "event:b1",
+   "object": "datasource:ev",
+   "relation": "q",
+   "revision": 7,
+   "subject": "?var"
+  },
+  {
+   "attrs": {},
+   "event": "event:b1",
+   "object": "datasource:ev",
+   "relation": "url",
+   "revision": 7,
+   "subject": "http://x/y"
+  },
+  {
+   "attrs": {},
+   "event": "event:b1",
+   "object": "datasource:ev_named",
+   "relation": "Mixed Case",
+   "revision": 7,
+   "subject": "value:v"
+  },
+  {
+   "attrs": {},
+   "event": "event:b1",
+   "object": "datasource:ev_named",
+   "relation": "q",
+   "revision": 7,
+   "subject": "?var"
+  },
+  {
+   "attrs": {},
+   "event": "event:b1",
+   "object": "datasource:ev_named",
+   "relation": "url",
+   "revision": 7,
+   "subject": "http://x/y"
+  },
+  {
+   "attrs": {},
+   "event": "event:padded",
+   "object": "datasource:ev",
+   "relation": "event",
+   "revision": 7,
+   "subject": "value:  padded  "
+  },
+  {
+   "attrs": {},
+   "event": "event:padded",
+   "object": "datasource:ev_named",
+   "relation": "event",
+   "revision": 7,
+   "subject": "value:  padded  "
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ev",
+   "object": "datasource:ev",
+   "relation": "plain",
+   "revision": 7,
+   "subject": "value:no event id so no components"
+  },
+  {
+   "attrs": {},
+   "event": "ingest_datasource_ev_named",
+   "object": "datasource:ev_named",
+   "relation": "plain",
+   "revision": 7,
+   "subject": "value:no event id so no components"
+  }
+ ],
+ "summary": {
+  "by_source": [
+   {
+    "before_edges": 5,
+    "before_edges_derived": 4,
+    "before_edges_explicit": 4,
+    "datasource": "datasource:ev",
+    "facts": 36,
+    "records": 12,
+    "type": "file"
+   },
+   {
+    "before_edges": 5,
+    "before_edges_derived": 4,
+    "before_edges_explicit": 4,
+    "datasource": "datasource:ev_named",
+    "facts": 36,
+    "records": 12,
+    "type": "file"
+   }
+  ],
+  "facts": 72,
+  "records": 24,
+  "sources": 2
+ }
+}

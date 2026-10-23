@@ -1,0 +1,10 @@
+MODULE interop.t.
+
+interop:record:1#kind@entity:interop_record.
+interop:record:1#host@value:web1.
+interop:record:1#state@value:up.
+interop:record:1#load@value:0.5.
+interop:record:2#kind@entity:interop_record.
+interop:record:2#host@value:web2.
+interop:record:2#state@value:down.
+interop:record:2#load@value:7.

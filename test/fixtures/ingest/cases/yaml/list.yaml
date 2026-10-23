@@ -1,0 +1,14 @@
+- Name: first   # trailing comment
+  # a comment line inside the item
+  Tab:	tabbed   # c
+  Value: 10
+  note: "quoted: text"
+  empty:
+  nothing: null
+- name: second
+  value: -3.50
+- just a scalar
+- null
+- name: third
+  name: duplicated
+    nested: ignored line? no, it is a key too

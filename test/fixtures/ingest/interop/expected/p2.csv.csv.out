@@ -1,0 +1,3 @@
+host,load,state
+web1,0.5,up
+web2,7,down
