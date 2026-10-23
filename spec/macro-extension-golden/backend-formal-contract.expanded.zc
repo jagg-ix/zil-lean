@@ -1,0 +1,503 @@
+RULE bfc_backend_engine_known_clj:
+IF ?b#engine@value:clj
+THEN ?b#engine_known@value:true.
+RULE bfc_backend_engine_known_datafrog:
+IF ?b#engine@value:datafrog
+THEN ?b#engine_known@value:true.
+RULE bfc_backend_engine_known_souffle:
+IF ?b#engine@value:souffle
+THEN ?b#engine_known@value:true.
+RULE bfc_tool_known_tla:
+IF ?x#tool@tool:tla
+THEN ?x#tool_known@value:true.
+RULE bfc_tool_known_lean4:
+IF ?x#tool@tool:lean4
+THEN ?x#tool_known@value:true.
+RULE bfc_tool_known_z3:
+IF ?x#tool@tool:z3
+THEN ?x#tool_known@value:true.
+RULE bfc_tool_known_acl2:
+IF ?x#tool@tool:acl2
+THEN ?x#tool_known@value:true.
+RULE bfc_verdict_known_satisfied:
+IF ?f#verdict@value:satisfied
+THEN ?f#verdict_known@value:true.
+RULE bfc_verdict_known_violated:
+IF ?f#verdict@value:violated
+THEN ?f#verdict_known@value:true.
+RULE bfc_verdict_known_unknown:
+IF ?f#verdict@value:unknown
+THEN ?f#verdict_known@value:true.
+RULE bfc_verdict_known_timeout:
+IF ?f#verdict@value:timeout
+THEN ?f#verdict_known@value:true.
+RULE bfc_verdict_known_error:
+IF ?f#verdict@value:error
+THEN ?f#verdict_known@value:true.
+RULE bfc_class_known_theorem:
+IF ?o#class@value:theorem
+THEN ?o#class_known@value:true.
+RULE bfc_class_known_policy:
+IF ?o#class@value:policy
+THEN ?o#class_known@value:true.
+RULE bfc_class_known_safety:
+IF ?o#class@value:safety
+THEN ?o#class_known@value:true.
+RULE bfc_class_known_liveness:
+IF ?o#class@value:liveness
+THEN ?o#class_known@value:true.
+RULE bfc_class_known_consistency:
+IF ?o#class@value:consistency
+THEN ?o#class_known@value:true.
+RULE bfc_capability_known_fixpoint:
+IF ?b#capability@capability:fixpoint
+THEN ?b#capability_known@capability:fixpoint.
+RULE bfc_capability_known_stratified_negation:
+IF ?b#capability@capability:stratified_negation
+THEN ?b#capability_known@capability:stratified_negation.
+RULE bfc_capability_known_anti_join:
+IF ?b#capability@capability:anti_join
+THEN ?b#capability_known@capability:anti_join.
+RULE bfc_capability_known_incremental:
+IF ?b#capability@capability:incremental
+THEN ?b#capability_known@capability:incremental.
+RULE bfc_capability_known_emit_tla:
+IF ?b#capability@capability:emit_tla
+THEN ?b#capability_known@capability:emit_tla.
+RULE bfc_capability_known_emit_lean4:
+IF ?b#capability@capability:emit_lean4
+THEN ?b#capability_known@capability:emit_lean4.
+RULE bfc_capability_known_check_z3:
+IF ?b#capability@capability:check_z3
+THEN ?b#capability_known@capability:check_z3.
+RULE bfc_capability_known_check_acl2:
+IF ?b#capability@capability:check_acl2
+THEN ?b#capability_known@capability:check_acl2.
+RULE bfc_capability_known_emit_acl2:
+IF ?b#capability@capability:emit_acl2
+THEN ?b#capability_known@capability:emit_acl2.
+RULE bfc_capability_known_ingest_feedback:
+IF ?b#capability@capability:ingest_feedback
+THEN ?b#capability_known@capability:ingest_feedback.
+RULE bfc_capability_known_artifact_json:
+IF ?b#capability@capability:artifact_json
+THEN ?b#capability_known@capability:artifact_json.
+RULE bfc_capability_known_artifact_yaml:
+IF ?b#capability@capability:artifact_yaml
+THEN ?b#capability_known@capability:artifact_yaml.
+RULE bfc_capability_known_artifact_csv:
+IF ?b#capability@capability:artifact_csv
+THEN ?b#capability_known@capability:artifact_csv.
+RULE bfc_artifact_format_known_json:
+IF ?a#format@value:json
+THEN ?a#format_known@value:true.
+RULE bfc_artifact_format_known_yaml:
+IF ?a#format@value:yaml
+THEN ?a#format_known@value:true.
+RULE bfc_artifact_format_known_yml:
+IF ?a#format@value:yml
+THEN ?a#format_known@value:true.
+RULE bfc_artifact_format_known_csv:
+IF ?a#format@value:csv
+THEN ?a#format_known@value:true.
+RULE bfc_artifact_format_known_edn:
+IF ?a#format@value:edn
+THEN ?a#format_known@value:true.
+RULE bfc_artifact_format_known_text:
+IF ?a#format@value:text
+THEN ?a#format_known@value:true.
+RULE bfc_error_backend_unknown_engine:
+IF ?b#kind@entity:backend_engine AND ?b#engine@?e AND NOT ?b#engine_known@value:true
+THEN ?b#contract_error@value:unknown_backend_engine.
+RULE bfc_error_backend_unknown_capability:
+IF ?b#kind@entity:backend_engine AND ?b#capability@?c AND NOT ?b#capability_known@?c
+THEN ?b#contract_error@value:unknown_capability.
+RULE bfc_error_artifact_unknown_format:
+IF ?a#kind@entity:interop_artifact AND ?a#format@?f AND NOT ?a#format_known@value:true
+THEN ?a#contract_error@value:unknown_artifact_format.
+RULE bfc_error_feedback_unknown_tool:
+IF ?f#kind@entity:formal_feedback AND ?f#tool@?t AND NOT ?f#tool_known@value:true
+THEN ?f#contract_error@value:unknown_feedback_tool.
+RULE bfc_error_feedback_unknown_verdict:
+IF ?f#kind@entity:formal_feedback AND ?f#verdict@?v AND NOT ?f#verdict_known@value:true
+THEN ?f#contract_error@value:unknown_feedback_verdict.
+RULE bfc_error_feedback_missing_run_ref:
+IF ?f#kind@entity:formal_feedback AND ?f#run@?r AND NOT ?r#kind@entity:backend_run
+THEN ?f#contract_error@value:invalid_run_reference.
+RULE bfc_error_feedback_missing_obligation_ref:
+IF ?f#kind@entity:formal_feedback AND ?f#obligation@?o AND NOT ?o#kind@entity:formal_obligation
+THEN ?f#contract_error@value:invalid_obligation_reference.
+RULE bfc_error_obligation_unknown_class:
+IF ?o#kind@entity:formal_obligation AND ?o#class@?c AND NOT ?o#class_known@value:true
+THEN ?o#contract_error@value:unknown_obligation_class.
+RULE bfc_error_obligation_missing_run_ref:
+IF ?o#kind@entity:formal_obligation AND ?o#run@?r AND NOT ?r#kind@entity:backend_run
+THEN ?o#contract_error@value:invalid_run_reference.
+RULE bfc_route_default_policy:
+IF ?o#kind@entity:formal_obligation AND ?o#class@value:policy
+THEN ?o#routed_tool@tool:z3.
+RULE bfc_route_default_theorem:
+IF ?o#kind@entity:formal_obligation AND ?o#class@value:theorem
+THEN ?o#routed_tool@tool:lean4.
+RULE bfc_route_default_safety:
+IF ?o#kind@entity:formal_obligation AND ?o#class@value:safety
+THEN ?o#routed_tool@tool:tla.
+RULE bfc_route_default_liveness:
+IF ?o#kind@entity:formal_obligation AND ?o#class@value:liveness
+THEN ?o#routed_tool@tool:tla.
+RULE bfc_route_default_consistency:
+IF ?o#kind@entity:formal_obligation AND ?o#class@value:consistency
+THEN ?o#routed_tool@tool:z3.
+RULE bfc_route_explicit:
+IF ?o#target_tool@?t
+THEN ?o#routed_tool@?t.
+RULE bfc_backend_supports_routed_tool:
+IF ?o#run@?r AND ?r#backend@?b AND ?o#routed_tool@?t AND ?b#bridge_tool@?t
+THEN ?o#route_covered@?t.
+RULE bfc_obligation_error_missing_tool_bridge:
+IF ?o#kind@entity:formal_obligation AND ?o#run@?r AND ?r#backend@?b AND ?o#routed_tool@?t AND NOT ?o#route_covered@?t
+THEN ?o#contract_error@value:missing_tool_bridge.
+RULE bfc_obligation_capability_met:
+IF ?o#run@?r AND ?r#backend@?b AND ?o#requires_capability@?c AND ?b#capability@?c
+THEN ?o#capability_met@?c.
+RULE bfc_obligation_error_missing_capability:
+IF ?o#kind@entity:formal_obligation AND ?o#run@?r AND ?r#backend@?b AND ?o#requires_capability@?c AND NOT ?o#capability_met@?c
+THEN ?o#contract_error@value:missing_backend_capability.
+RULE bfc_obligation_has_feedback:
+IF ?f#obligation@?o
+THEN ?o#has_feedback@value:true.
+RULE bfc_obligation_has_satisfied_feedback:
+IF ?f#obligation@?o AND ?f#verdict@value:satisfied
+THEN ?o#has_satisfied_feedback@value:true.
+RULE bfc_obligation_has_violated_feedback:
+IF ?f#obligation@?o AND ?f#verdict@value:violated
+THEN ?o#has_violated_feedback@value:true.
+RULE bfc_obligation_has_unknown_feedback:
+IF ?f#obligation@?o AND ?f#verdict@value:unknown
+THEN ?o#has_unknown_feedback@value:true.
+RULE bfc_obligation_has_timeout_feedback:
+IF ?f#obligation@?o AND ?f#verdict@value:timeout
+THEN ?o#has_timeout_feedback@value:true.
+RULE bfc_obligation_has_error_feedback:
+IF ?f#obligation@?o AND ?f#verdict@value:error
+THEN ?o#has_error_feedback@value:true.
+RULE bfc_obligation_has_contract_error:
+IF ?o#contract_error@?e
+THEN ?o#has_contract_error@value:true.
+RULE bfc_obligation_is_broken_from_violation:
+IF ?o#kind@entity:formal_obligation AND ?o#has_violated_feedback@value:true
+THEN ?o#is_broken@value:true.
+RULE bfc_obligation_is_broken_from_contract_error:
+IF ?o#kind@entity:formal_obligation AND ?o#has_contract_error@value:true
+THEN ?o#is_broken@value:true.
+RULE bfc_obligation_is_proved:
+IF ?o#kind@entity:formal_obligation AND ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND NOT ?o#has_unknown_feedback@value:true AND NOT ?o#has_timeout_feedback@value:true AND NOT ?o#has_error_feedback@value:true
+THEN ?o#is_proved@value:true.
+RULE bfc_obligation_is_conditional_from_unknown:
+IF ?o#kind@entity:formal_obligation AND ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND ?o#has_unknown_feedback@value:true
+THEN ?o#is_conditional@value:true.
+RULE bfc_obligation_is_conditional_from_timeout:
+IF ?o#kind@entity:formal_obligation AND ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND ?o#has_timeout_feedback@value:true
+THEN ?o#is_conditional@value:true.
+RULE bfc_obligation_is_conditional_from_error:
+IF ?o#kind@entity:formal_obligation AND ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND ?o#has_error_feedback@value:true
+THEN ?o#is_conditional@value:true.
+RULE bfc_obligation_is_weak_from_unknown:
+IF ?o#kind@entity:formal_obligation AND NOT ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND ?o#has_unknown_feedback@value:true
+THEN ?o#is_weak@value:true.
+RULE bfc_obligation_is_weak_from_timeout:
+IF ?o#kind@entity:formal_obligation AND NOT ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND ?o#has_timeout_feedback@value:true
+THEN ?o#is_weak@value:true.
+RULE bfc_obligation_is_weak_from_error:
+IF ?o#kind@entity:formal_obligation AND NOT ?o#has_satisfied_feedback@value:true AND NOT ?o#is_broken@value:true AND ?o#has_error_feedback@value:true
+THEN ?o#is_weak@value:true.
+RULE bfc_obligation_is_no_feedback:
+IF ?o#kind@entity:formal_obligation AND NOT ?o#has_feedback@value:true
+THEN ?o#is_no_feedback@value:true.
+RULE bfc_obligation_status_broken:
+IF ?o#is_broken@value:true
+THEN ?o#status@value:BROKEN.
+RULE bfc_obligation_status_proved:
+IF ?o#is_proved@value:true
+THEN ?o#status@value:PROVED.
+RULE bfc_obligation_status_conditional:
+IF ?o#is_conditional@value:true
+THEN ?o#status@value:CONDITIONAL.
+RULE bfc_obligation_status_weak:
+IF ?o#is_weak@value:true
+THEN ?o#status@value:WEAK.
+RULE bfc_obligation_status_no_feedback:
+IF ?o#is_no_feedback@value:true
+THEN ?o#status@value:NO_FEEDBACK.
+RULE bfc_run_has_obligation:
+IF ?o#run@?r
+THEN ?r#has_obligation@value:true.
+RULE bfc_run_has_broken:
+IF ?o#run@?r AND ?o#is_broken@value:true
+THEN ?r#has_broken@value:true.
+RULE bfc_run_has_conditional:
+IF ?o#run@?r AND ?o#is_conditional@value:true
+THEN ?r#has_conditional@value:true.
+RULE bfc_run_has_weak:
+IF ?o#run@?r AND ?o#is_weak@value:true
+THEN ?r#has_weak@value:true.
+RULE bfc_run_has_no_feedback:
+IF ?o#run@?r AND ?o#is_no_feedback@value:true
+THEN ?r#has_no_feedback@value:true.
+RULE bfc_run_status_broken:
+IF ?r#kind@entity:backend_run AND ?r#has_broken@value:true
+THEN ?r#status@value:BROKEN.
+RULE bfc_run_status_conditional:
+IF ?r#kind@entity:backend_run AND NOT ?r#has_broken@value:true AND ?r#has_conditional@value:true
+THEN ?r#status@value:CONDITIONAL.
+RULE bfc_run_status_weak:
+IF ?r#kind@entity:backend_run AND NOT ?r#has_broken@value:true AND NOT ?r#has_conditional@value:true AND ?r#has_weak@value:true
+THEN ?r#status@value:WEAK.
+RULE bfc_run_status_no_feedback:
+IF ?r#kind@entity:backend_run AND NOT ?r#has_broken@value:true AND NOT ?r#has_conditional@value:true AND NOT ?r#has_weak@value:true AND ?r#has_no_feedback@value:true
+THEN ?r#status@value:NO_FEEDBACK.
+RULE bfc_run_status_proved:
+IF ?r#kind@entity:backend_run AND ?r#has_obligation@value:true AND NOT ?r#has_broken@value:true AND NOT ?r#has_conditional@value:true AND NOT ?r#has_weak@value:true AND NOT ?r#has_no_feedback@value:true
+THEN ?r#status@value:PROVED.
+RULE bfc_run_status_empty:
+IF ?r#kind@entity:backend_run AND NOT ?r#has_obligation@value:true
+THEN ?r#status@value:EMPTY.
+QUERY bfc_backend_capabilities:
+FIND ?backend ?engine ?cap WHERE ?backend#kind@entity:backend_engine AND ?backend#engine@?engine AND ?backend#capability@?cap.
+QUERY bfc_backend_contract_errors:
+FIND ?backend ?error WHERE ?backend#kind@entity:backend_engine AND ?backend#contract_error@?error.
+QUERY bfc_obligation_contract_errors:
+FIND ?obligation ?error WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#contract_error@?error.
+QUERY bfc_feedback_contract_errors:
+FIND ?feedback ?error WHERE ?feedback#kind@entity:formal_feedback AND ?feedback#contract_error@?error.
+QUERY bfc_missing_capabilities:
+FIND ?obligation ?cap WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#requires_capability@?cap AND ?obligation#contract_error@value:missing_backend_capability.
+QUERY bfc_missing_tool_bridges:
+FIND ?obligation ?tool WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#routed_tool@?tool AND ?obligation#contract_error@value:missing_tool_bridge.
+QUERY bfc_feedback_matrix:
+FIND ?run ?obligation ?tool ?verdict ?artifact WHERE ?run#kind@entity:backend_run AND ?obligation#kind@entity:formal_obligation AND ?obligation#run@?run AND ?feedback#obligation@?obligation AND ?feedback#tool@?tool AND ?feedback#verdict@?verdict AND ?feedback#artifact@?artifact.
+QUERY bfc_obligation_status:
+FIND ?obligation ?status WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#status@?status.
+QUERY bfc_run_status:
+FIND ?run ?status WHERE ?run#kind@entity:backend_run AND ?run#status@?status.
+MODULE backend.formal.contract.demo.
+backend:b_clj_main#kind@entity:backend_engine.
+backend:b_clj_main#engine@value:clj.
+backend:b_clj_main#profile@value:default.
+backend:b_clj_main#version@value:v1_2_0.
+backend:b_clj_main#enabled@value:true.
+backend:b_clj_main#capability@capability:fixpoint.
+backend:b_clj_main#capability@capability:incremental.
+backend:b_clj_main#capability@capability:emit_tla.
+backend:b_clj_main#capability@capability:emit_lean4.
+backend:b_clj_main#capability@capability:check_z3.
+backend:b_clj_main#capability@capability:check_acl2.
+backend:b_clj_main#capability@capability:emit_acl2.
+backend:b_clj_main#capability@capability:ingest_feedback.
+backend:b_clj_main#capability@capability:artifact_json.
+backend:b_clj_main#io_direction@value:input.
+backend:b_clj_main#io_format@value:json.
+backend:b_clj_main#io_direction@value:output.
+backend:b_clj_main#io_format@value:json.
+backend:b_clj_main#bridge_tool@tool:tla.
+backend:b_clj_main#bridge_mode@value:direct.
+backend:b_clj_main#bridge_tool@tool:lean4.
+backend:b_clj_main#bridge_mode@value:direct.
+backend:b_clj_main#bridge_tool@tool:z3.
+backend:b_clj_main#bridge_mode@value:direct.
+backend:b_clj_main#bridge_tool@tool:acl2.
+backend:b_clj_main#bridge_mode@value:artifact_log.
+backend:b_clj_main#startup_ms@value:120.
+backend:b_clj_main#per_round_ms@value:15.
+backend:b_clj_main#max_facts@value:500000.
+backend:b_clj_main#max_memory_mb@value:2048.
+backend:b_souffle_batch#kind@entity:backend_engine.
+backend:b_souffle_batch#engine@value:souffle.
+backend:b_souffle_batch#profile@value:batch.
+backend:b_souffle_batch#version@value:v2_4_1.
+backend:b_souffle_batch#enabled@value:true.
+backend:b_souffle_batch#capability@capability:fixpoint.
+backend:b_souffle_batch#capability@capability:stratified_negation.
+backend:b_souffle_batch#capability@capability:artifact_csv.
+backend:b_souffle_batch#bridge_tool@tool:z3.
+backend:b_souffle_batch#bridge_mode@value:file_exchange.
+backend:b_souffle_batch#startup_ms@value:250.
+backend:b_souffle_batch#per_round_ms@value:40.
+backend:b_souffle_batch#max_facts@value:3000000.
+backend:b_souffle_batch#max_memory_mb@value:8192.
+backend:b_invalid#kind@entity:backend_engine.
+backend:b_invalid#engine@value:custom_engine_x.
+backend:b_invalid#profile@value:experimental.
+backend:b_invalid#capability@capability:speculative_magic.
+run:run_main#kind@entity:backend_run.
+run:run_main#module@value:backend.formal.contract.demo.
+run:run_main#revision@revision:rev_20260318.
+run:run_main#backend@backend:b_clj_main.
+run:run_batch#kind@entity:backend_run.
+run:run_batch#module@value:backend.formal.contract.demo.
+run:run_batch#revision@revision:rev_20260318.
+run:run_batch#backend@backend:b_souffle_batch.
+run:run_empty#kind@entity:backend_run.
+run:run_empty#module@value:backend.formal.contract.demo.
+run:run_empty#revision@revision:rev_20260318.
+run:run_empty#backend@backend:b_clj_main.
+artifact:a_lean_proof#kind@entity:interop_artifact.
+artifact:a_lean_proof#format@value:edn.
+artifact:a_lean_proof#uri@uri_lean_proof.
+artifact:a_lean_proof#schema_id@value:schema_formal_feedback_v1.
+artifact:a_lean_proof#producer@lean4.
+artifact:a_lean_proof#consumer@b_clj_main.
+artifact:a_tla_trace#kind@entity:interop_artifact.
+artifact:a_tla_trace#format@value:json.
+artifact:a_tla_trace#uri@uri_tla_trace.
+artifact:a_tla_trace#schema_id@value:schema_formal_feedback_v1.
+artifact:a_tla_trace#producer@tla.
+artifact:a_tla_trace#consumer@b_clj_main.
+artifact:a_policy_report#kind@entity:interop_artifact.
+artifact:a_policy_report#format@value:json.
+artifact:a_policy_report#uri@uri_policy_report.
+artifact:a_policy_report#schema_id@value:schema_formal_feedback_v1.
+artifact:a_policy_report#producer@z3.
+artifact:a_policy_report#consumer@b_clj_main.
+artifact:a_csv_report#kind@entity:interop_artifact.
+artifact:a_csv_report#format@value:csv.
+artifact:a_csv_report#uri@uri_csv_report.
+artifact:a_csv_report#schema_id@value:schema_formal_feedback_v1.
+artifact:a_csv_report#producer@z3.
+artifact:a_csv_report#consumer@b_souffle_batch.
+artifact:a_acl2_log#kind@entity:interop_artifact.
+artifact:a_acl2_log#format@value:text.
+artifact:a_acl2_log#uri@uri_acl2_log.
+artifact:a_acl2_log#schema_id@value:schema_formal_feedback_v1.
+artifact:a_acl2_log#producer@acl2.
+artifact:a_acl2_log#consumer@b_clj_main.
+artifact:a_unknown_format#kind@entity:interop_artifact.
+artifact:a_unknown_format#format@value:xml.
+artifact:a_unknown_format#uri@uri_unknown.
+artifact:a_unknown_format#schema_id@value:schema_formal_feedback_v1.
+run:run_main#output_artifact@artifact:a_lean_proof.
+run:run_main#output_artifact@artifact:a_tla_trace.
+run:run_main#output_artifact@artifact:a_policy_report.
+run:run_batch#output_artifact@artifact:a_csv_report.
+obligation:o_proved#kind@entity:formal_obligation.
+obligation:o_proved#class@value:theorem.
+obligation:o_proved#criticality@value:high.
+obligation:o_proved#run@run:run_main.
+obligation:o_proved#requires_capability@capability:emit_lean4.
+obligation:o_proved#target_tool@tool:lean4.
+obligation:o_proved#artifact@artifact:a_lean_proof.
+obligation:o_broken#kind@entity:formal_obligation.
+obligation:o_broken#class@value:policy.
+obligation:o_broken#criticality@value:high.
+obligation:o_broken#run@run:run_main.
+obligation:o_broken#requires_capability@capability:check_z3.
+obligation:o_broken#artifact@artifact:a_policy_report.
+obligation:o_conditional#kind@entity:formal_obligation.
+obligation:o_conditional#class@value:safety.
+obligation:o_conditional#criticality@value:medium.
+obligation:o_conditional#run@run:run_main.
+obligation:o_conditional#requires_capability@capability:emit_tla.
+obligation:o_conditional#artifact@artifact:a_tla_trace.
+obligation:o_weak#kind@entity:formal_obligation.
+obligation:o_weak#class@value:liveness.
+obligation:o_weak#criticality@value:medium.
+obligation:o_weak#run@run:run_main.
+obligation:o_weak#requires_capability@capability:emit_tla.
+obligation:o_weak#artifact@artifact:a_tla_trace.
+obligation:o_no_feedback#kind@entity:formal_obligation.
+obligation:o_no_feedback#class@value:consistency.
+obligation:o_no_feedback#criticality@value:low.
+obligation:o_no_feedback#run@run:run_main.
+obligation:o_no_feedback#requires_capability@capability:check_z3.
+obligation:o_no_feedback#artifact@artifact:a_policy_report.
+obligation:o_bridge_missing#kind@entity:formal_obligation.
+obligation:o_bridge_missing#class@value:theorem.
+obligation:o_bridge_missing#criticality@value:high.
+obligation:o_bridge_missing#run@run:run_batch.
+obligation:o_bridge_missing#requires_capability@capability:emit_lean4.
+obligation:o_bridge_missing#artifact@artifact:a_csv_report.
+obligation:o_acl2_ok#kind@entity:formal_obligation.
+obligation:o_acl2_ok#class@value:consistency.
+obligation:o_acl2_ok#criticality@value:medium.
+obligation:o_acl2_ok#run@run:run_main.
+obligation:o_acl2_ok#target_tool@tool:acl2.
+obligation:o_acl2_ok#requires_capability@capability:check_acl2.
+obligation:o_acl2_ok#artifact@artifact:a_acl2_log.
+obligation:o_unknown_class#kind@entity:formal_obligation.
+obligation:o_unknown_class#class@value:theorem_like.
+obligation:o_unknown_class#criticality@value:low.
+obligation:o_unknown_class#run@run:run_main.
+feedback:f_proved#kind@entity:formal_feedback.
+feedback:f_proved#run@run:run_main.
+feedback:f_proved#obligation@obligation:o_proved.
+feedback:f_proved#tool@tool:lean4.
+feedback:f_proved#verdict@value:satisfied.
+feedback:f_proved#artifact@artifact:a_lean_proof.
+feedback:f_proved#evidence@evidence:proof_single_controller_001.
+feedback:f_proved#duration_ms@value:180.
+feedback:f_proved#confidence@value:c99.
+feedback:f_proved#cost_usd@value:usd_0_07.
+feedback:f_broken#kind@entity:formal_feedback.
+feedback:f_broken#run@run:run_main.
+feedback:f_broken#obligation@obligation:o_broken.
+feedback:f_broken#tool@tool:z3.
+feedback:f_broken#verdict@value:violated.
+feedback:f_broken#artifact@artifact:a_policy_report.
+feedback:f_broken#evidence@evidence:counterexample_policy_004.
+feedback:f_broken#duration_ms@value:45.
+feedback:f_broken#confidence@value:c100.
+feedback:f_broken#cost_usd@value:usd_0_02.
+feedback:f_conditional_ok#kind@entity:formal_feedback.
+feedback:f_conditional_ok#run@run:run_main.
+feedback:f_conditional_ok#obligation@obligation:o_conditional.
+feedback:f_conditional_ok#tool@tool:tla.
+feedback:f_conditional_ok#verdict@value:satisfied.
+feedback:f_conditional_ok#artifact@artifact:a_tla_trace.
+feedback:f_conditional_ok#evidence@evidence:trace_ok_101.
+feedback:f_conditional_timeout#kind@entity:formal_feedback.
+feedback:f_conditional_timeout#run@run:run_main.
+feedback:f_conditional_timeout#obligation@obligation:o_conditional.
+feedback:f_conditional_timeout#tool@tool:tla.
+feedback:f_conditional_timeout#verdict@value:timeout.
+feedback:f_conditional_timeout#artifact@artifact:a_tla_trace.
+feedback:f_conditional_timeout#evidence@evidence:trace_timeout_102.
+feedback:f_weak_unknown#kind@entity:formal_feedback.
+feedback:f_weak_unknown#run@run:run_main.
+feedback:f_weak_unknown#obligation@obligation:o_weak.
+feedback:f_weak_unknown#tool@tool:tla.
+feedback:f_weak_unknown#verdict@value:unknown.
+feedback:f_weak_unknown#artifact@artifact:a_tla_trace.
+feedback:f_weak_unknown#evidence@evidence:unknown_due_state_space.
+feedback:f_acl2_ok#kind@entity:formal_feedback.
+feedback:f_acl2_ok#run@run:run_main.
+feedback:f_acl2_ok#obligation@obligation:o_acl2_ok.
+feedback:f_acl2_ok#tool@tool:acl2.
+feedback:f_acl2_ok#verdict@value:satisfied.
+feedback:f_acl2_ok#artifact@artifact:a_acl2_log.
+feedback:f_acl2_ok#evidence@evidence:acl2_execstep_qed.
+feedback:f_bad_tool#kind@entity:formal_feedback.
+feedback:f_bad_tool#run@run:run_main.
+feedback:f_bad_tool#obligation@obligation:o_proved.
+feedback:f_bad_tool#tool@tool:coq.
+feedback:f_bad_tool#verdict@value:satisfied.
+feedback:f_bad_tool#artifact@artifact:a_lean_proof.
+feedback:f_bad_tool#evidence@evidence:unsupported_tool_example.
+feedback:f_bad_run_ref#kind@entity:formal_feedback.
+feedback:f_bad_run_ref#run@run:run_missing.
+feedback:f_bad_run_ref#obligation@obligation:o_proved.
+feedback:f_bad_run_ref#tool@tool:lean4.
+feedback:f_bad_run_ref#verdict@value:satisfied.
+feedback:f_bad_run_ref#artifact@artifact:a_lean_proof.
+feedback:f_bad_run_ref#evidence@evidence:invalid_run_ref_example.
+QUERY demo_backend_contract_errors:
+FIND ?backend ?error WHERE ?backend#kind@entity:backend_engine AND ?backend#contract_error@?error.
+QUERY demo_artifact_contract_errors:
+FIND ?artifact ?error WHERE ?artifact#kind@entity:interop_artifact AND ?artifact#contract_error@?error.
+QUERY demo_obligation_status:
+FIND ?obligation ?status WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#status@?status.
+QUERY demo_obligation_contract_errors:
+FIND ?obligation ?error WHERE ?obligation#kind@entity:formal_obligation AND ?obligation#contract_error@?error.
+QUERY demo_feedback_contract_errors:
+FIND ?feedback ?error WHERE ?feedback#kind@entity:formal_feedback AND ?feedback#contract_error@?error.
+QUERY demo_run_status:
+FIND ?run ?status WHERE ?run#kind@entity:backend_run AND ?run#status@?status.

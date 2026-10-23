@@ -1,0 +1,78 @@
+MODULE temporal.pi.quickstart.
+RULE tpl_patient_visible:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:visible
+THEN ?p#can_sigma@value:true.
+RULE tpl_tau_blocks_tick:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:tau
+THEN ?p#blocks_tick@value:true.
+RULE pi_sync_tau:
+IF ?p#operator@value:par AND ?p#left@?s AND ?p#right@?r AND ?s#operator@value:send AND ?r#operator@value:recv AND ?s#channel@?c AND ?r#channel@?c
+THEN ?p#can_tau@value:true.
+RULE vc_lt_transitive:
+IF ?a#lt@?b AND ?b#lt@?c
+THEN ?a#lt@?c.
+RULE vc_witness:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c1#lt@?c2
+THEN ?e1#witness@?e2.
+RULE vc_violation:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c2#lt@?c1
+THEN ?e1#violation@?e2.
+RULE vc_before:
+IF ?e1#kind@entity:vc_event AND ?e2#kind@entity:vc_event AND ?e1#distinct_from@?e2 AND ?e1#witness@?e2 AND NOT ?e1#violation@?e2
+THEN ?e1#before@?e2.
+tpl:action:tick_ok#kind@entity:tpl_action.
+tpl:action:tick_ok#class@value:visible.
+tpl:action:tick_blocker#kind@entity:tpl_action.
+tpl:action:tick_blocker#class@value:tau.
+tpl:proc:t0#kind@entity:tpl_process.
+tpl:proc:t0#operator@value:nil.
+tpl:proc:tp_ok#kind@entity:tpl_process.
+tpl:proc:tp_ok#operator@value:prefix.
+tpl:proc:tp_ok#action@tpl:action:tick_ok.
+tpl:proc:tp_ok#next@tpl:proc:t0.
+tpl:proc:tp_block#kind@entity:tpl_process.
+tpl:proc:tp_block#operator@value:prefix.
+tpl:proc:tp_block#action@tpl:action:tick_blocker.
+tpl:proc:tp_block#next@tpl:proc:t0.
+pi:name:x#kind@entity:pi_channel.
+pi:name:msg1#kind@entity:pi_value.
+pi:name:v#kind@entity:pi_value.
+pi:proc:p0#kind@entity:pi_process.
+pi:proc:p0#operator@value:nil.
+pi:proc:ps#kind@entity:pi_process.
+pi:proc:ps#operator@value:send.
+pi:proc:ps#channel@pi:name:x.
+pi:proc:ps#payload@pi:name:msg1.
+pi:proc:ps#next@pi:proc:p0.
+pi:proc:pr#kind@entity:pi_process.
+pi:proc:pr#operator@value:recv.
+pi:proc:pr#channel@pi:name:x.
+pi:proc:pr#bind@pi:name:v.
+pi:proc:pr#next@pi:proc:p0.
+pi:proc:pp#kind@entity:pi_process.
+pi:proc:pp#operator@value:par.
+pi:proc:pp#left@pi:proc:ps.
+pi:proc:pp#right@pi:proc:pr.
+vc:actor:a#kind@entity:vc_actor.
+vc:actor:b#kind@entity:vc_actor.
+vc:ctr:c0#kind@entity:vc_counter.
+vc:ctr:c1#kind@entity:vc_counter.
+vc:ctr:c2#kind@entity:vc_counter.
+vc:ctr:c0#lt@vc:ctr:c1.
+vc:ctr:c1#lt@vc:ctr:c2.
+vc:event:e1#kind@entity:vc_event.
+vc:event:e2#kind@entity:vc_event.
+vc:event:e1#distinct_from@vc:event:e2.
+vc:event:e2#distinct_from@vc:event:e1.
+vc:event:e1#vc_counter@vc:actor:a [counter=vc:ctr:c1].
+vc:event:e1#vc_counter@vc:actor:b [counter=vc:ctr:c0].
+vc:event:e2#vc_counter@vc:actor:a [counter=vc:ctr:c2].
+vc:event:e2#vc_counter@vc:actor:b [counter=vc:ctr:c1].
+QUERY temporal_sigma_enabled:
+FIND ?p WHERE ?p#can_sigma@value:true.
+QUERY temporal_tick_blockers:
+FIND ?p WHERE ?p#blocks_tick@value:true.
+QUERY pi_tau_enabled:
+FIND ?p WHERE ?p#can_tau@value:true.
+QUERY vc_before_edges:
+FIND ?e WHERE vc:event:e1#before@?e.

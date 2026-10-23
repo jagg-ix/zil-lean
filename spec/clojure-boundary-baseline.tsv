@@ -1,0 +1,176 @@
+Dockerfile.test	15b7823747a80551	&& clojure -Spath >/dev/null \
+Dockerfile.test	209a736332183283	&& rm /tmp/clojure-install.sh
+Dockerfile.test	587819e7c10c461a	&& chmod +x /tmp/clojure-install.sh \
+Dockerfile.test	74215e26dea45990	RUN chmod +x scripts/*.sh scripts/lib/*.sh bin/zil bin/zil-legacy bin/
+Dockerfile.test	acf717586c996577	--output /tmp/clojure-install.sh \
+Dockerfile.test	cd75d70ab077cf3c	&& /tmp/clojure-install.sh \
+Dockerfile.test	d53ad2d5b99093ea	"https://github.com/clojure/brew-install/releases/download/${CLOJURE_T
+Makefile	40ca7b7f7894846d	test-clojure:
+Makefile	43cbe493449a2079	' make bootstrap SETUP_PROFILE=full install missing Elan/Clojure in us
+Makefile	96a307a61c70e33f	.PHONY: help self-check setup bootstrap doctor test test-smoke test-le
+Makefile	fa1f00d0d28217d0	$(MAKE) test PROFILE=clojure
+bin/build-jar	2e6b203b7a85accd	exec clojure -Sdeps '{:mvn/local-repo ".m2/repository"}' -T:build uber
+bin/zil	08bc14d4812021fd	Set ZIL_LEGACY_MODE=allow to temporarily route unknown commands to the
+bin/zil	0a25fe68b8e3a632	exec clojure -M:evaluate-runtime "$@"
+bin/zil	0ee4cbc1415ddc5f	exec clojure -M:macro-native "$mode" "$@"
+bin/zil	15d17a575dd73ea5	exec clojure -M:exchange "$@"
+bin/zil	2f07b02d0f111a4e	Library, macro, embedded, and conformance-suite preserve Clojure works
+bin/zil	31da4e8d6f914f36	control use Clojure for supervision, capability ownership, and SHA-256
+bin/zil	4666b17d15e2006e	bin/zil-legacy <legacy-command> [arguments]
+bin/zil	4e09c892d7dce275	echo "[zil] clojure is required for durable control-plane storage" >&2
+bin/zil	4e5938a57998c58a	exec clojure -M:control "$@"
+bin/zil	5919e9c06fe424af	Evaluate-runtime scores Lean, Clojure, and hybrid candidates from supp
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	596be74aa97c85f5	if ! command -v clojure >/dev/null 2>&1; then
+bin/zil	708e6e1eff94fb56	running the Clojure suite. Package exports committed source with SHA-2
+bin/zil	826ff07d6055deaa	exec clojure -M:control-store "$@"
+bin/zil	8fe6c2004987441c	echo "[zil] clojure is required for the formal control plane" >&2
+bin/zil	92ef4eccdf487ef8	echo "[zil] clojure is required for lib/*.zc discovery and parity repo
+bin/zil	a545ff1f599bf18f	echo "[zil] clojure is required for extension discovery and execution"
+bin/zil	a8481b98b760b156	under a temporary prefix without building Lean or running the Clojure 
+bin/zil	b4ce75586d5f68f1	the official Clojure CLI in user space. Doctor emits ZIL-DOCTOR/1 repo
+bin/zil	b72b380090a6014d	echo "[zil] clojure is required for operational orchestration" >&2
+bin/zil	b825c048bf5e9869	echo "[zil] clojure is required for exchange supervision and transport
+bin/zil	be9f9844cfcf2a86	exec clojure -M:plugins "$@"
+bin/zil	d0834054dc1eb882	exec "$SCRIPT_DIR/zil-legacy" "$@"
+bin/zil	d0834054dc1eb882	exec "$SCRIPT_DIR/zil-legacy" "$@"
+bin/zil	d4c07a12822975ae	exec clojure "-M:$alias_name" "$@"
+bin/zil	de959cfe0c884084	echo "[zil] clojure is required for runtime architecture evaluation" >
+bin/zil	f32d9cc79d16fef9	if [[ "${ZIL_LEGACY_MODE:-deny}" == "allow" ]]; then
+bin/zil	f64072f1753fd215	bin/zil-legacy $*
+bin/zil-conformance	502420c762378fe4	exec clojure -M:conformance "$@"
+bin/zil-embedded-native	a0f9535c0231ccc7	exec clojure -M:embedded-native "$@"
+bin/zil-legacy	06ddf6bac7241f56	[zil-legacy] no legacy runtime found.
+bin/zil-legacy	6f03d1f289e7ccbb	exec clojure -M -m zil.cli "$@"
+bin/zil-legacy	a5691d8047fa3150	if command -v clojure >/dev/null 2>&1; then
+bin/zil-legacy	bdfec9c20e864568	2) clojure CLI in PATH
+bin/zil-library	025c0063354d472a	exec clojure -M:library "$@"
+bin/zil-port-gate	84be650712dfc7ed	exec clojure -M:port-gate "$@"
+bin/zil-proof-tokens	e599e7fca3f10404	exec clojure -M:proof-tokens "$@"
+bin/zil-release-attest	9a6479822804e8da	exec clojure -M:release-attest "$@"
+bin/zil-retirement	07accc31131e8a70	exec clojure -M:retirement "$@"
+bin/zil-theorem-locks	56c5bf7e2b08e38e	exec clojure -M:theorem-locks "$@"
+bin/zil-tuples-lean	1ea4d4271edc9725	exec clojure -M -m zil.bridge.tuple-lean "$@"
+bin/zil-tuples-lean	3a298171e2bab735	exec java -cp "$ZIL_JAR" clojure.main -m zil.bridge.tuple-lean "$@"
+bin/zil-tuples-lean	a5691d8047fa3150	if command -v clojure >/dev/null 2>&1; then
+bin/zil-tuples-lean	bdfec9c20e864568	2) clojure CLI in PATH
+bin/zil-verify-generated	faa1dede31203a29	exec clojure -M:verify-generated "$@"
+bin/zil-workflow	7f7aad383cfdb39c	exec clojure -M:workflow-native "$@"
+scripts/doctor.sh	0358a6dbf1dc14d9	if ! zil_command_exists clojure; then
+scripts/doctor.sh	051bea89941a51cd	record tool clojure yes ok "tools.deps CLI: $detail"
+scripts/doctor.sh	2931f9569e4cffbd	if zil_command_exists clojure && clojure -Sdescribe >/dev/null 2>&1; t
+scripts/doctor.sh	4e97fbf0bcd04491	check_file deps.edn yes
+scripts/doctor.sh	5ab27d4646e7c8aa	record runtime legacy-clojure no unavailable 'official Clojure CLI is 
+scripts/doctor.sh	5ab8b3a1f6184c93	record tool clojure yes invalid 'clojure exists but does not support -
+scripts/doctor.sh	9648f03f3dd5927d	elif detail="$(clojure -Sdescribe 2>&1 | sed -n '1p')"; then
+scripts/doctor.sh	a5e01f85900e1579	full Lean + Java + official Clojure CLI
+scripts/doctor.sh	afed781ea8b53bde	legacy Java/JAR or Clojure legacy runtime
+scripts/doctor.sh	c3123f4c4dab4ff1	record runtime legacy-any yes missing 'build the standalone JAR or ins
+scripts/doctor.sh	d880c97ba5c23da5	record tool clojure yes missing 'official Clojure CLI not found on PAT
+scripts/doctor.sh	f614774a55729be6	record runtime legacy-clojure no ok 'official Clojure CLI is available
+scripts/doctor.sh	fa28ef9fb5d38316	extensions Java + official Clojure CLI
+scripts/examples.sh	06f9a6de48f3ec96	bin/zil-legacy embedded-scan examples/lean4-integration \
+scripts/examples.sh	06f9a6de48f3ec96	bin/zil-legacy embedded-scan examples/lean4-integration \
+scripts/examples.sh	2dbd695d62e38681	bin/zil-legacy theorem-dsl-ci examples/theorem-dsl-incident.zc "$workd
+scripts/examples.sh	37f3be3057fe3bc5	bin/zil-legacy preprocess "$model" "$pre"
+scripts/examples.sh	47e164adffac19e2	'legacy runtime unavailable (needs java + dist/zil-standalone.jar, or 
+scripts/examples.sh	4b9c5cf7a913d12b	bin/zil-legacy preprocess "$model" "$pre" "$libset"
+scripts/examples.sh	567161f250772e9f	bin/zil-legacy preprocess examples/kubernetes-compat.zc \
+scripts/examples.sh	66ad2717fadb4388	bin/zil-legacy export-lean examples/lean4-integration/measurement-prot
+scripts/examples.sh	66ad2717fadb4388	bin/zil-legacy export-lean examples/lean4-integration/measurement-prot
+scripts/examples.sh	700c0dab79a695f3	bin/zil-legacy "$pre"
+scripts/examples.sh	a98751845ee839b8	zil_command_exists clojure
+scripts/examples.sh	d14fd48b1f37fed6	bin/zil-legacy theorem-dsl-ci examples/formalization-arc-demo.zc "$wor
+scripts/install.sh	d4506d8255377f92	--install-tools Allow setup to install Elan/Clojure CLI in user space
+scripts/public-content-audit.sh	58bd05ccee2487f2	'*.md' '*.txt' '*.lean' '*.zc' '*.clj' '*.sh' '*.ps1' '*.edn' '*.json'
+scripts/self-check.sh	2931f9569e4cffbd	if zil_command_exists clojure && clojure -Sdescribe >/dev/null 2>&1; t
+scripts/self-check.sh	6beb5edc75048f54	record edn yes fail 'available Clojure EDN parser rejected a file'
+scripts/self-check.sh	721d2597756e7a7d	bin/zil bin/zil-legacy bin/build-jar
+scripts/self-check.sh	83628de4fa6d6637	clojure -Sdeps '{:deps {}}' -M -e \
+scripts/self-check.sh	843d3eb8d875b47b	running the Clojure test suite. Optional parsers are used when Clojure
+scripts/self-check.sh	9c0574458f1e5715	record edn optional skip 'official Clojure CLI unavailable'
+scripts/self-check.sh	f7d229f95ff16eac	'(require (quote clojure.edn)) (let [root (System/getenv "ZIL_ROOT")] 
+scripts/setup.ps1	0437fa767ecd65b3	'legacy' { 'clojure' }
+scripts/setup.ps1	25a90bbbe1044721	[ValidateSet('smoke', 'lean', 'clojure', 'hybrid', 'durable', 'all')]
+scripts/setup.ps1	5e0cc755d52933ef	if ($LASTEXITCODE -ne 0) { throw 'Clojure dependency resolution failed
+scripts/setup.ps1	5e0cc755d52933ef	if ($LASTEXITCODE -ne 0) { throw 'Clojure dependency resolution failed
+scripts/setup.ps1	5e0cc755d52933ef	if ($LASTEXITCODE -ne 0) { throw 'Clojure dependency resolution failed
+scripts/setup.ps1	94cf668d999aa463	throw 'clojure exists but does not support -Sdescribe. Install the off
+scripts/setup.ps1	98da26996854970a	'extensions' { 'clojure' }
+scripts/setup.ps1	a5951620e040f4c0	if (-not (Test-Command 'clojure')) {
+scripts/setup.ps1	afdbdf5e46250f69	& clojure -T:build uber
+scripts/setup.ps1	c517ffeda8544d23	& clojure -Sdescribe *> $null
+scripts/setup.ps1	d8a49d90635aa831	if (Test-Command 'clojure') { $Rows.Add('clojure-cli`tavailable') }
+scripts/setup.ps1	f03b8638618e70ea	& clojure -Spath *> $null
+scripts/setup.ps1	f03b8638618e70ea	& clojure -Spath *> $null
+scripts/setup.ps1	f03b8638618e70ea	& clojure -Spath *> $null
+scripts/setup.ps1	fc1064690ed8c788	throw 'The official Clojure CLI is required. Install clj-msi from the 
+scripts/setup.sh	1d8719c126493608	clojure -Spath >/dev/null
+scripts/setup.sh	1d8719c126493608	clojure -Spath >/dev/null
+scripts/setup.sh	1d8719c126493608	clojure -Spath >/dev/null
+scripts/setup.sh	245698da64e50545	legacy) test_profile=clojure ;;
+scripts/setup.sh	2931f9569e4cffbd	if zil_command_exists clojure && clojure -Sdescribe >/dev/null 2>&1; t
+scripts/setup.sh	2f6a06fdab183ce3	install_url="${CLOJURE_INSTALL_URL:-https://github.com/clojure/brew-in
+scripts/setup.sh	5084d4dd57afd99c	zil_log 'resolving Clojure dependencies'
+scripts/setup.sh	5084d4dd57afd99c	zil_log 'resolving Clojure dependencies'
+scripts/setup.sh	706488b2dde551eb	[[ "$offline" != true ]] || zil_die 'Clojure CLI is missing and --offl
+scripts/setup.sh	7c9a5dabca4c7e38	if zil_command_exists clojure; then printf 'clojure-cli\tavailable\n';
+scripts/setup.sh	8b3b85dcde97bae1	extensions) test_profile=clojure ;;
+scripts/setup.sh	8b5dcf5cb93456b8	zil_log "installing the official Clojure CLI under $prefix"
+scripts/setup.sh	9a9e46d62209959b	--install-tools Install missing Elan and/or official Clojure CLI
+scripts/setup.sh	c4ff7c3522bb2bd0	zil_command_exists java || zil_die 'Java is required before installing
+scripts/setup.sh	c62f649be03518c9	--prefix DIR User installation prefix for Clojure CLI (default: ~/.loc
+scripts/setup.sh	cb4a0257baa72937	zil_log 'resolving Clojure dependencies and building the standalone JA
+scripts/test-model-substrate.sh	9f272d3ea6a7049f	--no-clojure) no_clojure=1 ;;
+scripts/test-model-substrate.sh	a0e7f2a6a38b2aa1	echo "SKIP frontend parity (--no-clojure)"
+scripts/test-model-substrate.sh	c15d953f41c9e315	*) echo "usage: $0 [--skip-build] [--no-clojure]" >&2; exit 2 ;;
+scripts/test.ps1	0469700d1a6220a6	Invoke-TestStep 'evaluate' 'validate runtime model' @(0) 'clojure' @(
+scripts/test.ps1	25a90bbbe1044721	[ValidateSet('smoke', 'lean', 'clojure', 'hybrid', 'durable', 'all')]
+scripts/test.ps1	2981d464799b2d22	'-M:control-store', 'invoke', $Database, $Stream, '0', 'agent:tester',
+scripts/test.ps1	2f75283d33398cda	'-M:exchange', 'parse', 'examples/authorization/access.zc'
+scripts/test.ps1	2f75283d33398cda	'-M:exchange', 'parse', 'examples/authorization/access.zc'
+scripts/test.ps1	2fbc468c005086bb	Invoke-TestStep 'plugins' 'discover extension manifests' @(0) 'clojure
+scripts/test.ps1	35d3064e37cf59b6	'-M:control-store', 'verify', $Database, $Stream
+scripts/test.ps1	37ae318dab64fc77	Invoke-TestStep 'invoke' 'record Lean authorization decision' @(0) 'cl
+scripts/test.ps1	4382d1e1a10dabbe	Invoke-TestStep 'macro' 'compare macro frontends' @(0) 'clojure' @(
+scripts/test.ps1	4708d8077ada9763	'-M:macro-native', 'parity', 'examples/macro-extension/model.zc',
+scripts/test.ps1	471d62df661a4e91	'clojure' { Invoke-ClojureSuite }
+scripts/test.ps1	4c35f47330afdee5	Invoke-TestStep 'record' 'append workflow observation' @(0) 'clojure' 
+scripts/test.ps1	4cc112cc61532810	$script:Suite = 'clojure'
+scripts/test.ps1	4f33119811b691eb	'-M:plugins', 'run', 'extensions/reference/report-exporter/extension.j
+scripts/test.ps1	5389057f711d2570	'-M:control-store', 'project', $Database, $Stream
+scripts/test.ps1	573295d0c5eae31e	Invoke-TestStep 'project' 'materialize workflow projection' @(0) 'cloj
+scripts/test.ps1	5d01fea02f8e352b	Invoke-TestStep 'conformance' 'run differential conformance' @(0) 'clo
+scripts/test.ps1	6264e01431339c44	Invoke-TestStep 'library' 'check recursive corpus' @(0) 'clojure' @(
+scripts/test.ps1	74038d87f2d919f8	Invoke-TestStep 'scan' 'run repository scanner' @(0) 'clojure' @(
+scripts/test.ps1	776ff0cd156e3dd5	Invoke-TestStep 'exchange' 'invoke supervised parse' @(0) 'clojure' @(
+scripts/test.ps1	8eb1668c57151eb8	'-M:control', 'authorize', 'examples/authorization/access.zc',
+scripts/test.ps1	90e48d9e4e036f55	Invoke-TestStep 'tests' 'run Clojure tests' @(0) 'clojure' @('-M:test'
+scripts/test.ps1	95b086257458bd66	Invoke-TestStep 'exchange' 'parse through supervised Lean worker' @(0)
+scripts/test.ps1	96bfe64a061e9d9d	Invoke-TestStep 'plugins' 'load extension registry' @(0) 'clojure' @('
+scripts/test.ps1	a43e75a982f971fb	'-M:evaluate-runtime', '--output', (Join-Path $Workdir 'smoke-evaluati
+scripts/test.ps1	ac54789640b9f76f	Invoke-TestStep 'export' 'run report exporter' @(0) 'clojure' @(
+scripts/test.ps1	b1136e8cece103e6	Invoke-TestStep 'control' 'authorize through formal control plane' @(0
+scripts/test.ps1	b5e92fa79c19152c	Invoke-TestStep 'verify' 'verify event stream and receipts' @(0) 'cloj
+scripts/test.ps1	b9300afcaa96cbd1	'-M:library', '--check', '--root', 'lib', '--root', 'libsets', '--root
+scripts/test.ps1	b9780124f4f61766	Invoke-TestStep 'deps' 'resolve Clojure dependencies' @(0) 'clojure' @
+scripts/test.ps1	b9822e985791fb02	'-M:conformance', '--root', 'lib', '--root', 'libsets', '--root', 'exa
+scripts/test.ps1	c66fb895effb8fe7	'-M:plugins', 'run', 'extensions/reference/repository-scanner/extensio
+scripts/test.ps1	cec9a0b62b48db71	'-M:control-store', 'record', $Database, $Stream, '1', 'agent:tester',
+scripts/test.ps1	df75c145a5c63e52	Invoke-TestStep 'evaluation' 'validate architecture evaluation model' 
+scripts/test.ps1	e77c3c070bb8ce49	'-M:evaluate-runtime', '--output', (Join-Path $Workdir 'evaluation.edn
+scripts/test.sh	01f9baa200ac1421	profiles=(smoke lean clojure hybrid durable all)
+scripts/test.sh	0f13bb2c08a94228	run_step clojure-deps 'resolve Clojure dependency graph' 0 clojure -Sp
+scripts/test.sh	3f87e41d3d48437b	clojure) run_clojure_suite ;;
+scripts/test.sh	4c90c7b49c92a918	run_step macro-parity 'compare Clojure and Lean macro expansion' 0 \
+scripts/test.sh	c86d77ae820c55d5	--profile smoke|lean|clojure|hybrid|durable|all
+scripts/test.sh	d3bc0a67c80a51eb	suite=clojure
+scripts/test.sh	f55a852d99d69e6c	smoke|lean|clojure|hybrid|durable|all) ;;
+scripts/test.sh	ffa8f7f89cb908da	run_step clojure-tests 'run Clojure test suite' 0 clojure -M:test
+tools/aws_namespace_smoke.sh	5676f0350e32b1af	rg -Fq ':exact true' "${TMP_DIR}/macro-parity.edn" || fail "native mac
+tools/macro_extension_matrix.sh	9408e9a4eb600260	if ! clojure -M:macro-matrix --matrix "${LEGACY_MATRIX}" --out "${TMP_

@@ -1,0 +1,135 @@
+MODULE pi.vc.macro.layer.demo.
+RULE pi_parallel_sync:
+IF ?p#operator@value:par AND ?p#left@?s AND ?p#right@?r AND ?s#operator@value:send AND ?r#operator@value:recv AND ?s#channel@?c AND ?r#channel@?c AND ?s#payload@?v AND ?s#next@?sn AND ?r#next@?rn
+THEN ?p#can_tau@value:true AND ?p#sync_channel@?c AND ?p#sync_payload@?v AND ?p#left_cont@?sn AND ?p#right_cont@?rn.
+RULE pi_choice_tau_left:
+IF ?p#operator@value:choice AND ?p#left@?l AND ?l#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE pi_choice_tau_right:
+IF ?p#operator@value:choice AND ?p#right@?r AND ?r#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE pi_restrict_inherit_tau:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE pi_replicate_unfold:
+IF ?p#operator@value:replicate AND ?p#body@?b
+THEN ?p#can_spawn@value:true AND ?p#spawn_body@?b.
+RULE pi_rec_inherit_tau:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE pi_var_resolve_tau:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#can_tau@value:true
+THEN ?v#can_tau@value:true.
+RULE vc_lt_transitive:
+IF ?a#lt@?b AND ?b#lt@?c
+THEN ?a#lt@?c.
+RULE vc_strict_witness:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c1#lt@?c2
+THEN ?e1#vc_strict_witness@?e2.
+RULE vc_violation_over:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c2#lt@?c1
+THEN ?e1#vc_violation_over@?e2.
+RULE vc_before:
+IF ?e1#kind@entity:vc_event AND ?e2#kind@entity:vc_event AND ?e1#distinct_from@?e2 AND ?e1#vc_strict_witness@?e2 AND NOT ?e1#vc_violation_over@?e2
+THEN ?e1#before@?e2.
+RULE vc_concurrent:
+IF ?e1#kind@entity:vc_event AND ?e2#kind@entity:vc_event AND ?e1#distinct_from@?e2 AND NOT ?e1#before@?e2 AND NOT ?e2#before@?e1
+THEN ?e1#concurrent_with@?e2.
+pi:name:x#kind@entity:pi_channel.
+pi:name:z#kind@entity:pi_channel.
+pi:name:v1#kind@entity:pi_value.
+pi:name:v2#kind@entity:pi_value.
+pi:name:y#kind@entity:pi_value.
+pi:name:w#kind@entity:pi_value.
+pi:proc:p0#kind@entity:pi_process.
+pi:proc:p0#operator@value:nil.
+pi:proc:p1#kind@entity:pi_process.
+pi:proc:p1#operator@value:nil.
+pi:proc:s_x#kind@entity:pi_process.
+pi:proc:s_x#operator@value:send.
+pi:proc:s_x#channel@pi:name:x.
+pi:proc:s_x#payload@pi:name:v1.
+pi:proc:s_x#next@pi:proc:p0.
+pi:proc:r_x#kind@entity:pi_process.
+pi:proc:r_x#operator@value:recv.
+pi:proc:r_x#channel@pi:name:x.
+pi:proc:r_x#bind@pi:name:y.
+pi:proc:r_x#next@pi:proc:r_z_send.
+pi:proc:r_z_send#kind@entity:pi_process.
+pi:proc:r_z_send#operator@value:send.
+pi:proc:r_z_send#channel@pi:name:z.
+pi:proc:r_z_send#payload@pi:name:v2.
+pi:proc:r_z_send#next@pi:proc:p1.
+pi:proc:r_z#kind@entity:pi_process.
+pi:proc:r_z#operator@value:recv.
+pi:proc:r_z#channel@pi:name:z.
+pi:proc:r_z#bind@pi:name:w.
+pi:proc:r_z#next@pi:proc:p0.
+pi:proc:par_x#kind@entity:pi_process.
+pi:proc:par_x#operator@value:par.
+pi:proc:par_x#left@pi:proc:s_x.
+pi:proc:par_x#right@pi:proc:r_x.
+pi:proc:par_z#kind@entity:pi_process.
+pi:proc:par_z#operator@value:par.
+pi:proc:par_z#left@pi:proc:r_z_send.
+pi:proc:par_z#right@pi:proc:r_z.
+pi:proc:choice_any#kind@entity:pi_process.
+pi:proc:choice_any#operator@value:choice.
+pi:proc:choice_any#left@pi:proc:par_x.
+pi:proc:choice_any#right@pi:proc:p0.
+pi:proc:rep_service#kind@entity:pi_process.
+pi:proc:rep_service#operator@value:replicate.
+pi:proc:rep_service#body@pi:proc:r_x.
+pi:proc:scope_x#kind@entity:pi_process.
+pi:proc:scope_x#operator@value:restrict.
+pi:proc:scope_x#restricted_name@pi:name:x.
+pi:proc:scope_x#inner@pi:proc:par_x.
+pi:proc:loop_proc#kind@entity:pi_process.
+pi:proc:loop_proc#operator@value:rec.
+pi:proc:loop_proc#label@value:loop_label.
+pi:proc:loop_proc#body@pi:proc:par_x.
+pi:proc:loop_ref#kind@entity:pi_process.
+pi:proc:loop_ref#operator@value:var.
+pi:proc:loop_ref#var_label@value:loop_label.
+vc:actor:sender#kind@entity:vc_actor.
+vc:actor:middle#kind@entity:vc_actor.
+vc:actor:receiver#kind@entity:vc_actor.
+vc:ctr:c0#kind@entity:vc_counter.
+vc:ctr:c1#kind@entity:vc_counter.
+vc:ctr:c2#kind@entity:vc_counter.
+vc:ctr:c3#kind@entity:vc_counter.
+vc:ctr:c0#lt@vc:ctr:c1.
+vc:ctr:c1#lt@vc:ctr:c2.
+vc:ctr:c2#lt@vc:ctr:c3.
+vc:event:e_sync_x#kind@entity:vc_event.
+vc:event:e_sync_z#kind@entity:vc_event.
+vc:event:e_independent#kind@entity:vc_event.
+vc:event:e_sync_x#distinct_from@vc:event:e_sync_z.
+vc:event:e_sync_z#distinct_from@vc:event:e_sync_x.
+vc:event:e_sync_x#distinct_from@vc:event:e_independent.
+vc:event:e_independent#distinct_from@vc:event:e_sync_x.
+vc:event:e_sync_z#distinct_from@vc:event:e_independent.
+vc:event:e_independent#distinct_from@vc:event:e_sync_z.
+vc:event:e_sync_x#vc_counter@vc:actor:sender [counter=vc:ctr:c1].
+vc:event:e_sync_x#vc_counter@vc:actor:middle [counter=vc:ctr:c1].
+vc:event:e_sync_x#vc_counter@vc:actor:receiver [counter=vc:ctr:c0].
+vc:event:e_sync_z#vc_counter@vc:actor:sender [counter=vc:ctr:c1].
+vc:event:e_sync_z#vc_counter@vc:actor:middle [counter=vc:ctr:c2].
+vc:event:e_sync_z#vc_counter@vc:actor:receiver [counter=vc:ctr:c1].
+vc:event:e_independent#vc_counter@vc:actor:sender [counter=vc:ctr:c2].
+vc:event:e_independent#vc_counter@vc:actor:middle [counter=vc:ctr:c0].
+vc:event:e_independent#vc_counter@vc:actor:receiver [counter=vc:ctr:c0].
+vc:event:e_sync_x#pi_transition@pi:proc:par_x.
+vc:event:e_sync_z#pi_transition@pi:proc:par_z.
+QUERY pi_tau_enabled:
+FIND ?p WHERE ?p#can_tau@value:true.
+QUERY pi_sync_payloads:
+FIND ?v WHERE ?p#sync_payload@?v.
+QUERY pi_spawnable:
+FIND ?p WHERE ?p#can_spawn@value:true.
+QUERY vc_before_edges:
+FIND ?t WHERE vc:event:e_sync_x#before@?t.
+QUERY vc_concurrency_from_sync_x:
+FIND ?e WHERE vc:event:e_sync_x#concurrent_with@?e.
+QUERY vc_event_pi_links:
+FIND ?p WHERE ?e#pi_transition@?p.

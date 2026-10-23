@@ -1,0 +1,97 @@
+MODULE tlm.transaction.demo.
+tlm:timing:pv_fast#kind@entity:tlm_timing_profile.
+tlm:timing:pv_fast#level@value:pv.
+tlm:timing:pv_fast#quantum_ns@value:1000000.
+tlm:timing:lt_bus#kind@entity:tlm_timing_profile.
+tlm:timing:lt_bus#level@value:loosely_timed.
+tlm:timing:lt_bus#quantum_ns@value:10000.
+tlm:timing:at_bus#kind@entity:tlm_timing_profile.
+tlm:timing:at_bus#level@value:approximately_timed.
+tlm:timing:at_bus#quantum_ns@value:1000.
+tlm:timing:ut_func#kind@entity:tlm_timing_profile.
+tlm:timing:ut_func#level@value:untimed.
+tlm:timing:ut_func#quantum_ns@value:0.
+tlm:component:cpu0#kind@entity:tlm_component.
+tlm:component:cpu0#role@value:initiator.
+tlm:component:mem0#kind@entity:tlm_component.
+tlm:component:mem0#role@value:target.
+tlm:component:dma0#kind@entity:tlm_component.
+tlm:component:dma0#role@value:initiator.
+tlm:channel:read_bus#kind@entity:tlm_channel.
+tlm:channel:read_bus#from@tlm:component:cpu0.
+tlm:channel:read_bus#to@tlm:component:mem0.
+tlm:channel:read_bus#timing_profile@tlm:timing:lt_bus.
+tlm:bind:cpu0_read_bus_initiator#kind@entity:tlm_binding.
+tlm:bind:cpu0_read_bus_initiator#component@tlm:component:cpu0.
+tlm:bind:cpu0_read_bus_initiator#channel@tlm:channel:read_bus.
+tlm:bind:cpu0_read_bus_initiator#direction@value:initiator.
+tlm:bind:mem0_read_bus_target#kind@entity:tlm_binding.
+tlm:bind:mem0_read_bus_target#component@tlm:component:mem0.
+tlm:bind:mem0_read_bus_target#channel@tlm:channel:read_bus.
+tlm:bind:mem0_read_bus_target#direction@value:target.
+tlm:channel:write_bus#kind@entity:tlm_channel.
+tlm:channel:write_bus#from@tlm:component:dma0.
+tlm:channel:write_bus#to@tlm:component:mem0.
+tlm:channel:write_bus#timing_profile@tlm:timing:at_bus.
+tlm:bind:dma0_write_bus_initiator#kind@entity:tlm_binding.
+tlm:bind:dma0_write_bus_initiator#component@tlm:component:dma0.
+tlm:bind:dma0_write_bus_initiator#channel@tlm:channel:write_bus.
+tlm:bind:dma0_write_bus_initiator#direction@value:initiator.
+tlm:bind:mem0_write_bus_target#kind@entity:tlm_binding.
+tlm:bind:mem0_write_bus_target#component@tlm:component:mem0.
+tlm:bind:mem0_write_bus_target#channel@tlm:channel:write_bus.
+tlm:bind:mem0_write_bus_target#direction@value:target.
+tlm:tx:tx_read_1#kind@entity:tlm_transaction.
+tlm:tx:tx_read_1#command@value:read.
+tlm:tx:tx_read_1#address@value:addr_4096.
+tlm:tx:tx_read_1#payload@value:word32.
+tlm:tx:tx_read_1#size@value:4.
+tlm:tx:tx_read_1#priority@value:high.
+tlm:tx:tx_read_1#timing_level@value:loosely_timed.
+tlm:tx:tx_write_7#kind@entity:tlm_transaction.
+tlm:tx:tx_write_7#command@value:write.
+tlm:tx:tx_write_7#address@value:addr_8192.
+tlm:tx:tx_write_7#payload@value:burst8.
+tlm:tx:tx_write_7#size@value:32.
+tlm:tx:tx_write_7#priority@value:medium.
+tlm:tx:tx_write_7#timing_level@value:approximately_timed.
+tlm:step:cpu0_decode_read_1#kind@entity:tlm_step.
+tlm:step:cpu0_decode_read_1#phase@value:compute.
+tlm:step:cpu0_decode_read_1#at@tlm:component:cpu0.
+tlm:step:cpu0_decode_read_1#operation@value:decode_read_request.
+tlm:step:mem0_prepare_rsp_1#kind@entity:tlm_step.
+tlm:step:mem0_prepare_rsp_1#phase@value:compute.
+tlm:step:mem0_prepare_rsp_1#at@tlm:component:mem0.
+tlm:step:mem0_prepare_rsp_1#operation@value:build_read_response.
+tlm:tx:tx_read_1#phase@value:communication.
+tlm:tx:tx_read_1#issued_by@tlm:component:cpu0.
+tlm:tx:tx_read_1#via@tlm:channel:read_bus.
+tlm:tx:tx_read_1#status@value:issued.
+tlm:tx:tx_read_1#accepted_by@tlm:component:mem0.
+tlm:tx:tx_read_1#status@value:accepted.
+tlm:tx:tx_write_7#phase@value:communication.
+tlm:tx:tx_write_7#issued_by@tlm:component:dma0.
+tlm:tx:tx_write_7#via@tlm:channel:write_bus.
+tlm:tx:tx_write_7#status@value:issued.
+RULE tx_source_consistent:
+IF ?tx#issued_by@?src AND ?tx#via@?channel AND ?channel#from@?src
+THEN ?tx#source_consistent@value:true.
+RULE tx_has_channel_timing:
+IF ?tx#via@?channel AND ?channel#timing_profile@?tp
+THEN ?tx#channel_timing_profile@?tp.
+RULE tx_is_coarse_timing:
+IF ?tx#timing_level@value:loosely_timed
+THEN ?tx#timing_class@value:coarse.
+RULE tx_is_coarse_timing_approx:
+IF ?tx#timing_level@value:approximately_timed
+THEN ?tx#timing_class@value:coarse.
+QUERY transaction_status:
+FIND ?tx WHERE ?tx#status@?status.
+QUERY source_consistency_ok:
+FIND ?tx WHERE ?tx#source_consistent@value:true.
+QUERY channel_timing_profiles:
+FIND ?tp WHERE ?tx#channel_timing_profile@?tp.
+QUERY compute_steps:
+FIND ?s WHERE ?s#phase@value:compute.
+QUERY coarse_timed_transactions:
+FIND ?tx WHERE ?tx#timing_class@value:coarse.

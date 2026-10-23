@@ -1,0 +1,169 @@
+RULE rbd_dac_subject_grant_valid:
+IF ?g#kind@entity:dac_grant_subject AND ?g#object@?obj AND ?g#grantor@?grantor AND ?obj#owner@?grantor
+THEN ?g#valid@value:true.
+RULE rbd_dac_group_grant_valid:
+IF ?g#kind@entity:dac_grant_group AND ?g#object@?obj AND ?g#grantor@?grantor AND ?obj#owner@?grantor
+THEN ?g#valid@value:true.
+RULE rbd_dac_subject_grantor_not_owner:
+IF ?g#kind@entity:dac_grant_subject AND ?g#object@?obj AND ?g#grantor@?grantor AND NOT ?obj#owner@?grantor
+THEN ?g#policy_violation@value:grantor_not_owner.
+RULE rbd_dac_group_grantor_not_owner:
+IF ?g#kind@entity:dac_grant_group AND ?g#object@?obj AND ?g#grantor@?grantor AND NOT ?obj#owner@?grantor
+THEN ?g#policy_violation@value:grantor_not_owner.
+RULE rbd_allow_via_dac_subject:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?g#kind@entity:dac_grant_subject AND ?g#valid@value:true AND ?g#subject@?subject AND ?g#object@?obj AND ?g#action@?action
+THEN ?req#allowed_by@mechanism:dac_subject.
+RULE rbd_allow_via_dac_group:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?g#kind@entity:dac_grant_group AND ?g#valid@value:true AND ?g#group@?group AND ?group#member@?subject AND ?g#object@?obj AND ?g#action@?action
+THEN ?req#allowed_by@mechanism:dac_group.
+RULE rbd_allow_via_rbac_assignment:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?rb#kind@entity:role_binding AND ?rb#subject@?subject AND ?rb#role@?role AND ?rp#kind@entity:role_permission AND ?rp#role@?role AND ?rp#object@?obj AND ?rp#action@?action
+THEN ?req#allowed_by@mechanism:rbac_assignment.
+RULE rbd_allow_via_rbac_session:
+IF ?req#kind@entity:access_request AND ?req#subject@?subject AND ?req#object@?obj AND ?req#action@?action AND ?req#session@?session AND ?session#subject@?subject AND ?session#active_role@?role AND ?rp#kind@entity:role_permission AND ?rp#role@?role AND ?rp#object@?obj AND ?rp#action@?action
+THEN ?req#allowed_by@mechanism:rbac_session.
+RULE rbd_request_allow_witness:
+IF ?req#allowed_by@?mechanism
+THEN ?req#allow_witness@value:true.
+RULE rbd_request_allow_decision:
+IF ?req#allow_witness@value:true
+THEN ?req#decision@value:allow.
+RULE rbd_request_default_deny:
+IF ?req#kind@entity:access_request AND NOT ?req#allow_witness@value:true
+THEN ?req#decision@value:deny.
+RULE rbd_missing_audit_record:
+IF ?req#decision@?decision AND NOT ?req#audit_logged@value:true
+THEN ?req#policy_violation@value:missing_audit_record.
+RULE rbd_reuse_without_clear_violation:
+IF ?alloc#kind@entity:reuse_allocation AND ?alloc#object@?obj AND NOT ?obj#reuse_cleared@value:true
+THEN ?alloc#policy_violation@value:reuse_without_clear.
+RULE rbd_reuse_with_clear_ok:
+IF ?alloc#kind@entity:reuse_allocation AND ?alloc#object@?obj AND ?obj#reuse_cleared@value:true
+THEN ?alloc#policy_ok@value:reuse_cleared_before_allocation.
+RULE rbd_policy_target_dac_grant_subject:
+IF ?x#kind@entity:dac_grant_subject
+THEN ?x#policy_target@value:dac_grant.
+RULE rbd_policy_target_dac_grant_group:
+IF ?x#kind@entity:dac_grant_group
+THEN ?x#policy_target@value:dac_grant.
+RULE rbd_policy_target_access_request:
+IF ?x#kind@entity:access_request
+THEN ?x#policy_target@value:access_request.
+RULE rbd_policy_target_reuse_allocation:
+IF ?x#kind@entity:reuse_allocation
+THEN ?x#policy_target@value:reuse_allocation.
+QUERY rbd_decisions:
+FIND ?req ?decision WHERE ?req#decision@?decision.
+QUERY rbd_allowed_paths:
+FIND ?req ?mechanism WHERE ?req#allowed_by@?mechanism.
+QUERY rbd_denied_requests:
+FIND ?req WHERE ?req#decision@value:deny.
+QUERY rbd_grant_violations:
+FIND ?grant ?v WHERE ?grant#policy_target@value:dac_grant AND ?grant#policy_violation@?v.
+QUERY rbd_request_policy_violations:
+FIND ?req ?v WHERE ?req#policy_target@value:access_request AND ?req#policy_violation@?v.
+QUERY rbd_reuse_policy_violations:
+FIND ?alloc ?v WHERE ?alloc#policy_target@value:reuse_allocation AND ?alloc#policy_violation@?v.
+MODULE rbac.dac.demo.
+subject:alice#kind@entity:subject.
+subject:bob#kind@entity:subject.
+subject:carol#kind@entity:subject.
+subject:dave#kind@entity:subject.
+subject:erin#kind@entity:subject.
+subject:mallory#kind@entity:subject.
+group:ops_team#kind@entity:group.
+group:ops_team#member@subject:carol.
+subject:carol#member_of@group:ops_team.
+object:payroll_file#kind@entity:protected_object.
+object:payroll_file#owner@subject:alice.
+object:shared_runbook#kind@entity:protected_object.
+object:shared_runbook#owner@subject:alice.
+object:system_config#kind@entity:protected_object.
+object:system_config#owner@subject:alice.
+object:ops_console#kind@entity:protected_object.
+object:ops_console#owner@subject:alice.
+object:temp_buffer#kind@entity:protected_object.
+object:temp_buffer#owner@subject:alice.
+object:report_cache#kind@entity:protected_object.
+object:report_cache#owner@subject:alice.
+dac_grant:g_payroll_read_bob#kind@entity:dac_grant_subject.
+dac_grant:g_payroll_read_bob#object@object:payroll_file.
+dac_grant:g_payroll_read_bob#action@value:read.
+dac_grant:g_payroll_read_bob#subject@subject:bob.
+dac_grant:g_payroll_read_bob#grantor@subject:alice.
+dac_grant:g_runbook_read_ops#kind@entity:dac_grant_group.
+dac_grant:g_runbook_read_ops#object@object:shared_runbook.
+dac_grant:g_runbook_read_ops#action@value:read.
+dac_grant:g_runbook_read_ops#group@group:ops_team.
+dac_grant:g_runbook_read_ops#grantor@subject:alice.
+dac_grant:g_bad_payroll_write#kind@entity:dac_grant_subject.
+dac_grant:g_bad_payroll_write#object@object:payroll_file.
+dac_grant:g_bad_payroll_write#action@value:write.
+dac_grant:g_bad_payroll_write#subject@subject:mallory.
+dac_grant:g_bad_payroll_write#grantor@subject:mallory.
+role:admin_role#kind@entity:role.
+role:ops_role#kind@entity:role.
+role_perm:rp_admin_write_syscfg#kind@entity:role_permission.
+role_perm:rp_admin_write_syscfg#role@role:admin_role.
+role_perm:rp_admin_write_syscfg#object@object:system_config.
+role_perm:rp_admin_write_syscfg#action@value:write.
+role_perm:rp_ops_restart_console#kind@entity:role_permission.
+role_perm:rp_ops_restart_console#role@role:ops_role.
+role_perm:rp_ops_restart_console#object@object:ops_console.
+role_perm:rp_ops_restart_console#action@value:restart.
+role_binding:rb_dave_admin#kind@entity:role_binding.
+role_binding:rb_dave_admin#subject@subject:dave.
+role_binding:rb_dave_admin#role@role:admin_role.
+session:sess_erin_ops#kind@entity:session.
+session:sess_erin_ops#subject@subject:erin.
+session:sess_erin_ops#active_role@role:ops_role.
+request:req_bob_read_payroll#kind@entity:access_request.
+request:req_bob_read_payroll#subject@subject:bob.
+request:req_bob_read_payroll#object@object:payroll_file.
+request:req_bob_read_payroll#action@value:read.
+request:req_mallory_write_payroll#kind@entity:access_request.
+request:req_mallory_write_payroll#subject@subject:mallory.
+request:req_mallory_write_payroll#object@object:payroll_file.
+request:req_mallory_write_payroll#action@value:write.
+request:req_carol_read_runbook#kind@entity:access_request.
+request:req_carol_read_runbook#subject@subject:carol.
+request:req_carol_read_runbook#object@object:shared_runbook.
+request:req_carol_read_runbook#action@value:read.
+request:req_dave_write_syscfg#kind@entity:access_request.
+request:req_dave_write_syscfg#subject@subject:dave.
+request:req_dave_write_syscfg#object@object:system_config.
+request:req_dave_write_syscfg#action@value:write.
+request:req_erin_restart_console#kind@entity:access_request.
+request:req_erin_restart_console#subject@subject:erin.
+request:req_erin_restart_console#object@object:ops_console.
+request:req_erin_restart_console#action@value:restart.
+request:req_erin_restart_console#session@session:sess_erin_ops.
+audit:a_bob_read_payroll#kind@entity:audit_record.
+audit:a_bob_read_payroll#request@request:req_bob_read_payroll.
+audit:a_bob_read_payroll#channel@value:append_only_log.
+request:req_bob_read_payroll#audit_logged@value:true.
+audit:a_carol_read_runbook#kind@entity:audit_record.
+audit:a_carol_read_runbook#request@request:req_carol_read_runbook.
+audit:a_carol_read_runbook#channel@value:append_only_log.
+request:req_carol_read_runbook#audit_logged@value:true.
+audit:a_dave_write_syscfg#kind@entity:audit_record.
+audit:a_dave_write_syscfg#request@request:req_dave_write_syscfg.
+audit:a_dave_write_syscfg#channel@value:append_only_log.
+request:req_dave_write_syscfg#audit_logged@value:true.
+reuse_alloc:alloc_temp_1#kind@entity:reuse_allocation.
+reuse_alloc:alloc_temp_1#object@object:temp_buffer.
+reuse_alloc:alloc_temp_1#subject@subject:bob.
+object:report_cache#reuse_cleared@value:true.
+reuse_alloc:alloc_cache_1#kind@entity:reuse_allocation.
+reuse_alloc:alloc_cache_1#object@object:report_cache.
+reuse_alloc:alloc_cache_1#subject@subject:carol.
+QUERY demo_decisions:
+FIND ?req ?decision WHERE ?req#decision@?decision.
+QUERY demo_denied:
+FIND ?req WHERE ?req#decision@value:deny.
+QUERY demo_request_policy_violations:
+FIND ?req ?v WHERE ?req#policy_target@value:access_request AND ?req#policy_violation@?v.
+QUERY demo_grant_policy_violations:
+FIND ?grant ?v WHERE ?grant#policy_target@value:dac_grant AND ?grant#policy_violation@?v.
+QUERY demo_reuse_violations:
+FIND ?alloc ?v WHERE ?alloc#policy_target@value:reuse_allocation AND ?alloc#policy_violation@?v.

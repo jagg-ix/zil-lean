@@ -1,0 +1,204 @@
+MODULE process.algebra.lib.
+
+// A small process-algebra vocabulary for protocol models, as macros only. They emit the tuples and rules a hand-written
+// model would, so the generated Lean and the query runtime are the ordinary ones.
+//
+//   temporal prefixes   a visible action is patient (it may wait for ever); an internal tau action is urgent and blocks
+//                       time. Each process belongs to a side: `internal` (the system, which must keep time moving) or
+//                       `external` (a user, a network, anything allowed to be slow).
+//   pi-calculus         processes that send and receive on channels and run in parallel; a hand-off with no partner on
+//                       its channel is stuck.
+//   vector clocks       happens-before between actors, and a required order between two events.
+//   a discrete clock    ticks, ages and windows. The unit is a tick: one step of the clock. What a tick is in seconds
+//                       is the model's policy, never this library's.
+// The fuller layers in examples/tpl-macro-layer.zc and examples/pi-calculus-vc-macro-layer.zc define choice, recursion,
+// restriction and replication inline; this library is the compact core plus the checks below.
+
+// ---- temporal process prefixes -------------------------------------------------------------------------------
+
+MACRO TPL_ACTION(name, class):
+EMIT tpl:action:{{name}}#kind@entity:tpl_action.
+EMIT tpl:action:{{name}}#class@value:{{class}}.
+ENDMACRO.
+
+MACRO TPL_VISIBLE(name):
+EMIT USE TPL_ACTION({{name}}, visible).
+ENDMACRO.
+
+MACRO TPL_TAU(name):
+EMIT USE TPL_ACTION({{name}}, tau).
+ENDMACRO.
+
+MACRO TPL_PREFIX(proc, action, next_proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:prefix.
+EMIT tpl:proc:{{proc}}#action@tpl:action:{{action}}.
+EMIT tpl:proc:{{proc}}#next@tpl:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO TPL_NIL(proc):
+EMIT tpl:proc:{{proc}}#kind@entity:tpl_process.
+EMIT tpl:proc:{{proc}}#operator@value:nil.
+ENDMACRO.
+
+// Which side takes the step: `internal` or `external`.
+MACRO TPL_SIDE(proc, side):
+EMIT tpl:proc:{{proc}}#side@value:{{side}}.
+ENDMACRO.
+
+RULE tpl_patient_visible:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:visible
+THEN ?p#can_sigma@value:true.
+
+RULE tpl_tau_blocks_tick:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:tau
+THEN ?p#blocks_tick@value:true.
+
+// A step of the internal side that may wait lets the external side wait on it without a bound.
+RULE tpl_internal_may_stall:
+IF ?p#side@value:internal AND ?p#can_sigma@value:true
+THEN ?p#stalls_external@value:true.
+
+// A step of the external side that blocks time would hold the whole system up.
+RULE tpl_external_blocks_time:
+IF ?p#side@value:external AND ?p#blocks_tick@value:true
+THEN ?p#stalls_time@value:true.
+
+// ---- pi-calculus processes ----------------------------------------------------------------------------------
+
+MACRO PI_CHANNEL(name):
+EMIT pi:name:{{name}}#kind@entity:pi_channel.
+ENDMACRO.
+
+MACRO PI_VALUE(name):
+EMIT pi:name:{{name}}#kind@entity:pi_value.
+ENDMACRO.
+
+MACRO PI_NIL(proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:nil.
+ENDMACRO.
+
+MACRO PI_SEND(proc, channel, payload, next_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:send.
+EMIT pi:proc:{{proc}}#channel@pi:name:{{channel}}.
+EMIT pi:proc:{{proc}}#payload@pi:name:{{payload}}.
+EMIT pi:proc:{{proc}}#next@pi:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO PI_RECV(proc, channel, bind_name, next_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:recv.
+EMIT pi:proc:{{proc}}#channel@pi:name:{{channel}}.
+EMIT pi:proc:{{proc}}#bind@pi:name:{{bind_name}}.
+EMIT pi:proc:{{proc}}#next@pi:proc:{{next_proc}}.
+ENDMACRO.
+
+MACRO PI_PAR(proc, left_proc, right_proc):
+EMIT pi:proc:{{proc}}#kind@entity:pi_process.
+EMIT pi:proc:{{proc}}#operator@value:par.
+EMIT pi:proc:{{proc}}#left@pi:proc:{{left_proc}}.
+EMIT pi:proc:{{proc}}#right@pi:proc:{{right_proc}}.
+ENDMACRO.
+
+// A parallel composition whose sender and receiver agree on a channel can take an internal step.
+RULE pi_sync_tau:
+IF ?p#operator@value:par AND ?p#left@?s AND ?p#right@?r AND ?s#operator@value:send AND ?r#operator@value:recv AND ?s#channel@?c AND ?r#channel@?c
+THEN ?p#can_tau@value:true.
+
+// A hand-off with no partner on its channel is a step nobody can take.
+RULE pi_step_stuck:
+IF ?p#operator@value:par AND NOT ?p#can_tau@value:true
+THEN ?p#stuck@value:true.
+
+// ---- vector clocks: happens-before between actors --------------------------------------------------------------
+
+MACRO VC_EVENT(event):
+EMIT vc:event:{{event}}#kind@entity:vc_event.
+ENDMACRO.
+
+MACRO VC_ACTOR(actor):
+EMIT vc:actor:{{actor}}#kind@entity:vc_actor.
+ENDMACRO.
+
+MACRO VC_COUNTER(counter):
+EMIT vc:ctr:{{counter}}#kind@entity:vc_counter.
+ENDMACRO.
+
+MACRO VC_LT(low, high):
+EMIT vc:ctr:{{low}}#lt@vc:ctr:{{high}}.
+ENDMACRO.
+
+MACRO VC_COMPONENT(event, actor, counter):
+EMIT vc:event:{{event}}#vc_counter@vc:actor:{{actor}} [counter=vc:ctr:{{counter}}].
+ENDMACRO.
+
+MACRO VC_DISTINCT(e1, e2):
+EMIT vc:event:{{e1}}#distinct_from@vc:event:{{e2}}.
+EMIT vc:event:{{e2}}#distinct_from@vc:event:{{e1}}.
+ENDMACRO.
+
+RULE vc_lt_transitive:
+IF ?a#lt@?b AND ?b#lt@?c
+THEN ?a#lt@?c.
+
+RULE vc_witness:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c1#lt@?c2
+THEN ?e1#witness@?e2.
+
+RULE vc_violation:
+IF ?e1#vc_counter@?actor [counter=?c1] AND ?e2#vc_counter@?actor [counter=?c2] AND ?c2#lt@?c1
+THEN ?e1#violation@?e2.
+
+RULE vc_before:
+IF ?e1#kind@entity:vc_event AND ?e2#kind@entity:vc_event AND ?e1#distinct_from@?e2 AND ?e1#witness@?e2 AND NOT ?e1#violation@?e2
+THEN ?e1#before@?e2.
+
+// A required order between two events, and the checks on it: kept when the first happens before the second, broken
+// when it does not.
+MACRO VC_REQUIRE_BEFORE(first, second):
+EMIT vc:event:{{first}}#must_precede@vc:event:{{second}}.
+EMIT USE VC_DISTINCT({{first}}, {{second}}).
+ENDMACRO.
+
+RULE vc_order_kept:
+IF ?a#must_precede@?b AND ?a#before@?b
+THEN ?a#order_kept@?b.
+
+RULE vc_order_broken:
+IF ?a#must_precede@?b AND NOT ?a#before@?b
+THEN ?a#order_broken@?b.
+
+// ---- a discrete clock: ticks, ages and windows -----------------------------------------------------------------
+
+MACRO TIME_TICK(tick):
+EMIT time:tick:{{tick}}#kind@entity:time_tick.
+EMIT time:tick:{{tick}}#le@time:tick:{{tick}}.
+ENDMACRO.
+
+MACRO TIME_LT(low, high):
+EMIT time:tick:{{low}}#earlier@time:tick:{{high}}.
+ENDMACRO.
+
+RULE time_before_transitive:
+IF ?a#earlier@?b AND ?b#earlier@?c
+THEN ?a#earlier@?c.
+
+RULE time_le_from_before:
+IF ?a#earlier@?b
+THEN ?a#le@?b.
+
+// An operation with the age of the credential it runs on, and the longest age it accepts.
+MACRO TIME_AGE(op, age, limit):
+EMIT time:op:{{op}}#age@time:tick:{{age}}.
+EMIT time:op:{{op}}#limit@time:tick:{{limit}}.
+ENDMACRO.
+
+RULE time_within_window:
+IF ?o#age@?a AND ?o#limit@?l AND ?a#le@?l
+THEN ?o#within_window@value:true.
+
+RULE time_past_window:
+IF ?o#age@?a AND ?o#limit@?l AND ?l#earlier@?a
+THEN ?o#past_window@value:true.

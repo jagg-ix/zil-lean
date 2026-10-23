@@ -1,0 +1,37 @@
+MODULE dune.needs.criteria.providers.
+need:n_lwt#kind@entity:need.
+need:n_lwt#for_package@pkg:lwt.
+need:n_lwt#accepts@crit:lwt_ge_5_2.
+need:n_alcotest#kind@entity:need.
+need:n_alcotest#for_package@pkg:alcotest.
+need:n_alcotest#accepts@crit:with_test_true.
+provider:lwt_5_1#kind@entity:provider.
+provider:lwt_5_1#provides_package@pkg:lwt.
+provider:lwt_5_1#version@ver:v5_1.
+provider:lwt_5_7#kind@entity:provider.
+provider:lwt_5_7#provides_package@pkg:lwt.
+provider:lwt_5_7#version@ver:v5_7.
+provider:alcotest_1_9#kind@entity:provider.
+provider:alcotest_1_9#provides_package@pkg:alcotest.
+provider:alcotest_1_9#version@ver:v1_9.
+provider:lwt_5_7#meets@crit:lwt_ge_5_2.
+provider:alcotest_1_9#meets@crit:with_test_true.
+provider:lwt_5_7#preferred@value:true.
+provider:alcotest_1_9#preferred@value:true.
+RULE candidate_provider:
+IF ?need#for_package@?pkg AND ?provider#provides_package@?pkg
+THEN ?need#candidate@?provider.
+RULE accepted_provider:
+IF ?need#candidate@?provider AND ?need#accepts@?crit AND ?provider#meets@?crit
+THEN ?need#accepted_by@?provider.
+RULE selected_provider:
+IF ?need#accepted_by@?provider AND ?provider#preferred@value:true
+THEN ?need#selected_provider@?provider.
+QUERY needs:
+FIND ?n WHERE ?n#kind@entity:need.
+QUERY candidates:
+FIND ?n ?p WHERE ?n#candidate@?p.
+QUERY accepted:
+FIND ?n ?p WHERE ?n#accepted_by@?p.
+QUERY selected:
+FIND ?n ?p WHERE ?n#selected_provider@?p.

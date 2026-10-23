@@ -1,0 +1,22 @@
+MODULE supply.chain.domain.library.demo.
+product:widgetA#kind@entity:product.
+product:widgetA#category@value:electronics.
+warehouse:wh_north#kind@entity:warehouse.
+warehouse:wh_north#region@value:north.
+stock:widgetA_wh_north#kind@entity:stock_record.
+stock:widgetA_wh_north#product@product:widgetA.
+stock:widgetA_wh_north#warehouse@warehouse:wh_north.
+stock:widgetA_wh_north#qty@value:12.
+value:12#less_than@value:20.
+RULE low_stock_widgetA_wh_north:
+IF stock:widgetA_wh_north#qty@?q AND ?q#less_than@value:20
+THEN alert:widgetA_wh_north#kind@entity:alert AND alert:widgetA_wh_north#type@value:low_stock.
+supplier:acme_supply#kind@entity:supplier.
+supplier:acme_supply#replenishes@product:widgetA.
+warehouse:wh_north#preferred_supplier@supplier:acme_supply.
+QUERY low_stock_alerts:
+FIND ?a WHERE ?a#type@value:low_stock.
+QUERY supplier_for_wh_north:
+FIND ?s WHERE warehouse:wh_north#preferred_supplier@?s.
+QUERY stock_records:
+FIND ?r WHERE ?r#kind@entity:stock_record.

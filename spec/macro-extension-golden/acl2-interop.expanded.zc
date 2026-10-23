@@ -1,0 +1,6 @@
+MODULE acl2.proof.obligation.log.demo.
+REFINES core_to_logic [spec=tla:CoreMetaVM, impl=lean4:StepFn, mapping=map:core_to_logic].
+CORRESPONDS logic_to_runtime [left=lean4:StepFn, right=acl2:ExecStep, refines=core_to_logic].
+PROOF_OBLIGATION po_acl2_execstep [relation=corresponds:logic_to_runtime, statement="ExecStep correspondence theorem", tool=acl2, artifact_in="data/acl2-proof-ok.log", criticality=high].
+QUERY acl2_obligations:
+FIND ?ob ?tool ?criticality WHERE ?ob#kind@entity:proof_obligation AND ?ob#tool@?tool AND ?ob#criticality@?criticality.

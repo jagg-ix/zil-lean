@@ -1,0 +1,72 @@
+RULE rf_contains_transitive:
+IF ?x#contains@?y AND ?y#contains@?z
+THEN ?x#contains@?z.
+RULE rf_action_side_effectful:
+IF ?n#kind@entity:action AND ?n#has_effect@?e
+THEN ?n#side_effectful@value:true.
+RULE rf_request_has_side_effect:
+IF ?r#kind@entity:request AND ?r#contains@?n AND ?n#has_effect@?e
+THEN ?r#has_side_effect@value:true.
+RULE rf_request_mentions_action:
+IF ?r#kind@entity:request AND ?r#contains@?n AND ?n#kind@entity:action
+THEN ?r#mentions_action@value:true.
+RULE rf_node_recursive_cycle:
+IF ?n#contains@?n
+THEN ?n#is_recursive@value:true.
+RULE rf_request_recursive:
+IF ?r#kind@entity:request AND ?r#contains@?n AND ?n#kind@entity:recursive
+THEN ?r#is_recursive@value:true.
+RULE rf_request_dry_run_contract:
+IF ?r#mode@value:dry_run AND ?r#has_side_effect@value:true
+THEN ?r#execution_contract@value:plan_only.
+QUERY rf_requests_with_side_effects:
+FIND ?r WHERE ?r#has_side_effect@value:true.
+QUERY rf_recursive_requests:
+FIND ?r WHERE ?r#is_recursive@value:true.
+QUERY rf_request_acceptance:
+FIND ?r ?c WHERE ?r#accepts@?c.
+QUERY rf_action_effects:
+FIND ?a ?e WHERE ?a#has_effect@?e.
+MODULE request.form.demo.
+request:deploy_request#kind@entity:request.
+request:deploy_request#requester@actor:operator.
+request:deploy_request#mode@value:dry_run.
+node:root_plan#kind@entity:compound.
+node:root_plan#op@value:seq.
+request:deploy_request#root@node:root_plan.
+request:deploy_request#contains@node:root_plan.
+node:input_snapshot#kind@entity:data.
+node:input_snapshot#schema@value:"cluster_state_v3".
+node:apply_patch#kind@entity:action.
+node:apply_patch#verb@value:patch.
+node:apply_patch#target@value:"k8s/deployment/api".
+effect:e_write_spec#kind@entity:effect.
+effect:e_write_spec#effect_kind@value:writes.
+effect:e_write_spec#target@value:"deployment/spec".
+node:apply_patch#has_effect@effect:e_write_spec.
+node:root_plan#contains@node:input_snapshot.
+node:root_plan#contains@node:apply_patch.
+node:loop_body#kind@entity:compound.
+node:loop_body#op@value:any.
+node:inspect_state#kind@entity:action.
+node:inspect_state#verb@value:read_status.
+node:inspect_state#target@value:"k8s/deployment/api".
+node:loop_fix#kind@entity:recursive.
+node:loop_fix#bind@value:R.
+node:loop_fix#body@node:loop_body.
+node:loop_fix#contains@node:loop_body.
+node:loop_body#contains@node:inspect_state.
+node:loop_body#contains@node:loop_fix.
+node:root_plan#contains@node:loop_fix.
+criterion:c_no_failed_pods#kind@entity:criterion.
+criterion:c_no_failed_pods#expr@value:"failed_pods == 0".
+criterion:c_rollout_complete#kind@entity:criterion.
+criterion:c_rollout_complete#expr@value:"rollout_status == complete".
+request:deploy_request#accepts@criterion:c_no_failed_pods.
+request:deploy_request#accepts@criterion:c_rollout_complete.
+QUERY request_contract:
+FIND ?c WHERE request:deploy_request#execution_contract@?c.
+QUERY recursive_nodes:
+FIND ?n WHERE ?n#is_recursive@value:true.
+QUERY request_contains:
+FIND ?n WHERE request:deploy_request#contains@?n.

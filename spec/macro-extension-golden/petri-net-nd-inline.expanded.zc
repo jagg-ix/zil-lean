@@ -1,0 +1,142 @@
+MODULE petrinet.nd.macro.layer.demo.
+RULE pn_arc_source_canonical_place_direct:
+IF ?arc#arc_type@value:pt AND ?arc#source_place@?p
+THEN ?arc#source_canonical_place@?p.
+RULE pn_arc_source_canonical_place_ref:
+IF ?arc#arc_type@value:pt AND ?arc#source_ref_place@?rp AND ?rp#refers_to@?p
+THEN ?arc#source_canonical_place@?p.
+RULE pn_ref_place_flat_target:
+IF ?rp#kind@entity:pn_ref_place AND ?rp#refers_to@?p
+THEN ?rp#flat_target@?p.
+RULE pn_layer_parent_transitive:
+IF ?l1#parent@?l2 AND ?l2#parent@?l3
+THEN ?l1#parent@?l3.
+RULE pn_abstraction_layer_consistent:
+IF ?p#abstracts_to@?q AND ?p#layer@?lp AND ?q#layer@?lq AND ?lp#parent@?lq
+THEN ?p#abstraction_consistent@value:true.
+RULE pn_lift_token_to_abstraction:
+IF ?p#has_token@?tok AND ?p#abstracts_to@?q
+THEN ?q#abstract_token@?tok.
+RULE pn_transition_enabling_witness:
+IF ?arc#arc_type@value:pt AND ?arc#source_canonical_place@?p AND ?arc#target_transition@?t AND ?p#has_token@?tok
+THEN ?t#enabling_witness_from@?p.
+RULE pn_tm_map_valid:
+IF ?t#tm_map@?m [from_state=?from, read_symbol=?read, to_state=?to, write_symbol=?write, move=?mv] AND ?m#transition@?tr [from_state=?from, read_symbol=?read, to_state=?to, write_symbol=?write, move=?mv]
+THEN ?t#tm_map_valid@value:true.
+RULE pi_parallel_sync:
+IF ?p#operator@value:par AND ?p#left@?s AND ?p#right@?r AND ?s#operator@value:send AND ?r#operator@value:recv AND ?s#channel@?c AND ?r#channel@?c
+THEN ?p#can_tau@value:true.
+RULE pn_pi_map_valid:
+IF ?t#pi_process@?p AND ?p#can_tau@value:true
+THEN ?t#pi_map_valid@value:true.
+RULE pn_lambda_map_valid:
+IF ?t#lambda_from@?lf AND ?t#lambda_to@?lt AND ?lf#reduces_to@?lt
+THEN ?t#lambda_map_valid@value:true.
+pn:net:auth_pipeline_net#kind@entity:pn_net.
+pn:net:auth_pipeline_net#pntd@value:ptNet.
+pn:page:main_page#kind@entity:pn_page.
+pn:page:diag_page#kind@entity:pn_page.
+pn:dim:stack#kind@entity:pn_dimension.
+pn:dim:domain#kind@entity:pn_dimension.
+pn:dim:trust#kind@entity:pn_dimension.
+pn:layer:l2_business#kind@entity:pn_layer.
+pn:layer:l2_business#layer_role@value:root.
+pn:layer:l1_protocol#kind@entity:pn_layer.
+pn:layer:l1_protocol#parent@pn:layer:l2_business.
+pn:layer:l0_transport#kind@entity:pn_layer.
+pn:layer:l0_transport#parent@pn:layer:l1_protocol.
+pn:place:conn_socket_ready#kind@entity:pn_place.
+pn:place:conn_socket_ready#layer@pn:layer:l0_transport.
+pn:place:conn_socket_ready#page@pn:page:main_page.
+pn:place:conn_socket_ready#coord@pn:dim:stack [value=value:transport].
+pn:place:conn_socket_ready#coord@pn:dim:domain [value=value:ssh].
+pn:place:conn_socket_ready#coord@pn:dim:trust [value=value:medium].
+pn:place:channel_ready#kind@entity:pn_place.
+pn:place:channel_ready#layer@pn:layer:l1_protocol.
+pn:place:channel_ready#page@pn:page:main_page.
+pn:place:channel_ready#coord@pn:dim:stack [value=value:protocol].
+pn:place:channel_ready#coord@pn:dim:domain [value=value:overlay].
+pn:place:channel_ready#coord@pn:dim:trust [value=value:high].
+pn:place:session_authenticated#kind@entity:pn_place.
+pn:place:session_authenticated#layer@pn:layer:l2_business.
+pn:place:session_authenticated#page@pn:page:main_page.
+pn:place:session_authenticated#coord@pn:dim:stack [value=value:workflow].
+pn:place:session_authenticated#coord@pn:dim:domain [value=value:operator].
+pn:place:session_authenticated#coord@pn:dim:trust [value=value:high].
+pn:place:conn_socket_ready#abstracts_to@pn:place:channel_ready.
+pn:place:channel_ready#abstracts_to@pn:place:session_authenticated.
+pn:ref_place:conn_socket_ready_ref#kind@entity:pn_ref_place.
+pn:ref_place:conn_socket_ready_ref#page@pn:page:diag_page.
+pn:ref_place:conn_socket_ready_ref#refers_to@pn:place:conn_socket_ready.
+pn:transition:t_upgrade_channel#kind@entity:pn_transition.
+pn:transition:t_upgrade_channel#layer@pn:layer:l1_protocol.
+pn:transition:t_upgrade_channel#page@pn:page:main_page.
+pn:transition:t_authenticate#kind@entity:pn_transition.
+pn:transition:t_authenticate#layer@pn:layer:l2_business.
+pn:transition:t_authenticate#page@pn:page:main_page.
+pn:arc:a_in_upgrade#kind@entity:pn_arc.
+pn:arc:a_in_upgrade#arc_type@value:pt.
+pn:arc:a_in_upgrade#source_ref_place@pn:ref_place:conn_socket_ready_ref.
+pn:arc:a_in_upgrade#target_transition@pn:transition:t_upgrade_channel.
+pn:arc:a_in_upgrade#weight@value:1.
+pn:arc:a_out_upgrade#kind@entity:pn_arc.
+pn:arc:a_out_upgrade#arc_type@value:tp.
+pn:arc:a_out_upgrade#source_transition@pn:transition:t_upgrade_channel.
+pn:arc:a_out_upgrade#target_place@pn:place:channel_ready.
+pn:arc:a_out_upgrade#weight@value:1.
+pn:arc:a_in_auth#kind@entity:pn_arc.
+pn:arc:a_in_auth#arc_type@value:pt.
+pn:arc:a_in_auth#source_place@pn:place:channel_ready.
+pn:arc:a_in_auth#target_transition@pn:transition:t_authenticate.
+pn:arc:a_in_auth#weight@value:1.
+pn:arc:a_out_auth#kind@entity:pn_arc.
+pn:arc:a_out_auth#arc_type@value:tp.
+pn:arc:a_out_auth#source_transition@pn:transition:t_authenticate.
+pn:arc:a_out_auth#target_place@pn:place:session_authenticated.
+pn:arc:a_out_auth#weight@value:1.
+pn:place:conn_socket_ready#has_token@pn:token:tok_conn_1.
+pn:place:channel_ready#has_token@pn:token:tok_chan_1.
+TM_ATOM handshake_unit [states=#{idle done reject}, alphabet=#{conn _}, blank=_, initial=idle, accept=#{done}, reject=#{reject}, transitions={[idle conn] [done conn :N], [idle _] [reject _ :N]}].
+pn:transition:t_upgrade_channel#tm_machine@tm_atom:handshake_unit.
+pn:transition:t_upgrade_channel#tm_map@tm_atom:handshake_unit [from_state=idle, read_symbol=conn, to_state=done, write_symbol=conn, move=:N].
+pi:name:ch_conn#kind@entity:pi_channel.
+pi:name:v_conn#kind@entity:pi_value.
+pi:name:v_bound#kind@entity:pi_value.
+pi:proc:p0#kind@entity:pi_process.
+pi:proc:p0#operator@value:nil.
+pi:proc:p_send#kind@entity:pi_process.
+pi:proc:p_send#operator@value:send.
+pi:proc:p_send#channel@pi:name:ch_conn.
+pi:proc:p_send#payload@pi:name:v_conn.
+pi:proc:p_send#next@pi:proc:p0.
+pi:proc:p_recv#kind@entity:pi_process.
+pi:proc:p_recv#operator@value:recv.
+pi:proc:p_recv#channel@pi:name:ch_conn.
+pi:proc:p_recv#bind@pi:name:v_bound.
+pi:proc:p_recv#next@pi:proc:p0.
+pi:proc:p_sync#kind@entity:pi_process.
+pi:proc:p_sync#operator@value:par.
+pi:proc:p_sync#left@pi:proc:p_send.
+pi:proc:p_sync#right@pi:proc:p_recv.
+pn:transition:t_upgrade_channel#pi_process@pi:proc:p_sync.
+lam:term:beta_redex#kind@entity:lambda_term.
+lam:term:beta_redex#form@value:application.
+lam:term:beta_result#kind@entity:lambda_term.
+lam:term:beta_result#form@value:variable.
+lam:term:beta_redex#reduces_to@lam:term:beta_result.
+pn:transition:t_authenticate#lambda_from@lam:term:beta_redex.
+pn:transition:t_authenticate#lambda_to@lam:term:beta_result.
+QUERY flatten_ref_targets:
+FIND ?p WHERE pn:ref_place:conn_socket_ready_ref#flat_target@?p.
+QUERY transition_enabling_witnesses:
+FIND ?p WHERE pn:transition:t_upgrade_channel#enabling_witness_from@?p.
+QUERY abstraction_consistency:
+FIND ?p WHERE ?p#abstraction_consistent@value:true.
+QUERY lifted_tokens_on_abstract_places:
+FIND ?tok WHERE pn:place:channel_ready#abstract_token@?tok.
+QUERY tm_bridge_valid:
+FIND ?t WHERE ?t#tm_map_valid@value:true.
+QUERY pi_bridge_valid:
+FIND ?t WHERE ?t#pi_map_valid@value:true.
+QUERY lambda_bridge_valid:
+FIND ?t WHERE ?t#lambda_map_valid@value:true.

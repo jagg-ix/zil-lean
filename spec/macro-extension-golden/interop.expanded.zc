@@ -1,0 +1,26 @@
+QUERY io_export_specs:
+FIND ?spec ?source ?format ?path WHERE ?spec#kind@entity:interop_export AND ?spec#source@?source AND ?spec#format@?format AND ?spec#path@?path.
+MODULE interop.json_yaml_csv.demo.
+DATASOURCE ds_json [type=file, format=json, path="examples/data/interop-sample.json"].
+DATASOURCE ds_yaml [type=file, format=yaml, path="examples/data/interop-sample.yaml"].
+DATASOURCE ds_csv [type=file, format=csv, path="examples/data/interop-sample.csv"].
+service:api_gateway#state@value:healthy.
+service:api_gateway#owner@value:platform_sre.
+service:file_bridge#state@value:degraded.
+service:file_bridge#owner@value:migration_team.
+QUERY service_states:
+FIND ?svc ?state WHERE ?svc#state@?state.
+QUERY service_owners:
+FIND ?svc ?owner WHERE ?svc#owner@?owner.
+interop:export:states_json#kind@entity:interop_export.
+interop:export:states_json#source@value:service_states.
+interop:export:states_json#format@value:json.
+interop:export:states_json#path@"/tmp/service_states.json".
+interop:export:owners_yaml#kind@entity:interop_export.
+interop:export:owners_yaml#source@value:service_owners.
+interop:export:owners_yaml#format@value:yaml.
+interop:export:owners_yaml#path@"/tmp/service_owners.yaml".
+interop:export:states_csv#kind@entity:interop_export.
+interop:export:states_csv#source@value:service_states.
+interop:export:states_csv#format@value:csv.
+interop:export:states_csv#path@"/tmp/service_states.csv".

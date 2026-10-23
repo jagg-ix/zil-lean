@@ -1,0 +1,196 @@
+MODULE discovery.api.rules.
+
+// Reasoning rules over the API surface of a Google-style Discovery document, as facts. A converter from Discovery JSON
+// emits, per API: `gcp_api:<name>#kind@entity:api_service`, `#representation_complete@true` once every method and
+// schema is present, and `#component_mapping_present@true` when the service is mapped to a component of the using
+// model; per method: `api_method:<id>#method_in_api@gcp_api:<name>`, `#http_method@"GET"`, `#oauth_scope_present@true`
+// and the `*_expected` / `*_resolved` flags for its request and response schemas; per schema field:
+// `#field_in_api@gcp_api:<name>`, `#field_type@"string"` (or integer, number, boolean, array, object, reference) and
+// the reference flags. A model names the APIs it relies on with `suite:selected#selected_api@gcp_api:<name>`.
+// examples/discovery-api/sample-model.zc shows the vocabulary on a small invented API.
+
+// Method classification. OAuth scopes in Discovery are accepted alternatives;
+// their presence does not by itself prove least privilege or authorization policy.
+RULE oauth_scoped_method:
+IF ?m#method_in_api@?api AND ?m#oauth_scope_present@true
+THEN ?m#classification@classification:oauth_scoped.
+
+RULE read_method:
+IF ?m#method_in_api@?api AND ?m#http_method@"GET"
+THEN ?m#classification@classification:read.
+
+RULE mutating_post_method:
+IF ?m#method_in_api@?api AND ?m#http_method@"POST"
+THEN ?m#classification@classification:mutating.
+
+RULE mutating_put_method:
+IF ?m#method_in_api@?api AND ?m#http_method@"PUT"
+THEN ?m#classification@classification:mutating.
+
+RULE mutating_patch_method:
+IF ?m#method_in_api@?api AND ?m#http_method@"PATCH"
+THEN ?m#classification@classification:mutating.
+
+RULE mutating_delete_method:
+IF ?m#method_in_api@?api AND ?m#http_method@"DELETE"
+THEN ?m#classification@classification:mutating.
+
+// Supported HTTP methods.
+RULE supported_http_get:
+IF ?m#http_method@"GET"
+THEN ?m#http_method_supported@true.
+
+RULE supported_http_post:
+IF ?m#http_method@"POST"
+THEN ?m#http_method_supported@true.
+
+RULE supported_http_put:
+IF ?m#http_method@"PUT"
+THEN ?m#http_method_supported@true.
+
+RULE supported_http_patch:
+IF ?m#http_method@"PATCH"
+THEN ?m#http_method_supported@true.
+
+RULE supported_http_delete:
+IF ?m#http_method@"DELETE"
+THEN ?m#http_method_supported@true.
+
+// Primitive field types. Reference fields are accepted only when their target
+// schema is present in the same Discovery document.
+RULE supported_field_string:
+IF ?f#field_in_api@?api AND ?f#field_type@"string"
+THEN ?f#field_type_supported@true.
+
+RULE supported_field_integer:
+IF ?f#field_in_api@?api AND ?f#field_type@"integer"
+THEN ?f#field_type_supported@true.
+
+RULE supported_field_number:
+IF ?f#field_in_api@?api AND ?f#field_type@"number"
+THEN ?f#field_type_supported@true.
+
+RULE supported_field_boolean:
+IF ?f#field_in_api@?api AND ?f#field_type@"boolean"
+THEN ?f#field_type_supported@true.
+
+RULE supported_field_array:
+IF ?f#field_in_api@?api AND ?f#field_type@"array"
+THEN ?f#field_type_supported@true.
+
+RULE supported_field_object:
+IF ?f#field_in_api@?api AND ?f#field_type@"object"
+THEN ?f#field_type_supported@true.
+
+RULE supported_field_reference:
+IF ?f#field_in_api@?api AND ?f#field_type@"reference" AND ?f#schema_reference_resolved@true
+THEN ?f#field_type_supported@true.
+
+// Counterexamples. A CI gate asserts that every one of these queries is empty.
+RULE method_without_discovery_scope:
+IF ?m#method_in_api@?api AND NOT ?m#oauth_scope_present@true
+THEN ?m#classification@classification:unscoped_in_discovery.
+
+RULE violation_missing_http_method:
+IF ?m#method_in_api@?api AND NOT ?m#http_method_present@true
+THEN ?m#violation@violation:missing_http_method.
+
+RULE violation_missing_endpoint_path:
+IF ?m#method_in_api@?api AND NOT ?m#endpoint_path_present@true
+THEN ?m#violation@violation:missing_endpoint_path.
+
+RULE violation_unsupported_http_method:
+IF ?m#method_in_api@?api AND NOT ?m#http_method_supported@true
+THEN ?m#violation@violation:unsupported_http_method.
+
+RULE violation_unsupported_field_type:
+IF ?f#field_in_api@?api AND NOT ?f#field_type_supported@true
+THEN ?f#violation@violation:unsupported_field_type.
+
+RULE violation_dangling_field_reference:
+IF ?f#field_in_api@?api AND ?f#schema_reference_expected@true AND NOT ?f#schema_reference_resolved@true
+THEN ?f#violation@violation:dangling_schema_reference.
+
+RULE violation_dangling_items_reference:
+IF ?f#field_in_api@?api AND ?f#items_reference_expected@true AND NOT ?f#items_reference_resolved@true
+THEN ?f#violation@violation:dangling_items_reference.
+
+RULE violation_dangling_request_schema:
+IF ?m#method_in_api@?api AND ?m#request_schema_expected@true AND NOT ?m#request_schema_resolved@true
+THEN ?m#violation@violation:dangling_request_schema.
+
+RULE violation_dangling_response_schema:
+IF ?m#method_in_api@?api AND ?m#response_schema_expected@true AND NOT ?m#response_schema_resolved@true
+THEN ?m#violation@violation:dangling_response_schema.
+
+RULE violation_selected_api_not_represented:
+IF suite:selected#selected_api@?api AND NOT ?api#representation_complete@true
+THEN ?api#violation@violation:selected_api_not_represented.
+
+RULE violation_missing_component_mapping:
+IF suite:selected#selected_api@?api AND NOT ?api#component_mapping_present@true
+THEN ?api#violation@violation:missing_component_mapping.
+
+// Inventory and per-API reports.
+QUERY all_api_services:
+FIND ?api WHERE ?api#kind@entity:api_service.
+
+QUERY selected_apis:
+FIND ?api WHERE suite:selected#selected_api@?api.
+
+QUERY selected_api_representations:
+FIND ?api WHERE suite:selected#selected_api@?api AND ?api#representation_complete@true.
+
+QUERY methods_by_api:
+FIND ?api ?method WHERE ?method#method_in_api@?api.
+
+QUERY read_methods_by_api:
+FIND ?api ?method WHERE ?method#read_method_in_api@?api.
+
+QUERY mutating_methods_by_api:
+FIND ?api ?method WHERE ?method#mutating_method_in_api@?api.
+
+QUERY schemas_by_api:
+FIND ?api ?schema WHERE ?schema#schema_in_api@?api.
+
+QUERY all_schema_fields:
+FIND ?field WHERE ?field#kind@entity:schema_field.
+
+QUERY fields_by_api:
+FIND ?api ?field WHERE ?field#field_in_api@?api.
+
+QUERY methods_without_discovery_scope:
+FIND ?method WHERE ?method#classification@classification:unscoped_in_discovery.
+
+QUERY missing_http_methods:
+FIND ?method WHERE ?method#violation@violation:missing_http_method.
+
+QUERY missing_endpoint_methods:
+FIND ?method WHERE ?method#violation@violation:missing_endpoint_path.
+
+QUERY unsupported_http_methods:
+FIND ?method WHERE ?method#violation@violation:unsupported_http_method.
+
+QUERY unsupported_field_types:
+FIND ?field WHERE ?field#violation@violation:unsupported_field_type.
+
+QUERY dangling_schema_references:
+FIND ?entity WHERE ?entity#violation@violation:dangling_schema_reference.
+
+QUERY dangling_items_references:
+FIND ?entity WHERE ?entity#violation@violation:dangling_items_reference.
+
+QUERY dangling_request_schemas:
+FIND ?method WHERE ?method#violation@violation:dangling_request_schema.
+
+QUERY dangling_response_schemas:
+FIND ?method WHERE ?method#violation@violation:dangling_response_schema.
+
+QUERY selected_apis_without_representation:
+FIND ?api WHERE ?api#violation@violation:selected_api_not_represented.
+
+QUERY services_without_component_mapping:
+FIND ?api WHERE ?api#violation@violation:missing_component_mapping.
+
+QUERY_PACK gcp_api_pack [queries=[all_api_services selected_apis selected_api_representations methods_by_api read_methods_by_api mutating_methods_by_api schemas_by_api all_schema_fields fields_by_api methods_without_discovery_scope missing_http_methods missing_endpoint_methods unsupported_http_methods unsupported_field_types dangling_schema_references dangling_items_references dangling_request_schemas dangling_response_schemas selected_apis_without_representation services_without_component_mapping], must_return=[all_api_services selected_apis selected_api_representations methods_by_api schemas_by_api all_schema_fields fields_by_api]].
+DSL_PROFILE gcp_api_profile [query_pack=gcp_api_pack, planner_hint=high_selectivity_first, verification_chain=[query_ci]].

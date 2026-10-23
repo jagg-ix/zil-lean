@@ -1,0 +1,112 @@
+MODULE needs.provider.demo.
+context:solver#has@ctx:with-test=true.
+context:solver#has@ctx:os=linux.
+need:n_lwt#kind@entity:need.
+need:n_lwt#target@pkg:lwt.
+need:n_lwt#accepts@crit:lwt_ge_5_2.
+need:n_lwt#rejects@crit:lwt_eq_5_1.
+need:n_lwt#policy@value:exactly_one.
+need:n_alcotest#kind@entity:need.
+need:n_alcotest#target@pkg:alcotest.
+need:n_alcotest#accepts@crit:with_test_true.
+need:n_alcotest#policy@value:optional.
+need:n_clock#kind@entity:need.
+need:n_clock#target@vlib:clock.
+need:n_clock#accepts@crit:os_is_linux.
+need:n_clock#policy@value:exactly_one.
+need:n_missing#kind@entity:need.
+need:n_missing#target@pkg:fmt.
+need:n_missing#accepts@crit:fmt_any.
+need:n_missing#policy@value:exactly_one.
+crit:lwt_ge_5_2#kind@entity:criterion_version.
+crit:lwt_ge_5_2#op@value:gte.
+crit:lwt_ge_5_2#version@ver:v5_2.
+crit:lwt_eq_5_1#kind@entity:criterion_version.
+crit:lwt_eq_5_1#op@value:eq.
+crit:lwt_eq_5_1#version@ver:v5_1.
+crit:with_test_true#kind@entity:criterion_context_equals.
+crit:with_test_true#expects_ctx@ctx:with-test=true.
+crit:os_is_linux#kind@entity:criterion_context_equals.
+crit:os_is_linux#expects_ctx@ctx:os=linux.
+crit:fmt_any#kind@entity:criterion.
+crit:fmt_any#criterion_kind@value:unconstrained.
+provider:lwt_5_1#kind@entity:provider.
+provider:lwt_5_1#target@pkg:lwt.
+provider:lwt_5_1#version@ver:v5_1.
+provider:lwt_5_7#kind@entity:provider.
+provider:lwt_5_7#target@pkg:lwt.
+provider:lwt_5_7#version@ver:v5_7.
+provider:alcotest_1_9#kind@entity:provider.
+provider:alcotest_1_9#target@pkg:alcotest.
+provider:alcotest_1_9#version@ver:v1_9.
+provider:clock_unix#kind@entity:provider.
+provider:clock_unix#target@vlib:clock.
+provider:clock_unix#version@ver:v1.
+provider:clock_mock#kind@entity:provider.
+provider:clock_mock#target@vlib:clock.
+provider:clock_mock#version@ver:v1.
+provider:lwt_5_7#meets@crit:lwt_ge_5_2.
+proof:lwt_5_7:lwt_ge_5_2#kind@entity:evaluation_proof.
+proof:lwt_5_7:lwt_ge_5_2#provider@provider:lwt_5_7.
+proof:lwt_5_7:lwt_ge_5_2#criterion@crit:lwt_ge_5_2.
+proof:lwt_5_7:lwt_ge_5_2#engine@engine:opam_solver.
+proof:lwt_5_7:lwt_ge_5_2#evidence@evidence:dune_lock.
+provider:lwt_5_7#supported_by@proof:lwt_5_7:lwt_ge_5_2.
+provider:lwt_5_1#meets@crit:lwt_eq_5_1.
+proof:lwt_5_1:lwt_eq_5_1#kind@entity:evaluation_proof.
+proof:lwt_5_1:lwt_eq_5_1#provider@provider:lwt_5_1.
+proof:lwt_5_1:lwt_eq_5_1#criterion@crit:lwt_eq_5_1.
+proof:lwt_5_1:lwt_eq_5_1#engine@engine:opam_solver.
+proof:lwt_5_1:lwt_eq_5_1#evidence@evidence:dune_lock.
+provider:lwt_5_1#supported_by@proof:lwt_5_1:lwt_eq_5_1.
+provider:alcotest_1_9#meets_if@crit:with_test_true.
+provider:clock_unix#meets_if@crit:os_is_linux.
+need:n_lwt#selected_provider@provider:lwt_5_7.
+need:n_lwt#has_selected@value:true.
+need:n_lwt#selected_by@engine:selection_engine.
+need:n_lwt#selection_reason@value:prefer_newest.
+need:n_clock#selected_provider@provider:clock_unix.
+need:n_clock#has_selected@value:true.
+need:n_clock#selected_by@engine:selection_engine.
+need:n_clock#selection_reason@value:first_match_select.
+RULE np_criterion_holds_from_context:
+IF ?crit#expects_ctx@?ctx AND context:solver#has@?ctx
+THEN ?crit#holds@value:true.
+RULE np_provider_meets_from_context:
+IF ?provider#meets_if@?crit AND ?crit#holds@value:true
+THEN ?provider#meets@?crit.
+RULE np_candidate_provider:
+IF ?need#kind@entity:need AND ?provider#kind@entity:provider AND ?need#target@?target AND ?provider#target@?target
+THEN ?need#candidate@?provider.
+RULE np_accepted_provider:
+IF ?need#candidate@?provider AND ?need#accepts@?crit AND ?provider#meets@?crit
+THEN ?need#accepted_by@?provider.
+RULE np_rejected_provider:
+IF ?need#candidate@?provider AND ?need#rejects@?crit AND ?provider#meets@?crit
+THEN ?need#rejected_by@?provider.
+RULE np_eligible_provider:
+IF ?need#accepted_by@?provider AND NOT ?need#rejected_by@?provider
+THEN ?need#eligible_provider@?provider.
+RULE np_effective_selection:
+IF ?need#selected_provider@?provider AND ?need#eligible_provider@?provider
+THEN ?need#effective_provider@?provider.
+RULE np_selected_without_eligibility:
+IF ?need#selected_provider@?provider AND NOT ?need#eligible_provider@?provider
+THEN ?need#selection_warning@value:selected_without_eligibility.
+RULE np_policy_exactly_one_missing_selection:
+IF ?need#policy@value:exactly_one AND NOT ?need#has_selected@value:true
+THEN ?need#selection_violation@value:missing_selection.
+QUERY candidates:
+FIND ?need ?provider WHERE ?need#candidate@?provider.
+QUERY accepted:
+FIND ?need ?provider WHERE ?need#accepted_by@?provider.
+QUERY rejected:
+FIND ?need ?provider WHERE ?need#rejected_by@?provider.
+QUERY eligible:
+FIND ?need ?provider WHERE ?need#eligible_provider@?provider.
+QUERY effective:
+FIND ?need ?provider WHERE ?need#effective_provider@?provider.
+QUERY policy_violations:
+FIND ?need ?v WHERE ?need#selection_violation@?v.
+QUERY selection_warnings:
+FIND ?need ?w WHERE ?need#selection_warning@?w.

@@ -198,6 +198,12 @@ run_lean_suite() {
     doc:readme viewer user:11
   run_step native-impact 'evaluate native impact graph' 0 \
     bin/zil impact examples/impact/project.zc lean:Parser.parse
+  run_step macro-matrix 'expand, compile and typecheck every macro library against its golden' 0 \
+    tools/macro_extension_matrix.sh --skip-build
+  run_step extension-libraries 'row counts and evidence checks of the extension libraries' 0 \
+    scripts/test-extension-libraries.sh --skip-build
+  run_step clojure-boundary 'no new call of Clojure from the scripts' 0 \
+    scripts/check-clojure-boundary.sh
 }
 
 run_clojure_suite() {

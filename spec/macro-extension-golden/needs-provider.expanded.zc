@@ -1,0 +1,55 @@
+RULE np_criterion_holds_from_context:
+IF ?crit#expects_ctx@?ctx AND context:solver#has@?ctx
+THEN ?crit#holds@value:true.
+RULE np_provider_meets_from_context:
+IF ?provider#meets_if@?crit AND ?crit#holds@value:true
+THEN ?provider#meets@?crit.
+RULE np_candidate_provider:
+IF ?need#kind@entity:need AND ?provider#kind@entity:provider AND ?need#target@?target AND ?provider#target@?target
+THEN ?need#candidate@?provider.
+RULE np_accepted_provider:
+IF ?need#candidate@?provider AND ?need#accepts@?crit AND ?provider#meets@?crit
+THEN ?need#accepted_by@?provider.
+RULE np_rejected_provider:
+IF ?need#candidate@?provider AND ?need#rejects@?crit AND ?provider#meets@?crit
+THEN ?need#rejected_by@?provider.
+RULE np_eligible_provider:
+IF ?need#accepted_by@?provider AND NOT ?need#rejected_by@?provider
+THEN ?need#eligible_provider@?provider.
+RULE np_effective_selection:
+IF ?need#selected_provider@?provider AND ?need#eligible_provider@?provider
+THEN ?need#effective_provider@?provider.
+RULE np_selected_without_eligibility:
+IF ?need#selected_provider@?provider AND NOT ?need#eligible_provider@?provider
+THEN ?need#selection_warning@value:selected_without_eligibility.
+RULE np_policy_exactly_one_missing_selection:
+IF ?need#policy@value:exactly_one AND NOT ?need#has_selected@value:true
+THEN ?need#selection_violation@value:missing_selection.
+QUERY np_candidates:
+FIND ?need ?provider WHERE ?need#candidate@?provider.
+QUERY np_accepted:
+FIND ?need ?provider WHERE ?need#accepted_by@?provider.
+QUERY np_rejected:
+FIND ?need ?provider WHERE ?need#rejected_by@?provider.
+QUERY np_eligible:
+FIND ?need ?provider WHERE ?need#eligible_provider@?provider.
+QUERY np_effective:
+FIND ?need ?provider WHERE ?need#effective_provider@?provider.
+QUERY np_policy_violations:
+FIND ?need ?v WHERE ?need#selection_violation@?v.
+QUERY np_selection_warnings:
+FIND ?need ?w WHERE ?need#selection_warning@?w.
+MODULE needs.provider.macro.compat.
+context:solver#has@ctx:os=linux.
+need:package_lwt#kind@entity:need.
+need:package_lwt#target@pkg:lwt.
+need:package_lwt#policy@value:exactly_one.
+crit:lwt_version#kind@entity:criterion.
+crit:lwt_version#criterion_kind@value:version.
+crit:lwt_version#kind@entity:criterion_version.
+crit:lwt_version#op@value:gte.
+crit:lwt_version#version@ver:5_2.
+provider:lwt_system#kind@entity:provider.
+provider:lwt_system#target@pkg:lwt.
+provider:lwt_system#version@ver:5_2_0.
+provider:lwt_system#meets_if@crit:lwt_version.

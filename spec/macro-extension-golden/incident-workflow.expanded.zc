@@ -1,0 +1,447 @@
+RULE iwf_req_implies_transitive:
+IF ?a#implies@?b AND ?b#implies@?c
+THEN ?a#implies@?c.
+RULE iwf_req_state_machine_feature:
+IF ?r#tag@value:state_machine
+THEN feature:state_machine_engine#feature_recommended_by@?r.
+RULE iwf_req_single_owner_feature:
+IF ?r#tag@value:single_owner
+THEN feature:single_owner_lock#feature_recommended_by@?r.
+RULE iwf_req_role_split_feature:
+IF ?r#tag@value:role_split
+THEN feature:role_based_workspace#feature_recommended_by@?r.
+RULE iwf_req_multi_plane_feature:
+IF ?r#tag@value:multi_plane_comms
+THEN feature:multi_plane_communications#feature_recommended_by@?r.
+RULE iwf_req_timeline_feature:
+IF ?r#tag@value:timeline
+THEN feature:incident_timeline#feature_recommended_by@?r.
+RULE iwf_req_external_updates_feature:
+IF ?r#tag@value:external_updates
+THEN feature:stakeholder_update_templates#feature_recommended_by@?r.
+RULE iwf_req_resolution_summary_feature:
+IF ?r#tag@value:resolution_summary
+THEN feature:resolution_summary_gate#feature_recommended_by@?r.
+RULE iwf_req_postmortem_feature:
+IF ?r#tag@value:postmortem
+THEN feature:postmortem_workspace#feature_recommended_by@?r.
+RULE iwf_req_action_tracking_feature:
+IF ?r#tag@value:action_tracking
+THEN feature:action_item_tracker#feature_recommended_by@?r.
+RULE iwf_req_fix_proposal_feature:
+IF ?r#tag@value:fix_proposal
+THEN feature:fix_proposal_registry#feature_recommended_by@?r.
+RULE iwf_req_test_gate_feature:
+IF ?r#tag@value:test_gates
+THEN feature:test_gate_engine#feature_recommended_by@?r.
+RULE iwf_req_invariants_feature:
+IF ?r#tag@value:invariants
+THEN feature:invariant_checker#feature_recommended_by@?r.
+RULE iwf_feature_kind:
+IF ?f#feature_recommended_by@?r
+THEN ?f#kind@entity:tool_feature.
+RULE iwf_feature_priority_must:
+IF ?f#feature_recommended_by@?r AND ?r#priority@value:high
+THEN ?f#priority@value:must_have.
+RULE iwf_feature_priority_should:
+IF ?f#feature_recommended_by@?r AND ?r#priority@value:medium
+THEN ?f#priority@value:should_have.
+RULE iwf_feature_source_trace:
+IF ?f#feature_recommended_by@?r AND ?r#source@?s
+THEN ?f#source_support@?s.
+RULE iwf_option_state_machine_strict:
+IF feature:state_machine_engine#feature_recommended_by@?r
+THEN option:strict_transition_validation#option_recommended_by@feature:state_machine_engine.
+RULE iwf_option_state_machine_invalid_transition_guard:
+IF feature:state_machine_engine#feature_recommended_by@?r
+THEN option:reject_invalid_state_jumps#option_recommended_by@feature:state_machine_engine.
+RULE iwf_option_single_owner_token:
+IF feature:single_owner_lock#feature_recommended_by@?r
+THEN option:exclusive_incident_lead_token#option_recommended_by@feature:single_owner_lock.
+RULE iwf_option_handoff_ack:
+IF feature:single_owner_lock#feature_recommended_by@?r
+THEN option:lead_handoff_requires_ack#option_recommended_by@feature:single_owner_lock.
+RULE iwf_option_role_views:
+IF feature:role_based_workspace#feature_recommended_by@?r
+THEN option:role_specific_dashboards#option_recommended_by@feature:role_based_workspace.
+RULE iwf_option_multi_plane_templates:
+IF feature:multi_plane_communications#feature_recommended_by@?r
+THEN option:separate_internal_external_templates#option_recommended_by@feature:multi_plane_communications.
+RULE iwf_option_channel_binding:
+IF feature:multi_plane_communications#feature_recommended_by@?r
+THEN option:channel_to_state_binding#option_recommended_by@feature:multi_plane_communications.
+RULE iwf_option_timeline_capture:
+IF feature:incident_timeline#feature_recommended_by@?r
+THEN option:auto_timeline_capture#option_recommended_by@feature:incident_timeline.
+RULE iwf_option_timeline_hash:
+IF feature:incident_timeline#feature_recommended_by@?r
+THEN option:evidence_hash_for_timeline_entries#option_recommended_by@feature:incident_timeline.
+RULE iwf_option_external_state_ref:
+IF feature:stakeholder_update_templates#feature_recommended_by@?r
+THEN option:external_updates_require_state_reference#option_recommended_by@feature:stakeholder_update_templates.
+RULE iwf_option_resolution_gate:
+IF feature:resolution_summary_gate#feature_recommended_by@?r
+THEN option:block_resolve_until_summary_present#option_recommended_by@feature:resolution_summary_gate.
+RULE iwf_option_postmortem_deadline:
+IF feature:postmortem_workspace#feature_recommended_by@?r
+THEN option:postmortem_due_date_policy#option_recommended_by@feature:postmortem_workspace.
+RULE iwf_option_action_block_close:
+IF feature:action_item_tracker#feature_recommended_by@?r
+THEN option:block_postmortem_close_on_open_critical_actions#option_recommended_by@feature:action_item_tracker.
+RULE iwf_option_fix_fields_required:
+IF feature:fix_proposal_registry#feature_recommended_by@?r
+THEN option:require_fix_risk_blast_radius_rollback_fields#option_recommended_by@feature:fix_proposal_registry.
+RULE iwf_option_test_gate_matrix:
+IF feature:test_gate_engine#feature_recommended_by@?r
+THEN option:enforce_repro_mitigation_rollback_regression_tests#option_recommended_by@feature:test_gate_engine.
+RULE iwf_option_invariant_runtime:
+IF feature:invariant_checker#feature_recommended_by@?r
+THEN option:runtime_invariant_evaluator#option_recommended_by@feature:invariant_checker.
+RULE iwf_option_kind:
+IF ?o#option_recommended_by@?f
+THEN ?o#kind@entity:tool_option.
+RULE iwf_option_priority_must:
+IF ?o#option_recommended_by@?f AND ?f#priority@value:must_have
+THEN ?o#priority@value:must_have.
+RULE iwf_option_priority_should:
+IF ?o#option_recommended_by@?f AND ?f#priority@value:should_have
+THEN ?o#priority@value:should_have.
+RULE iwf_option_source_trace:
+IF ?o#option_recommended_by@?f AND ?f#source_support@?s
+THEN ?o#source_support@?s.
+RULE iwf_dsl_state:
+IF ?r#tag@value:state_machine
+THEN dsl:STATE#dsl_recommended_by@?r.
+RULE iwf_dsl_event:
+IF ?r#tag@value:state_machine
+THEN dsl:EVENT#dsl_recommended_by@?r.
+RULE iwf_dsl_transition:
+IF ?r#tag@value:state_machine
+THEN dsl:TRANSITION#dsl_recommended_by@?r.
+RULE iwf_dsl_role:
+IF ?r#tag@value:role_split
+THEN dsl:ROLE#dsl_recommended_by@?r.
+RULE iwf_dsl_channel:
+IF ?r#tag@value:multi_plane_comms
+THEN dsl:CHANNEL#dsl_recommended_by@?r.
+RULE iwf_dsl_incident:
+IF ?r#tag@value:timeline
+THEN dsl:INCIDENT#dsl_recommended_by@?r.
+RULE iwf_dsl_problem_block:
+IF ?r#tag@value:fix_proposal
+THEN dsl:PROBLEM#dsl_recommended_by@?r.
+RULE iwf_dsl_test_block:
+IF ?r#tag@value:test_gates
+THEN dsl:TEST#dsl_recommended_by@?r.
+RULE iwf_dsl_fix_block:
+IF ?r#tag@value:fix_proposal
+THEN dsl:FIX_PROPOSAL#dsl_recommended_by@?r.
+RULE iwf_dsl_postmortem:
+IF ?r#tag@value:postmortem
+THEN dsl:POSTMORTEM#dsl_recommended_by@?r.
+RULE iwf_dsl_action_item:
+IF ?r#tag@value:action_tracking
+THEN dsl:ACTION_ITEM#dsl_recommended_by@?r.
+RULE iwf_dsl_invariant:
+IF ?r#tag@value:invariants
+THEN dsl:INVARIANT#dsl_recommended_by@?r.
+RULE iwf_dsl_implies:
+IF ?a#implies@?b
+THEN dsl:IMPLIES#dsl_recommended_by@?a.
+RULE iwf_dsl_kind:
+IF ?d#dsl_recommended_by@?x
+THEN ?d#kind@entity:dsl_construct.
+RULE iwf_dsl_priority_must:
+IF ?d#dsl_recommended_by@?r AND ?r#priority@value:high
+THEN ?d#priority@value:must_have.
+RULE iwf_dsl_priority_should:
+IF ?d#dsl_recommended_by@?r AND ?r#priority@value:medium
+THEN ?d#priority@value:should_have.
+RULE iwf_dsl_priority_from_feature_must:
+IF ?d#dsl_recommended_by@?f AND ?f#priority@value:must_have
+THEN ?d#priority@value:must_have.
+RULE iwf_dsl_source_trace:
+IF ?d#dsl_recommended_by@?r AND ?r#source@?s
+THEN ?d#source_support@?s.
+RULE iwf_req_needs_model_problem:
+IF ?r#tag@value:fix_proposal
+THEN ?r#needs_model@model:problem.
+RULE iwf_req_needs_model_test:
+IF ?r#tag@value:test_gates
+THEN ?r#needs_model@model:test_plan.
+RULE iwf_req_needs_model_fix:
+IF ?r#tag@value:fix_proposal
+THEN ?r#needs_model@model:fix_proposal.
+RULE iwf_req_needs_model_postmortem:
+IF ?r#tag@value:postmortem
+THEN ?r#needs_model@model:postmortem.
+QUERY iwf_workflow_transitions:
+FIND ?from ?event ?to WHERE ?t#kind@entity:transition AND ?t#from@?from AND ?t#event@?event AND ?t#to@?to.
+QUERY iwf_requirement_graph:
+FIND ?req_a ?req_b WHERE ?req_a#implies@?req_b.
+QUERY iwf_recommended_features:
+FIND ?feature ?priority WHERE ?feature#kind@entity:tool_feature AND ?feature#priority@?priority.
+QUERY iwf_feature_traceability:
+FIND ?feature ?requirement ?source WHERE ?feature#feature_recommended_by@?requirement AND ?feature#source_support@?source.
+QUERY iwf_recommended_options:
+FIND ?option ?priority ?feature WHERE ?option#kind@entity:tool_option AND ?option#priority@?priority AND ?option#option_recommended_by@?feature.
+QUERY iwf_option_traceability:
+FIND ?option ?source WHERE ?option#kind@entity:tool_option AND ?option#source_support@?source.
+QUERY iwf_recommended_dsl_constructs:
+FIND ?construct ?priority WHERE ?construct#kind@entity:dsl_construct AND ?construct#priority@?priority.
+QUERY iwf_dsl_traceability:
+FIND ?construct ?source WHERE ?construct#kind@entity:dsl_construct AND ?construct#source_support@?source.
+QUERY iwf_model_shapes:
+FIND ?model ?field WHERE ?model#kind@entity:model_shape AND ?model#field@?field.
+QUERY iwf_requirement_model_links:
+FIND ?requirement ?model WHERE ?requirement#kind@entity:requirement AND ?requirement#needs_model@?model.
+MODULE incident.workflow.tool.dsl.analysis.demo.
+iwf:state:declared#kind@entity:state.
+iwf:state:declared#order@value:1.
+iwf:state:investigating#kind@entity:state.
+iwf:state:investigating#order@value:2.
+iwf:state:active#kind@entity:state.
+iwf:state:active#order@value:3.
+iwf:state:identified#kind@entity:state.
+iwf:state:identified#order@value:4.
+iwf:state:monitoring#kind@entity:state.
+iwf:state:monitoring#order@value:5.
+iwf:state:resolved#kind@entity:state.
+iwf:state:resolved#order@value:6.
+iwf:state:postmortem_open#kind@entity:state.
+iwf:state:postmortem_open#order@value:7.
+iwf:state:postmortem_closed#kind@entity:state.
+iwf:state:postmortem_closed#order@value:8.
+iwf:event:incident_declared#kind@entity:event.
+iwf:event:incident_declared#stage@value:detection.
+iwf:event:lead_assigned#kind@entity:event.
+iwf:event:lead_assigned#stage@value:command.
+iwf:event:status_update_sent#kind@entity:event.
+iwf:event:status_update_sent#stage@value:communication.
+iwf:event:mitigation_executed#kind@entity:event.
+iwf:event:mitigation_executed#stage@value:response.
+iwf:event:handoff_acknowledged#kind@entity:event.
+iwf:event:handoff_acknowledged#stage@value:command.
+iwf:event:incident_resolved#kind@entity:event.
+iwf:event:incident_resolved#stage@value:closure.
+iwf:event:postmortem_published#kind@entity:event.
+iwf:event:postmortem_published#stage@value:learning.
+iwf:event:action_item_closed#kind@entity:event.
+iwf:event:action_item_closed#stage@value:learning.
+iwf:transition:declared_incident_declared_investigating#kind@entity:transition.
+iwf:transition:declared_incident_declared_investigating#from@state:declared.
+iwf:transition:declared_incident_declared_investigating#event@event:incident_declared.
+iwf:transition:declared_incident_declared_investigating#to@state:investigating.
+iwf:transition:investigating_lead_assigned_active#kind@entity:transition.
+iwf:transition:investigating_lead_assigned_active#from@state:investigating.
+iwf:transition:investigating_lead_assigned_active#event@event:lead_assigned.
+iwf:transition:investigating_lead_assigned_active#to@state:active.
+iwf:transition:active_mitigation_executed_identified#kind@entity:transition.
+iwf:transition:active_mitigation_executed_identified#from@state:active.
+iwf:transition:active_mitigation_executed_identified#event@event:mitigation_executed.
+iwf:transition:active_mitigation_executed_identified#to@state:identified.
+iwf:transition:identified_status_update_sent_monitoring#kind@entity:transition.
+iwf:transition:identified_status_update_sent_monitoring#from@state:identified.
+iwf:transition:identified_status_update_sent_monitoring#event@event:status_update_sent.
+iwf:transition:identified_status_update_sent_monitoring#to@state:monitoring.
+iwf:transition:monitoring_incident_resolved_resolved#kind@entity:transition.
+iwf:transition:monitoring_incident_resolved_resolved#from@state:monitoring.
+iwf:transition:monitoring_incident_resolved_resolved#event@event:incident_resolved.
+iwf:transition:monitoring_incident_resolved_resolved#to@state:resolved.
+iwf:transition:resolved_postmortem_published_postmortem_open#kind@entity:transition.
+iwf:transition:resolved_postmortem_published_postmortem_open#from@state:resolved.
+iwf:transition:resolved_postmortem_published_postmortem_open#event@event:postmortem_published.
+iwf:transition:resolved_postmortem_published_postmortem_open#to@state:postmortem_open.
+iwf:transition:postmortem_open_action_item_closed_postmortem_closed#kind@entity:transition.
+iwf:transition:postmortem_open_action_item_closed_postmortem_closed#from@state:postmortem_open.
+iwf:transition:postmortem_open_action_item_closed_postmortem_closed#event@event:action_item_closed.
+iwf:transition:postmortem_open_action_item_closed_postmortem_closed#to@state:postmortem_closed.
+iwf:role:incident_lead#kind@entity:role.
+iwf:role:incident_lead#purpose@value:command.
+iwf:role:responder#kind@entity:role.
+iwf:role:responder#purpose@value:technical.
+iwf:role:comms_liaison#kind@entity:role.
+iwf:role:comms_liaison#purpose@value:communications.
+iwf:role:scribe#kind@entity:role.
+iwf:role:scribe#purpose@value:documentation.
+iwf:channel:incident_chat#kind@entity:channel.
+iwf:channel:incident_chat#plane@value:command_plane.
+iwf:channel:incident_chat#mode@value:synchronous.
+iwf:channel:war_room_call#kind@entity:channel.
+iwf:channel:war_room_call#plane@value:command_plane.
+iwf:channel:war_room_call#mode@value:synchronous.
+iwf:channel:shared_state_doc#kind@entity:channel.
+iwf:channel:shared_state_doc#plane@value:state_plane.
+iwf:channel:shared_state_doc#mode@value:asynchronous.
+iwf:channel:incident_ticket#kind@entity:channel.
+iwf:channel:incident_ticket#plane@value:state_plane.
+iwf:channel:incident_ticket#mode@value:asynchronous.
+iwf:channel:status_page#kind@entity:channel.
+iwf:channel:status_page#plane@value:external_plane.
+iwf:channel:status_page#mode@value:asynchronous.
+iwf:channel:support_case#kind@entity:channel.
+iwf:channel:support_case#plane@value:external_plane.
+iwf:channel:support_case#mode@value:asynchronous.
+iwf:artifact:timeline_log#kind@entity:artifact.
+iwf:artifact:timeline_log#plane@value:state_plane.
+iwf:artifact:resolution_summary#kind@entity:artifact.
+iwf:artifact:resolution_summary#plane@value:external_plane.
+iwf:artifact:postmortem_doc#kind@entity:artifact.
+iwf:artifact:postmortem_doc#plane@value:state_plane.
+iwf:artifact:action_tracker#kind@entity:artifact.
+iwf:artifact:action_tracker#plane@value:state_plane.
+req:single_owner_at_a_time#kind@entity:requirement.
+req:single_owner_at_a_time#priority@value:high.
+req:single_owner_at_a_time#category@value:governance.
+req:single_owner_at_a_time#tag@value:single_owner.
+req:single_owner_at_a_time#tag@value:invariants.
+req:single_owner_at_a_time#needs_role@role:incident_lead.
+req:single_owner_at_a_time#needs_event@event:lead_assigned.
+req:single_owner_at_a_time#needs_event@event:handoff_acknowledged.
+req:single_owner_at_a_time#source@source:google_sre.
+req:single_owner_at_a_time#source@source:pagerduty.
+req:single_owner_at_a_time#source@source:gitlab.
+req:role_split_during_response#kind@entity:requirement.
+req:role_split_during_response#priority@value:high.
+req:role_split_during_response#category@value:collaboration.
+req:role_split_during_response#tag@value:role_split.
+req:role_split_during_response#needs_role@role:incident_lead.
+req:role_split_during_response#needs_role@role:responder.
+req:role_split_during_response#needs_role@role:comms_liaison.
+req:role_split_during_response#source@source:google_sre.
+req:role_split_during_response#source@source:pagerduty.
+req:multi_plane_information_flow#kind@entity:requirement.
+req:multi_plane_information_flow#priority@value:high.
+req:multi_plane_information_flow#category@value:communication.
+req:multi_plane_information_flow#tag@value:multi_plane_comms.
+req:multi_plane_information_flow#tag@value:timeline.
+req:multi_plane_information_flow#needs_channel@channel:incident_chat.
+req:multi_plane_information_flow#needs_channel@channel:shared_state_doc.
+req:multi_plane_information_flow#needs_channel@channel:status_page.
+req:multi_plane_information_flow#needs_artifact@artifact:timeline_log.
+req:multi_plane_information_flow#source@source:gitlab.
+req:multi_plane_information_flow#source@source:redhat.
+req:stateful_incident_lifecycle#kind@entity:requirement.
+req:stateful_incident_lifecycle#priority@value:high.
+req:stateful_incident_lifecycle#category@value:control_loop.
+req:stateful_incident_lifecycle#tag@value:state_machine.
+req:stateful_incident_lifecycle#needs_state@state:investigating.
+req:stateful_incident_lifecycle#needs_state@state:active.
+req:stateful_incident_lifecycle#needs_state@state:identified.
+req:stateful_incident_lifecycle#needs_state@state:monitoring.
+req:stateful_incident_lifecycle#needs_state@state:resolved.
+req:stateful_incident_lifecycle#source@source:gitlab.
+req:stateful_incident_lifecycle#source@source:solaris_fma.
+req:external_updates_must_reference_state#kind@entity:requirement.
+req:external_updates_must_reference_state#priority@value:high.
+req:external_updates_must_reference_state#category@value:communication.
+req:external_updates_must_reference_state#tag@value:external_updates.
+req:external_updates_must_reference_state#needs_channel@channel:status_page.
+req:external_updates_must_reference_state#needs_channel@channel:support_case.
+req:external_updates_must_reference_state#needs_event@event:status_update_sent.
+req:external_updates_must_reference_state#source@source:redhat.
+req:external_updates_must_reference_state#source@source:gitlab.
+req:resolution_summary_before_closure#kind@entity:requirement.
+req:resolution_summary_before_closure#priority@value:medium.
+req:resolution_summary_before_closure#category@value:closure.
+req:resolution_summary_before_closure#tag@value:resolution_summary.
+req:resolution_summary_before_closure#needs_artifact@artifact:resolution_summary.
+req:resolution_summary_before_closure#needs_event@event:incident_resolved.
+req:resolution_summary_before_closure#source@source:redhat.
+req:blameless_postmortem_with_actions#kind@entity:requirement.
+req:blameless_postmortem_with_actions#priority@value:high.
+req:blameless_postmortem_with_actions#category@value:learning.
+req:blameless_postmortem_with_actions#tag@value:postmortem.
+req:blameless_postmortem_with_actions#tag@value:action_tracking.
+req:blameless_postmortem_with_actions#needs_artifact@artifact:postmortem_doc.
+req:blameless_postmortem_with_actions#needs_artifact@artifact:action_tracker.
+req:blameless_postmortem_with_actions#needs_event@event:postmortem_published.
+req:blameless_postmortem_with_actions#source@source:google_sre.
+req:fix_proposal_must_include_risk_and_rollback#kind@entity:requirement.
+req:fix_proposal_must_include_risk_and_rollback#priority@value:high.
+req:fix_proposal_must_include_risk_and_rollback#category@value:remediation.
+req:fix_proposal_must_include_risk_and_rollback#tag@value:fix_proposal.
+req:fix_proposal_must_include_risk_and_rollback#source@source:redhat_quay_postmortem.
+req:fix_proposal_must_include_risk_and_rollback#source@source:sre_practice.
+req:test_gate_matrix_for_changes#kind@entity:requirement.
+req:test_gate_matrix_for_changes#priority@value:high.
+req:test_gate_matrix_for_changes#category@value:verification.
+req:test_gate_matrix_for_changes#tag@value:test_gates.
+req:test_gate_matrix_for_changes#source@source:sre_practice.
+req:test_gate_matrix_for_changes#source@source:redhat_quay_postmortem.
+req:no_postmortem_close_with_open_critical_actions#kind@entity:requirement.
+req:no_postmortem_close_with_open_critical_actions#priority@value:high.
+req:no_postmortem_close_with_open_critical_actions#category@value:invariants.
+req:no_postmortem_close_with_open_critical_actions#tag@value:invariants.
+req:no_postmortem_close_with_open_critical_actions#tag@value:action_tracking.
+req:no_postmortem_close_with_open_critical_actions#source@source:sre_practice.
+req:stateful_incident_lifecycle#implies@requirement:external_updates_must_reference_state.
+req:multi_plane_information_flow#implies@requirement:external_updates_must_reference_state.
+req:blameless_postmortem_with_actions#implies@requirement:no_postmortem_close_with_open_critical_actions.
+req:test_gate_matrix_for_changes#implies@requirement:fix_proposal_must_include_risk_and_rollback.
+req:single_owner_at_a_time#implies@requirement:role_split_during_response.
+iwf:invariant:exactly_one_incident_lead_active#kind@entity:invariant.
+iwf:invariant:exactly_one_incident_lead_active#severity@value:high.
+iwf:invariant:exactly_one_incident_lead_active#requires_requirement@requirement:single_owner_at_a_time.
+iwf:invariant:resolve_requires_summary#kind@entity:invariant.
+iwf:invariant:resolve_requires_summary#severity@value:high.
+iwf:invariant:resolve_requires_summary#requires_requirement@requirement:resolution_summary_before_closure.
+iwf:invariant:postmortem_close_requires_critical_actions_closed#kind@entity:invariant.
+iwf:invariant:postmortem_close_requires_critical_actions_closed#severity@value:high.
+iwf:invariant:postmortem_close_requires_critical_actions_closed#requires_requirement@requirement:no_postmortem_close_with_open_critical_actions.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:incident_id.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:severity.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:services.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:impact.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:symptoms.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:suspected_causes.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:evidence_refs.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:owner.
+iwf:model:problem#kind@entity:model_shape.
+iwf:model:problem#field@value:state.
+iwf:model:test_plan#kind@entity:model_shape.
+iwf:model:test_plan#field@value:repro_test.
+iwf:model:test_plan#kind@entity:model_shape.
+iwf:model:test_plan#field@value:mitigation_safety_test.
+iwf:model:test_plan#kind@entity:model_shape.
+iwf:model:test_plan#field@value:rollback_test.
+iwf:model:test_plan#kind@entity:model_shape.
+iwf:model:test_plan#field@value:regression_test.
+iwf:model:test_plan#kind@entity:model_shape.
+iwf:model:test_plan#field@value:acceptance_criteria.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:hypothesis.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:change_plan.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:risk.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:blast_radius.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:rollback.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:validation_signals.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:decision.
+iwf:model:fix_proposal#kind@entity:model_shape.
+iwf:model:fix_proposal#field@value:post_deploy_result.
+iwf:model:postmortem#kind@entity:model_shape.
+iwf:model:postmortem#field@value:trigger.
+iwf:model:postmortem#kind@entity:model_shape.
+iwf:model:postmortem#field@value:root_cause.
+iwf:model:postmortem#kind@entity:model_shape.
+iwf:model:postmortem#field@value:timeline.
+iwf:model:postmortem#kind@entity:model_shape.
+iwf:model:postmortem#field@value:what_worked.
+iwf:model:postmortem#kind@entity:model_shape.
+iwf:model:postmortem#field@value:what_failed.
+iwf:model:postmortem#kind@entity:model_shape.
+iwf:model:postmortem#field@value:actions_owner_due_status.

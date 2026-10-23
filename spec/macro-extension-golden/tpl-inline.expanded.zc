@@ -1,0 +1,148 @@
+MODULE tpl.macro.layer.demo.
+RULE prefix_visible_patient:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:visible
+THEN ?p#patient@value:true AND ?p#can_sigma@value:true.
+RULE prefix_sigma_tick:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:sigma
+THEN ?p#can_sigma@value:true.
+RULE prefix_tau_ready:
+IF ?p#operator@value:prefix AND ?p#action@?a AND ?a#class@value:tau
+THEN ?p#can_tau@value:true.
+RULE maximal_progress_blocks_tick:
+IF ?p#can_tau@value:true
+THEN ?p#blocks_tick@value:true.
+RULE timeout_tick_branch_enabled:
+IF ?p#operator@value:timeout AND ?p#guard@?e AND ?p#on_tick@?f AND NOT ?e#blocks_tick@value:true
+THEN ?p#tick_branch_enabled@value:true AND ?p#sigma_target@?f AND ?p#can_sigma@value:true.
+RULE choice_blocks_left:
+IF ?p#operator@value:choice AND ?p#left@?l AND ?l#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+RULE choice_blocks_right:
+IF ?p#operator@value:choice AND ?p#right@?r AND ?r#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+RULE choice_sigma_left:
+IF ?p#operator@value:choice AND ?p#left@?l AND ?l#can_sigma@value:true AND NOT ?p#blocks_tick@value:true
+THEN ?p#can_sigma@value:true.
+RULE choice_sigma_right:
+IF ?p#operator@value:choice AND ?p#right@?r AND ?r#can_sigma@value:true AND NOT ?p#blocks_tick@value:true
+THEN ?p#can_sigma@value:true.
+RULE parallel_blocks_left:
+IF ?p#operator@value:parallel AND ?p#left@?l AND ?l#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+RULE parallel_blocks_right:
+IF ?p#operator@value:parallel AND ?p#right@?r AND ?r#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+RULE parallel_tau_left:
+IF ?p#operator@value:parallel AND ?p#left@?l AND ?l#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE parallel_tau_right:
+IF ?p#operator@value:parallel AND ?p#right@?r AND ?r#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE parallel_sigma:
+IF ?p#operator@value:parallel AND ?p#left@?l AND ?p#right@?r AND ?l#can_sigma@value:true AND ?r#can_sigma@value:true AND NOT ?l#blocks_tick@value:true AND NOT ?r#blocks_tick@value:true
+THEN ?p#can_sigma@value:true.
+RULE restrict_inherit_sigma:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#can_sigma@value:true
+THEN ?p#can_sigma@value:true.
+RULE restrict_inherit_tau:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE restrict_inherit_block:
+IF ?p#operator@value:restrict AND ?p#inner@?q AND ?q#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+RULE rec_inherit_sigma:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#can_sigma@value:true
+THEN ?p#can_sigma@value:true.
+RULE rec_inherit_tau:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#can_tau@value:true
+THEN ?p#can_tau@value:true.
+RULE rec_inherit_block:
+IF ?p#operator@value:rec AND ?p#body@?b AND ?b#blocks_tick@value:true
+THEN ?p#blocks_tick@value:true.
+RULE var_resolves_sigma:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#can_sigma@value:true
+THEN ?v#can_sigma@value:true.
+RULE var_resolves_tau:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#can_tau@value:true
+THEN ?v#can_tau@value:true.
+RULE var_resolves_block:
+IF ?v#operator@value:var AND ?v#var_label@?lbl AND ?r#operator@value:rec AND ?r#label@?lbl AND ?r#blocks_tick@value:true
+THEN ?v#blocks_tick@value:true.
+tpl:action:act_a#kind@entity:tpl_action.
+tpl:action:act_a#class@value:visible.
+tpl:action:act_b#kind@entity:tpl_action.
+tpl:action:act_b#class@value:visible.
+tpl:action:act_tau#kind@entity:tpl_action.
+tpl:action:act_tau#class@value:tau.
+tpl:action:act_sigma#kind@entity:tpl_action.
+tpl:action:act_sigma#class@value:sigma.
+tpl:proc:p0#kind@entity:tpl_process.
+tpl:proc:p0#operator@value:nil.
+tpl:proc:p1#kind@entity:tpl_process.
+tpl:proc:p1#operator@value:nil.
+tpl:proc:p_visible#kind@entity:tpl_process.
+tpl:proc:p_visible#operator@value:prefix.
+tpl:proc:p_visible#action@tpl:action:act_a.
+tpl:proc:p_visible#next@tpl:proc:p0.
+tpl:proc:p_visible_b#kind@entity:tpl_process.
+tpl:proc:p_visible_b#operator@value:prefix.
+tpl:proc:p_visible_b#action@tpl:action:act_b.
+tpl:proc:p_visible_b#next@tpl:proc:p1.
+tpl:proc:p_tau_only#kind@entity:tpl_process.
+tpl:proc:p_tau_only#operator@value:prefix.
+tpl:proc:p_tau_only#action@tpl:action:act_tau.
+tpl:proc:p_tau_only#next@tpl:proc:p0.
+tpl:proc:p_sigma_pref#kind@entity:tpl_process.
+tpl:proc:p_sigma_pref#operator@value:prefix.
+tpl:proc:p_sigma_pref#action@tpl:action:act_sigma.
+tpl:proc:p_sigma_pref#next@tpl:proc:p1.
+tpl:proc:p_omega#kind@entity:tpl_process.
+tpl:proc:p_omega#operator@value:omega.
+tpl:proc:p_omega#blocks_tick@value:true.
+tpl:proc:p_insistent#kind@entity:tpl_process.
+tpl:proc:p_insistent#operator@value:choice.
+tpl:proc:p_insistent#left@tpl:proc:p_visible.
+tpl:proc:p_insistent#right@tpl:proc:p_omega.
+tpl:proc:p_timeout_clean#kind@entity:tpl_process.
+tpl:proc:p_timeout_clean#operator@value:timeout.
+tpl:proc:p_timeout_clean#guard@tpl:proc:p_visible.
+tpl:proc:p_timeout_clean#on_tick@tpl:proc:p1.
+tpl:proc:p_timeout_blocked#kind@entity:tpl_process.
+tpl:proc:p_timeout_blocked#operator@value:timeout.
+tpl:proc:p_timeout_blocked#guard@tpl:proc:p_insistent.
+tpl:proc:p_timeout_blocked#on_tick@tpl:proc:p1.
+tpl:proc:p_parallel_clean#kind@entity:tpl_process.
+tpl:proc:p_parallel_clean#operator@value:parallel.
+tpl:proc:p_parallel_clean#left@tpl:proc:p_visible.
+tpl:proc:p_parallel_clean#right@tpl:proc:p_visible_b.
+tpl:proc:p_parallel_blocked#kind@entity:tpl_process.
+tpl:proc:p_parallel_blocked#operator@value:parallel.
+tpl:proc:p_parallel_blocked#left@tpl:proc:p_visible.
+tpl:proc:p_parallel_blocked#right@tpl:proc:p_insistent.
+tpl:proc:p_parallel_tau_blocked#kind@entity:tpl_process.
+tpl:proc:p_parallel_tau_blocked#operator@value:parallel.
+tpl:proc:p_parallel_tau_blocked#left@tpl:proc:p_visible.
+tpl:proc:p_parallel_tau_blocked#right@tpl:proc:p_tau_only.
+tpl:proc:p_rec_loop#kind@entity:tpl_process.
+tpl:proc:p_rec_loop#operator@value:rec.
+tpl:proc:p_rec_loop#label@value:loop_x.
+tpl:proc:p_rec_loop#body@tpl:proc:p_visible.
+tpl:proc:p_var_loop_x#kind@entity:tpl_process.
+tpl:proc:p_var_loop_x#operator@value:var.
+tpl:proc:p_var_loop_x#var_label@value:loop_x.
+tpl:proc:p_restrict_visible#kind@entity:tpl_process.
+tpl:proc:p_restrict_visible#operator@value:restrict.
+tpl:proc:p_restrict_visible#inner@tpl:proc:p_visible.
+tpl:proc:p_restrict_visible#restricted_action@tpl:action:act_a.
+QUERY patient_processes:
+FIND ?p WHERE ?p#patient@value:true.
+QUERY sigma_enabled_processes:
+FIND ?p WHERE ?p#can_sigma@value:true.
+QUERY blocked_processes:
+FIND ?p WHERE ?p#blocks_tick@value:true.
+QUERY timeout_tick_enabled:
+FIND ?p WHERE ?p#tick_branch_enabled@value:true.
+QUERY parallel_tick_enabled:
+FIND ?p WHERE ?p#operator@value:parallel AND ?p#can_sigma@value:true.
+QUERY recursive_var_resolutions:
+FIND ?v WHERE ?v#operator@value:var AND ?v#can_sigma@value:true.

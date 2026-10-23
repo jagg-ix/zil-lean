@@ -652,15 +652,41 @@ model that exercises it. Run the full qualification from this directory:
 ./tools/macro_extension_matrix.sh
 ```
 
-Each row must pass exact Clojure/native expansion parity, native ZIL compilation, and
-typechecking of the generated Lean module. Add a row when introducing a macro library or
-extension; keep distinct legacy `lib/` variants represented even when a similarly named
-`libsets/` copy exists.
+The check needs no Clojure. Each row's native expansion must equal its reviewed golden in
+`spec/macro-extension-golden/`, the native frontend must compile the model, and the generated
+Lean module must typecheck. A library column of `-` marks a model that defines its macros
+inline. After an intended change to a library or the expander, run
+`./tools/macro_extension_matrix.sh --update` and review the golden diff. Add a row when
+introducing a macro library or extension; keep distinct legacy `lib/` variants represented even
+when a similarly named `libsets/` copy exists.
+
+`./tools/macro_extension_matrix.sh --legacy-parity` keeps the old check, which needs Clojure
+and requires the legacy and native expansions to be identical (rows with library `-` are
+skipped). `scripts/check-clojure-boundary.sh` lists the scripts that still call Clojure and
+refuses any new or changed call, so that list can only shrink.
 
 The Souffle compatibility macros build on the existing Clojure `zil.bridge.souffle`
 runtime; they do not replace it. See `spec/souffle-macro-compat-v1.md` and
 `examples/souffle-transitive-closure.zc` for the currently qualified binary-symbol
 relation subset and its parity test.
+
+## Extension libraries
+
+Opt-in macro libraries, each selected with `--lib` and qualified by the macro matrix. None of them needs Clojure.
+
+| Library | Adds | Example |
+|---|---|---|
+| `libsets/process-algebra` | temporal process prefixes with internal and external sides, pi-calculus hand-offs, vector clocks with required orders, and a discrete clock with windows | `examples/process-algebra-checks.zc` |
+| `libsets/proof-evidence` | `LEAN_PROOF` and `LEAN_LEMMA_PROOF`, the kernel-evidence form `bin/zil theorem-audit` reads | `examples/proof-evidence/contracts.zc` |
+| `libsets/discovery-api` | rules and queries over the facts of a Discovery-style API description (methods, schemas, fields, references) | `examples/discovery-api/sample-model.zc` |
+
+The AWS, TLM, Petri-net, namespace, theorem, interop and other libraries are listed in
+`spec/macro-extension-matrix.tsv`. `scripts/test-extension-libraries.sh` checks the row counts the
+three libraries above must give on their examples, and that the theorem audit refuses a high
+theorem without evidence.
+
+Keyword values written with a leading colon, such as `move=:N`, read as the name without the
+colon, so the Petri-net layer in `examples/petrinet-nd-macro-layer.zc` compiles natively.
 
 ## Repository layout
 

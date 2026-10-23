@@ -1,6 +1,7 @@
-# name<TAB>library directory<TAB>model source
-# Not listed yet: libsets/diff-patch (its queries continue over several lines, which the native parser does not accept).
-# Add a row when it passes.
+# name<TAB>library<TAB>model source
+# library: a directory of macro files, "@file" for one file (composed alone), or "-" when the model defines its macros itself.
+# Not listed yet: libsets/diff-patch. The native parser now reads its queries, but its rules spell variables as typed names
+# (patchset:?ps), which both frontends read as a literal node, so they never fire on real data. The library needs a redesign.
 aws-model	libsets/aws-model	examples/aws-model-extension-with-icons.zc
 aws-model-legacy-lib	@lib/aws-model-macros.zc	examples/aws-model-extension-with-icons.zc
 aws-namespace	libsets/aws-namespace	examples/aws-namespace-compat.zc
@@ -23,3 +24,14 @@ interop	@lib/interop-macros.zc	examples/interop-json-yaml-csv.zc
 needs-provider	@lib/needs-provider-macros.zc	examples/needs-provider-macro-compat.zc
 tlm	@lib/tlm-macros.zc	examples/tlm-macro-compat.zc
 souffle-compat	libsets/souffle-compat	examples/souffle-transitive-closure.zc
+petri-net-nd-inline	-	examples/petrinet-nd-macro-layer.zc
+tpl-inline	-	examples/tpl-macro-layer.zc
+pi-calculus-vc-inline	-	examples/pi-calculus-vc-macro-layer.zc
+temporal-pi-inline	-	examples/temporal-pi-quickstart.zc
+domain-library-inline	-	examples/domain-library-macros.zc
+tlm-domain-inline	-	examples/tlm-domain-macros.zc
+needs-provider-inline	-	examples/needs-provider-macro-layer.zc
+needs-criteria-inline	-	examples/dune-needs-criteria-providers.zc
+process-algebra	libsets/process-algebra	examples/process-algebra-checks.zc
+proof-evidence	libsets/proof-evidence	examples/proof-evidence/contracts.zc
+discovery-api	libsets/discovery-api	examples/discovery-api/sample-model.zc

@@ -1,0 +1,16 @@
+MODULE proof.evidence.example.
+
+// Run with: bin/zil theorem-audit examples/proof-evidence/contracts.zc
+// Expand and compile with: bin/zil expand examples/proof-evidence/contracts.zc --lib libsets/proof-evidence
+
+assumption:finiteInput#kind@entity:assumption.
+lemma:normalizationClosed#kind@entity:lemma.
+
+theorem:normalizedSound#kind@entity:theorem.
+theorem:normalizedSound#requires_assumption@assumption:finiteInput.
+theorem:normalizedSound#requires_lemma@lemma:normalizationClosed.
+theorem:normalizedSound#ensures@guarantee:normalizedOutputSafe.
+theorem:normalizedSound#criticality@value:high.
+
+USE LEAN_PROOF(normalizedSound, Library.Normalizer.normalized_sound).
+USE LEAN_LEMMA_PROOF(normalizationClosed, Library.Normalizer.normalization_closed).
