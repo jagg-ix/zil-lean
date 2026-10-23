@@ -30,7 +30,7 @@ fi
 binary="$root/.lake/build/bin/zilControl"
 # Every call has a deadline, so a hung worker fails the gate instead of stalling it.
 control() { timeout 120 "$binary" "$@"; }
-payload="test/fixtures/control-store/action-consumed.edn"
+payload="test/fixtures/control-store/action-consumed.json"
 decision="sha256:86ae35d58a6aa3b5742df94ef9d7162219f0106a911ae1954c1f0604aaec805d"
 stream="stream:gate"
 
@@ -44,6 +44,23 @@ else fail "a store written by the earlier Clojure implementation verifies"; fi
 if out="$(control store project "$work/old.db" stream:diff)" && [[ "$(json_field snapshot.existing <<<"$out")" == true ]]; then
   pass "projecting it finds its snapshot stored with identical bytes"
 else fail "projecting it finds its snapshot stored with identical bytes"; fi
+
+# 1b. a payload written in EDN (the notation the earlier implementation used) records the same batch as its JSON form
+cat >"$work/payload.edn" <<'EDN'
+{:workflow_id "workflow:release"
+ :request_id "request:consume"
+ :base_revision "rev:42"
+ :context_bundle_id "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ :plugin_id "-"
+ :token_id "token:release"
+ :action_id "action:release"
+ :lean_status "consumed"
+ :observed_outputs [{:artifact "artifact:release" :hash "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}]}
+EDN
+edn_batch="$(control store record "$work/edn.db" stream:edn 0 agent:one action-consumed "$decision" "$work/payload.edn" | json_field receipt.batch_sha256)"
+json_batch="$(control store record "$work/json.db" stream:edn 0 agent:one action-consumed "$decision" "$payload" | json_field receipt.batch_sha256)"
+if [[ -n "$edn_batch" && "$edn_batch" == "$json_batch" ]]; then pass "an EDN payload records the same batch as its JSON form"
+else fail "an EDN payload records the same batch as its JSON form ($edn_batch vs $json_batch)"; fi
 
 # 2. appends and the revision compare-and-swap
 db="$work/new.db"

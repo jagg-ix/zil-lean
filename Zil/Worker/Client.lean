@@ -1,6 +1,7 @@
 import Zil.Exchange.Protocol
 import Zil.Crypto.Sha256
 import Zil.Json.Ordered
+import Zil.Process.Run
 
 /-!
 # Exchange worker client
@@ -155,8 +156,9 @@ def closeInput (worker : Worker) : IO Unit := worker.stdin.set none
 /-- Read one line within `timeoutMs`; on timeout the worker is killed and the call fails. -/
 private def readLine (worker : Worker) (timeoutMs : Nat) : IO String := do
   let reader ← IO.asTask (prio := .dedicated) worker.child.stdout.getLine
-  let timer ← IO.asTask (prio := .dedicated) (do IO.sleep timeoutMs.toUInt32; pure "")
-  let _ ← IO.waitAny [reader, timer]
+  let deadline ← Zil.Process.timer timeoutMs ""
+  let _ ← IO.waitAny [reader, deadline]
+  IO.cancel deadline
   if (← IO.hasFinished reader) then
     match reader.get with
     | .ok line => return line

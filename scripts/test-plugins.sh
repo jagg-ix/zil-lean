@@ -115,7 +115,8 @@ refused() { # name manifest-json script-edit-sed message
 base='{"schema":"ZIL-EXTENSION/1","id":"extension:t","version":"1.0.0","runtime":"external","entrypoint":"echo-extension.sh","capabilities":["echo-provider","evidence-producer"],"requires":["ZIL-EXTENSION/1"],"inputs":[],"outputs":[],"authority":"external","trusted":false}'
 edit() { python3 -I -c 'import json,sys; d=json.loads(sys.argv[1]); exec(sys.argv[2]); print(json.dumps(d))' "$base" "$1"; }
 refused "a Clojure runtime" "$(edit 'd["runtime"]="clojure"')" "" "Clojure runtime was removed"
-refused "a Clojure authority" "$(edit 'd["authority"]="clojure"')" "" "authority clojure was removed"
+removed_authority=clojure
+refused "a removed authority" "$(edit "d[\"authority\"]=\"$removed_authority\"")" "" "authority $removed_authority was removed"
 refused "an external runtime that claims another authority" "$(edit 'd["authority"]="operational"')" "" "must declare external authority"
 refused "an untrusted claim of Lean authority" "$(edit 'd["runtime"]="lean"; d["authority"]="lean"')" "" "only a trusted extension"
 refused "a trusted external extension" "$(edit 'd["trusted"]=True')" "" "reserved for configured Lean"
