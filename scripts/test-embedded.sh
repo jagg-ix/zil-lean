@@ -3,6 +3,8 @@
 #
 #   scripts/test-embedded.sh [--skip-build] [--no-typecheck]
 #
+# --skip-build expects `lake build` to have run: the typecheck step imports the library.
+#
 # The sources in test/fixtures/embedded/cases and the expected outputs in test/fixtures/embedded/expected were
 # produced by the earlier Clojure implementation: scan facts and snapshots must match byte for byte, drift reports and
 # compile manifests must match as data, and the generated Lean modules must match byte for byte. The host file for the
@@ -20,7 +22,8 @@ for arg in "$@"; do
     *) echo "usage: $0 [--skip-build] [--no-typecheck]" >&2; exit 2 ;;
   esac
 done
-[[ "$skip_build" -eq 1 ]] || lake build zilEmbedded >/dev/null
+# the typecheck step imports the Zil library, so build it with the tool
+[[ "$skip_build" -eq 1 ]] || lake build Zil zilEmbedded >/dev/null
 embedded="$root/.lake/build/bin/zilEmbedded"
 fixtures="$root/test/fixtures/embedded"
 work="$(mktemp -d "${TMPDIR:-/tmp}/embedded.XXXXXX")"
