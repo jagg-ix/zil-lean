@@ -701,3 +701,8 @@ bin/zil test --profile lean
 ```
 
 The Lean toolchain is pinned to `leanprover/lean4:v4.31.0`.
+
+## License
+
+[Apache License 2.0](LICENSE). A contribution is accepted under the same terms (section 5 of the license). The macro libraries that used
+to live here are in [zil-lib](https://github.com/jagg-ix/zil-lib), under the same license.
