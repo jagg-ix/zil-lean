@@ -1,0 +1,5 @@
+MODULE edge.cases.v2.
+
+LTS_ATOM http_server2fa [states=#{Idle waitingForInput api_v2 apiV2 class end HTTPServer}, initial=Idle, transitions={[Idle ReadRequest] [waitingForInput], [waitingForInput timeout] [Idle log_timeout], [Idle go_class] [class], [class done] [end], [HTTPServer start] [Idle], [api_v2 up] [apiV2 emit]}].
+
+LTS_ATOM sshTunnelFSM [states=#{open closed}, initial=open, transitions={[open close] [closed], [closed open] [open]}].

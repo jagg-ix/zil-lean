@@ -1,0 +1,60 @@
+MODULE hcl.dir.
+
+PROVIDER aws [source="hashicorp/aws", version="~> 5.0", language=hcl, engine=opentofu].
+PROVIDER local [source="hashicorp/local", language=hcl, engine=opentofu].
+PROVIDER random [source="hashicorp/random", language=hcl, engine=opentofu].
+
+provider:aws#configured_in@hcl:file:a_tf.
+provider:aws#attr@value:present [key=value:big, raw="1.23456785E7"].
+provider:aws#attr@value:present [key=value:max_retries, raw="5"].
+provider:aws#attr@value:present [key=value:profile, raw="dev"].
+provider:aws#attr@value:present [key=value:ratio, raw="1.5"].
+provider:aws#attr@value:present [key=value:region, raw="us-east-1"].
+provider:aws#attr@value:present [key=value:skip_x, raw="true"].
+provider:aws#attr@value:present [key=value:tiny, raw="5.0E-4"].
+provider:local#configured_in@hcl:file:c_hcl.
+hcl_resource:aws_instance:web#kind@entity:hcl_resource.
+hcl_resource:aws_instance:web#resource_type@value:aws_instance.
+hcl_resource:aws_instance:web#resource_name@value:web.
+hcl_resource:aws_instance:web#declared_in@hcl:file:a_tf.
+hcl_resource:aws_instance:web#provider@provider:aws.
+hcl_resource:aws_instance:web#attr@value:present [key=value:ami, raw="ami-0abc"].
+hcl_resource:aws_instance:web#attr@value:present [key=value:count, raw="2"].
+hcl_resource:aws_instance:web#attr@value:present [key=value:instance_type, raw="t3.micro"].
+hcl_resource:aws_instance:web#attr@value:present [key=value:provider, raw="aws.west"].
+hcl_resource:aws_instance:web#attr@value:present [key=value:user_data, raw="line1\\nline2 \\\"quoted\\\" back\\\\slash \\$dollar"].
+hcl_resource:aws_s3_bucket:b#kind@entity:hcl_resource.
+hcl_resource:aws_s3_bucket:b#resource_type@value:aws_s3_bucket.
+hcl_resource:aws_s3_bucket:b#resource_name@value:b.
+hcl_resource:aws_s3_bucket:b#declared_in@hcl:file:b_tf.
+hcl_resource:aws_s3_bucket:b#provider@provider:aws.
+hcl_resource:aws_s3_bucket:b#attr@value:present [key=value:bucket, raw="my-bucket"].
+hcl_data:aws_ami:latest#kind@entity:hcl_data.
+hcl_data:aws_ami:latest#data_type@value:aws_ami.
+hcl_data:aws_ami:latest#data_name@value:latest.
+hcl_data:aws_ami:latest#declared_in@hcl:file:a_tf.
+hcl_data:aws_ami:latest#provider@provider:aws.
+hcl_data:aws_ami:latest#attr@value:present [key=value:most_recent, raw="true"].
+hcl_data:aws_ami:latest#attr@value:present [key=value:owners, raw="[\"amazon\"]"].
+hcl_module:network#kind@entity:hcl_module.
+hcl_module:network#module_name@value:network.
+hcl_module:network#declared_in@hcl:file:a_tf.
+hcl_module:network#attr@value:present [key=value:cidr, raw="10.0.0.0/16"].
+hcl_module:network#attr@value:present [key=value:source, raw="./modules/network"].
+hcl_variable:region#kind@entity:hcl_variable.
+hcl_variable:region#variable_name@value:region.
+hcl_variable:region#declared_in@hcl:file:a_tf.
+hcl_variable:region#attr@value:present [key=value:default, raw="us-east-1"].
+hcl_variable:region#attr@value:present [key=value:type, raw="string"].
+hcl_variable:v#kind@entity:hcl_variable.
+hcl_variable:v#variable_name@value:v.
+hcl_variable:v#declared_in@hcl:file:b_tf.
+hcl_output:ip#kind@entity:hcl_output.
+hcl_output:ip#output_name@value:ip.
+hcl_output:ip#declared_in@hcl:file:a_tf.
+hcl_output:ip#attr@value:present [key=value:description, raw="the ip"].
+hcl_output:ip#attr@value:present [key=value:value, raw="aws_instance.web.public_ip"].
+hcl_output:o#kind@entity:hcl_output.
+hcl_output:o#output_name@value:o.
+hcl_output:o#declared_in@hcl:file:b_tf.
+hcl_output:o#attr@value:present [key=value:value, raw="1"].

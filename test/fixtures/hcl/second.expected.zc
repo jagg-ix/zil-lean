@@ -1,0 +1,17 @@
+MODULE hcl.import.
+
+PROVIDER aws [source="hashicorp/aws", language=hcl, engine=opentofu].
+
+hcl_resource:aws_s3_bucket:b#kind@entity:hcl_resource.
+hcl_resource:aws_s3_bucket:b#resource_type@value:aws_s3_bucket.
+hcl_resource:aws_s3_bucket:b#resource_name@value:b.
+hcl_resource:aws_s3_bucket:b#declared_in@hcl:file:main_tf.
+hcl_resource:aws_s3_bucket:b#provider@provider:aws.
+hcl_resource:aws_s3_bucket:b#attr@value:present [key=value:bucket, raw="my-bucket"].
+hcl_variable:v#kind@entity:hcl_variable.
+hcl_variable:v#variable_name@value:v.
+hcl_variable:v#declared_in@hcl:file:main_tf.
+hcl_output:o#kind@entity:hcl_output.
+hcl_output:o#output_name@value:o.
+hcl_output:o#declared_in@hcl:file:main_tf.
+hcl_output:o#attr@value:present [key=value:value, raw="1"].

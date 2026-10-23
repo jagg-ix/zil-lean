@@ -59,3 +59,7 @@ lean_exe zilEvaluate where
 /-- Extension discovery, inspection, invocation and evidence production. -/
 lean_exe zilPlugin where
   root := `Zil.CLI.PluginMain
+
+/-- Importers and exporters between ZIL and other formats. -/
+lean_exe zilInterop where
+  root := `Zil.CLI.InteropMain

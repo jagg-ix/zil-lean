@@ -1,0 +1,33 @@
+MODULE hcl.test.edge2.
+
+PROVIDER google [source="hashicorp/google", language=hcl, engine=opentofu].
+PROVIDER kubernetes [source="hashicorp/kubernetes", language=hcl, engine=opentofu].
+PROVIDER x [source="hashicorp/x", language=hcl, engine=opentofu].
+
+provider:google#configured_in@hcl:file:main_tf.
+provider:google#attr@value:present [key=value:project, raw="p"].
+hcl_resource:google_compute_instance:vm-1#kind@entity:hcl_resource.
+hcl_resource:google_compute_instance:vm-1#resource_type@value:google_compute_instance.
+hcl_resource:google_compute_instance:vm-1#resource_name@value:vm-1.
+hcl_resource:google_compute_instance:vm-1#declared_in@hcl:file:main_tf.
+hcl_resource:google_compute_instance:vm-1#provider@provider:google.
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:empty, raw=""].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:flag, raw="true"].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:hash, raw="x # not a comment"].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:name, raw="vm-1"].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:neg, raw="-3"].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:negf, raw="-0.5"].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:note, raw="a // not a comment"].
+hcl_resource:google_compute_instance:vm-1#attr@value:present [key=value:zone, raw="${var.zone}-a"].
+hcl_resource:kubernetes_namespace:ns#kind@entity:hcl_resource.
+hcl_resource:kubernetes_namespace:ns#resource_type@value:kubernetes_namespace.
+hcl_resource:kubernetes_namespace:ns#resource_name@value:ns.
+hcl_resource:kubernetes_namespace:ns#declared_in@hcl:file:main_tf.
+hcl_resource:kubernetes_namespace:ns#provider@provider:kubernetes.
+hcl_resource:x:y#kind@entity:hcl_resource.
+hcl_resource:x:y#resource_type@value:x.
+hcl_resource:x:y#resource_name@value:y.
+hcl_resource:x:y#declared_in@hcl:file:main_tf.
+hcl_resource:x:y#provider@provider:x.
+hcl_resource:x:y#attr@value:present [key=value:a, raw="<<EOT"].
+hcl_resource:x:y#attr@value:present [key=value:b, raw="after"].
