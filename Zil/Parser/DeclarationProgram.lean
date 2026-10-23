@@ -1,5 +1,6 @@
 import Zil.Parser.MacroProgram
 import Zil.Parser.Declaration
+import Zil.Parser.Continuation
 import Zil.Syntax.Declaration
 
 namespace Zil.Parser.DeclarationProgram
@@ -28,7 +29,10 @@ private def parseModuleOnly
 rules, and queries. -/
 def parseText (text : String) (limit : Nat := 10000) : Except ParseError Zil.Program := do
   let preprocessed ← Zil.Parser.Macro.preprocess text limit
-  let (declarations, payload) ← Zil.Parser.Declaration.collect preprocessed.lines
+  -- Statements written over several physical lines become one logical line before declarations are collected.
+  let logicalLines := (Zil.Parser.Continuation.joinContinuations (preprocessed.lines.map (·.text))).map
+    fun (first, joinedText) => { preprocessed.lines[first]! with text := joinedText }
+  let (declarations, payload) ← Zil.Parser.Declaration.collect logicalLines
   let semantic ←
     if payload.all (fun line => line.text.trim.startsWith "MODULE ") then
       parseModuleOnly payload

@@ -1,6 +1,7 @@
 import Zil.Core.Program
 import Zil.Parser.Tuple
 import Zil.Engine.Query
+import Zil.Parser.Continuation
 
 open Lean (Name)
 
@@ -278,7 +279,10 @@ private partial def parseLines
 
 /-- Parse a complete, safe, stratifiable source unit. -/
 def parseText (text : String) : Except ParseError Zil.Program := do
-  let program ← parseLines (significantLines text) 0 none #[] #[] #[]
+  let lines := significantLines text
+  let joined := (Zil.Parser.Continuation.joinContinuations (lines.map (·.text))).map fun (first, joinedText) =>
+    { lines[first]! with text := joinedText }
+  let program ← parseLines joined 0 none #[] #[] #[]
   unless program.valid do
     throw { line := 1, message := "program contains an unsafe rule or query" }
   match Zil.Engine.stratify program.allRules with
