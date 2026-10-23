@@ -97,122 +97,6 @@ task ───────── blockedBy ────▶ issue
 claim ──────── supportedBy ──▶ document
 ```
 
-### Datalog-style rules
-
-Table 1 presents relation data. Rules describe how additional relations follow from that data. ZIL uses Horn rules, the rule form commonly used by Datalog systems.
-
-For example:
-
-```text
-when a group can view a document
-and a user belongs to that group,
-the user can view the document
-```
-
-In ZIL Lean:
-
-```lean
-zil_theorem_rule groupViewer
-  {document group user : Zil.Node}
-  (hViewer : document ⟶[viewer] group)
-  (hMember : group ⟶[member] user)
-  : document ⟶[viewer] user
-```
-
-Given:
-
-```text
-doc.readme ─────────── viewer ──▶ group.engineering
-group.engineering ──── member ──▶ user.u11
-```
-
-applying the rule repeatedly (forward chaining) derives:
-
-```text
-doc.readme ── viewer ──▶ user.u11
-```
-
-The same rule structure can derive project relationships, such as requirement coverage and change impact.
-
-
-## A project example
-
-Consider a project containing a parser
-
-```lean
-import Zil
-
-zil_fact
-  node(lean.Parser.parse)
-    ⟶[implements]
-  node(requirement.parseInput)
-
-zil_fact
-  node(lean.Normalize.normalize)
-    ⟶[dependsOn]
-  node(lean.Parser.parse)
-
-zil_fact
-  node(lean.Normalize.normalized_sound)
-    ⟶[validates]
-  node(lean.Normalize.normalize)
-```
-
-These facts form a relationship graph:
-
-```text
-requirement.parseInput
-          ▲
-          │ implements
-lean.Parser.parse
-          ▲
-          │ dependsOn
-lean.Normalize.normalize
-          ▲
-          │ validates
-lean.Normalize.normalized_sound
-```
-
-Lean checks the parser, normalizer, theorem statement, and proof. ZIL stores their project roles and connections.
-
-A query can ask:
-
-- which declaration implements `requirement.parseInput`;
-- which components depend on the parser;
-- which transformations have a validation theorem;
-- which downstream declarations should be reviewed after a change.
-
-## Rules derive project relationships
-
-A rule can derive direct change impact:
-
-```lean
-zil_theorem_rule propagateImpact
-  {changed dependent : Zil.Node}
-  (hDepends : dependent ⟶[dependsOn] changed)
-  : changed ⟶[affects] dependent
-```
-
-From the parser dependency, the engine adds:
-
-```text
-lean.Parser.parse
-  ── affects ──▶
-lean.Normalize.normalize
-```
-
-A second rule continues the relationship through several levels:
-
-```lean
-zil_theorem_rule propagateTransitiveImpact
-  {source middle target : Zil.Node}
-  (hFirst : source ⟶[affects] middle)
-  (hSecond : target ⟶[dependsOn] middle)
-  : source ⟶[affects] target
-```
-
-Local dependency facts can therefore support a repository-wide review query.
-
 ## Lean and ZIL in one project
 
 Lean verifies terms, types, definitions, computation, theorem statements, and proofs.
@@ -481,49 +365,6 @@ Lean checks definitions, theorem statements and proofs, and ZIL records how thos
 Claims that need a proof are audited by `bin/zil theorem-audit`, which fails a high-criticality theorem that has no proof evidence
 (`spec/theorem-audit-v1.md`), and `bin/zil proof-obligations` lists the proof obligations for each prover.
 
-## Native CLI and data exchange
-
-The native `zil` executable reads `.zc` models and `ZILR/1` revision logs:
-
-```bash
-bin/zil expand examples/native-cli/formalization-claims.zc -
-bin/zil query-ci examples/native-cli/formalization-claims.zc
-bin/zil revision-summary examples/revision/release.zilr
-bin/zil snapshot examples/revision/release.zilr 2 -
-```
-
-Supported operations include `compile`, `expand`, `trace`, `query-ci`, `explain-query`, `explain-authorization`, `dependency-graph`, `impact`, `authorize`, `revision-summary`, `snapshot`, and `causal-check` (`bin/zil --help` lists them all). See `examples/native-cli/README.md` for the walkthrough.
-
-Relations and rules have deterministic text codecs in `Zil.Codec`:
-
-```lean
-Zil.Codec.encodeRelation
-Zil.Codec.decodeRelation
-Zil.Codec.encodeRule
-Zil.Codec.decodeRule
-```
-
-`ZILR/1` revision logs store numbered revisions with a causal order (`spec/revision-causal-v0.1.md`); `bin/zil snapshot` replays a log up
-to a revision.
-
-These interfaces let external tools and assistants consume the same relational state as the Lean implementation.
-
-### Operations and exchange tools
-
-Each command is a Lean executable behind `bin/zil`. Every one has a specification and a test script, and none of them needs Clojure.
-
-| Command | What it does | Specification | Test script |
-|---|---|---|---|
-| `control` | formal control plane: exchange with the worker, hash-chained control events and receipts in SQLite | `spec/control-event-store-v1.md`, `spec/exchange-protocol-v1.md` | `scripts/test-control-plane.sh` |
-| `plugin` | extension registry for `ZIL-EXTENSION/1` manifests, with quarantine and an external-command adapter | `spec/extension-manifest-v1.md` | `scripts/test-plugins.sh` |
-| `evaluate-runtime` | scores where a component is best implemented, with exact arithmetic | `spec/runtime-evaluation-v1.md` | `scripts/test-evaluation.sh` |
-| `release-attest` | binds a release request to its evidence | `spec/release-attestation-v1.md` | `scripts/test-release-attestation.sh` |
-| `import-hcl`, `export-tla`, `export-lean` | Terraform/OpenTofu to ZIL; `LTS_ATOM` to TLA+ and to Lean | `spec/interop-v1.md` | `scripts/test-interop.sh` |
-| `embedded-scan`, `embedded-snapshot`, `embedded-drift-check`, `embedded-native` | ZIL blocks written in comments of Lean, Python, Clojure, Rust and Markdown sources | `spec/embedded-blocks-v1.md` | `scripts/test-embedded.sh` |
-| `ingest`, `import-data`, `convert-data` | `DATASOURCE` declarations to facts, causal edges and a revision log; data files to and from JSON, EDN, text, CSV, a YAML subset and key=value | `spec/datasource-ingest-v1.md` | `scripts/test-ingest.sh` |
-
-Their expected outputs were produced by the earlier Clojure implementation and are compared byte for byte, or as data. The test scripts
-run only the Lean tools. The control store needs `sqlite3`, the test scripts need `python3`, and the REST adapter needs `curl`.
 
 ## Use cases
 
@@ -549,25 +390,6 @@ removed. Its control plane, plugin loader, release attestation, placement evalua
 TLA+ and LTS tools were rewritten in Lean (see *Operations and exchange tools*), and `spec/clojure-removal.md` records where each part
 went. `scripts/check-no-clojure.sh` keeps Clojure out of the repository.
 
-### Testing the macro libraries
-
-`spec/macro-extension-matrix.tsv` records each macro library of `lib/` (and each model that defines its macros inline) with a
-representative model that exercises it. Run the whole test from the repository root:
-
-```bash
-./tools/macro_extension_matrix.sh
-```
-
-The test runs on the native engine alone. For each row, the native expansion must equal the reviewed golden file in
-`spec/macro-extension-golden/`, the native frontend must compile the model, and the generated Lean module must type-check. A library
-column of `-` marks a model that defines its macros inline. After an intended change to a library or the expander, run
-`./tools/macro_extension_matrix.sh --update` and review the diff of the golden files. Add a row when you introduce a macro library or
-extension to `lib/`.
-
-`bin/zil corpus` (`scripts/check-corpus.sh`) compiles every `.zc` file under `lib/` and `examples/` alone and compares the outcome with
-`spec/corpus-status.tsv`, so any change in what compiles shows up in code review. A macro file, or a model that needs its library, is
-rejected when compiled alone and is recorded as such; the matrix test covers those together with their libraries.
-
 ## Macro libraries
 
 The macro engine and the nearest-`lib/` rule are part of this repository. The opt-in macro libraries (`libsets/`: model substrate,
@@ -584,36 +406,7 @@ The last commit of this repository that still holds `libsets/` is tagged `last-w
 A keyword value written with a leading colon, such as `move=:N`, is read as the name without the colon, so the Petri-net layer in
 `examples/petrinet-nd-macro-layer.zc` compiles natively.
 
-## Repository layout
 
-```text
-Zil/                    native Lean library
-Zil/Core/               terms, relations, rules, queries, declarations, macros and revisions
-Zil/Datalog/            the Datalog layer: environment queries, file contracts, linting and grounding
-Zil/Engine/             rule evaluation and the derivation (provenance) of derived facts
-Zil/Horn/               first-order terms, unification, SLD resolution, and parsing
-Zil/Parser/, Syntax/    the .zc parser and the Lean syntax frontends
-Zil/Codec/, Exchange/   text codecs and the exchange protocol
-lib/                    macro libraries that ship with the core
-examples/               example models; examples/lean/ is a progressive tutorial in Lean
-spec/                   specifications, golden files and the corpus status
-bin/ scripts/ tools/    commands, test scripts and helper tools (no Clojure)
-```
-
-## Validation
-
-The expected validation is:
-
-```bash
-lake build
-lake exe zilLeanTests
-bin/zil test --profile lean
-```
-
-`bin/zil test --profile lean` includes a check that the commands in the Quick start print the output shown there
-(`tools/check_readme_examples.py`), so the examples in this README cannot drift from the tools.
-
-The Lean toolchain is pinned to `leanprover/lean4:v4.31.0`.
 
 ## License
 
