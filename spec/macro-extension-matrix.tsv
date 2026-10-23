@@ -1,7 +1,7 @@
 # name<TAB>library directory<TAB>model source
-# Not listed yet: libsets/diff-patch (its queries continue over several lines, which the native parser does not accept),
-# libsets/config-declarative (its models use a quoted string, such as a URL, as a term, which the native parser does not accept) and
-# lib/backend-formal-contract-macros.zc (the native engine rejects its run-level rules as not stratifiable). Add a row when they pass.
+# Not listed yet: libsets/diff-patch (its queries continue over several lines, which the native parser does not accept) and
+# libsets/config-declarative (its models use a quoted string, such as a URL, as a term, which the native parser does not accept).
+# Add a row when they pass.
 aws-model	libsets/aws-model	examples/aws-model-extension-with-icons.zc
 aws-model-legacy-lib	@lib/aws-model-macros.zc	examples/aws-model-extension-with-icons.zc
 aws-namespace	libsets/aws-namespace	examples/aws-namespace-compat.zc
@@ -17,6 +17,7 @@ category-theory	libsets/theorem-dsl-ci	examples/lean4-integration/category-theor
 theorem-dsl	libsets/theorem-dsl-ci	examples/theorem-dsl-incident.zc
 theorem-impact	libsets/theorem-dsl-ci	examples/theorem-impact-devops-sre.zc
 acl2-interop	@lib/acl2-interop-macros.zc	examples/acl2-proof-obligation-log.zc
+backend-formal-contract	@lib/backend-formal-contract-macros.zc	examples/backend-formal-contract-demo.zc
 incident-workflow	@lib/incident-workflow-macros.zc	examples/incident-workflow-tool-dsl-analysis.zc
 interop	@lib/interop-macros.zc	examples/interop-json-yaml-csv.zc
 needs-provider	@lib/needs-provider-macros.zc	examples/needs-provider-macro-compat.zc

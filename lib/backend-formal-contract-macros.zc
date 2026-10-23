@@ -452,19 +452,19 @@ IF ?o#run@?r
 THEN ?r#has_obligation@value:true.
 
 RULE bfc_run_has_broken:
-IF ?o#run@?r AND ?o#status@value:BROKEN
+IF ?o#run@?r AND ?o#is_broken@value:true
 THEN ?r#has_broken@value:true.
 
 RULE bfc_run_has_conditional:
-IF ?o#run@?r AND ?o#status@value:CONDITIONAL
+IF ?o#run@?r AND ?o#is_conditional@value:true
 THEN ?r#has_conditional@value:true.
 
 RULE bfc_run_has_weak:
-IF ?o#run@?r AND ?o#status@value:WEAK
+IF ?o#run@?r AND ?o#is_weak@value:true
 THEN ?r#has_weak@value:true.
 
 RULE bfc_run_has_no_feedback:
-IF ?o#run@?r AND ?o#status@value:NO_FEEDBACK
+IF ?o#run@?r AND ?o#is_no_feedback@value:true
 THEN ?r#has_no_feedback@value:true.
 
 RULE bfc_run_status_broken:
