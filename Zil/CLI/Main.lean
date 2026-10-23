@@ -246,6 +246,11 @@ end Zil.CLI
 
 /-- Native ZIL command-line entry point. -/
 def main (args : List String) : IO UInt32 := do
+  -- `lake exe zil -- compile ...` passes the `--` through under Lake 5 (Lean 4.31) but not under
+  -- earlier Lake; the Clojure control plane launches it that way, so accept it either way.
+  let args := match args with
+    | "--" :: rest => rest
+    | other => other
   try
     match args with
     | ["compile", input] => Zil.CLI.compileFile input; pure 0
