@@ -17,8 +17,10 @@ traces, and the zil-lib repository checks them with `zilLib certify`.
 * For a program **without negation**, the semantics is the **least model**: the atoms that belong to every model. It is also the set of
   atoms with a derivation.
 * For a program **with negation**, a set `S` is a **stable model** when it is a model and every atom of `S` has a derivation in which the
-  negative literals are read against `S` (`IsStableModel`). A stratified program has exactly one stable model, the one that evaluation
-  stratum by stratum computes. That last statement is not proved here.
+  negative literals are read against `S` (`IsStableModel`). A stratified program has exactly one stable model (`stable_unique`, below).
+* The relations are **stratified** when they can be numbered so that no positive literal of a rule is above its head and every negative
+  literal is strictly below it (`Program.StrataValid`). `Program.strataValid` checks that the numbering the evaluator computes
+  (`Program.stratumOf`) has this property; the theorem holds for whatever numbering passes, so nothing is assumed about how it is computed.
 
 ## Theorems (`Zil.Datalog.LeastModel`)
 
@@ -28,6 +30,7 @@ traces, and the zil-lib repository checks them with `zilLib certify`.
 | `leastModel_of_sound_model` | a model that consists of atoms with derivations is inside every model and is exactly the set of atoms with a derivation (paper, Lemma 1 and the equivalence of the two semantics) |
 | `isStableModel_iff` | `S` is stable exactly when `S` is a model and `a ∈ S ↔ DerivesUnder program S a` |
 | `isStableModel_iff_sound` | for a program without negation, stable and least model coincide |
+| `stable_unique` (`Zil.Datalog.Stratified`) | if the strata respect the rules, two stable models contain the same atoms |
 
 ## Evaluation that says when it is incomplete (`Zil.Datalog.Checked`)
 
@@ -52,11 +55,13 @@ earlier nodes that its positive literals matched, in order. `checkCertificate pr
 1. every node is justified by nodes before it (the paper's ordered proof graph, which makes a circular argument impossible), the
    negative literals of the rule being absent from the set of all nodes;
 2. the facts of the program are among the nodes;
-3. no rule derives an atom outside the nodes (the paper's model check).
+3. no rule derives an atom outside the nodes (the paper's model check);
+4. the strata of the program respect its rules (`Program.strataValid`).
 
 | Theorem | Statement |
 |---|---|
 | `checkCertificate_sound` | if the check says yes, the atoms of the certificate are a stable model of the program |
+| `checkCertificate_unique` | every stable model of the program has the same atoms: the answer is the only one |
 | `checkCertificate_leastModel` | for a program without negation they are the least model, and an atom is among them exactly when it has a derivation |
 
 `certifyProgram` makes a certificate by running the checked evaluation and adding the facts round by round. It is not trusted: the
@@ -71,9 +76,11 @@ is not one, a missing fact, a missing rule consequence, an extra node), each of 
 * Lean's kernel, and the three axioms of classical logic (`propext`, `Classical.choice`, `Quot.sound`); a guard checks that no theorem of
   these files uses another axiom or `sorry`.
 
-Not proved: that `unify` agrees with a declarative notion of matching (the paper's section 3.1); that the stable model of a stratified
-program is unique and equals the stratum-by-stratum result; that the engine's native checker, `zilLib certify`, is correct (it is tested,
-not proved); the existence of a certificate for every entailed atom (`certifyProgram` is tested).
+Not proved: that `unify` agrees with a declarative notion of matching (the paper's section 3.1); that the result of the stratum-by-stratum
+evaluation, `deriveProgramChecked`, is the stable model (it is a model whose atoms were all derived, and a certificate for it settles the
+question for one program: `certifyProgram` followed by `checkCertificate`); that the engine's native checker, `zilLib certify`, is correct
+(it is tested, not proved; with `--verified` it also runs `checkCertificate` on a translation); the existence of a certificate for every
+entailed atom (`certifyProgram` is tested).
 
 ## Differences from the paper
 

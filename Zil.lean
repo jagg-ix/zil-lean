@@ -6,6 +6,7 @@ public import Zil.Datalog.Eval
 public import Zil.Datalog.Semantics
 public import Zil.Datalog.Model
 public import Zil.Datalog.LeastModel
+public import Zil.Datalog.Stratified
 public import Zil.Datalog.Checked
 public import Zil.Datalog.Certify
 public import Zil.Datalog.Environment

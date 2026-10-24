@@ -21,7 +21,7 @@ and 2.
 For a program with negation, a model-theoretic semantics has to say how a negative literal is read. `IsStableModel` reads it against the
 set itself, as the stable-model semantics of Gelfond and Lifschitz does: `S` is stable when `S` is closed under the rules and every
 fact of `S` has a finite derivation in which the negative literals are checked against `S`. A stratified program has exactly one stable
-model, the one that stratum-by-stratum evaluation computes; that part is not proved here.
+model; that is `stable_unique` in `Zil.Datalog.Stratified`.
 
 The matching of patterns is the evaluator's own (`unify`, `instantiate`), so these theorems say what the evaluator's rules mean, not
 that `unify` implements a particular notion of matching.

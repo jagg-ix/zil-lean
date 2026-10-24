@@ -85,8 +85,23 @@ private def negationCert : Certificate := certificate withNegation
 #guard !checkCertificate withNegation
   (negationCert.filter fun n => n.atom != { object := node 9, relation := "unreached", subject := .symbol "yes" })
 
+-- The strata of both programs respect their rules; a program that negates itself has none that do, and no certificate passes.
+#guard chain.strataValid
+#guard withNegation.strataValid
+private def selfNegating : Program where
+  facts := [edge 0 1]
+  rules := [
+    { name := "a", head := pattern "p" "x" "y", literals := [.positive (pattern "edge" "x" "y"), .negative (pattern "q" "x" "y")] },
+    { name := "b", head := pattern "q" "x" "y", literals := [.positive (pattern "edge" "x" "y"), .negative (pattern "p" "x" "y")] }]
+#guard !selfNegating.strataValid
+#guard !checkCertificate selfNegating [{ atom := edge 0 1 }, { atom := reach 0 1, origin := some ("a", [0]) }]
+
 -- The theorem, used: from the check to the semantics, for a concrete program. (`native_decide` runs the check.)
 example : IsStableModel chain (chainCert.map (·.atom)) := checkCertificate_sound (by native_decide)
+
+-- No other set of atoms is a stable model of the program with negation: the answer is unique.
+example (other : Interpretation) (h : IsStableModel withNegation other) : ∀ a, a ∈ other ↔ a ∈ negationCert.map (·.atom) :=
+  checkCertificate_unique (by native_decide) h
 
 example : ∀ a, a ∈ chainCert.map (·.atom) ↔ Derives chain a := by
   have hpos : chain.IsPositive := by
@@ -98,8 +113,8 @@ example : ∀ a, a ∈ chainCert.map (·.atom) ↔ Derives chain a := by
 -- The theorems use no axiom beyond the three of classical logic.
 open Lean Elab Command in
 run_cmd do
-  for theoremName in [``checkCertificate_sound, ``checkCertificate_leastModel, ``checkNodes_derives, ``nodeOk_derives,
-      ``matchChain_bodyMatches] do
+  for theoremName in [``checkCertificate_sound, ``checkCertificate_leastModel, ``checkCertificate_unique, ``stable_unique,
+      ``derivesUnder_mem_of_agree, ``checkNodes_derives, ``nodeOk_derives, ``matchChain_bodyMatches] do
     let axioms ← liftCoreM <| collectAxioms theoremName
     for ax in axioms do
       unless ax == ``propext || ax == ``Classical.choice || ax == ``Quot.sound do

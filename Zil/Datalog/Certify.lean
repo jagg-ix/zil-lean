@@ -1,6 +1,7 @@
 module
 
 public import Zil.Datalog.Checked
+public import Zil.Datalog.Stratified
 
 @[expose] public section
 
@@ -168,10 +169,11 @@ theorem checkNodes_derives {program : Program} {certified : List Atom} :
         · rcases List.mem_singleton.mp ha with rfl
           exact hhead
 
-/-- The certificate lists the facts of the program, and each fact is justified by the facts before it, and nothing more can be
-derived. -/
+/-- The strata of the program respect its rules; the certificate lists the facts of the program, and each fact is justified by the facts
+before it, and nothing more can be derived. -/
 def checkCertificate (program : Program) (cert : Certificate) : Bool :=
   let certified := cert.map (·.atom)
+  program.strataValid &&
   checkNodes program certified cert [] &&
   program.facts.all certified.contains &&
   (program.rules.flatMap (applyRule certified)).all certified.contains
@@ -183,7 +185,7 @@ theorem checkCertificate_sound {program : Program} {cert : Certificate} (h : che
     IsStableModel program (cert.map (·.atom)) := by
   unfold checkCertificate at h
   simp only [Bool.and_eq_true] at h
-  obtain ⟨⟨hnodes, hfacts⟩, hclosed⟩ := h
+  obtain ⟨⟨⟨_, hnodes⟩, hfacts⟩, hclosed⟩ := h
   refine ⟨⟨?_, ?_⟩, ?_⟩
   · intro a ha
     simpa using List.all_eq_true.mp hfacts a ha
@@ -194,6 +196,16 @@ theorem checkCertificate_sound {program : Program} {cert : Certificate} (h : che
   · intro a ha
     obtain ⟨n, hn, rfl⟩ := List.mem_map.mp ha
     exact checkNodes_derives cert [] hnodes (by simp) n hn
+
+/-- **There is no other answer.** The check includes that the strata respect the rules, so a program that it accepts has one stable
+model, and the facts of the certificate are it. -/
+theorem checkCertificate_unique {program : Program} {cert : Certificate} (h : checkCertificate program cert = true)
+    {other : Interpretation} (hother : IsStableModel program other) : ∀ a, a ∈ other ↔ a ∈ cert.map (·.atom) := by
+  have hstable := checkCertificate_sound h
+  unfold checkCertificate at h
+  simp only [Bool.and_eq_true] at h
+  obtain ⟨⟨⟨hstrata, _⟩, _⟩, _⟩ := h
+  exact stable_unique (Program.strataValid_spec hstrata) hother hstable
 
 /-- **For a program without negation, the facts of an accepted certificate are the least model**: a model, inside every model, and the
 set of facts that have a derivation. -/
