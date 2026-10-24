@@ -115,6 +115,10 @@ Together they support questions such as:
 
 These relationships can connect Lean declarations to requirements, documents, issues, tests, tools, and external sources across many modules.
 
+The clause-logic part (`Zil.Datalog`) has a proved semantics: the least model equals the set of facts with a derivation, an evaluation that fails
+instead of returning a partial answer when the rules need more rounds than the bound, and a certificate checker with a soundness theorem. See
+`spec/datalog-semantics-v1.md`.
+
 
 ## Sharing the relationship graph between people and tools
 

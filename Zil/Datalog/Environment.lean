@@ -5,6 +5,7 @@ public import Zil.Datalog.Basic
 public import Zil.Datalog.Revision
 public meta import Zil.Datalog.Revision
 public meta import Zil.Datalog.Eval
+public meta import Zil.Datalog.Checked
 
 @[expose] public section
 
@@ -325,8 +326,10 @@ meta def elabZilQuery : CommandElab := fun stx => do
       unless state.program.supportsNegation do
         throwErrorAt stx "cannot query a non-stratifiable ZIL program"
       let pattern ← patternFromSyntax pattern
-      let queryFuel := 32
-      let rows := query state.program pattern queryFuel
+      let queryFuel := defaultFuel
+      let rows ← match queryChecked state.program pattern queryFuel with
+        | .ok rows => pure rows
+        | .error reason => throwErrorAt stx "ZIL query failed: {reason}"
       let revisions := state.snapshots.map (fun metadata =>
         metadata.revision)
       logInfo m!"ZIL query (fuel={queryFuel}, snapshots={repr revisions}): {repr rows}"
@@ -336,7 +339,9 @@ meta def elabZilQuery : CommandElab := fun stx => do
         throwErrorAt stx "cannot query a non-stratifiable ZIL program"
       let pattern ← patternFromSyntax pattern
       let queryFuel := amount.getNat
-      let rows := query state.program pattern queryFuel
+      let rows ← match queryChecked state.program pattern queryFuel with
+        | .ok rows => pure rows
+        | .error reason => throwErrorAt stx "ZIL query failed: {reason}"
       let revisions := state.snapshots.map (fun metadata =>
         metadata.revision)
       logInfo m!"ZIL query (fuel={queryFuel}, snapshots={repr revisions}): {repr rows}"

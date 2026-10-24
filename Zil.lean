@@ -5,6 +5,9 @@ public import Zil.Datalog.Unify
 public import Zil.Datalog.Eval
 public import Zil.Datalog.Semantics
 public import Zil.Datalog.Model
+public import Zil.Datalog.LeastModel
+public import Zil.Datalog.Checked
+public import Zil.Datalog.Certify
 public import Zil.Datalog.Environment
 public meta import Zil.Datalog.Attach
 public meta import Zil.Datalog.EmbeddedValidation
@@ -29,7 +32,9 @@ This root module carries the clause-logic (Datalog) surface used by downstream
 Lean libraries: `zil attach`, `zil_claim`/`zil_level` attributes,
 `#zil_validate_embedded`, the `zil_solve`/`zil_apply` tactics, and the `Holds`
 semantics, all under `Zil.Datalog` with compatibility aliases in `Zil`
-(`Zil.Datalog.Compat`).
+(`Zil.Datalog.Compat`). The semantics is proved equal to the least model, `holdsChecked` and
+`queryChecked` fail instead of answering from a partial closure, and `checkCertificate` has a
+soundness theorem (`spec/datalog-semantics-v1.md`).
 
 The native knowledge stack (facts, theorem-shaped rules, engine, provenance,
 profiles, authorization) lives in `Zil.Native` and the `Zil.Core`/`Zil.Engine`/
