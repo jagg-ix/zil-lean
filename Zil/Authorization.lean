@@ -78,7 +78,7 @@ private def candidateRules (program : Zil.Program) (relation : Name) : Array Nam
 def decide
     (program : Zil.Program)
     (request : Request)
-    (fuel : Nat := 64) : Except String Decision := do
+    (fuel : Nat := Zil.Engine.defaultFuel) : Except String Decision := do
   unless program.valid do throw "authorization program is structurally invalid"
   unless request.valid do throw "authorization request must be ground"
   let facts := program.facts

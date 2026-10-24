@@ -129,7 +129,7 @@ def fromTrace
 def fromProgram
     (program : Zil.Program)
     (policy : Policy := .default)
-    (fuel : Nat := 64) : Except String Graph := do
+    (fuel : Nat := Zil.Engine.defaultFuel) : Except String Graph := do
   let trace ← Zil.Engine.Provenance.traceProgram program fuel
   pure (fromTrace trace policy)
 

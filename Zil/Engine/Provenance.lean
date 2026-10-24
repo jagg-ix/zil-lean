@@ -207,41 +207,49 @@ def rulesAt
 def maxStratum (strata : Zil.Engine.Strata) : Nat :=
   strata.foldl (init := 0) fun current entry => Nat.max current entry.2
 
+/-- Close one stratum, and say whether the fixpoint was reached (see `Zil.Engine.closeOneStratum`). -/
 def closeOneStratum
     (initial : Trace)
     (rules : Array Zil.Rule)
-    (level fuel : Nat) : Trace :=
+    (level fuel : Nat) : Trace × Bool :=
   let negativeFacts := initial.facts
-  let rec loop (trace : Trace) : Nat → Trace
-    | 0 => trace
+  let rec loop (trace : Trace) : Nat → Trace × Bool
+    | 0 => (trace, false)
     | remaining + 1 =>
         let next := rules.foldl (init := trace) fun current rule =>
           (deriveRule current.facts negativeFacts rule).foldl (init := current) fun out candidate =>
             appendCandidate out candidate level
-        if next.facts.size == trace.facts.size then next else loop next remaining
+        if next.facts.size == trace.facts.size then (next, true) else loop next remaining
   loop initial fuel
 
+/-- Close every stratum in order; the second component is the lowest stratum whose rounds ran out before its fixpoint, if any. -/
 def executeLevels
     (trace : Trace)
     (rules : Array Zil.Rule)
     (strata : Zil.Engine.Strata)
-    (fuel : Nat) : Nat → Nat → Trace
-  | _, 0 => trace
+    (fuel : Nat) : Nat → Nat → Trace × Option Nat
+  | _, 0 => (trace, none)
   | level, remaining + 1 =>
-      let closed := closeOneStratum trace (rulesAt rules strata level) level fuel
-      executeLevels closed rules strata fuel (level + 1) remaining
+      let (closed, converged) := closeOneStratum trace (rulesAt rules strata level) level fuel
+      let (final, unfinished) := executeLevels closed rules strata fuel (level + 1) remaining
+      (final, if converged then unfinished else some level)
 
-/-- Compute checked stratified closure with one deterministic origin per fact. -/
+/-- Compute checked stratified closure with one deterministic origin per fact. It fails, and does not return a partial trace, when the
+rounds run out before a stratum reaches its fixpoint. -/
 def traceChecked
     (facts : Array Zil.RelExpr)
     (rules : Array Zil.Rule)
-    (fuel : Nat := 64) : Except String Trace := do
+    (fuel : Nat := Zil.Engine.defaultFuel) : Except String Trace := do
   let strata ← Zil.Engine.stratify rules
   let initial := baseTrace facts
-  pure <| executeLevels initial rules strata fuel 0 (maxStratum strata + 1)
+  let (trace, unfinished) := executeLevels initial rules strata fuel 0 (maxStratum strata + 1)
+  match unfinished with
+  | none => pure trace
+  | some level =>
+      throw s!"closure did not reach its fixpoint in stratum {level} within {fuel} rounds; the facts derived so far are not the closure"
 
 /-- Compute provenance for one complete native program. -/
-def traceProgram (program : Zil.Program) (fuel : Nat := 64) : Except String Trace := do
+def traceProgram (program : Zil.Program) (fuel : Nat := Zil.Engine.defaultFuel) : Except String Trace := do
   unless program.valid do throw "provenance requires a structurally valid program"
   traceChecked program.facts program.allRules fuel
 

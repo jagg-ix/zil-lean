@@ -299,7 +299,7 @@ def unionNames (groups : Array (Array Name)) : Array Name :=
 def checkProgram
     (program : Zil.Program)
     (requestedProfile : Option Name := none)
-    (fuel : Nat := 64) : Except String CiReport := do
+    (fuel : Nat := Zil.Engine.defaultFuel) : Except String CiReport := do
   unless program.valid do throw "query CI requires a structurally valid program"
   let moduleName ← match program.moduleName with
     | some value => pure value

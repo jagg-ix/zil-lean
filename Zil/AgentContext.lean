@@ -144,7 +144,7 @@ private def affectedNames (entries : Array ImpactEntry) : Array Name :=
 def build
     (program : Zil.Program)
     (request : Request)
-    (fuel : Nat := 64) : Except String Bundle := do
+    (fuel : Nat := Zil.Engine.defaultFuel) : Except String Bundle := do
   unless program.valid do throw "agent context requires a structurally valid program"
   if request.taskId.isEmpty then throw "agent context task ID must be nonempty"
   if request.agentId.isEmpty then throw "agent context agent ID must be nonempty"

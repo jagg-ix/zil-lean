@@ -6,6 +6,7 @@ import Zil.Test.KeywordTerm
 import Zil.Test.Attributes
 import Zil.Test.ProgramParser
 import Zil.Test.StratifiedNegation
+import Zil.Test.Fixpoint
 import Zil.Test.Macro
 import Zil.Test.MacroLibrary
 import Zil.Test.DatalogMacro

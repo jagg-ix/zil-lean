@@ -248,51 +248,68 @@ def rulesAt
     (rules : Array Zil.Rule) (strata : Strata) (level : Nat) : Array Zil.Rule :=
   rules.filter fun rule => strata.lookup rule.conclusion.relation == level
 
+/-- The number of rounds the closure of one stratum may take. A round that adds nothing ends the loop, so a large bound costs nothing
+when the closure is reached; it is only a limit. Each round adds at least one fact, so no program that has a closure comes near it. -/
+def defaultFuel : Nat := 1000000
+
+/-- Close one stratum, and say whether the fixpoint was reached. A round that adds no fact ends the loop with `true`. Using up `fuel`
+rounds first ends it with `false` and the facts derived so far: the last round counts, so a closure that needs `n` rounds needs `fuel`
+of at least `n + 1` to be known to be complete. -/
 def closeOneStratum
     (baseFacts : Array Zil.RelExpr)
     (rules : Array Zil.Rule)
-    (fuel : Nat) : Array Zil.RelExpr :=
+    (fuel : Nat) : Array Zil.RelExpr × Bool :=
   let negativeIndex := FactIndex.build baseFacts
-  let rec loop (facts : Array Zil.RelExpr) (index : FactIndex) : Nat → Array Zil.RelExpr
-    | 0 => facts
+  let rec loop (facts : Array Zil.RelExpr) (index : FactIndex) : Nat → Array Zil.RelExpr × Bool
+    | 0 => (facts, false)
     | remaining + 1 =>
         let (next, nextIndex) := rules.foldl (init := (facts, index)) fun (current, currentIndex) rule =>
           (deriveRuleIndexed currentIndex negativeIndex rule).foldl
             (init := (current, currentIndex)) fun (stateFacts, stateIndex) fact =>
               if stateIndex.containsSemantic fact then (stateFacts, stateIndex)
               else (stateFacts.push fact, stateIndex.insert fact)
-        if next.size == facts.size then facts else loop next nextIndex remaining
+        if next.size == facts.size then (facts, true) else loop next nextIndex remaining
   loop baseFacts (FactIndex.build baseFacts) fuel
 
 def maxStratum (strata : Strata) : Nat :=
   strata.foldl (init := 0) fun current entry => Nat.max current entry.2
 
+/-- Close every stratum in order. The second component is the lowest stratum whose rounds ran out before its fixpoint, if any; the
+facts are then the closure so far. -/
 def executeLevels
     (facts : Array Zil.RelExpr)
     (rules : Array Zil.Rule)
     (strata : Strata)
-    (fuel : Nat) : Nat → Nat → Array Zil.RelExpr
-  | _, 0 => facts
+    (fuel : Nat) : Nat → Nat → Array Zil.RelExpr × Option Nat
+  | _, 0 => (facts, none)
   | level, remaining + 1 =>
-      let closed := closeOneStratum facts (rulesAt rules strata level) fuel
-      executeLevels closed rules strata fuel (level + 1) remaining
+      let (closed, converged) := closeOneStratum facts (rulesAt rules strata level) fuel
+      let (final, unfinished) := executeLevels closed rules strata fuel (level + 1) remaining
+      (final, if converged then unfinished else some level)
 
-/-- Compute stratified least-fixpoint closure and report unsafe or cyclic programs. -/
+/-- Compute the stratified least-fixpoint closure, and report unsafe or cyclic programs. It fails, and does not return a partial
+closure, when the rounds run out before a stratum reaches its fixpoint. -/
 def closureChecked
     (facts : Array Zil.RelExpr) (rules : Array Zil.Rule)
-    (fuel : Nat := 64) : Except String (Array Zil.RelExpr) := do
+    (fuel : Nat := defaultFuel) : Except String (Array Zil.RelExpr) := do
   let strata ← stratify rules
-  pure <| executeLevels facts rules strata fuel 0 (maxStratum strata + 1)
+  let (closed, unfinished) := executeLevels facts rules strata fuel 0 (maxStratum strata + 1)
+  match unfinished with
+  | none => pure closed
+  | some level =>
+      throw s!"closure did not reach its fixpoint in stratum {level} within {fuel} rounds; the facts derived so far are not the closure"
 
-/-- Compatibility wrapper. Invalid programs leave the supplied fact set unchanged. -/
+/-- Compatibility wrapper for callers that have no way to receive an error. Invalid programs leave the supplied fact set unchanged.
+If the rounds run out, the facts derived so far are returned, which is a bounded closure and not the closure: with a `fuel` of your
+own, use `closureChecked` to be told. -/
 def closure (facts : Array Zil.RelExpr) (rules : Array Zil.Rule)
-    (fuel : Nat := 64) : Array Zil.RelExpr :=
-  match closureChecked facts rules fuel with
-  | .ok closed => closed
+    (fuel : Nat := defaultFuel) : Array Zil.RelExpr :=
+  match stratify rules with
+  | .ok strata => (executeLevels facts rules strata fuel 0 (maxStratum strata + 1)).1
   | .error _ => facts
 
 /-- Compute closure from facts and rules persisted in a Lean environment. -/
-def closureOfEnvironment (env : Lean.Environment) (fuel : Nat := 64) : Array Zil.RelExpr :=
+def closureOfEnvironment (env : Lean.Environment) (fuel : Nat := defaultFuel) : Array Zil.RelExpr :=
   closure (Zil.Environment.facts env) (Zil.Environment.rules env) fuel
 
 /-- Solve a safe conjunctive query with absence checks over a closed fact set. -/
@@ -307,12 +324,12 @@ def solve (facts : Array Zil.RelExpr) (query : Zil.Query) : Array Binding :=
 
 /-- Solve a query using the bounded closure of one Lean environment. -/
 def solveEnvironment (env : Lean.Environment) (query : Zil.Query)
-    (fuel : Nat := 64) : Array Binding :=
+    (fuel : Nat := defaultFuel) : Array Binding :=
   solve (closureOfEnvironment env fuel) query
 
 /-- Test whether one semantic fact is present after stratified closure. -/
 def entails (facts : Array Zil.RelExpr) (rules : Array Zil.Rule)
-    (target : Zil.RelExpr) (fuel : Nat := 64) : Bool :=
+    (target : Zil.RelExpr) (fuel : Nat := defaultFuel) : Bool :=
   (closure facts rules fuel).any (·.semanticallyEqual target)
 
 end Zil.Engine

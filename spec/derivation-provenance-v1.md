@@ -2,7 +2,7 @@
 
 ## Trace construction
 
-Given validated base facts and safe stratified rules, the provenance engine computes the same bounded stratified closure as the native query engine while retaining one origin for each semantic fact.
+Given validated base facts and safe stratified rules, the provenance engine computes the same stratified closure as the native query engine while retaining one origin for each semantic fact.
 
 ## Fact identity
 
@@ -88,6 +88,10 @@ target\t<canonical relation>
 
 ## Limits
 
-The closure uses the supplied per-stratum fuel, default 64. Reaching the bound returns the partial bounded closure, matching the existing native engine contract.
+Each stratum is closed in rounds, and a round that derives no new fact ends it; what a successful run returns is the least fixpoint of section 6.5 of `spec/zil-formal-core-v0.1.md`. The supplied per-stratum `fuel` is only a limit on the number of rounds. It defaults to `Zil.Engine.defaultFuel` (one million), which no program that has a closure comes near, because every round that does not end the stratum adds a fact.
+
+If the rounds run out before a stratum reaches its fixpoint, no trace is returned. The computation fails with `closure did not reach its fixpoint in stratum N within F rounds`, and so does every report built on it (provenance, query explanations, authorization, impact, query governance, agent context). The round that finds nothing new counts toward the limit, so a closure that needs `n` rounds to add its last fact needs a `fuel` of at least `n + 1`.
+
+Until version 4f35b41 of the repository the default was 64 and reaching the bound returned the partial closure without any signal. A rule that extends a path by one step per round (reachability, dependency or access propagation along a chain) then lost every fact beyond the 65th step, and the reports still said they had passed. `Zil.Engine.closure`, which has no way to return an error, still returns the facts derived so far when a `fuel` of the caller's own runs out; `Zil.Engine.closureChecked` is the function that reports it.
 
 The trace is graph-derived evidence. It is not a Lean kernel proof term.
