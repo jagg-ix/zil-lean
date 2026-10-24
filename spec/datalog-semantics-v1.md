@@ -32,6 +32,41 @@ traces, and the zil-lib repository checks them with `zilLib certify`.
 | `isStableModel_iff_sound` | for a program without negation, stable and least model coincide |
 | `stable_unique` (`Zil.Datalog.Stratified`) | if the strata respect the rules, two stable models contain the same atoms |
 
+## Matching is what it says (`Zil.Datalog.Matching`)
+
+`unify` and `instantiate` decide what a rule means in the evaluator. The paper (section 3.1) reads a rule without a procedure: take every
+**grounding**, a total assignment of values to variables; the rule fires under it when each positive literal, with the grounding applied,
+is satisfied by a fact (same relation, object and subject, and every attribute of the pattern on the fact with the grounded value) and no
+negative literal is satisfied by an atom of the reference set. `Matches g p a` is that satisfaction.
+
+| Theorem | Statement |
+|---|---|
+| `unify_sound` | if `unify p a σ` succeeds with `σ'`, then `σ'` keeps every binding of `σ`, and every grounding that agrees with `σ'` matches |
+| `unify_complete` | if a grounding that agrees with `σ` matches, `unify` succeeds, and its result keeps `σ` and agrees with the grounding |
+| `unify_binds` | a successful `unify` binds every variable of the pattern |
+| `bodyMatches_sound`, `bodyMatches_complete` | the same for a body, one literal after the other |
+| `mem_applyRuleUnder_iff_ground` | for a safe rule, the atoms `applyRuleUnder` produces are exactly the heads of the groundings under which the rule fires |
+| `isModel_iff_ground`, `derivesUnder_iff_ground`, `isStableModel_iff_ground` | for a safe program, models, derivations and stable models are the same as when read with groundings |
+
+A rule is safe when its head and its negative literals use only variables that a positive literal has (`Rule.isSafe`; the parser and the
+`zil_rule` command require it). So nothing in the definitions above depends on how `unify` is written.
+
+## The evaluator's result is the stable model (`Zil.Datalog.Perfect`)
+
+`deriveProgramChecked` saturates the strata in order, reading the negative literals of a rule in stratum `k` against what the strata
+below `k` produced. It also checks that the numbering of the strata respects the rules (`Program.strataValid`), and returns an error if it
+does not. The result is the stable model:
+
+| Theorem | Statement |
+|---|---|
+| `deriveProgramChecked_isStableModel` | if `deriveProgramChecked` returns a set, it is a stable model: every fact has a derivation whose negative literals are read against the whole result |
+| `deriveProgramChecked_unique` | every stable model of the program has the same atoms |
+| `evaluator_eq_certificate` | the evaluator's set and the atoms of any certificate the checker accepts are the same set |
+
+The argument: a stratum adds only facts of its own relations (`saturateStrata_adds`), and a negative literal of a rule in stratum `k` is over
+a relation of a stratum below `k`, so every fact of the final result that the literal could match was already there when the rule fired
+(`saturateStrata_derivesUnder`).
+
 ## Evaluation that says when it is incomplete (`Zil.Datalog.Checked`)
 
 `derive`, `deriveStratified`, `query` and `holds` apply the rules a fixed number of times (32 by default) and return what they have.
@@ -77,16 +112,15 @@ is not one, a missing fact, a missing rule consequence, an extra node), each of 
 
 ## What is trusted
 
-* the matching functions `unify` and `instantiate`, which say what a rule means; the theorems are about rules as these functions read
-  them, not about a separate account of matching;
+* nothing about matching beyond `Matches`, the grounding reading above: `unify` and `instantiate` are proved to compute it for safe rules;
 * Lean's kernel, and the three axioms of classical logic (`propext`, `Classical.choice`, `Quot.sound`); a guard checks that no theorem of
   these files uses another axiom or `sorry`.
 
-Not proved: that `unify` agrees with a declarative notion of matching (the paper's section 3.1); that the result of the stratum-by-stratum
-evaluation, `deriveProgramChecked`, is the stable model (it is a model whose atoms were all derived, and a certificate for it settles the
-question for one program: `certifyProgram` followed by `checkCertificate`); that the engine's native checker, `zilLib certify`, is correct
-(it is tested, not proved; with `--verified` it also runs `checkCertificate` on a translation); the existence of a certificate for every
-entailed atom (`certifyProgram` is tested).
+Not proved: that the native engine (`Zil.Engine`, a different and indexed implementation) computes the same set as `deriveProgramChecked`
+(they are compared on random programs in the zil-lib repository, and a certificate checked with `zilLib certify --verified` settles it
+for one program); that the engine's native checker, `zilLib certify`, is correct (it is tested, not proved); the existence of a
+certificate for every entailed atom (`certifyProgram` is tested); that a rule that is not safe means anything (the theorems about
+matching are for safe rules, and unsafe rules are refused where programs are read).
 
 ## Differences from the paper
 

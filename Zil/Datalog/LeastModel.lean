@@ -23,8 +23,8 @@ set itself, as the stable-model semantics of Gelfond and Lifschitz does: `S` is 
 fact of `S` has a finite derivation in which the negative literals are checked against `S`. A stratified program has exactly one stable
 model; that is `stable_unique` in `Zil.Datalog.Stratified`.
 
-The matching of patterns is the evaluator's own (`unify`, `instantiate`), so these theorems say what the evaluator's rules mean, not
-that `unify` implements a particular notion of matching.
+The matching of patterns is the evaluator's own (`unify`, `instantiate`). `Zil.Datalog.Matching` proves that it computes the declarative
+reading of a rule, a grounding of its variables, for every safe rule, so these definitions do not depend on how `unify` is written.
 -/
 
 namespace Zil.Datalog

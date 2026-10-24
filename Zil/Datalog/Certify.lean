@@ -17,8 +17,9 @@ when it says yes the set is a stable model of the program (`IsStableModel`), and
   circular argument, and the negative literals of the rule are absent from the set;
 * **closure** (the paper's model check, section 5): the facts of the program are in the set, and no rule derives a fact outside it.
 
-Nothing is trusted but the matching functions `unify` and `instantiate`, which say what a rule means; the reasoner that produced the
-certificate is not. The proof is in this file and in `Zil.Datalog.LeastModel`.
+The reasoner that produced the certificate is not trusted. The matching functions `unify` and `instantiate` are proved to compute the
+declarative reading of a rule (`Zil.Datalog.Matching`). The proof is in this file, in `Zil.Datalog.LeastModel` and in
+`Zil.Datalog.Stratified`; `Zil.Datalog.Perfect` shows that the evaluator's result is the certified set.
 
 This is the checker for the Lean-embedded Datalog (`Zil.Datalog.Program`). `zilLib certify`, in the zil-lib repository, checks the
 engine's own programs the same way, with a checker that is tested but not proved.

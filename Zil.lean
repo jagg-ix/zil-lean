@@ -9,6 +9,8 @@ public import Zil.Datalog.LeastModel
 public import Zil.Datalog.Stratified
 public import Zil.Datalog.Checked
 public import Zil.Datalog.Certify
+public import Zil.Datalog.Matching
+public import Zil.Datalog.Perfect
 public import Zil.Datalog.Environment
 public meta import Zil.Datalog.Attach
 public meta import Zil.Datalog.EmbeddedValidation

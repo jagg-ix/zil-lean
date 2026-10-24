@@ -1,6 +1,7 @@
 module
 
 public import Zil.Datalog.LeastModel
+public import Zil.Datalog.Stratified
 
 @[expose] public section
 
@@ -90,43 +91,59 @@ theorem saturateStrata_spec (program : Program) (fuel : Nat) :
         exact ⟨fun a ha => hsub2 a (hsub1 a ha), fun hd => hsound2 (hsound1 hd)⟩
       · simp at h
 
-/-- The facts that follow from the program, or the reason there is no answer: the program is not stratified, a stratum did not reach
-its fixpoint within `fuel` rounds, or the result is not closed under the rules (which a correct stratification does not allow). -/
+/-- The facts that follow from the program, or the reason there is no answer: the program is not stratified, the strata do not respect
+its rules, a stratum did not reach its fixpoint within `fuel` rounds, or the result is not closed under the rules (which a correct
+stratification does not allow). -/
 def deriveProgramChecked (program : Program) (fuel : Nat := defaultFuel) : Except String (List Atom) :=
   if program.isStratified then
-    match saturateStrata program fuel (List.range (program.maxStratum + 1)) program.facts.eraseDups with
-    | .error reason => .error reason
-    | .ok facts =>
-        if (program.rules.flatMap (applyRule facts)).all (facts.contains ·) then .ok facts
-        else .error "the strata do not close the program: a rule still derives a new fact"
+    if program.strataValid then
+      match saturateStrata program fuel (List.range (program.maxStratum + 1)) program.facts.eraseDups with
+      | .error reason => .error reason
+      | .ok facts =>
+          if (program.rules.flatMap (applyRule facts)).all (facts.contains ·) then .ok facts
+          else .error "the strata do not close the program: a rule still derives a new fact"
+    else .error "the strata do not respect the rules: a negative literal is not strictly below its head"
   else .error "the program is not stratified: a negative dependency lies on a cycle"
+
+/-- What a successful result consists of. -/
+theorem deriveProgramChecked_unfold {program : Program} {fuel : Nat} {facts : List Atom}
+    (h : deriveProgramChecked program fuel = .ok facts) :
+    program.isStratified = true ∧ program.strataValid = true ∧
+      saturateStrata program fuel (List.range (program.maxStratum + 1)) program.facts.eraseDups = .ok facts ∧
+      (program.rules.flatMap (applyRule facts)).all (facts.contains ·) = true := by
+  unfold deriveProgramChecked at h
+  by_cases hs : program.isStratified = true
+  · rw [if_pos hs] at h
+    by_cases hv : program.strataValid = true
+    · rw [if_pos hv] at h
+      split at h
+      · simp at h
+      · rename_i result hres
+        by_cases hall : (program.rules.flatMap (applyRule result)).all (result.contains ·) = true
+        · rw [if_pos hall] at h
+          have hr : result = facts := Except.ok.inj h
+          subst hr
+          exact ⟨hs, hv, hres, hall⟩
+        · rw [if_neg hall] at h
+          simp at h
+    · rw [if_neg hv] at h
+      simp at h
+  · rw [if_neg hs] at h
+    simp at h
 
 /-- A successful result is a stratified model of the program, and every fact of it has a derivation. -/
 theorem deriveProgramChecked_ok {program : Program} {fuel : Nat} {facts : List Atom}
     (h : deriveProgramChecked program fuel = .ok facts) :
     IsStratifiedModel program facts ∧ ∀ a, a ∈ facts → Derives program a := by
-  unfold deriveProgramChecked at h
-  by_cases hs : program.isStratified = true
-  · rw [if_pos hs] at h
-    split at h
-    · simp at h
-    · rename_i result hres
-      by_cases hall : (program.rules.flatMap (applyRule result)).all (result.contains ·) = true
-      · rw [if_pos hall] at h
-        have hr : result = facts := Except.ok.inj h
-        subst hr
-        obtain ⟨hsub, hsound⟩ := saturateStrata_spec program fuel _ _ _ hres
-        have hder : ∀ a, a ∈ result → Derives program a :=
-          hsound (fun a ha => .fact (List.mem_eraseDups.mp ha))
-        refine ⟨⟨hs, fun a ha => hsub a (List.mem_eraseDups.mpr ha), ?_⟩, hder⟩
-        intro rule hrule a hcons
-        have happ : a ∈ applyRule result rule := ruleConsequence_iff_applyRule_mem.mp hcons
-        have hmem : a ∈ program.rules.flatMap (applyRule result) := List.mem_flatMap.mpr ⟨rule, hrule, happ⟩
-        simpa using List.all_eq_true.mp hall a hmem
-      · rw [if_neg hall] at h
-        simp at h
-  · rw [if_neg hs] at h
-    simp at h
+  obtain ⟨hs, _, hres, hall⟩ := deriveProgramChecked_unfold h
+  obtain ⟨hsub, hsound⟩ := saturateStrata_spec program fuel _ _ _ hres
+  have hder : ∀ a, a ∈ facts → Derives program a :=
+    hsound (fun a ha => .fact (List.mem_eraseDups.mp ha))
+  refine ⟨⟨hs, fun a ha => hsub a (List.mem_eraseDups.mpr ha), ?_⟩, hder⟩
+  intro rule hrule a hcons
+  have happ : a ∈ applyRule facts rule := ruleConsequence_iff_applyRule_mem.mp hcons
+  have hmem : a ∈ program.rules.flatMap (applyRule facts) := List.mem_flatMap.mpr ⟨rule, hrule, happ⟩
+  simpa using List.all_eq_true.mp hall a hmem
 
 /-- For a program without negation the result is the least model: it is a model, it is inside every model, and a fact is in it
 exactly when it has a derivation. This is the model-theoretic semantics of the paper. -/

@@ -12,6 +12,7 @@ import Zil.Test.MacroLibrary
 import Zil.Test.DatalogMacro
 import Zil.Test.DatalogChecked
 import Zil.Test.DatalogCertify
+import Zil.Test.DatalogPerfect
 import Zil.Test.Declarations
 import Zil.Test.RevisionCausal
 import Zil.Test.Conformance
