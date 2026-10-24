@@ -163,4 +163,35 @@ theorem holdsChecked_iff {program : Program} (hpos : program.IsPositive) {fuel :
       rw [hans]
       simpa using hiff atom
 
+/-- A fact that `holdsChecked` finds has a derivation, for every stratified program. -/
+theorem holds_of_checked {program : Program} {fuel : Nat} {atom : Atom}
+    (h : (holdsChecked program atom fuel).toOption = some true) : Holds program atom := by
+  unfold holdsChecked at h
+  cases hd : deriveProgramChecked program fuel with
+  | error reason => simp [hd, Functor.map, Except.map, Except.toOption] at h
+  | ok facts =>
+      simp only [hd, Functor.map, Except.map, Except.toOption, Option.some.injEq] at h
+      exact (deriveProgramChecked_ok hd).2 atom (by simpa using h)
+
+/-- The program has no negative literal. -/
+def Program.positive (program : Program) : Bool := program.rules.all (·.negativePatterns.isEmpty)
+
+theorem Program.positive_isPositive {program : Program} (h : program.positive = true) : program.IsPositive := by
+  intro rule hrule
+  have := List.all_eq_true.mp h rule hrule
+  simpa using this
+
+/-- **A negative answer is proved too.** For a program without negation, if `holdsChecked` answers `false`, the atom has no derivation:
+it does not follow from the program. -/
+theorem not_holds_of_checked {program : Program} {fuel : Nat} {atom : Atom} (hpos : program.positive = true)
+    (h : (holdsChecked program atom fuel).toOption = some false) : ¬ Holds program atom := by
+  intro hholds
+  cases hh : holdsChecked program atom fuel with
+  | error reason => simp [hh, Except.toOption] at h
+  | ok answer =>
+      simp only [hh, Except.toOption, Option.some.injEq] at h
+      subst h
+      have := (holdsChecked_iff (Program.positive_isPositive hpos) hh).mpr hholds
+      simp at this
+
 end Zil.Datalog

@@ -1,4 +1,5 @@
 import Zil.Datalog.Checked
+import Zil.Datalog.Tactic.Solve
 import Lean
 
 /-!
@@ -42,6 +43,11 @@ private def last : Atom := reach 0 steps
 #guard match holdsChecked chain last 40 with | .error _ => true | .ok _ => false
 #guard match holdsChecked chain last 41 with | .ok answer => answer | .error _ => false
 
+-- The tactics use it: `zil_solve` proves the end of the chain, which it could not with 32 rounds, and `zil_refute` proves that a fact
+-- does not follow (the chain only goes forward).
+example : Holds chain last := by zil_solve
+example : ¬ Holds chain (reach 5 2) := by zil_refute
+
 -- The query returns every `y` that `n0` reaches.
 #guard match queryChecked chain { object := .value (node 0), relation := "reach", subject := .variable "y" } with
   | .ok rows => rows.length == steps
@@ -73,7 +79,7 @@ private def cyclic : Program where
 open Lean Elab Command in
 run_cmd do
   for theoremName in [``leastModel_of_sound_model, ``derives_mem_model, ``isStableModel_iff, ``deriveProgramChecked_ok,
-      ``deriveProgramChecked_leastModel, ``holdsChecked_iff] do
+      ``deriveProgramChecked_leastModel, ``holdsChecked_iff, ``holds_of_checked, ``not_holds_of_checked] do
     let axioms ← liftCoreM <| collectAxioms theoremName
     for ax in axioms do
       unless ax == ``propext || ax == ``Classical.choice || ax == ``Quot.sound do

@@ -36,7 +36,7 @@ traces, and the zil-lib repository checks them with `zilLib certify`.
 
 `derive`, `deriveStratified`, `query` and `holds` apply the rules a fixed number of times (32 by default) and return what they have.
 A rule that extends a path by one step per round needs as many rounds as the path has steps, so a longer path lost its end and `holds`
-answered `false` for a fact that follows. These functions stay as they were, for proofs that fix the bound (`zil_solve`).
+answered `false` for a fact that follows. These functions stay as they were, for proofs and tools that fix the bound.
 
 `deriveProgramChecked`, `queryChecked` and `holdsChecked` stop when a round adds nothing and fail when the bound (`defaultFuel`,
 one million rounds; the round that finds nothing counts) is reached first, or when the program is not stratified. `#zil_query` uses them.
@@ -46,6 +46,12 @@ one million rounds; the round that finds nothing counts) is reached first, or wh
 | `deriveProgramChecked_ok` | a result is a stratified model of the program and every atom in it has a derivation |
 | `deriveProgramChecked_leastModel` | for a program without negation the result is the least model |
 | `holdsChecked_iff` | for a program without negation, `holdsChecked` answers `true` exactly when the atom has a derivation |
+| `holds_of_checked` | for any stratified program, a `true` answer means the atom has a derivation |
+| `not_holds_of_checked` | for a program without negation, a `false` answer means the atom has no derivation: a negative answer is proved too |
+
+The tactic `zil_solve` closes a goal `Holds program atom` by `holds_of_checked` (it used the 32-round evaluator, so it failed for a derivation
+of more than 32 rounds), and `zil_refute` closes `¬ Holds program atom` for a program without negation by `not_holds_of_checked`. Both
+run the evaluation with `native_decide`.
 
 ## Certificates (`Zil.Datalog.Certify`)
 
