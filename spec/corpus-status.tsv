@@ -61,7 +61,7 @@ examples/tm-atom-parity.zc	accepted
 examples/token-lifecycle/lifecycle.zc	accepted	
 examples/tpl-macro-layer.zc	accepted	
 examples/tuple-lean/access.zc	accepted	
-examples/vstack-refinement-minimal.zc	rejected	line 12:1: invalid value QF_LRA for logic
+examples/vstack-refinement-minimal.zc	accepted	
 lib/acl2-interop-macros.zc	accepted	
 lib/aws-model-macros.zc	accepted	
 lib/aws-namespace-bridge-macros.zc	accepted	
