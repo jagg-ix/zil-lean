@@ -3,6 +3,7 @@ module
 public import Zil.Core.Program
 public import Zil.Engine.Query
 public import Zil.Codec.Canonical
+import Std.Data.HashMap
 
 @[expose] public section
 
@@ -124,13 +125,52 @@ def instantiateRelation
     attrs := attrs.push { entry with value }
   pure { relation with subject, object, attrs }
 
-def extendWitnesses
-    (facts : Array FactNode)
+/-- Nodes by relation, by relation and subject, and by relation and object, each bucket in the order the nodes were added, which is their
+number. A lookup returns the nodes that a scan of all of them would keep, in the order the scan would visit them, so a derivation that
+uses the index visits its candidates exactly as it did before and builds the same trace. -/
+structure NodeIndex where
+  byRelation : Std.HashMap Name (Array FactNode) := {}
+  bySubject : Std.HashMap (Name × Zil.Term) (Array FactNode) := {}
+  byObject : Std.HashMap (Name × Zil.Term) (Array FactNode) := {}
+  deriving Inhabited
+
+namespace NodeIndex
+
+/-- Grow a bucket in place (reading it out and inserting a longer copy would copy the whole bucket for every node). -/
+def appendBucket {key : Type} [BEq key] [Hashable key]
+    (index : Std.HashMap key (Array FactNode)) (value : key) (node : FactNode) : Std.HashMap key (Array FactNode) :=
+  if index.contains value then index.modify value (·.push node) else index.insert value #[node]
+
+def insert (index : NodeIndex) (node : FactNode) : NodeIndex :=
+  { byRelation := appendBucket index.byRelation node.fact.relation node
+    bySubject := appendBucket index.bySubject (node.fact.relation, node.fact.subject) node
+    byObject := appendBucket index.byObject (node.fact.relation, node.fact.object) node }
+
+def ofNodes (nodes : Array FactNode) : NodeIndex := nodes.foldl insert {}
+
+/-- Is there a node whose fact equals `fact`? Equal facts have the same relation and subject, so only that bucket is searched. -/
+def containsSemantic (index : NodeIndex) (fact : Zil.RelExpr) : Bool :=
+  (index.bySubject.getD (fact.relation, fact.subject) #[]).any (·.fact.semanticallyEqual fact)
+
+/-- The nodes that can match `pattern` under `binding`, narrowed by an endpoint that is fixed or already bound. -/
+def candidates (index : NodeIndex) (pattern : Zil.RelExpr) (binding : Zil.Engine.Binding) : Array FactNode :=
+  let known : Zil.Term → Option Zil.Term
+    | .node node => some (.node node)
+    | .var name => binding.lookup name
+  match known pattern.subject, known pattern.object with
+  | some subject, _ => index.bySubject.getD (pattern.relation, subject) #[]
+  | none, some object => index.byObject.getD (pattern.relation, object) #[]
+  | none, none => index.byRelation.getD pattern.relation #[]
+
+end NodeIndex
+
+def extendWitnessesIndexed
+    (index : NodeIndex)
     (patterns : Array Zil.RelExpr)
     (seed : WitnessState := {}) : Array WitnessState :=
   patterns.foldl (init := #[seed]) fun states pattern =>
     states.foldl (init := #[]) fun out state =>
-      facts.foldl (init := out) fun current node =>
+      (index.candidates pattern state.binding).foldl (init := out) fun current node =>
         match unifyRelation pattern node.fact state.binding with
         | none => current
         | some binding =>
@@ -139,11 +179,29 @@ def extendWitnesses
               premiseFactIds := state.premiseFactIds.push node.id
             }
 
+def extendWitnesses
+    (facts : Array FactNode)
+    (patterns : Array Zil.RelExpr)
+    (seed : WitnessState := {}) : Array WitnessState :=
+  extendWitnessesIndexed (NodeIndex.ofNodes facts) patterns seed
+
+def hasMatchIndexed
+    (index : NodeIndex)
+    (pattern : Zil.RelExpr)
+    (binding : Zil.Engine.Binding) : Bool :=
+  (index.candidates pattern binding).any fun node => (unifyRelation pattern node.fact binding).isSome
+
 def hasMatch
     (facts : Array FactNode)
     (pattern : Zil.RelExpr)
     (binding : Zil.Engine.Binding) : Bool :=
   facts.any fun node => (unifyRelation pattern node.fact binding).isSome
+
+def negativesHoldIndexed
+    (index : NodeIndex)
+    (patterns : Array Zil.RelExpr)
+    (binding : Zil.Engine.Binding) : Bool :=
+  patterns.all fun pattern => !hasMatchIndexed index pattern binding
 
 def negativesHold
     (facts : Array FactNode)
@@ -151,29 +209,24 @@ def negativesHold
     (binding : Zil.Engine.Binding) : Bool :=
   patterns.all fun pattern => !hasMatch facts pattern binding
 
-def appendBase (trace : Trace) (fact : Zil.RelExpr) : Trace :=
-  if (trace.findFact? fact).isSome then trace
-  else {
-    facts := trace.facts.push {
-      id := trace.facts.size
-      fact
-      origin := .base
-      stratum := 0
-    }
-  }
-
+/-- The trace of the database facts, each once, in order. -/
 def baseTrace (facts : Array Zil.RelExpr) : Trace :=
-  facts.foldl (init := {}) appendBase
+  let (trace, _) := facts.foldl (init := (({} : Trace), ({} : NodeIndex))) fun (trace, index) fact =>
+    if index.containsSemantic fact then (trace, index)
+    else
+      let node : FactNode := { id := trace.facts.size, fact, origin := .base, stratum := 0 }
+      ({ facts := trace.facts.push node }, index.insert node)
+  trace
 
 structure Candidate where
   fact : Zil.RelExpr
   origin : Origin
 
 def deriveRule
-    (positiveFacts negativeFacts : Array FactNode)
+    (positiveFacts negativeFacts : NodeIndex)
     (rule : Zil.Rule) : Array Candidate :=
-  (extendWitnesses positiveFacts rule.premises).filterMap fun state =>
-    if negativesHold negativeFacts rule.negativePremises state.binding then
+  (extendWitnessesIndexed positiveFacts rule.premises).filterMap fun state =>
+    if negativesHoldIndexed negativeFacts rule.negativePremises state.binding then
       match instantiateRelation state.binding rule.conclusion with
       | none => none
       | some fact =>
@@ -184,19 +237,16 @@ def deriveRule
           }
     else none
 
+/-- Add a derived fact if no node holds it yet. -/
 def appendCandidate
     (trace : Trace)
+    (index : NodeIndex)
     (candidate : Candidate)
-    (stratum : Nat) : Trace :=
-  if (trace.findFact? candidate.fact).isSome then trace
-  else {
-    facts := trace.facts.push {
-      id := trace.facts.size
-      fact := candidate.fact
-      origin := candidate.origin
-      stratum
-    }
-  }
+    (stratum : Nat) : Trace × NodeIndex :=
+  if index.containsSemantic candidate.fact then (trace, index)
+  else
+    let node : FactNode := { id := trace.facts.size, fact := candidate.fact, origin := candidate.origin, stratum }
+    ({ facts := trace.facts.push node }, index.insert node)
 
 def rulesAt
     (rules : Array Zil.Rule)
@@ -207,20 +257,22 @@ def rulesAt
 def maxStratum (strata : Zil.Engine.Strata) : Nat :=
   strata.foldl (init := 0) fun current entry => Nat.max current entry.2
 
-/-- Close one stratum, and say whether the fixpoint was reached (see `Zil.Engine.closeOneStratum`). -/
+/-- Close one stratum, and say whether the fixpoint was reached (see `Zil.Engine.closeOneStratum`). The rules are applied in order, and a
+rule sees the facts that the rules before it added in the same round; the negated conditions are read against the facts that were there
+when the stratum began. -/
 def closeOneStratum
     (initial : Trace)
     (rules : Array Zil.Rule)
     (level fuel : Nat) : Trace × Bool :=
-  let negativeFacts := initial.facts
-  let rec loop (trace : Trace) : Nat → Trace × Bool
+  let negativeIndex := NodeIndex.ofNodes initial.facts
+  let rec loop (trace : Trace) (index : NodeIndex) : Nat → Trace × Bool
     | 0 => (trace, false)
     | remaining + 1 =>
-        let next := rules.foldl (init := trace) fun current rule =>
-          (deriveRule current.facts negativeFacts rule).foldl (init := current) fun out candidate =>
-            appendCandidate out candidate level
-        if next.facts.size == trace.facts.size then (next, true) else loop next remaining
-  loop initial fuel
+        let (next, nextIndex) := rules.foldl (init := (trace, index)) fun (current, currentIndex) rule =>
+          (deriveRule currentIndex negativeIndex rule).foldl (init := (current, currentIndex)) fun (out, outIndex) candidate =>
+            appendCandidate out outIndex candidate level
+        if next.facts.size == trace.facts.size then (next, true) else loop next nextIndex remaining
+  loop initial (NodeIndex.ofNodes initial.facts) fuel
 
 /-- Close every stratum in order; the second component is the lowest stratum whose rounds ran out before its fixpoint, if any. -/
 def executeLevels
@@ -256,8 +308,9 @@ def traceProgram (program : Zil.Program) (fuel : Nat := Zil.Engine.defaultFuel) 
 def queryStates (trace : Trace) (query : Zil.Query) : Array WitnessState :=
   if !query.selectedVariablesBound || !query.safe then #[]
   else
-    (extendWitnesses trace.facts query.premises).filter fun state =>
-      negativesHold trace.facts query.negativePremises state.binding
+    let index := NodeIndex.ofNodes trace.facts
+    (extendWitnessesIndexed index query.premises).filter fun state =>
+      negativesHoldIndexed index query.negativePremises state.binding
 
 /-- Return concrete positive-premise witnesses for every query result. -/
 def queryWitnesses (trace : Trace) (query : Zil.Query) : Array QueryWitness :=
