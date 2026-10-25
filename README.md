@@ -2,13 +2,15 @@
 
 **A declarative systems architecture language, relational inference engine, and formal verification substrate embedded in [Lean 4](https://lean-lang.org/).**
 
-ZIL provides a mathematically grounded, unified framework for modeling distributed systems, cloud infrastructure topologies, cascading failure modes, and architectural contracts. Powered by a machine-checked Datalog inference engine in Lean 4, ZIL computes transitive closures, evaluates stratified negation, and proves structural invariants across complex software ecosystems.
+ZIL provides a framework for modeling distributed systems, cloud infrastructure topologies, cascading failure modes, and architectural contracts. Powered by a machine-checked Datalog inference engine in Lean 4, ZIL computes transitive closures, evaluates stratified negation, and proves structural invariants across complex software codebases.
 
 ---
 
-## Beyond Zanzibar: Why ZIL Exists
+## Relation to Google Zanzibar 
 
-While tuple-based systems like Google's [Zanzibar](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) popularize relational assertions for user access control (ReBAC/RBAC), **ZIL is engineered for systems engineering, infrastructure reliability, and formal verification.**
+While based on Google's [Zanzibar](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) that popularize relational assertions for user access control (ReBAC/RBAC), **ZIL is engineered for systems engineering, infrastructure reliability, and formal verification.**
+
+This was initially used for the [Entropic-physlib](https://github.com/jagg-ix/entropic-physlib) project to link theorems as a single coherent framework
 
 | Dimension | Google Zanzibar / ReBAC Engines | ZIL Lean |
 |---|---|---|
