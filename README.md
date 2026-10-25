@@ -8,7 +8,7 @@ ZIL provides a framework for modeling distributed systems, cloud infrastructure 
 
 ## Relation to Google Zanzibar 
 
-While based on Google's [Zanzibar](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) that popularize relational assertions for user access control (ReBAC/RBAC), **ZIL is engineered for systems engineering, infrastructure reliability, and formal verification.**
+While based on Google's [Zanzibar](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) that popularize relational assertions for user access control (ReBAC/RBAC), **ZIL is meant for systems engineering, infrastructure reliability, and formal verification.**
 
 This was initially used for the [Entropic-physlib](https://github.com/jagg-ix/entropic-physlib) project to link theorems as a single coherent framework
 
