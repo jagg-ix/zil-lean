@@ -3,7 +3,7 @@
 **A declarative systems architecture language, relational inference engine, and formal verification substrate embedded in [Lean 4](https://lean-lang.org/).**
 
 ZIL provides a framework for modeling distributed systems, cloud infrastructure topologies, cascading failure modes, and architectural contracts. Powered by a machine-checked Datalog inference engine in Lean 4, ZIL computes transitive closures, evaluates stratified negation, and proves structural invariants across complex software codebases.
-
+simplest way to use it is to ref its repo url to your AI agent and link it to a TLA+ spec via SANY to produce zil code from the TLA+ spec
 ---
 
 ## Relation to Google Zanzibar 
@@ -132,38 +132,6 @@ impact          service.orders     2   transitive  service.orders#zil.dependsOn@
 impact          service.gateway    3   transitive  service.gateway#zil.dependsOn@service.orders -> ...
 impact          service.frontend   4   transitive  service.frontend#zil.dependsOn@service.gateway -> ...
 ```
-
----
-
-###  Infrastructure Reliability & Audit Provenance
-
-ZIL's Datalog engine evaluates **stratified negation** to model degraded operational states, network failovers, and circuit breakers.
-
-Save the following model as `infrastructure.zc`:
-
-```zc
-MODULE infrastructure.
-
-// Datacenter Interconnects
-location:dc_west#connected_to@location:dc_east [link="mpls"].
-location:dc_west#connected_to@location:dc_east [link="internet"].
-network:vpn_overlay#overlays@link:internet.
-
-// Service Topology & Primary/Replica Mirroring
-app:api_server#deployed_on@location:dc_west.
-app:api_server#mirrored_by@app:api_server_standby.
-app:api_server#depends_on@service:database_cluster.
-
-// Cascading Failure Invariant Rule:
-// If a dependency is not marked healthy, the dependent application is degraded
-RULE dependencyFailure:
-IF ?app#depends_on@?dep AND NOT ?dep#status@value:healthy
-THEN ?app#state@value:degraded.
-
-QUERY degraded_services:
-FIND ?app WHERE ?app#state@value:degraded.
-```
-
 
 ###  Compiling System Architectures to Machine-Checked Lean 4 Code
 
