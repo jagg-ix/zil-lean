@@ -221,9 +221,8 @@ Export state machine models directly to TLA+ for temporal model checking with TL
 Zil needs help ! this began with the idea that we need a generalized way to describe how systems and concepts aka knowledge graph (db)
 should leverage lean4 to allow AI agents to link tla+ specs, system behaviors and verify system using lean4 as foundations. 
 
-Project would benefit from DSL Design and core language as well as the lean4 community and the tla+ community
-so far project has a companion repo; it includes some Advanced formal verification and solver integration capabilities maintained in 
-[zil-lib](https://github.com/jagg-ix/zil-lib) library that leveraged Zil Macro system:
+Project would benefit from DSL Design and core language to link TLA+ and Lean4, both communities are welcome;
+we need help to improve [zil-lib](https://github.com/jagg-ix/zil-lib)  it includes:
 
 - **SMT-Backed Policy Equivalence (`zilLib equiv`):** Formally proves that two refactored rule sets or architectures are semantically identical using Z3.
 - **Rule Repair Hints (`zilLib repair`):** Automatically suggests minimal rule modifications to repair broken architectural invariants.
