@@ -12,18 +12,6 @@ While based on Google's [Zanzibar](https://storage.googleapis.com/gweb-research2
 
 This was initially used for the [Entropic-physlib](https://github.com/jagg-ix/entropic-physlib) project to link theorems as a single coherent framework
 
-| Dimension | Google Zanzibar / ReBAC Engines | ZIL Lean |
-|---|---|---|
-| **Primary Domain** | User authorization & document ACLs | Distributed systems, infrastructure, and software architectures |
-| **Relational Logic** | Restricted graph reachability | Full Datalog with stratified negation (`NOT`) and inductive rules |
-| **System Degradation** | Binary permissions (`allow` / `deny`) | Cascading failures, circuit breaker states, and degraded services |
-| **Blast Radius & Cycles** | Not supported | Automated change impact analysis, reachability depth, and cycle detection |
-| **Formal Guarantees** | Operational guarantees only | Machine-checked Lean 4 kernel proofs for termination and correctness |
-| **Codebase Verification** | External directory service | Polyglot embedded comment scanning (Go, Rust, Python, Lean) to prevent architecture drift in CI |
-| **Formal Interoperability** | Proprietary APIs | Native compilation to Lean 4, bidirectional Terraform/OpenTofu HCL ingestion, and TLA+ export |
-
----
-
 ## Quick Start
 
 ### Prerequisites
@@ -46,8 +34,7 @@ lake build zil
 
 ## Core Concepts: Relational Tuples & Rules 
 
-System state in ZIL is declared as a set of strongly typed **relation tuples**:
-
+System state in ZIL is declared as a set of strongly typed **relation tuples**, Google Zanzibar core lang shines here:
 ```text
 <entity>#<relationship>@<target> [optional_attributes].
 ```
