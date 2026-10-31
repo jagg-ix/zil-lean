@@ -61,7 +61,8 @@ THEN ?service#status@value:degraded.
 
 ### 1. Service Topology, Cycle Detection & Change Impact Analysis
 
-ZIL models complex service architectures to detect circular dependencies and calculate blast radius prior to infrastructure deployments or migrations.
+ZIL uses a macro system leveraged from Lean4, one scenario would  use it to  model complex service architectures to detect circular dependencies 
+and calculate blast radius prior to infrastructure deployments or migrations.
 
 Save the following model as `service_mesh.zc`:
 
@@ -244,30 +245,13 @@ Export state machine models directly to TLA+ for temporal model checking with TL
 
 ---
 
-## CLI Reference
-
-The `bin/zil` command-line tool provides a unified suite for modeling, verification, and interop:
-
-| Command | Purpose |
-|---|---|
-| `bin/zil dependency-graph <model.zc>` | Generates directed graph topology and identifies circular dependency cycles. |
-| `bin/zil impact <model.zc> <node>` | Calculates blast radius and direct/transitive change impact. |
-| `bin/zil explain-query <model.zc> <query>` | Produces complete step-by-step derivation provenance for any query. |
-| `bin/zil compile <model.zc> [out.lean]` | Compiles a ZIL specification into typed, machine-checked Lean 4 code. |
-| `bin/zil expand <model.zc> [out.zc]` | Expands domain macros into canonical relation tuples and Datalog rules. |
-| `bin/zil embedded-scan <path>` | Extracts architectural assertions embedded in source code comments. |
-| `bin/zil embedded-drift-check <path> <base.json>` | Verifies source code against architecture baseline to prevent drift in CI. |
-| `bin/zil export-tla <model.zc> [out.tla]` | Exports state machine specifications (`LTS_ATOM`) to TLA+ for model checking. |
-| `bin/zil import-hcl <dir> [out.zc]` | Ingests Terraform / OpenTofu HCL infrastructure configurations into ZIL. |
-| `bin/zil proof-obligations <model.zc>` | Maps system verification goals to solver obligations (Z3, TLAPS, Lean 4). |
-| `bin/zil test` | Runs the test suite across supported profiles. |
-| `bin/zil doctor` | Inspects local toolchain health and environment prerequisites. |
-
----
-
 ## Companion Library: `zil-lib`
+Zil needs help ! this began with the idea that we need a generalized way to describe how systems and concepts aka knowledge graph (db)
+should leverage lean4 to allow AI agents to link tla+ specs, system behaviors and verify system using lean4 as foundations. 
 
-Advanced formal verification and solver integration capabilities are maintained in the companion [zil-lib](https://github.com/jagg-ix/zil-lib) library:
+Project would benefit from DSL Design and core language as well as the lean4 community and the tla+ community
+so far project has a companion repo; it includes some Advanced formal verification and solver integration capabilities maintained in 
+[zil-lib](https://github.com/jagg-ix/zil-lib) library that leveraged Zil Macro system:
 
 - **SMT-Backed Policy Equivalence (`zilLib equiv`):** Formally proves that two refactored rule sets or architectures are semantically identical using Z3.
 - **Rule Repair Hints (`zilLib repair`):** Automatically suggests minimal rule modifications to repair broken architectural invariants.
