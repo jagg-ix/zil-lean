@@ -44,7 +44,7 @@ lake build zil
 
 ---
 
-## Core Concepts: Relational Tuples & Rules
+## Core Concepts: Relational Tuples & Rules 
 
 System state in ZIL is declared as a set of strongly typed **relation tuples**:
 
@@ -147,7 +147,7 @@ impact          service.frontend   4   transitive  service.frontend#zil.dependsO
 
 ---
 
-### 2. Infrastructure Reliability & Audit Provenance
+###  Infrastructure Reliability & Audit Provenance
 
 ZIL's Datalog engine evaluates **stratified negation** to model degraded operational states, network failovers, and circuit breakers.
 
@@ -176,31 +176,8 @@ QUERY degraded_services:
 FIND ?app WHERE ?app#state@value:degraded.
 ```
 
-#### Explain Query Derivations (Audit Provenance)
-Query the system and inspect the complete, step-by-step mathematical provenance of derived facts:
 
-```bash
-./bin/zil explain-query infrastructure.zc degraded_services
-```
-
-**Output:**
-```text
-ZIL-QUERY-EXPLANATION   1
-query       degraded_services
-witnesses   1
-witness     degraded_services   app=app.api_server   fact=5   app=app.api_server,dep=service.database_cluster
--- provenance --
-fact    0   0   rel   node:location.dc_west   zil.connectedTo   node:location.dc_east   link=s:mpls      origin  base
-fact    1   0   rel   node:location.dc_west   zil.connectedTo   node:location.dc_east   link=s:internet  origin  base
-fact    2   0   rel   node:network.vpn_overlay zil.overlays     node:link.internet                       origin  base
-fact    3   0   rel   node:app.api_server     zil.deployedOn    node:location.dc_west                    origin  base
-fact    4   0   rel   node:app.api_server     zil.dependsOn     node:service.database_cluster            origin  base
-fact    5   0   rel   node:app.api_server     zil.state         node:value.degraded                      origin  rule  dependencyFailure  4  app=app.api_server,dep=service.database_cluster
-```
-
----
-
-### 3. Compiling System Architectures to Machine-Checked Lean 4 Code
+###  Compiling System Architectures to Machine-Checked Lean 4 Code
 
 ZIL models compile directly into strongly typed Lean 4 definitions, inductive AST expressions, and formal Datalog programs:
 
@@ -246,38 +223,9 @@ end Zil.Generated.infrastructure
 
 Because ZIL compiles to native Lean 4, system properties can be checked against the Lean 4 kernel with mathematical proofs guaranteeing deterministic evaluation and termination.
 
----
 
-### 4. Continuous Architecture Drift Detection (Polyglot Embedded Blocks)
 
-Architectural specifications often drift from production implementations. ZIL allows engineers to embed declarative architectural assertions directly into code comments across Go, Rust, Python, Lean, and Markdown:
-
-```lean
-/-
-@zil target=self
-self#depends_on@service:postgres_cluster.
-self#enforces_sla@value:tier_1.
-@endzil
--/
-def executePaymentTransaction (tx : Transaction) : IO TransactionResult := do
-  ...
-```
-
-#### Scan Codebases in CI:
-```bash
-# Scan and extract relational contracts from source code comments
-./bin/zil embedded-scan ./src /tmp/extracted_architecture.zc
-
-# Snapshot verified architecture
-./bin/zil embedded-snapshot ./src architecture_baseline.json
-
-# Fail CI builds if unapproved dependencies or architecture drift are detected
-./bin/zil embedded-drift-check ./src architecture_baseline.json
-```
-
----
-
-### 5. Distributed Protocols & State Machines (`LTS_ATOM`)
+### Distributed Protocols & State Machines (`LTS_ATOM`)
 
 ZIL natively supports Labeled Transition Systems (`LTS_ATOM`) to model distributed protocol state transitions, connection handshakes, and recovery states:
 
