@@ -1,9 +1,10 @@
 # ZIL Lean
 
-**A declarative systems architecture language, relational inference engine, and formal verification substrate embedded in [Lean 4](https://lean-lang.org/)
+A declarative systems architecture language, relational inference engine, and formal verification substrate embedded in [Lean 4](https://lean-lang.org/)
 
 ZIL provides a framework for modeling distributed systems, cloud infrastructure topologies, cascading failure modes, and architectural contracts. Powered by a machine-checked Datalog inference engine in Lean 4, ZIL computes transitive closures, evaluates stratified negation, and proves structural invariants across complex software codebases.
 simplest way to use it is to ref its repo url to your AI agent and link it to a TLA+ spec via SANY to produce zil code from the TLA+ spec
+
 ---
 
 ## Relation to Google Zanzibar 
