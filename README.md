@@ -39,7 +39,7 @@ System state in ZIL is declared as a set of strongly typed **relation tuples**, 
 <entity>#<relationship>@<target> [optional_attributes].
 ```
 
-Entities can be physical or virtual nodes, networks, cloud resources, microservices, or state machines. Inference rules (Datalog Horn clauses) derive new relationships and system states:
+Zil describes concepts, can be physical or virtual nodes, networks, cloud resources, microservices, or state machines. Inference rules (Datalog Horn clauses) derive new relationships and system states:
 
 ```zc
 // Multi-region interconnect
