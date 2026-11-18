@@ -1,6 +1,6 @@
 # ZIL Lean
 
-This is a DSL that works as a relational inference engine, and formal verification layer embedded in [Lean 4](https://lean-lang.org/)
+This is a DSL that leverages formal verification in [Lean 4](https://lean-lang.org/)
 
 ZIL provides a framework for modeling how concepts interact and depends and relate to each other, this can cover from distributed systems, cloud infrastructure topologies, cascading failure modes to architectural contracts. By using zil we get a machine-checked Datalog inference engine in Lean 4, ZIL computes transitive closures, evaluates stratified negation, and proves structural invariants across complex software codebases.
 
