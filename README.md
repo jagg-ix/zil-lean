@@ -2,12 +2,8 @@
 
 This is a DSL that leverages formal verification in [Lean 4](https://lean-lang.org/)
 
-ZIL provides a framework for modeling how concepts interact and depends and relate to each other, this can cover from distributed systems, cloud infrastructure topologies, cascading failure modes to architectural contracts. By using zil we get a machine-checked Datalog inference engine in Lean 4, ZIL computes transitive closures, evaluates stratified negation, and proves structural invariants across complex software codebases.
-
-simplest way to use it is to ref its repo url to your AI agent and link it to a TLA+ spec via SANY to produce zil code from the TLA+ spec, this allows to leverage lean4 
-power to cover TLA+ spec state-space without relaying on TLC scanning, this alone can avoid waiting tlc from 10-20 minutes to seconds while you get even better coverage.
-
-Community contributions are welcome to provide exact quantifications for similar scenarios.
+ZIL provides a framework for modeling how concepts relate to each other, it can be used to describe distributed systems, cloud infrastructure topologies, cascading failure modes or architectural contracts. 
+The simplest way to use it is to reference its repository URL in your AI agent and link it to a TLA+ specification via SANY to generate ZIL code from the TLA+ spec. This allows you to leverage the power of Lean 4 to cover the TLA+ specification's state space without relying on TLC scanning. This alone can reduce wait times from minutes to seconds on some scenarios.
 
 ---
 
@@ -17,29 +13,11 @@ While based on Google's [Zanzibar](https://storage.googleapis.com/gweb-research2
 
 This was initially used for the [Entropic-physlib](https://github.com/jagg-ix/entropic-physlib) project to link theorems as a single coherent framework
 
-## Quick Start
-
-### Prerequisites
-- [Elan](https://github.com/leanprover/elan) (Lean 4 toolchain manager)
-
-### Installation & Build
-
-```bash
-git clone https://github.com/jagg-ix/zil-lean
-cd zil-lean
-
-# Build the Lean library and verification kernel
-lake build
-
-# Build the standalone command-line tool (bin/zil)
-lake build zil
-```
-
 ---
 
 ## Core Concepts: Relational Tuples & Rules 
 
-System state in ZIL is declared as a set of strongly typed **relation tuples**, Google Zanzibar core lang shines here:
+System state in ZIL is declared as a set of strongly typed **relation tuples**, similar to  Google Zanzibar core lang :
 ```text
 <entity>#<relationship>@<target> [optional_attributes].
 ```
@@ -61,6 +39,27 @@ THEN ?service#status@value:degraded.
 ```
 
 ---
+
+
+## Quick Start
+
+### Prerequisites
+- [Elan](https://github.com/leanprover/elan) (Lean 4 toolchain manager)
+
+### Installation & Build
+
+```bash
+git clone https://github.com/jagg-ix/zil-lean
+cd zil-lean
+
+# Build the Lean library and verification kernel
+lake build
+
+# Build the standalone command-line tool (bin/zil)
+lake build zil
+```
+
+
 
 ## Capabilities & Hands-On Examples
 
